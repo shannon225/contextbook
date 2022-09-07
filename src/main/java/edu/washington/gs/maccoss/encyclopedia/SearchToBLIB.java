@@ -1142,6 +1142,7 @@ public class SearchToBLIB {
 		final Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides;
 		final PeakLocationInferrerInterface inferrer;
 		final ArrayList<? extends ProteinGroupInterface> proteins;
+		final TObjectFloatMap<String> ticMap = new TObjectFloatHashMap<>();
 
 		try {
 			try {
@@ -1161,6 +1162,27 @@ public class SearchToBLIB {
 					proteins = alignmentFile.getProteinGroups();
 
 					inferrer = readInferrer(alignmentFile, jobs, parameters);
+
+					// Read TICs from alignment ELIB; we can't just read the provided set of jobs, we want
+					// all the jobs used for creation of the alignment results, so we match the normalization
+					// as if they were all quantified together.
+					try (
+							Connection c = alignmentFile.getConnection();
+							PreparedStatement ps = c.prepareStatement("SELECT Key, Value FROM Metadata WHERE Key LIKE (? || '%');")
+					) {
+						ps.setString(1, LibraryFile.SOURCEFILE_TIC_PREFIX);
+
+						try (ResultSet rs = ps.executeQuery()) {
+							while (rs.next()) {
+								ticMap.put(
+										rs.getString(1).substring(LibraryFile.SOURCEFILE_TIC_PREFIX.length()),
+										Float.parseFloat(rs.getString(2))
+								);
+							}
+						}
+					}
+					Logger.logLine("Found TIC values to normalize across " + ticMap.size() + " files");
+
 				} finally {
 					alignmentFile.close();
 				}
@@ -1168,7 +1190,7 @@ public class SearchToBLIB {
 				throw new EncyclopediaException("Unable to read alignment results", e);
 			}
 
-			convertElibQuantOnly(progress, jobs, elibFile, passingPeptides, inferrer, proteins, parameters);
+			convertElibQuantOnly(progress, jobs, elibFile, passingPeptides, inferrer, proteins, ticMap, parameters);
 		} finally {
 			Logger.close();
 		}
@@ -1408,7 +1430,7 @@ public class SearchToBLIB {
 	 * @param proteins the previously-computed set of scored and grouped proteins
 	 * @param parameters the parameters to use for quant (should match those used for the initial alignment exactly!)
 	 */
-	static void convertElibQuantOnly(ProgressIndicator progress, List<? extends SearchJobData> jobs, File elibFile, Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides, PeakLocationInferrerInterface inferrer, ArrayList<? extends ProteinGroupInterface> proteins, SearchParameters parameters) {
+	static void convertElibQuantOnly(ProgressIndicator progress, List<? extends SearchJobData> jobs, File elibFile, Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides, PeakLocationInferrerInterface inferrer, ArrayList<? extends ProteinGroupInterface> proteins, TObjectFloatMap<? super String> ticMap, SearchParameters parameters) {
 		if (null == passingPeptides || null == passingPeptides.x || passingPeptides.x.size() < 1) {
 			throw new IllegalArgumentException("Can't extract quantities for zero peptides!");
 		}
@@ -1448,13 +1470,6 @@ public class SearchToBLIB {
 
 			elib.createIndices();
 			elib.saveAsFile(elibFile);
-
-			// Read TICs from alignment ELIB
-			TObjectFloatMap<String> ticMap = new TObjectFloatHashMap<>();
-			for (SearchJobData job : jobs) {
-				//TODO
-			}
-
 
 			try {
 				//TODO: we want to produce _normalized_ results for the subset of files we're quantifying

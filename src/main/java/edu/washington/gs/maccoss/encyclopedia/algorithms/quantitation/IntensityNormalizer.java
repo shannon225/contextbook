@@ -1,12 +1,13 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation;
 
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Sets;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.impl.unmodifiable.TUnmodifiableObjectFloatMap;
 import gnu.trove.map.TObjectFloatMap;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
-import java.util.Map;
+import java.util.Set;
 
 /**
  * Interface for various implementations of intensity normalization.
@@ -27,12 +28,20 @@ public interface IntensityNormalizer {
 			averageTic = General.sum(ticMap.values()) / ticMap.size();
 		}
 
-		return (intensity, sourceFile) -> {
-			float tic = ticMap.get(sourceFile);
-			if (tic > 0.0f) {
-				return intensity / tic * averageTic;
-			} else {
-				return intensity;
+		return new IntensityNormalizer() {
+			private final Set<String> warnedMissingFiles = Sets.newHashSet();
+
+			@Override
+			public float normalize(float intensity, String sourceFile) {
+				float tic = ticMap.get(sourceFile);
+				if (tic > 0.0f) {
+					return intensity / tic * averageTic;
+				} else {
+					if (warnedMissingFiles.add(sourceFile)) {
+						Logger.errorLine("Can not normalize intensities in " + sourceFile + " (TIC is missing)");
+					}
+					return intensity;
+				}
 			}
 		};
 	}

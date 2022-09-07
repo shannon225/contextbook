@@ -72,7 +72,7 @@ import gnu.trove.map.hash.TObjectDoubleHashMap;
 public class LibraryFile extends SQLFile implements LibraryInterface {
 	public static boolean OPEN_IN_PLACE=false;
 
-	private static final String SOURCEFILE_TIC_PREFIX="TIC_";
+	public static final String SOURCEFILE_TIC_PREFIX="TIC_";
 	private static final String SOURCEFILE_STRING="sourcefile";
 	private static final String SOURCE_FILE_SPLIT="|";
 	public static final String DLIB=".dlib";

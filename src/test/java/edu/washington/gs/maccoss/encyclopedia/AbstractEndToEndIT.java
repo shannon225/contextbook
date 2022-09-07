@@ -924,6 +924,8 @@ public abstract class AbstractEndToEndIT {
 		// If there aren't the same number of rows the tables are unequal. If they do have the same size then the
 		// check above ensures they're identical. Do this check last to give more useful feedback whenever possible.
 		assertEquals("Wrong number of actual rows!", expected.rowKeySet().size(), actual.rowKeySet().size());
+
+		assertFalse("No rows found in quant table!", actual.rowKeySet().isEmpty());
 	}
 
 	public static void assertSanityTest(LibraryFile outputFile, int peptideFloor, int proteinFloor) throws Exception {
