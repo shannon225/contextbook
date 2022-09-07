@@ -733,8 +733,8 @@ public abstract class AbstractEndToEndIT {
 			}
 		}
 
-		SearchToBLIBIT.assertHasQuantReports(libraryFile.toPath());
 		SearchToBLIBIT.assertHasQuantReports(refElib);
+		SearchToBLIBIT.assertHasQuantReports(quantFile.getFile().toPath());
 
 		//TODO: diff files
 		final ExternalExecutor diffExec = new ExternalExecutor(new String[]{"diff", "-qs", libraryFile.getAbsolutePath(), refElib.toAbsolutePath().toString()});
