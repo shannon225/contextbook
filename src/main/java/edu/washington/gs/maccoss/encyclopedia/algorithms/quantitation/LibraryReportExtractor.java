@@ -23,6 +23,7 @@ import java.util.Map.Entry;
 import java.util.zip.DataFormatException;
 
 public class LibraryReportExtractor {
+	public static final String UNORMALIZED_TAG = "_unormalized";
 
 	public static void main(String[] args) throws IOException, SQLException, DataFormatException {
 		File file=new File("/Volumes/WorkingDisk/yeast_curve_wide.elib");
@@ -45,7 +46,7 @@ public class LibraryReportExtractor {
 		if (normalizeByTIC) {
 			tag="";
 		} else {
-			tag="_unormalized";
+			tag = UNORMALIZED_TAG;
 		}
 
 		ArrayList<String> sourceFiles;

@@ -21,6 +21,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPr
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.LocalizationDataToTSVConsumer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ThesaurusJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.precursor.DDAPrecursorIntegrator;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.IntensityNormalizer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.LibraryReportExtractor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.PeptideQuantExtractor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAJobData;
@@ -38,6 +39,8 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.SubProgressIndicator;
+import gnu.trove.map.TObjectFloatMap;
+import gnu.trove.map.hash.TObjectFloatHashMap;
 
 import java.io.*;
 import java.nio.file.Path;
@@ -1494,17 +1497,29 @@ public class SearchToBLIB {
 			elib.addTargetDecoyPeptides(passingPeptides.x, Lists.newArrayList());
 
 			// We must also take the protein connections from the entries so they're available to quant reporting.
-			//TODO: we MUST include the decoys to ensure protein FDR filtering functions
-			// Alternatively we could perform protein inference using the alignment ELIB
 			elib.addProteinsFromPercolator(passingPeptides.x);
 
 			elib.createIndices();
 			elib.saveAsFile(elibFile);
 
+			// Read TICs from alignment ELIB
+			TObjectFloatMap<String> ticMap = new TObjectFloatHashMap<>();
+			for (SearchJobData job : jobs) {
+				//TODO
+			}
+
+
 			try {
 				//TODO: we want to produce _normalized_ results for the subset of files we're quantifying
 				// This will require computing the correct normalization constants from the _alignment_ ELIB.
-				LibraryReportExtractor.extractMatrix(elib, proteins, true);
+				LibraryReportExtractor.extractMatrix(
+						elib,
+						jobs.stream().map(j -> j.getDiaFileReader().getOriginalFileName()).collect(Collectors.toList()),
+						proteins,
+						IntensityNormalizer.tic(ticMap),
+						Optional.empty(),
+						""
+				);
 			} catch (DataFormatException e) {
 				Logger.errorException(e);
 			}

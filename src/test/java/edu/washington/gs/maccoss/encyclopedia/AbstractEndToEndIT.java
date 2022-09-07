@@ -739,6 +739,7 @@ public abstract class AbstractEndToEndIT {
 							" LEFT JOIN ref.peptidetoprotein rp" +
 							" USING (PeptideSeq, ProteinAccession)" +
 							" WHERE rp.peptideseq IS NULL" +
+							" AND NOT p.isdecoy" +
 							" LIMIT 1;"
 					);
 					ResultSet rs = s.executeQuery()
@@ -759,6 +760,7 @@ public abstract class AbstractEndToEndIT {
 							" LEFT JOIN peptidetoprotein p" +
 							" USING (PeptideSeq, ProteinAccession)" +
 							" WHERE p.peptideseq IS NULL" +
+							" AND NOT p.isdecoy" +
 							" LIMIT 1;"
 					);
 					ResultSet rs = s.executeQuery()
