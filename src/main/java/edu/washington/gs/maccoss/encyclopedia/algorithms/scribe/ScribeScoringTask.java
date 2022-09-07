@@ -85,6 +85,10 @@ public class ScribeScoringTask extends AbstractLibraryScoringTask {
 					double target = entry.getPrecursorMZ()+(j+1)*MassConstants.neutronMass/entry.getPrecursorCharge();
 					match=match||parameters.getPrecursorTolerance().equals(target, msms.getPrecursorMZ());	
 				}
+				// required charge
+//				if (msms.getCharge()!=0&&msms.getCharge()!=entry.getPrecursorCharge()) {
+//					match=false;
+//				}
 				if (match) {
 					SparseXCorrSpectrum xcorrEntry=getXCorrEntry(entry);
 					

@@ -37,6 +37,7 @@ public class DDAPrecursorIntegrator {
 		
 
 		try {
+			int chargeCount=0;
 			float currentRTStart=minRT;
 			float currentRTStop=minRT+increment;
 			ArrayList<FragmentScan> scanBlock=stripeFile.getStripes(targetMzRange, currentRTStart, currentRTStop, false);
@@ -63,6 +64,10 @@ public class DDAPrecursorIntegrator {
 				}
 				
 				if (matchingMSMS!=null) {
+//					if (psm.getPrecursorCharge()!=matchingMSMS.getCharge()) {
+//						chargeCount++;
+//						System.err.println(chargeCount+"/"+psms.size()+") \t"+psm.getPrecursorCharge()+" != "+matchingMSMS.getCharge());
+//					}
 					list.add(new PSMScoredSpectrum(psm, matchingMSMS));
 				} else {
 					Logger.errorLine("Failed to find PSM spectrum ID: "+psm.getSpectrumIndex());
