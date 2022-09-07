@@ -1494,6 +1494,8 @@ public class SearchToBLIB {
 			elib.addTargetDecoyPeptides(passingPeptides.x, Lists.newArrayList());
 
 			// We must also take the protein connections from the entries so they're available to quant reporting.
+			//TODO: we MUST include the decoys to ensure protein FDR filtering functions
+			// Alternatively we could perform protein inference using the alignment ELIB
 			elib.addProteinsFromPercolator(passingPeptides.x);
 
 			elib.createIndices();
