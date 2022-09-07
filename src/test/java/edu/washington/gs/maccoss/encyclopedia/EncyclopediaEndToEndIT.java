@@ -6,11 +6,14 @@ import com.google.common.collect.Maps;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.QuantitativeSearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.tests.EncyclopediaTestUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import org.junit.AfterClass;
@@ -88,6 +91,24 @@ public class EncyclopediaEndToEndIT extends AbstractEndToEndIT{
 
 	public static EncyclopediaJobData makeAndDoJob(File dia) throws Exception {
 		EncyclopediaJobData jobData = new EncyclopediaJobData(dia,fastaFile,libraryInterface,libraryScoringFactory);
+
+		// Patch to deal with the older, messy test files: compute TIC and save it
+		final StripeFileInterface diaFileReader = jobData.getDiaFileReader();
+		if (diaFileReader instanceof StripeFile) {
+			final float tic = diaFileReader.getTIC();
+			if (tic <= 0 || !Float.isFinite(tic)) {
+				((StripeFile) diaFileReader).addMetadata(
+						StripeFile.TOTAL_PRECURSOR_TIC_ATTRIBUTE,
+						Float.toString((float)
+								diaFileReader.getPrecursors(0, Float.MAX_VALUE).stream()
+										.mapToDouble(PrecursorScan::getTIC)
+										.sum()
+						)
+				);
+				((StripeFile) diaFileReader).saveFile();
+			}
+		}
+
 		Encyclopedia.runSearch(new EmptyProgressIndicator(),jobData);
 		return jobData;
 	}
