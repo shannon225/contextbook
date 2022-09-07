@@ -16,10 +16,7 @@ import org.w3c.dom.NodeList;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.zip.DataFormatException;
@@ -194,12 +191,13 @@ public class EncyclopediaJobData extends QuantitativeSearchJobData implements Li
 	 * <p>
 	 * Instances will return {@code true} from {@link #hasBeenRun()} even if
 	 * ths .DIA doesn't exist. It will also return a {@code StripeFileInterface} that provides
-	 * the appropriate original file name (read from the file's results ELIB; see
+	 * the appropriate original file name and TIC (read from the file's results ELIB; see
 	 * {@link StripeFileInterface#getOriginalFileName()}) but otherwise throws on attempts to
 	 * read the .DIA's contents.
 	 */
 	private static class DummyEncyclopediaJobData extends EncyclopediaJobData {
 		private String originalFileName = null;
+		private Float tic = null;
 
 		private DummyEncyclopediaJobData(File diaFile, File fastaFile, LibraryInterface library, LibraryScoringFactory factory) {
 			super(diaFile, fastaFile, library, factory);
@@ -261,11 +259,6 @@ public class EncyclopediaJobData extends QuantitativeSearchJobData implements Li
 				}
 
 				@Override
-				public float getTIC() throws IOException, SQLException {
-					throw new UnsupportedOperationException("File not found: " + getDiaFile().getAbsolutePath());
-				}
-
-				@Override
 				public float getGradientLength() throws IOException, SQLException {
 					throw new UnsupportedOperationException("File not found: " + getDiaFile().getAbsolutePath());
 				}
@@ -291,8 +284,8 @@ public class EncyclopediaJobData extends QuantitativeSearchJobData implements Li
 						return originalFileName;
 					}
 
-					synchronized (this) {
-						if (null == originalFileName) {
+					synchronized (DummyEncyclopediaJobData.this) {
+						SET_NAME: if (null == originalFileName) {
 							// Workaround: if the DIA file is missing we can't read the
 							// original file name, which likely has an .mzML extension.
 							// Instead, get the name used in this job's results ELIB.
@@ -304,7 +297,8 @@ public class EncyclopediaJobData extends QuantitativeSearchJobData implements Li
 													" LIMIT 1;"
 									)) {
 										if (rs.next()) {
-											return rs.getString(1);
+											originalFileName = rs.getString(1);
+											break SET_NAME;
 										} else {
 											throw new SQLException("No entries in results ELIB!");
 										}
@@ -320,6 +314,44 @@ public class EncyclopediaJobData extends QuantitativeSearchJobData implements Li
 					}
 
 					return originalFileName;
+				}
+
+				@Override
+				public float getTIC() throws IOException, SQLException {
+					if (null != tic) {
+						return tic;
+					}
+
+					synchronized (this) {
+						SET_TIC: if (null == tic) {
+							// TIC is saved in this file's results ELIB
+							try (Connection c = new SQLFile() {}.getConnection(getResultLibrary())) {
+								try (PreparedStatement ps = c.prepareStatement(
+										"SELECT Value" +
+										" FROM Metdata" +
+										" WHERE KEY=?" +
+										" LIMIT 1;"
+								)) {
+									ps.setString(1, LibraryFile.SOURCEFILE_TIC_PREFIX + getOriginalFileName());
+									try (ResultSet rs = ps.executeQuery()) {
+										if (rs.next()) {
+											tic = Float.parseFloat(rs.getString(1));
+											break SET_TIC;
+										} else {
+											throw new SQLException("No recorded TIC in results ELIB!");
+										}
+									}
+								}
+							} catch (IOException | SQLException e) {
+								Logger.errorLine("Unable to read from results ELIB for job " + getOriginalFileName());
+								Logger.errorException(e);
+							}
+
+							tic = 0.0f;
+						}
+					}
+
+					return tic;
 				}
 			};
 		}

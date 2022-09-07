@@ -1000,7 +1000,7 @@ public class SearchToBLIB {
 				// Now compute and write the set of entries that to capture the alignment/transition refinement
 				elib.addEntries(getAlignmentEntries(passingPeptides.x, inferrer, parameters));
 
-				// Write each job's alignment to the ELIB
+				// Write information about each job to the ELIB
 				float increment = 1.0f / jobs.size();
 				for (int i = 0; i < jobs.size(); i++) {
 					final SearchJobData job = jobs.get(i);
@@ -1016,7 +1016,9 @@ public class SearchToBLIB {
 
 					elib.addRtAlignment(job, getRawAlignmentPoints(job, inferrer));
 
-					subProgress.update("Done writing alignment for job " + job.getDiaFileReader().getOriginalFileName(), 1f);
+//					elib.addTIC(); //TODO: record each file's tic in the alignment results, for later normalization
+
+					subProgress.update("Done writing job " + job.getDiaFileReader().getOriginalFileName(), 1f);
 				}
 
 				writeElibMetadata(elib, jobs, parameters, true); // align is required for ALIB
