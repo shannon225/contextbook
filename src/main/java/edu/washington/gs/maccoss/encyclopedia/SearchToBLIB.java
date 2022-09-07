@@ -51,7 +51,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.DataFormatException;
@@ -1142,7 +1141,7 @@ public class SearchToBLIB {
 	static void convertElibQuantOnly(ProgressIndicator progress, List<? extends SearchJobData> jobs, File elibFile, File alignmentElib, SearchParameters parameters) {
 		final Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides;
 		final PeakLocationInferrerInterface inferrer;
-		final ArrayList<PercolatorProteinGroup> proteins;
+		final ArrayList<? extends ProteinGroupInterface> proteins;
 
 		try {
 			try {
@@ -1159,7 +1158,7 @@ public class SearchToBLIB {
 					alignmentFile.openFile(alignmentElib);
 
 					passingPeptides = readPassingPeptides(alignmentFile, parameters);
-					proteins = readPassingProteins(alignmentFile, passingPeptides.x);
+					proteins = alignmentFile.getProteinGroups();
 
 					inferrer = readInferrer(alignmentFile, jobs, parameters);
 				} finally {
@@ -1217,58 +1216,6 @@ public class SearchToBLIB {
 		}
 
 		return new Pair<>(passingPeptides, pi0);
-	}
-
-	/**
-	 * Read the set of passing proteins from an "alignment-only" ELIB (ALIB).
-	 *
-	 * @param alignmentFile an open ALIB library
-	 */
-	static ArrayList<PercolatorProteinGroup> readPassingProteins(LibraryFile alignmentFile, List<? extends PercolatorPeptide> passingPeptides) throws IOException, SQLException {
-		final ArrayList<PercolatorProteinGroup> passingProteins = Lists.newArrayList();
-
-		final String query = "SELECT" +
-				" group_concat(p.proteinaccession, ';')," +
-				" group_concat(p.peptideseq, ';')," +
-				" s.QValue, s.MinimumPeptidePEP" +
-				" FROM proteinscores s" +
-				" JOIN peptidetoprotein p USING (proteinaccession)" +
-				" GROUP BY proteinaccession;";
-
-		try (Connection c = alignmentFile.getConnection()) {
-			try (PreparedStatement ps = c.prepareStatement(query)) {
-				try (ResultSet rs = ps.executeQuery()) {
-					final Map<String, List<String>> modseqCache = new TreeMap<>();
-
-					while (rs.next()) {
-						final String[] peptideSequences = rs.getString(2).split(";");
-
-						final List<String> peptideModSeqs = Lists.newArrayListWithCapacity(peptideSequences.length);
-						for (String seq : peptideSequences) {
-							final List<String> modSeqs = modseqCache.computeIfAbsent(seq, toModSeqs(passingPeptides));
-
-							peptideModSeqs.addAll(modSeqs);
-						}
-
-						passingProteins.add(new PercolatorProteinGroup(
-								rs.getString(1).split(";"),
-								peptideModSeqs.toArray(new String[0]),
-								rs.getFloat(3),
-								rs.getFloat(4)
-						));
-					}
-				}
-			}
-		}
-
-		return passingProteins;
-	}
-
-	static Function<String, List<String>> toModSeqs(List<? extends PercolatorPeptide> passingPeptides) {
-		return seq -> passingPeptides.stream()
-				.filter(p -> Objects.equals(seq, p.getPeptideSeq()))
-				.map(PercolatorPeptide::getPeptideModSeq)
-				.collect(Collectors.toList());
 	}
 
 	/**
@@ -1461,7 +1408,7 @@ public class SearchToBLIB {
 	 * @param proteins the previously-computed set of scored and grouped proteins
 	 * @param parameters the parameters to use for quant (should match those used for the initial alignment exactly!)
 	 */
-	static void convertElibQuantOnly(ProgressIndicator progress, List<? extends SearchJobData> jobs, File elibFile, Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides, PeakLocationInferrerInterface inferrer, ArrayList<PercolatorProteinGroup> proteins, SearchParameters parameters) {
+	static void convertElibQuantOnly(ProgressIndicator progress, List<? extends SearchJobData> jobs, File elibFile, Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides, PeakLocationInferrerInterface inferrer, ArrayList<? extends ProteinGroupInterface> proteins, SearchParameters parameters) {
 		if (null == passingPeptides || null == passingPeptides.x || passingPeptides.x.size() < 1) {
 			throw new IllegalArgumentException("Can't extract quantities for zero peptides!");
 		}
