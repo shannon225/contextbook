@@ -1,16 +1,16 @@
 package edu.washington.gs.maccoss.encyclopedia;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.Sets;
+import com.google.common.collect.*;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
 import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParser;
+import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
-import edu.washington.gs.maccoss.encyclopedia.utils.threading.ExternalExecutor;
 import org.apache.commons.io.FileUtils;
 import org.junit.*;
 import org.slf4j.LoggerFactory;
@@ -26,11 +26,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import static edu.washington.gs.maccoss.encyclopedia.tests.EncyclopediaTestUtils.getResourceAsTempFile;
 import static org.junit.Assert.*;
@@ -736,11 +735,14 @@ public abstract class AbstractEndToEndIT {
 		SearchToBLIBIT.assertHasQuantReports(refElib);
 		SearchToBLIBIT.assertHasQuantReports(quantFile.getFile().toPath());
 
-		//TODO: diff files
-		final ExternalExecutor diffExec = new ExternalExecutor(new String[]{"diff", "-qs", libraryFile.getAbsolutePath(), refElib.toAbsolutePath().toString()});
-		diffExec.start();
-		diffExec.waitFor();
-		assertEquals(0, diffExec.getResultCode());
+		assertTableEquals(
+				parseQuantTable(new File(refElib.toAbsolutePath() + ".peptides.txt"), "Peptide", jobs),
+				parseQuantTable(new File(quantFile.getFile().getAbsolutePath() + ".peptides.txt"), "Peptide", jobs)
+		);
+		assertTableEquals(
+				parseQuantTable(new File(refElib.toAbsolutePath() + ".proteins.txt"), "Protein", jobs),
+				parseQuantTable(new File(quantFile.getFile().getAbsolutePath() + ".proteins.txt"), "Protein", jobs)
+		);
 	}
 
 	/**
@@ -801,6 +803,84 @@ public abstract class AbstractEndToEndIT {
 					&& intersection.upperEndpoint() - intersection.lowerEndpoint() > REQUIRED_PROPORTION_OF_REFERENCE_RT_RANGE * r2.getRange()
 			;
 		};
+	}
+
+	/**
+	 * Parse the provided TSV quant report.
+	 *
+	 * @param rowKeyCol the column used as the key for each row
+	 * @param jobData used to identify the columns that should be included
+	 * @return rows: rowKey, cols: file name
+	 */
+	private static Table<String, String, Float> parseQuantTable(File f, String rowKeyCol, Collection<? extends SearchJobData> jobData) {
+		final class QuantMuscle implements TableParserMuscle {
+			private final Collection<String> quantCols;
+
+			private final Table<String, String, Float> table = HashBasedTable.create();
+
+			public QuantMuscle(Collection<String> quantCols) {
+				this.quantCols = quantCols;
+			}
+
+			@Override
+			public void processRow(Map<String, String> row) {
+				final String rowKey = row.get(rowKeyCol);
+
+				assertNotNull("No such row key in " + row.toString(), rowKey);
+
+				for (String colKey : quantCols) {
+					assertTrue("Missing column " + colKey + " in row " + rowKey, row.containsKey(colKey));
+
+					table.put(rowKey, colKey, Float.parseFloat(row.get(colKey)));
+				}
+			}
+
+			@Override
+			public void cleanup() {
+				// Nothing to do; must keep table in memory (for now)
+			}
+
+			Table<String, String, Float> finish() {
+				final ImmutableTable<String, String, Float> result = ImmutableTable.copyOf(table);
+				table.clear();
+				return result;
+			}
+		}
+
+		final QuantMuscle muscle = new QuantMuscle(jobData.stream().map(d -> d.getDiaFileReader().getOriginalFileName()).collect(Collectors.toSet()));
+
+		TableParser.parseTSV(f, muscle);
+
+		return muscle.finish();
+	}
+
+	/**
+	 * More readable assertion of table equality; useful for large tables!
+	 */
+	private static void assertTableEquals(Table<String, String, Float> expected, Table<String, String, Float> actual) {
+		expected.rowMap().forEach((rowKey, row) -> {
+			final Map<String, Float> actualRow = actual.row(rowKey);
+
+			assertNotNull("Did not find expected row with key " + rowKey, actualRow);
+			assertFalse("Did not find expected row with key " + rowKey, actualRow.isEmpty());
+
+			row.forEach((colKey, exp) -> {
+				assertTrue(
+						"Did not get intensity for " + rowKey + " in " + colKey,
+						actualRow.containsKey(colKey)
+				);
+				assertEquals(
+						"Intensity mismatches for " + rowKey + " in " + colKey,
+						exp,
+						actualRow.get(colKey),
+						0.0001
+				);
+			});
+		});
+
+		// If there aren't the same number of rows the tables are unequal. If they do have the same size then the
+		// check above ensures they're identical. Do this check last to give more useful feedback whenever possible.
+		assertEquals("Wrong number of actual rows!", expected.rowKeySet().size(), actual.rowKeySet().size());
 	}
 
 	public static void assertSanityTest(LibraryFile outputFile, int peptideFloor, int proteinFloor) throws Exception {
