@@ -9,6 +9,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOne
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutionData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorProteinGroup;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.QuantitativeSearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
@@ -673,6 +674,9 @@ public class SearchToBLIBIT {
 
 				final Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides = SearchToBLIB.readPassingPeptides(file, searchParameters);
 				assertTrue("Unable to fetch passing peptides from ALIB!", 0 < passingPeptides.x.size());
+
+				final ArrayList<PercolatorProteinGroup> passingProteins = SearchToBLIB.readPassingProteins(file, passingPeptides.x);
+				assertTrue("Unable to fetch passing proteins from ALIB!", 0 < passingProteins.size());
 
 				try (ResultSet rs = s.executeQuery("SELECT PeptideModSeq, count(), massencodedlength/8 FROM entries GROUP BY PeptideModSeq;")) {
 					while (rs.next()) {

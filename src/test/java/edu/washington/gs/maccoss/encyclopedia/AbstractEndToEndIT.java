@@ -11,6 +11,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
+import junit.framework.AssertionFailedError;
 import org.apache.commons.io.FileUtils;
 import org.junit.*;
 import org.slf4j.LoggerFactory;
@@ -728,6 +729,46 @@ public abstract class AbstractEndToEndIT {
 							);
 						}
 					}
+				}
+			}
+
+			try (
+					PreparedStatement s = c.prepareStatement(
+							"SELECT p.peptideseq, p.proteinaccession" +
+							" FROM peptidetoprotein p" +
+							" LEFT JOIN ref.peptidetoprotein rp" +
+							" USING (PeptideSeq, ProteinAccession)" +
+							" WHERE rp.peptideseq IS NULL" +
+							" LIMIT 1;"
+					);
+					ResultSet rs = s.executeQuery()
+			) {
+				if (rs.next()) {
+					throw new AssertionFailedError(String.format(
+							"File has extra peptide-protein connections, e.g. (%s, %s)",
+							rs.getString(1),
+							rs.getString(2)
+					));
+				}
+			}
+
+			try (
+					PreparedStatement s = c.prepareStatement(
+							"SELECT rp.peptideseq, rp.proteinaccession" +
+							" FROM ref.peptidetoprotein rp" +
+							" LEFT JOIN peptidetoprotein p" +
+							" USING (PeptideSeq, ProteinAccession)" +
+							" WHERE p.peptideseq IS NULL" +
+							" LIMIT 1;"
+					);
+					ResultSet rs = s.executeQuery()
+			) {
+				if (rs.next()) {
+					throw new AssertionFailedError(String.format(
+							"File is missing some peptide-protein connections, e.g. (%s, %s)",
+							rs.getString(1),
+							rs.getString(2)
+					));
 				}
 			}
 		}
