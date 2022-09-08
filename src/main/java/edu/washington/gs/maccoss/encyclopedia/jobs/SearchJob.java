@@ -13,7 +13,7 @@ public abstract class SearchJob implements WorkerJob, XMLObject {
 
 	@Override
 	public String getJobTitle() {
-		return "Read "+data;//.getDiaFileReader().getOriginalFileName();
+		return "Read "+data;
 	}
 
 	public SearchJobData getSearchData() {

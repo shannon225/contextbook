@@ -86,6 +86,12 @@ public class XMLDriverFactory {
 						jobs.add(XCorDIAJob.readFromXML(doc, element));
 					} else if (ScribeJob.class.getSimpleName().equals(element.getTagName())) {
 						jobs.add(ScribeJob.readFromXML(doc, element));
+					} else if (SearchToELIBJob.class.getSimpleName().equals(element.getTagName())) {
+						jobs.add(SearchToELIBJob.readFromXML(doc, element, new SimpleJobProcessor(jobs)));
+					} else if (SearchToBLIBJob.class.getSimpleName().equals(element.getTagName())) {
+						jobs.add(SearchToBLIBJob.readFromXML(doc, element, new SimpleJobProcessor(jobs)));
+					} else if (CombineELIBsAndExtractGroupSpecificLibrariesJob.class.getSimpleName().equals(element.getTagName())) {
+						jobs.add(CombineELIBsAndExtractGroupSpecificLibrariesJob.readFromXML(doc, element, new SimpleJobProcessor(jobs)));
 					}
 				}
 			}

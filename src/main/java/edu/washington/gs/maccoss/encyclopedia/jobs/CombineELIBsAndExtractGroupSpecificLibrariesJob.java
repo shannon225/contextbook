@@ -6,6 +6,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Optional;
 
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
 import edu.washington.gs.maccoss.encyclopedia.SearchToBLIB;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.EncyclopediaTwoPeakLocationInferrer;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
@@ -19,13 +24,16 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.spectrumprocessors.WindowDownsampler;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.LibraryUtilities;
+import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.io.XMLObject;
+import edu.washington.gs.maccoss.encyclopedia.utils.io.XMLUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.SubProgressIndicator;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
-public class CombineELIBsAndExtractGroupSpecificLibrariesJob implements WorkerJob {
+public class CombineELIBsAndExtractGroupSpecificLibrariesJob implements WorkerJob, XMLObject {
 	private final File saveDirectory;
 	private final Optional<File> singleInjectionExample;
 	private final SearchParameters parameters;
@@ -128,5 +136,53 @@ public class CombineELIBsAndExtractGroupSpecificLibrariesJob implements WorkerJo
 		LibraryFile library=new LibraryFile();
 		library.openFile(intermediateQuantLibraryFile);
 		LibraryUtilities.extractSampleSpecificLibraries(new SubProgressIndicator(progress, 0.25f), saveDirectory, Optional.of(globalTransitions), library, parameters);
+	}
+
+	@Override
+	public void writeToXML(Document doc, Element parentElement) {
+		Element rootElement=doc.createElement(getClass().getSimpleName());
+		parentElement.appendChild(rootElement);
+		/**
+	private final File saveDirectory;
+	private final Optional<File> singleInjectionExample;
+	private final SearchParameters parameters;
+	JobProcessor processor;
+	**/
+
+		XMLUtils.writeTag(doc, rootElement, "saveDirectory", saveDirectory.getAbsolutePath());
+		if (singleInjectionExample.isPresent()) {
+			XMLUtils.writeTag(doc, rootElement, "singleInjectionExample", singleInjectionExample.get().getAbsolutePath());
+		}
+		parameters.writeToXML(doc, rootElement);
+	}
+	
+	public static CombineELIBsAndExtractGroupSpecificLibrariesJob readFromXML(Document doc, Element rootElement, JobProcessor processor) {
+		if (!rootElement.getTagName().equals(SearchToBLIBJob.class.getSimpleName())) {
+			throw new EncyclopediaException("Unexpected XML parsing element, found ["+rootElement.getTagName()+"] when expecting ["+SearchToBLIBJob.class.getSimpleName()+"]");
+		}
+
+		File saveDirectory=null;
+		File singleInjectionExample=null;
+		SearchParameters readParams=null;
+		
+		NodeList nodes=rootElement.getChildNodes();
+
+		for (int i = 0; i < nodes.getLength(); i++) {
+			Node node = nodes.item(i);
+            if (node.getNodeType() == Node.ELEMENT_NODE) {
+                Element element = (Element) node;
+                if ("saveDirectory".equals(element.getTagName())) {
+                	saveDirectory=new File(element.getTextContent());
+                } else if ("singleInjectionExample".equals(element.getTagName())) {
+                	singleInjectionExample=new File(element.getTextContent());
+                } else if (element.getTagName().equals(SearchParameters.class.getSimpleName())) {
+                	readParams=SearchParameters.readFromXML(doc, element);
+                }
+            }
+		}
+
+		if (saveDirectory==null) throw new EncyclopediaException("Found null saveDirectory in "+rootElement.getTagName());
+		if (readParams==null) throw new EncyclopediaException("Found null parameters in "+rootElement.getTagName());
+		return new CombineELIBsAndExtractGroupSpecificLibrariesJob(saveDirectory, Optional.ofNullable(singleInjectionExample), readParams, processor);
 	}
 }

@@ -675,6 +675,8 @@ public class SearchToBLIB {
 					} catch (DataFormatException e) {
 						Logger.errorException(e);
 					}
+				} else {
+					Logger.errorLine("Only exporting report for a single search, so skipping building quantitative tables.");
 				}
 			}
 			
