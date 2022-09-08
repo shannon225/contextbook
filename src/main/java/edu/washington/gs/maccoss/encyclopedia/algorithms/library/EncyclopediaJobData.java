@@ -167,17 +167,15 @@ public class EncyclopediaJobData extends QuantitativeSearchJobData implements Li
 	}
 
 	/**
-	 * Return an {@code EncyclopeDIAJobData} instance that for {@code diaFile} that will
-	 * function even if the .DIA file doesn't exist. Only useful when the file's results
-	 * are present but the .DIA file doesn't. This allows SearchToBLIB's {@code -alignOnly}
-	 * option to run without access to raw data, which is useful e.g. for large experiments
-	 * where collecting all the raw files is costly.
+	 * Return an {@code EncyclopeDIAJobData} instance for {@code diaFile} that will
+	 * allow processing results for jobs even if the .DIA file doesn't exist. This allows
+	 * SearchToBLIB's {@code -alignOnly} option to run without access to raw data, which
+	 * is useful e.g. for large experiments where collecting all the raw files is costly.
 	 * <p>
-	 * The returned instance will return {@code true} from {@link #hasBeenRun()} even if
-	 * the .DIA doesn't exist. It will also return a {@code StripeFileInterface} that provides
-	 * the appropriate original file name (read from the file's results ELIB; see
-	 * {@link StripeFileInterface#getOriginalFileName()}) but otherwise throws on attempts to
-	 * read the .DIA's contents.
+	 * Instances will return {@code true} from {@link #hasBeenRun()} even if the .DIA
+	 * doesn't exist. It will also return a {@code StripeFileInterface} that provides the
+	 * appropriate original file name and TIC (read from the file's results ELIB) but
+	 * otherwise throws on attempts to read the .DIA's contents.
 	 */
 	public static EncyclopediaJobData getDummyFor(File diaFile, File fastaFile, LibraryInterface library, LibraryScoringFactory factory) {
 		return new DummyEncyclopediaJobData(diaFile, fastaFile, library, factory);
@@ -185,15 +183,14 @@ public class EncyclopediaJobData extends QuantitativeSearchJobData implements Li
 
 	/**
 	 * Special class overriding key methods to allow processing results for jobs
-	 * even if the DIA file doesn't exist. This allows SearchToBLIB's {@code -alignOnly}
+	 * even if the .DIA file doesn't exist. This allows SearchToBLIB's {@code -alignOnly}
 	 * option to run without access to raw data, which is useful e.g. for large
 	 * experiments where collecting all the raw files is costly.
 	 * <p>
-	 * Instances will return {@code true} from {@link #hasBeenRun()} even if
-	 * ths .DIA doesn't exist. It will also return a {@code StripeFileInterface} that provides
-	 * the appropriate original file name and TIC (read from the file's results ELIB; see
-	 * {@link StripeFileInterface#getOriginalFileName()}) but otherwise throws on attempts to
-	 * read the .DIA's contents.
+	 * Instances will return {@code true} from {@link #hasBeenRun()} even if the .DIA
+	 * doesn't exist. It will also return a {@code StripeFileInterface} that provides the
+	 * appropriate original file name and TIC (read from the file's results ELIB) but
+	 * otherwise throws on attempts to read the .DIA's contents.
 	 */
 	private static class DummyEncyclopediaJobData extends EncyclopediaJobData {
 		private String originalFileName = null;
