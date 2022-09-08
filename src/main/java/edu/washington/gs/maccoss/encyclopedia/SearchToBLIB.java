@@ -1304,7 +1304,9 @@ public class SearchToBLIB {
 							.collect(Collectors.toCollection(ArrayList::new));
 
 					// Check for monotonic function (don't require strict monotonicity though, as we see this sometimes).
-					//TODO: non-strictness means the function may not be correctly invertible! This is an upstream problem, however.
+					// This non-strictness means the function may not be correctly invertible! This isn't our problem
+					// though, we're just handling the behavior that's in place elsewhere. We do check however to be sure
+					// that the provided data isn't entirely nonsensible.
 					final boolean increasing = true;
 					for (int i = 1; i < alignmentPoints.size(); i++) {
 						final double y = alignmentPoints.get(i).getY();
@@ -1474,8 +1476,6 @@ public class SearchToBLIB {
 			elib.saveAsFile(elibFile);
 
 			try {
-				//TODO: we want to produce _normalized_ results for the subset of files we're quantifying
-				// This will require computing the correct normalization constants from the _alignment_ ELIB.
 				LibraryReportExtractor.extractMatrix(
 						elib,
 						jobs.stream().map(j -> j.getDiaFileReader().getOriginalFileName()).collect(Collectors.toList()),
