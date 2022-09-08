@@ -324,7 +324,7 @@ public class EncyclopediaJobData extends QuantitativeSearchJobData implements Li
 
 					synchronized (this) {
 						SET_TIC: if (null == tic) {
-							// TIC is saved in this file's results ELIB
+							// TIC is saved in this file's results ELIB; read directly to avoid copying the ELIB to temp
 							try (Connection c = new SQLFile() {}.getConnection(getResultLibrary())) {
 								try (PreparedStatement ps = c.prepareStatement(
 										"SELECT Value" +

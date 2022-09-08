@@ -1016,7 +1016,7 @@ public class SearchToBLIB {
 
 					elib.addRtAlignment(job, getRawAlignmentPoints(job, inferrer));
 
-//					elib.addTIC(); //TODO: record each file's tic in the alignment results, for later normalization
+					elib.addTIC(job.getDiaFileReader());
 
 					subProgress.update("Done writing job " + job.getDiaFileReader().getOriginalFileName(), 1f);
 				}
