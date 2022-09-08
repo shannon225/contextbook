@@ -325,7 +325,7 @@ public class EncyclopediaJobData extends QuantitativeSearchJobData implements Li
 							try (Connection c = new SQLFile() {}.getConnection(getResultLibrary())) {
 								try (PreparedStatement ps = c.prepareStatement(
 										"SELECT Value" +
-										" FROM Metdata" +
+										" FROM Metadata" +
 										" WHERE KEY=?" +
 										" LIMIT 1;"
 								)) {
