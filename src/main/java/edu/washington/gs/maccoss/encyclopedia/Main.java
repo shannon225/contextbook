@@ -1,8 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.TreeMap;
@@ -10,15 +8,10 @@ import java.util.TreeMap;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
-import edu.washington.gs.maccoss.encyclopedia.jobs.WorkerJob;
-import edu.washington.gs.maccoss.encyclopedia.jobs.XMLDriverFactory;
 import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.ConfigFileParser;
-import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
-import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
-import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 
 public class Main {
 
@@ -63,22 +56,7 @@ public class Main {
 			XCorDIA.main(args);
 			
 		} else if (arguments.containsKey("-batch")) {
-			File f=new File(arguments.get("-batch"));
-			if (f.exists()&&f.canRead()) {
-				ArrayList<WorkerJob> jobs=XMLDriverFactory.readXML(f);
-				ProgressIndicator progress=new EmptyProgressIndicator(false);
-				
-				for (WorkerJob job : jobs) {
-					try {
-						job.runJob(progress);
-					} catch (Exception e) {
-						throw new EncyclopediaException("Encountered unexpected exception running "+job.getJobTitle(), e);
-					}
-				}
-				
-			} else {
-				Logger.errorLine("You are required to specify an driver XML file ("+XMLDriverFactory.DRIVER_XML_EXTENSION+")");
-			}
+			Batch.main(args);
 			
 		} else if (arguments.containsKey("-h")||arguments.containsKey("-help")||arguments.containsKey("--help")) {
 			Logger.logLine("EncyclopeDIA Help");
@@ -91,10 +69,11 @@ public class Main {
 			Logger.timelessLogLine("\t-walnut\trun Walnut (use -walnut -h for Walnut help)");
 			Logger.timelessLogLine("\t-thesaurus\trun Thesaurus (use -thesaurus -h for Thesaurus help)");
 			Logger.timelessLogLine("\t-xcordia\trun XCorDIA (use -xcordia -h for XCorDIA help)");
-			//Logger.timelessLogLine("\t-scribe\trun Scribe (use -scribe -h for Scribe help)");
+			Logger.timelessLogLine("\t-scribe\trun Scribe (use -scribe -h for Scribe help)");
 			Logger.timelessLogLine("\t-browser\trun ELIB Browser (use -browser -h for ELIB Browser help)");
 			Logger.timelessLogLine("\t-libexport\trun Library Export (use -libexport -h for Library Export help)");
 			Logger.timelessLogLine("\t-convert\trun files converter (use -convert -h for help)");
+			Logger.timelessLogLine("\t-batch\trun XML driven batch commands (use -batch -h for help)");
 			Logger.timelessLogLine("Other Parameters: ");
 			Logger.timelessLogLine("\t-o\toutput report file (default: [input file]"+EncyclopediaJobData.OUTPUT_FILE_SUFFIX+")");
 
