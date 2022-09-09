@@ -1300,28 +1300,31 @@ public class SearchToBLIB {
 							// RTs must be in _minutes_ to match AlternatePeakLocationInferrer, but these values are
 							// already in minutes when we read them from `retentiontimes`.
 							.map(p -> new XYPoint(p.getLibrary(), p.getPredictedActual()))
-							.sorted(Comparator.comparingDouble(XYPoint::getX))
+							// We sort by increasing X, but then by increasing Y, to avoid causing issues
+							// with the monotonicity check below when the same X value is repeated (which
+							// we see happen sometimes).
+							.sorted(Comparator.comparingDouble(XYPoint::getX)
+									          .thenComparing(XYPoint::getY)
+							)
 							.collect(Collectors.toCollection(ArrayList::new));
 
 					// Check for monotonic function (don't require strict monotonicity though, as we see this sometimes).
 					// This non-strictness means the function may not be correctly invertible! This isn't our problem
 					// though, we're just handling the behavior that's in place elsewhere. We do check however to be sure
 					// that the provided data isn't entirely nonsensible.
-					final boolean increasing = true;
 					for (int i = 1; i < alignmentPoints.size(); i++) {
 						final double y = alignmentPoints.get(i).getY();
 						final double prev = alignmentPoints.get(i - 1).getY();
 
-						if (
-								(increasing && y < prev)
-								|| (!increasing && y > prev)
-						) throw new IllegalStateException(String.format(
-								"Alignment warp is not monotonic! (%.02f, %.02f) -> (%.02f, %.02f)",
-								alignmentPoints.get(i - 1).getX(),
-								prev,
-								alignmentPoints.get(i).getX(),
-								y
-						));
+						if (y < prev){
+							throw new IllegalStateException(String.format(
+									"Alignment warp is not monotonic! (%.02f, %.02f) -> (%.02f, %.02f)",
+									alignmentPoints.get(i - 1).getX(),
+									prev,
+									alignmentPoints.get(i).getX(),
+									y
+							));
+						}
 					}
 
 					final RetentionTimeAlignmentInterface alignment = new RetentionTimeAlignmentInterface() {
