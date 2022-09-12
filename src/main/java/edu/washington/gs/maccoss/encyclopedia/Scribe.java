@@ -24,10 +24,13 @@ import java.util.zip.DataFormatException;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.ScoredPSM;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractScoringResult;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RTRTPoint;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeptideXYPoint;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeFilter;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.ScoredPSMFilter;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.ScoredPSMFilterInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackground;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackgroundInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
@@ -204,7 +207,7 @@ public class Scribe {
 		SaveResultsConsumer saveResultsConsumer=generateFeatureFile(progress, job, stripefile);
 
 		Logger.logLine("Running Percolator...");
-		Pair<ArrayList<PercolatorPeptide>, RetentionTimeAlignmentInterface> percolatorResults=percolatePeptides(progress, job, stripefile, saveResultsConsumer);
+		Pair<ArrayList<PercolatorPeptide>, ScoredPSMFilterInterface> percolatorResults=percolatePeptides(progress, job, stripefile, saveResultsConsumer);
 		if (parameters.getScoringBreadthType().runRecalibration()) {
 			percolatorResults=repercolatePeptides(progress, job, stripefile, saveResultsConsumer, percolatorResults.y);
 		}
@@ -376,7 +379,7 @@ public class Scribe {
 		return subset;
 	}
 
-	public static Pair<ArrayList<PercolatorPeptide>, RetentionTimeAlignmentInterface> percolatePeptides(ProgressIndicator progress, ScribeJobData job, StripeFileInterface stripefile, SaveResultsConsumer saveResultsConsumer) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
+	public static Pair<ArrayList<PercolatorPeptide>, ScoredPSMFilterInterface> percolatePeptides(ProgressIndicator progress, ScribeJobData job, StripeFileInterface stripefile, SaveResultsConsumer saveResultsConsumer) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
 		SearchParameters parameters=job.getParameters();
 		
 		try {
@@ -388,13 +391,13 @@ public class Scribe {
 			Logger.logLine("First pass: "+passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100f)+"% FDR");
 			
 			if (!parameters.getScoringBreadthType().runRecalibration()) {
-				return new Pair<ArrayList<PercolatorPeptide>, RetentionTimeAlignmentInterface>(passingPeptides, null);
+				return new Pair<ArrayList<PercolatorPeptide>, ScoredPSMFilterInterface>(passingPeptides, null);
 			}
 			
 			ArrayList<AbstractScoringResult> data=saveResultsConsumer.getSavedResults();
-			RetentionTimeAlignmentInterface filter=getRescoringModel(passingPeptides, data, job, false);
+			ScoredPSMFilterInterface filter=getRescoringModel(passingPeptides, data, job, false);
 			
-			return new Pair<ArrayList<PercolatorPeptide>, RetentionTimeAlignmentInterface>(passingPeptides, filter);
+			return new Pair<ArrayList<PercolatorPeptide>, ScoredPSMFilterInterface>(passingPeptides, filter);
 		} catch (EncyclopediaException e) {
 			Logger.errorLine("Fatal Error: "+e.getMessage());
 			Logger.errorLine("Sorry, not feeling well today! Try again tomorrow!");
@@ -408,7 +411,7 @@ public class Scribe {
 		return job.getPercolatorFiles();
 	}
 	
-	public static Pair<ArrayList<PercolatorPeptide>, RetentionTimeAlignmentInterface> repercolatePeptides(ProgressIndicator progress, ScribeJobData job, StripeFileInterface stripefile, SaveResultsConsumer saveResultsConsumer, RetentionTimeAlignmentInterface filter) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
+	public static Pair<ArrayList<PercolatorPeptide>, ScoredPSMFilterInterface> repercolatePeptides(ProgressIndicator progress, ScribeJobData job, StripeFileInterface stripefile, SaveResultsConsumer saveResultsConsumer, ScoredPSMFilterInterface filter) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
 		SearchParameters parameters=job.getParameters();
 		
 		try {
@@ -435,7 +438,7 @@ public class Scribe {
 			filter=getRescoringModel(passingPeptides, data, job, true);
 			
 			progress.update(passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
-			return new Pair<ArrayList<PercolatorPeptide>, RetentionTimeAlignmentInterface>(passingPeptides, filter);
+			return new Pair<ArrayList<PercolatorPeptide>, ScoredPSMFilterInterface>(passingPeptides, filter);
 			
 		} catch (EncyclopediaException e) {
 			Logger.errorLine("Fatal Error: "+e.getMessage());
@@ -445,33 +448,27 @@ public class Scribe {
 		}
 	}
 
-	public static RetentionTimeAlignmentInterface getRescoringModel(ArrayList<PercolatorPeptide> passingPeptides, ArrayList<AbstractScoringResult> data, ScribeJobData job, boolean finalPass) {
+	public static ScoredPSMFilterInterface getRescoringModel(ArrayList<PercolatorPeptide> passingPeptides, ArrayList<AbstractScoringResult> data, ScribeJobData job, boolean finalPass) {
 		HashSet<String> passingSeqs=new HashSet<String>();
 		for (PercolatorPeptide pass : passingPeptides) {
 			passingSeqs.add(PercolatorPeptide.getPeptideData(pass.getPsmID()));
 		}
 		
-		HashSet<XYPoint> rtSet=new HashSet<XYPoint>();
+		ArrayList<ScoredPSM> passingPSMs=new ArrayList<>();
 		
 		for (AbstractScoringResult result : data) {
 			if (result.hasScoredResults()) {
 				String peptideModSeq=result.getEntry().getPeptideModSeq();
 				if (passingSeqs.contains(peptideModSeq+"+"+result.getEntry().getPrecursorCharge())) {
-					LibraryEntry entry=result.getEntry();
-					float entryTime=entry.getScanStartTime();
-
-					Pair<ScoredObject<FragmentScan>, float[]> first=result.getScoredMSMS();
-					XYPoint point=new RTRTPoint(entryTime/60.0f, first.x.y.getScanStartTime()/60.0f, entry.isDecoy(), entry.getPeptideModSeq());
-					rtSet.add(point);
+					passingPSMs.add(result.getScoredMSMS());
 				}
 			}
 		}
-		ArrayList<XYPoint> rts=new ArrayList<XYPoint>(rtSet);
-		Logger.logLine("Generating retention time mapping using "+rts.size()+" points...");
-		RetentionTimeAlignmentInterface filter=RetentionTimeFilter.getFilter(rts);
 		
+		ScoredPSMFilter filter=new ScoredPSMFilter(job.getParameters(), passingPSMs);
+
 		final String passTag=finalPass?".final":".first";
-		filter.plot(rts, Optional.ofNullable(new File(getPercolatorData(job).getPeptideOutputFile().getAbsolutePath()+passTag)));
+		filter.makePlots(passingPSMs, Optional.ofNullable(new File(getPercolatorData(job).getPeptideOutputFile().getAbsolutePath()+passTag)));
 		return filter;
 	}
 }

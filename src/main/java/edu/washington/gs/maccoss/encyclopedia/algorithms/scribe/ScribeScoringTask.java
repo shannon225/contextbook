@@ -155,7 +155,9 @@ public class ScribeScoringTask extends AbstractLibraryScoringTask {
 					//System.out.println("cut\t"+3);
 					//continue;
 				}
-				result.addPeptide(score, General.concatenate(auxScoreArray, evalue, map.size(), deltaCn, chargeMatch), entry);
+				float deltaPrecursorMass=auxScoreArray[scorerFunction.getParentDeltaMassIndex()];
+				float deltaFragmentMass=auxScoreArray[scorerFunction.getFragmentDeltaMassIndex()];
+				result.addPeptide(score, General.concatenate(auxScoreArray, evalue, map.size(), deltaCn, chargeMatch), deltaPrecursorMass, deltaFragmentMass, entry);
 				
 				if (identifiedPeaks>peaksKept) {
 					// keep N+1 peaks

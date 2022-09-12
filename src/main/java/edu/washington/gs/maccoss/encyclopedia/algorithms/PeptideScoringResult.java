@@ -3,61 +3,53 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.AbstractRetentionTimeFilter;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.ScoredPSMFilter;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.ScoredPSMFilterInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 import gnu.trove.list.array.TFloatArrayList;
 
 public class PeptideScoringResult extends AbstractScoringResult {
 	
 	private final LibraryEntry entry;
-	private final ArrayList<Pair<ScoredObject<FragmentScan>, float[]>> goodStripes=new ArrayList<Pair<ScoredObject<FragmentScan>, float[]>>();
+	private final ArrayList<ScoredPSM> goodStripes=new ArrayList<ScoredPSM>();
 	private XYTraceInterface trace=null;
 	
 	public PeptideScoringResult(LibraryEntry entry) {
 		this.entry=entry;
 	}
 	
-	public AbstractScoringResult rescore(RetentionTimeAlignmentInterface filter) {
-		AbstractScoringResult newResult=new RescoredPeptideScoringResult(entry);
+	public AbstractScoringResult rescore(ScoredPSMFilterInterface filter) {
+		AbstractScoringResult newResult;
+		if (filter instanceof ScoredPSMFilter) {
+			newResult=new RecalibratedPeptideScoringResult(entry);
+		} else {
+			newResult=new RescoredPeptideScoringResult(entry);
+		}
 		newResult.setTrace(trace);
 		
 		boolean anyFoundWithRTFilter=false;
-		boolean bestSet=false;
-		float bestScore=0.0f;
-		float[] bestScores=null;
-		FragmentScan bestStripe=null;
 		
-		for (Pair<ScoredObject<FragmentScan>, float[]> pair : goodStripes) {
-			float score=pair.x.x;
-			FragmentScan stripe=pair.x.y;
-			float[] scores=pair.y;
-			float actualRT=stripe.getScanStartTime()/60f;
-			float modelRT=entry.getRetentionTime()/60f;
-			boolean passes=filter.getProbabilityFitsModel(actualRT, modelRT)>=AbstractRetentionTimeFilter.rejectionPValue;
-			if (passes) {
-				float deltaRT=Math.abs(actualRT-filter.getYValue(modelRT));
-				float[] scoresWithRT=General.concatenate(scores, deltaRT);
-				newResult.addStripe(score, scoresWithRT, stripe);
+		if (goodStripes.size()==0) return newResult;
+		
+		/* assumes sorted in order, first is best scoring! */
+		ScoredPSM startingBest=goodStripes.get(0);
+				
+		for (ScoredPSM pair : goodStripes) {
+			// next best score has to be 90% close!
+			if (filter.passesFilter(pair)&&pair.getPrimaryScore()/startingBest.getPrimaryScore()>0.9f) {
+				float[] scoresWithRT=General.concatenate(pair.getAuxScores(), filter.getAdditionalScores(pair));
+				newResult.addStripe(pair.getPrimaryScore(), scoresWithRT, pair.getDeltaPrecursorMass(), pair.getDeltaFragmentMass(), pair.getMSMS());
 				anyFoundWithRTFilter=true;
-			} else if (!bestSet) {
-				bestSet=true;
-				bestScore=score;
-				float deltaRT=Math.abs(actualRT-filter.getYValue(modelRT));
-				float[] scoresWithRT=General.concatenate(scores, deltaRT);
-				bestScores=scoresWithRT;
-				bestStripe=stripe;
 			}
 		}
 		
 		// if nothing passes the RT filter then use the top match
 		if (!anyFoundWithRTFilter) {
-			newResult.addStripe(bestScore, bestScores, bestStripe);
+			float[] scoresWithRT=General.concatenate(startingBest.getAuxScores(), filter.getAdditionalScores(startingBest));
+			newResult.addStripe(startingBest.getPrimaryScore(), scoresWithRT, startingBest.getDeltaPrecursorMass(), startingBest.getDeltaFragmentMass(), startingBest.getMSMS());
 		}
 		
 		return newResult;
@@ -71,8 +63,8 @@ public class PeptideScoringResult extends AbstractScoringResult {
 		return entry;
 	}
 
-	public void addStripe(float score, float[] auxScoreArray, FragmentScan stripe) {
-		goodStripes.add(new Pair<ScoredObject<FragmentScan>, float[]>(new ScoredObject<FragmentScan>(score, stripe), auxScoreArray));
+	public void addStripe(float score, float[] auxScoreArray, float deltaPrecursorMass, float deltaFragmentMass, FragmentScan stripe) {
+		goodStripes.add(new ScoredPSM(entry, stripe, score, auxScoreArray, deltaPrecursorMass, deltaFragmentMass));
 	}
 	
 	public float getBestScore() {
@@ -92,8 +84,8 @@ public class PeptideScoringResult extends AbstractScoringResult {
 	
 	private float[] getSortedScores() {
 		TFloatArrayList scores=new TFloatArrayList();
-		for (Pair<ScoredObject<FragmentScan>, float[]> pair : goodStripes) {
-			scores.add(pair.x.x);
+		for (ScoredPSM pair : goodStripes) {
+			scores.add(pair.getPrimaryScore());
 		}
 		float[] sorted=scores.toArray();
 		Arrays.sort(sorted);
@@ -112,20 +104,20 @@ public class PeptideScoringResult extends AbstractScoringResult {
 		return goodStripes.size()>0;
 	}
 	
-	public Pair<ScoredObject<FragmentScan>, float[]> getScoredMSMS() {
+	public ScoredPSM getScoredMSMS() {
 		float bestScore=-Float.MAX_VALUE;
-		Pair<ScoredObject<FragmentScan>, float[]> bestPair=null;
+		ScoredPSM bestPair=null;
 		
-		for (Pair<ScoredObject<FragmentScan>, float[]> pair : goodStripes) {
-			if (pair.x.x>bestScore) {
-				bestScore=pair.x.x;
+		for (ScoredPSM pair : goodStripes) {
+			if (pair.getPrimaryScore()>bestScore) {
+				bestScore=pair.getPrimaryScore();
 				bestPair=pair;
 			}
 		}
 		return bestPair;
 	}
 	
-	public ArrayList<Pair<ScoredObject<FragmentScan>, float[]>> getGoodMSMSCandidates() {
+	public ArrayList<ScoredPSM> getGoodMSMSCandidates() {
 		return goodStripes;
 	}
 }

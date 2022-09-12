@@ -49,6 +49,16 @@ public class PecanRawScorer implements PSMPeakScorer {
 	}
 
 	@Override
+	public int getParentDeltaMassIndex() {
+		return auxScorer.getParentDeltaMassIndex();
+	}
+
+	@Override
+	public int getFragmentDeltaMassIndex() {
+		return auxScorer.getFragmentDeltaMassIndex();
+	}
+
+	@Override
 	public PeakScores[] getIndividualPeakScores(LibraryEntry entry, Spectrum spectrum, boolean normalize) {
 		//if (entry instanceof AnnotatedLibraryEntry) {
 		//	return getIndividualPeakScores(entry, spectrum, normalize, ((AnnotatedLibraryEntry) entry).getIonAnnotations());

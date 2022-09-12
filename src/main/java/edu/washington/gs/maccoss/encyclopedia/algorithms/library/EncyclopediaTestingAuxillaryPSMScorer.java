@@ -3,6 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.library;
 import java.util.ArrayList;
 import java.util.Collections;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.AuxillaryPSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.EncyclopediaAuxillaryPSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -186,6 +187,16 @@ public class EncyclopediaTestingAuxillaryPSMScorer extends EncyclopediaAuxillary
 				"sumnormDotProduct", "sumnormContrastAngle", "sumnormLogit", "sumnormScribeScore", "sumnormTandem",
 				"maxnormDotProduct", "maxnormContrastAngle", "maxnormLogit", "maxnormScribeScore", "maxnormTandem",
 				"l2normDotProduct", "l2normContrastAngle", "l2normLogit", "l2normScribeScore", "l2normTandem",};
+	}
+
+	@Override
+	public int getParentDeltaMassIndex() {
+		return AuxillaryPSMScorer.MISSING_INDEX;
+	}
+
+	@Override
+	public int getFragmentDeltaMassIndex() {
+		return AuxillaryPSMScorer.MISSING_INDEX;
 	}
 	
 	@Override

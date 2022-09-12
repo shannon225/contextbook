@@ -42,7 +42,7 @@ public class EncyclopediaTwoScoringFactory implements LibraryScoringFactory {
 
 	@Override
 	public PeptideScoringResultsConsumer getResultsConsumer(File outputFile, BlockingQueue<AbstractScoringResult> resultsQueue, StripeFileInterface diaFile, LibraryInterface library) {
-		return new ScoringResultsToTSVConsumer(outputFile, diaFile, EncyclopediaTwoAuxillaryPSMScorer.getScoreNames(true), resultsQueue, parameters);
+		return new ScoringResultsToTSVConsumer(outputFile, diaFile, EncyclopediaTwoAuxillaryPSMScorer.getScoreNames(), resultsQueue, parameters);
 	}
 
 	@Override

@@ -8,8 +8,9 @@ import java.util.HashMap;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractScoringResult;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.ScoredPSM;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefinementData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
@@ -35,7 +36,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Ion;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 
 public class PhosphoLocalizerExample {
@@ -377,10 +377,10 @@ public class PhosphoLocalizerExample {
 		while (!resultsQueue.isEmpty()) {
 			if (!resultsQueue.isEmpty()) {
 				AbstractScoringResult result=resultsQueue.take();
-				Pair<ScoredObject<FragmentScan>, float[]> pair=result.getScoredMSMS();
+				ScoredPSM pair=result.getScoredMSMS();
 				index++;
 				//for (Pair<ScoredObject<FragmentScan>, float[]> pair : data) {
-					System.out.println(index+") "+result.getEntry().getPeptideModSeq()+"\t"+pair.x.x+"\t("+((pair.x.y.getScanStartTime())/60f)+" minutes)");
+					System.out.println(index+") "+result.getEntry().getPeptideModSeq()+"\t"+pair.getPrimaryScore()+"\t("+((pair.getMSMS().getScanStartTime())/60f)+" minutes)");
 				//}
 			} else {
 				Thread.sleep(10);

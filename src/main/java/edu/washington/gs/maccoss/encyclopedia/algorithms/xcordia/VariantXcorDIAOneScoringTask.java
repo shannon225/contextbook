@@ -285,7 +285,11 @@ public class VariantXcorDIAOneScoringTask extends AbstractLibraryScoringTask {
 		}
 		
 		AbstractScoringResult result=new PeptideScoringResult(timepoint.xcordiaEntry);
-		result.addStripe(timepoint.scoredIndex.x, General.concatenate(auxScoreArray, timepoint.scoredIndex.x, evalue, timepoint.neededToLocalize?1:0, timepoint.numberOfWellShapedIons), stripe);
+		float deltaPrecursorMass=scorer.getParentDeltaMassIndex()>=0?auxScoreArray[scorer.getParentDeltaMassIndex()]:0.0f;
+		float deltaFragmentMass=scorer.getFragmentDeltaMassIndex()>=0?auxScoreArray[scorer.getFragmentDeltaMassIndex()]:0.0f;
+		result.addStripe(timepoint.scoredIndex.x, 
+				General.concatenate(auxScoreArray, timepoint.scoredIndex.x, evalue, timepoint.neededToLocalize?1:0, timepoint.numberOfWellShapedIons), 
+				deltaPrecursorMass, deltaFragmentMass, stripe);
 		resultsQueue.add(result);
 	}
 

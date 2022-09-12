@@ -21,7 +21,7 @@ import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ParsimonyProteinGrouper;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.SSRCalc;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RTRTPoint;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeptideXYPoint;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeFilter;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.TwoDimensionalKDE;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefinementData;
@@ -363,7 +363,7 @@ public class BlibFile extends SQLFile {
 			public boolean execute(int a, float b) {
 				float secondRT=rtsByPeptideModSeqSecond.get(a);
 				if (secondRT!=rtsByPeptideModSeqSecond.getNoEntryValue()) {
-					points.add(new RTRTPoint(b, secondRT, false, Integer.toString(a)));
+					points.add(new PeptideXYPoint(b, secondRT, false, Integer.toString(a)));
 				}
 				return true;
 			}

@@ -102,4 +102,14 @@ public class PecanAuxillaryScorer extends AuxillaryPSMScorer {
 		float maxPrePPMError=(float)parameters.getPrecursorTolerance().getToleranceThreshold();
 		return new float[] {0, 0, 0, 0, 0, 0, maxPrePPMError, maxPrePPMError, 0};
 	}
+
+	@Override
+	public int getParentDeltaMassIndex() {
+		return -1;
+	}
+
+	@Override
+	public int getFragmentDeltaMassIndex() {
+		return -1;
+	}
 }

@@ -19,7 +19,7 @@ public class EncyclopediaTwoScorer implements EncyclopediaScorer {
 
 	public EncyclopediaTwoScorer(SearchParameters parameters) {
 		this.parameters=parameters;
-		auxScorer=new EncyclopediaTwoAuxillaryPSMScorer(parameters, true);
+		auxScorer=new EncyclopediaTwoAuxillaryPSMScorer(parameters);
 	}
 
 	public static String getPrimaryScoreName() {
@@ -51,6 +51,15 @@ public class EncyclopediaTwoScorer implements EncyclopediaScorer {
 		return scoreIons(individualPeakScores);
 	}
 
+	@Override
+	public int getParentDeltaMassIndex() {
+		return auxScorer.getParentDeltaMassIndex();
+	}
+
+	@Override
+	public int getFragmentDeltaMassIndex() {
+		return auxScorer.getFragmentDeltaMassIndex();
+	}
 
 	@Override
 	public float score(LibraryEntry entry, Spectrum spectrum, FragmentIon[] ions) {
