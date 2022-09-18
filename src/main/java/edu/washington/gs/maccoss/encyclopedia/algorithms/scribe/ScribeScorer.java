@@ -33,6 +33,16 @@ public class ScribeScorer implements PSMScorer {
 	}
 
 	@Override
+	public int getParentDeltaMassIndex() {
+		return auxScorer.getParentDeltaMassIndex();
+	}
+
+	@Override
+	public int getFragmentDeltaMassIndex() {
+		return auxScorer.getFragmentDeltaMassIndex();
+	}
+
+	@Override
 	public float score(LibraryEntry entry, Spectrum spectrum, float[] predictedIsotopeDistribution, PrecursorScanMap precursors) {
 		return score(entry, spectrum);
 	}

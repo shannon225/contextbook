@@ -213,6 +213,16 @@ public class EncyclopediaOneAuxillaryPSMScorer extends EncyclopediaAuxillaryPSMS
 			return new String[] {"primary", "LogDotProduct", "logWeightedDotProduct", "sumOfSquaredErrors", "weightedSumOfSquaredErrors", "numberOfMatchingPeaks", "numberOfMatchingPeaksAboveThreshold", "averageAbsFragmentDeltaMass", "averageFragmentDeltaMasses", "isotopeDotProduct", "averageAbsParentDeltaMass", "averageParentDeltaMass", "xCorrModel", "eValue"};
 		}
 	}
+
+	@Override
+	public int getParentDeltaMassIndex() {
+		return AuxillaryPSMScorer.MISSING_INDEX;
+	}
+
+	@Override
+	public int getFragmentDeltaMassIndex() {
+		return AuxillaryPSMScorer.MISSING_INDEX;
+	}
 	
 	@Override
 	public float[] getMissingDataScores(LibraryEntry entry) {

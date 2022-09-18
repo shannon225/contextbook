@@ -117,7 +117,10 @@ public class XCorDIAOneScoringTask extends AbstractLibraryScoringTask {
 					if (Float.isNaN(evalue)) {
 						evalue=-1.0f;
 					}
-					result.addStripe(score, General.concatenate(auxScoreArray, score, evalue), stripe);
+
+					float deltaPrecursorMass=scorer.getParentDeltaMassIndex()>=0?auxScoreArray[scorer.getParentDeltaMassIndex()]:0.0f;
+					float deltaFragmentMass=scorer.getFragmentDeltaMassIndex()>=0?auxScoreArray[scorer.getFragmentDeltaMassIndex()]:0.0f;
+					result.addStripe(score, General.concatenate(auxScoreArray, score, evalue), deltaPrecursorMass, deltaFragmentMass, stripe);
 					
 					// block out a 40 scan window
 					int lowerWindow=index-2*movingAverageLength;

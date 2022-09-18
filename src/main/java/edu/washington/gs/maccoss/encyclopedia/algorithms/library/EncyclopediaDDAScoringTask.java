@@ -66,7 +66,11 @@ public class EncyclopediaDDAScoringTask extends AbstractLibraryScoringTask {
 			float[] auxScoreArray=scorerFunction.auxScore(entry, msms, predictedIsotopeDistribution, precursors);
 
 			AbstractScoringResult result=new PeptideScoringResult(entry);
-			result.addStripe(score, General.concatenate(auxScoreArray, evalue), msms);
+
+			float deltaPrecursorMass=scorerFunction.getParentDeltaMassIndex()>=0?auxScoreArray[scorerFunction.getParentDeltaMassIndex()]:0.0f;
+			float deltaFragmentMass=scorerFunction.getFragmentDeltaMassIndex()>=0?auxScoreArray[scorerFunction.getFragmentDeltaMassIndex()]:0.0f;
+			
+			result.addStripe(score, General.concatenate(auxScoreArray, evalue), deltaPrecursorMass, deltaFragmentMass, msms);
 			resultsQueue.add(result);
 		}
 		return Nothing.NOTHING;

@@ -248,9 +248,9 @@ public class EncyclopediaTwoScoringTask extends AbstractLibraryScoringTask {
 						//correlationToPlusOne=Correlation.getPearsons(precursorPlusOne, median);
 					}
 					
-					auxScoreArray=General.concatenate(new float[] {primary[index], secondary[index], evalue, correlationToGaussian, 
+					auxScoreArray=General.concatenate(auxScoreArray, new float[] {primary[index], secondary[index], evalue, correlationToGaussian, 
 							correlationToPrecursor, isIntegratedSignal, isIntegratedPrecursor,
-							numPeaksWithGoodCorrelation}, auxScoreArray);
+							numPeaksWithGoodCorrelation});
 					
 					// block out a 40 scan window
 					for (int j=lowerWindow; j<=upperWindow; j++) {
@@ -270,7 +270,9 @@ public class EncyclopediaTwoScoringTask extends AbstractLibraryScoringTask {
 					// don't add if we don't have enough quantitative ions (add below if it's still the best and there are no matches)
 					if (numPeaksWithGoodCorrelation<parameters.getMinNumOfQuantitativePeaks()) continue;
 					
-					result.addStripe(score, auxScoreArray, stripe);
+					float deltaPrecursorMass=auxScorer.getParentDeltaMassIndex()>=0?auxScoreArray[auxScorer.getParentDeltaMassIndex()]:0.0f;
+					float deltaFragmentMass=auxScorer.getFragmentDeltaMassIndex()>=0?auxScoreArray[auxScorer.getFragmentDeltaMassIndex()]:0.0f;
+					result.addStripe(score, auxScoreArray, deltaPrecursorMass, deltaFragmentMass, stripe);
 					if (identifiedPeaks>peaksKept) {
 						// keep N+1 peaks
 						break;
@@ -281,7 +283,9 @@ public class EncyclopediaTwoScoringTask extends AbstractLibraryScoringTask {
 			
 			if (identifiedPeaks==0) {
 				// add the best data if we can't find any valid peaks
-				result.addStripe(bestScore, bestAuxScores, bestStripe);
+				float deltaPrecursorMass=auxScorer.getParentDeltaMassIndex()>=0?bestAuxScores[auxScorer.getParentDeltaMassIndex()]:0.0f;
+				float deltaFragmentMass=auxScorer.getFragmentDeltaMassIndex()>=0?bestAuxScores[auxScorer.getFragmentDeltaMassIndex()]:0.0f;
+				result.addStripe(bestScore, bestAuxScores, deltaPrecursorMass, deltaFragmentMass, bestStripe);
 			}
 			
 			resultsQueue.add(result);

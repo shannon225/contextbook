@@ -1,6 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RTRTPoint;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeptideXYPoint;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeFilter;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.TwoDimensionalKDE;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
@@ -228,7 +228,7 @@ public class LibraryEntryCleaner {
 		for (Entry<String, TFloatArrayList> entry : rtsByPeptideModSeqFirst.entrySet()) {
 			TFloatArrayList secondRTs=rtsByPeptideModSeqSecond.get(entry.getKey());
 			if (secondRTs!=null) {
-				points.add(new RTRTPoint(QuickMedian.median(entry.getValue().toArray()), QuickMedian.median(secondRTs.toArray()), false, entry.getKey()));
+				points.add(new PeptideXYPoint(QuickMedian.median(entry.getValue().toArray()), QuickMedian.median(secondRTs.toArray()), false, entry.getKey()));
 			}
 		}
 		

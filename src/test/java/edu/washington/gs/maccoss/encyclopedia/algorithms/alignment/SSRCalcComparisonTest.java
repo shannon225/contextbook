@@ -43,10 +43,10 @@ public class SSRCalcComparisonTest {
 				float resnet=resnetcalc.get(pep);
 				
 				if (ssr!=0.0f&&prosit!=0.0f&&resnet!=0.0f) {
-					actualSSRCalcPair.add(new RTRTPoint(ssr, actual, false, pep));
-					actualPrositPair.add(new RTRTPoint(prosit, actual, false, pep));
-					actualResnetPair.add(new RTRTPoint(resnet, actual, false, pep));
-					actualOldSSRCalcPair.add(new RTRTPoint(SSRCalc.getHydrophobicity(pep), actual, false, pep));
+					actualSSRCalcPair.add(new PeptideXYPoint(ssr, actual, false, pep));
+					actualPrositPair.add(new PeptideXYPoint(prosit, actual, false, pep));
+					actualResnetPair.add(new PeptideXYPoint(resnet, actual, false, pep));
+					actualOldSSRCalcPair.add(new PeptideXYPoint(SSRCalc.getHydrophobicity(pep), actual, false, pep));
 					//System.out.println(resnet+"\t"+SSRCalc.getHydrophobicity(pep));
 				}
 				return true;

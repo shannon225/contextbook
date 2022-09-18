@@ -89,6 +89,8 @@ public class SearchPanel extends JPanel {
 	private static final ImageIcon featureBrowserIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/feature_icon.png"));
 	private static final ImageIcon helpIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/help_icon.png"));
 	private static final ImageIcon windowSchemeIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/window_scheme_icon.png"));
+	private static final ImageIcon xmlFileIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/xml_file_icon.png"));
+	
 	
 	JobProcessorTableModel processorTableModel=new JobProcessorTableModel();
 	
@@ -558,7 +560,7 @@ public class SearchPanel extends JPanel {
 		dataMenu.setMnemonic(KeyEvent.VK_D);
 		bar.add(dataMenu);
 
-		JMenuItem saveDriverItem=new JMenuItem("Save XML driver file", convertDBIcon);
+		JMenuItem saveDriverItem=new JMenuItem("Save XML driver file", xmlFileIcon);
 		saveDriverItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -567,7 +569,7 @@ public class SearchPanel extends JPanel {
 		});
 		dataMenu.add(saveDriverItem);
 		
-		JMenuItem loadDriverItem=new JMenuItem("Load XML driver file", convertDBIcon);
+		JMenuItem loadDriverItem=new JMenuItem("Load XML driver file", xmlFileIcon);
 		loadDriverItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {

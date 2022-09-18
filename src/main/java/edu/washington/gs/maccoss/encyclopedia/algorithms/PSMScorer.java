@@ -14,4 +14,7 @@ public interface PSMScorer {
 
 	String[] getAuxScoreNames(LibraryEntry entry);
 
+	public int getParentDeltaMassIndex();
+	public int getFragmentDeltaMassIndex();
+
 }

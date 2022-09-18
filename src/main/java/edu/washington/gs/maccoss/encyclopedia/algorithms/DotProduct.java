@@ -43,6 +43,16 @@ public class DotProduct implements PSMPeakScorer {
 	}
 
 	@Override
+	public int getParentDeltaMassIndex() {
+		return -1;
+	}
+
+	@Override
+	public int getFragmentDeltaMassIndex() {
+		return -1;
+	}
+
+	@Override
 	public PeakScores[] getIndividualPeakScores(LibraryEntry entry, Spectrum spectrum, boolean normalize) {
 		if (entry instanceof AnnotatedLibraryEntry) {
 			return getIndividualPeakScores(entry, spectrum, normalize, ((AnnotatedLibraryEntry)entry).getIonAnnotations());

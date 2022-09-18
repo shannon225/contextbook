@@ -156,7 +156,7 @@ public class FeatureGrapher {
 	}
 
 	public static XYTrace getRocPlot(String name, float[] targets, float[] decoys) {
-		if (name.equals("sumOfSquaredErrors")||name.equals("weightedSumOfSquaredErrors")||name.equals("precursorMass")||name.equals("percentBlankOverMono")||name.equals("numMissedCleavage")||name.equals("lnExpect")||name.equals("averageAbsParentDeltaMass")||name.equals("averageAbsFragmentDeltaMass")) {
+		if (name.equals("sumOfSquaredErrors")||name.equals("weightedSumOfSquaredErrors")||name.equals("precursorMass")||name.equals("percentBlankOverMono")||name.equals("numMissedCleavage")||name.equals("lnExpect")||name.equals("averageAbsParentDeltaMass")||name.equals("averageAbsFragmentDeltaMass")||name.equals("ms1MassError")||name.equals("ms2MassError")) {
 			targets=General.multiply(targets, -1f);
 			decoys=General.multiply(decoys, -1f);
 		}

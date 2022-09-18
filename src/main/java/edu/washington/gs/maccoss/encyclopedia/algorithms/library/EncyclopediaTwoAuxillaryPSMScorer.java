@@ -38,20 +38,17 @@ public class EncyclopediaTwoAuxillaryPSMScorer extends EncyclopediaAuxillaryPSMS
 		targetImmoniumIons.put('F', 120.0813);
 	}
 	
-	private final boolean runXCorr;
 	private final SparseXCorrCalculator librarySparseCalculator;
 	private final SparseXCorrCalculator sparseModelCalculator;
 
-	public EncyclopediaTwoAuxillaryPSMScorer(SearchParameters parameters, boolean runXCorr) {
+	public EncyclopediaTwoAuxillaryPSMScorer(SearchParameters parameters) {
 		super(parameters);
-		this.runXCorr=runXCorr;
 		this.librarySparseCalculator=null;
 		this.sparseModelCalculator=null;
 	}
 	
-	private EncyclopediaTwoAuxillaryPSMScorer(SearchParameters parameters, boolean runXCorr, SparseXCorrCalculator librarySparseCalculator, SparseXCorrCalculator sparseModelCalculator) {
+	private EncyclopediaTwoAuxillaryPSMScorer(SearchParameters parameters, SparseXCorrCalculator librarySparseCalculator, SparseXCorrCalculator sparseModelCalculator) {
 		super(parameters);
-		this.runXCorr=runXCorr;
 		this.librarySparseCalculator=librarySparseCalculator;
 		this.sparseModelCalculator=sparseModelCalculator;
 	}
@@ -60,7 +57,7 @@ public class EncyclopediaTwoAuxillaryPSMScorer extends EncyclopediaAuxillaryPSMS
 	public EncyclopediaAuxillaryPSMScorer getEntryOptimizedScorer(LibraryEntry entry) {
 		SparseXCorrCalculator librarySparse=new SparseXCorrCalculator(entry, new Range((float)entry.getPrecursorMZ()-10f, (float)entry.getPrecursorMZ()+10f), parameters);
 		SparseXCorrCalculator sparseModel=new SparseXCorrCalculator(entry.getPeptideModSeq(), entry.getPrecursorCharge(), parameters);
-		return new EncyclopediaTwoAuxillaryPSMScorer(parameters, runXCorr, librarySparse, sparseModel);
+		return new EncyclopediaTwoAuxillaryPSMScorer(parameters, librarySparse, sparseModel);
 	}
 	
 	@Override
@@ -234,36 +231,40 @@ public class EncyclopediaTwoAuxillaryPSMScorer extends EncyclopediaAuxillaryPSMS
 			xTandem=((float)Log.protectedLog10(dotProduct))+Log.logFactorial(numberOfMatchingPeaks); // really log10(X!Tandem score)
 		}
 		
-		if (runXCorr) {
-			SparseXCorrSpectrum sparseScan=SparseXCorrCalculator.normalize(spectrum, new Range((float)entry.getPrecursorMZ()-10f, (float)entry.getPrecursorMZ()+10f), false, parameters);
-			
-			SparseXCorrCalculator librarySparse=librarySparseCalculator!=null?librarySparseCalculator:new SparseXCorrCalculator(entry, new Range((float)entry.getPrecursorMZ()-10f, (float)entry.getPrecursorMZ()+10f), parameters);
-			float xCorrLib=librarySparse.score(sparseScan);
-			SparseXCorrCalculator sparseModel=sparseModelCalculator!=null?sparseModelCalculator:new SparseXCorrCalculator(entry.getPeptideModSeq(), entry.getPrecursorCharge(), parameters);
-			float xCorrModel=sparseModel.score(sparseScan);
-			
-			return new float[] {xTandem, xCorrLib, xCorrModel, dotProduct, contrastAngle, logit, sumOfSquaredErrors, numberOfMatchingPeaks, numberOfMatchingPeaksAboveThreshold, averageAbsFragDeltaMass, averageFragmentDeltaMasses, isotopeDotProduct, averageAbsPPM, averagePPM, percentBlankOverMono, numberPrecursorMatch, sp, maxLadderLength};
-		} else {
-			return new float[] {xTandem, dotProduct, contrastAngle, logit, sumOfSquaredErrors, numberOfMatchingPeaks, numberOfMatchingPeaksAboveThreshold, averageAbsFragDeltaMass, averageFragmentDeltaMasses, isotopeDotProduct, averageAbsPPM, averagePPM, percentBlankOverMono, numberPrecursorMatch, sp, maxLadderLength};
-		}
+		SparseXCorrSpectrum sparseScan=SparseXCorrCalculator.normalize(spectrum, new Range((float)entry.getPrecursorMZ()-10f, (float)entry.getPrecursorMZ()+10f), false, parameters);
+		
+		SparseXCorrCalculator librarySparse=librarySparseCalculator!=null?librarySparseCalculator:new SparseXCorrCalculator(entry, new Range((float)entry.getPrecursorMZ()-10f, (float)entry.getPrecursorMZ()+10f), parameters);
+		float xCorrLib=librarySparse.score(sparseScan);
+		SparseXCorrCalculator sparseModel=sparseModelCalculator!=null?sparseModelCalculator:new SparseXCorrCalculator(entry.getPeptideModSeq(), entry.getPrecursorCharge(), parameters);
+		float xCorrModel=sparseModel.score(sparseScan);
+		
+		return new float[] {xTandem, xCorrLib, xCorrModel, dotProduct, contrastAngle, logit, sumOfSquaredErrors, numberOfMatchingPeaks, numberOfMatchingPeaksAboveThreshold, 
+				averageFragmentDeltaMasses, isotopeDotProduct, averagePPM, percentBlankOverMono, numberPrecursorMatch, sp, 
+				maxLadderLength};
+	
 	}
 
 	@Override
 	public String[] getScoreNames(LibraryEntry entry) {
-		return getScoreNames(runXCorr);
+		return getScoreNames();
 	}
 
-	public static String[] getScoreNames(boolean runXCorr) {
-		// extra scores at the beginning
-		if (runXCorr) {
-			return new String[] {"primary", "secondary", "evalue", "correlationToGaussian", "correlationToPrecursor", "isIntegratedSignal", "isIntegratedPrecursor", "numPeaksWithGoodCorrelation",  
-					"xTandem", "xCorrLib", "xCorrModel", "dotProduct", "contrastAngle", "logit", "sumOfSquaredErrors", "numberOfMatchingPeaks", "numberOfMatchingPeaksAboveThreshold", "averageAbsFragmentDeltaMass", "averageFragmentDeltaMasses", "isotopeDotProduct", "averageAbsParentDeltaMass", "averageParentDeltaMass",
-					"percentBlankOverMono", "numberPrecursorMatch", "sp", "maxLadderLength"};
-		} else {
-			return new String[] {"primary", "secondary", "evalue", "correlationToGaussian", "correlationToPrecursor", "isIntegratedSignal", "isIntegratedPrecursor", "numPeaksWithGoodCorrelation", 
-					"xTandem", "dotProduct", "contrastAngle", "logit", "sumOfSquaredErrors", "numberOfMatchingPeaks", "numberOfMatchingPeaksAboveThreshold", "averageAbsFragmentDeltaMass", "averageFragmentDeltaMasses", "isotopeDotProduct", "averageAbsParentDeltaMass", "averageParentDeltaMass",
-					"percentBlankOverMono", "numberPrecursorMatch", "sp", "maxLadderLength"};
-		}
+	public static String[] getScoreNames() {
+		return new String[] {"xTandem", "xCorrLib", "xCorrModel", "dotProduct", "contrastAngle", "logit", "sumOfSquaredErrors", "numberOfMatchingPeaks", 
+				"numberOfMatchingPeaksAboveThreshold", "averageFragmentDeltaMasses", "isotopeDotProduct", 
+				"averageParentDeltaMass", "percentBlankOverMono", "numberPrecursorMatch", "sp", "maxLadderLength", 
+				"primary", "secondary", "evalue", "correlationToGaussian", "correlationToPrecursor", "isIntegratedSignal", "isIntegratedPrecursor", 
+				"numPeaksWithGoodCorrelation"};
+	}
+	
+	@Override
+	public int getFragmentDeltaMassIndex() {
+		return 9;
+	}
+	
+	@Override
+	public int getParentDeltaMassIndex() {
+		return 11;
 	}
 	
 	@Override

@@ -42,6 +42,16 @@ public class LibraryPredictedFragmentationScorer extends AuxillaryPSMScorer {
 	}
 
 	@Override
+	public int getParentDeltaMassIndex() {
+		return AuxillaryPSMScorer.MISSING_INDEX;
+	}
+
+	@Override
+	public int getFragmentDeltaMassIndex() {
+		return AuxillaryPSMScorer.MISSING_INDEX;
+	}
+
+	@Override
 	public String[] getScoreNames(LibraryEntry entry) {
 		ArrayList<String> names=new ArrayList<String>();
 		

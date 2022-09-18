@@ -72,7 +72,7 @@ public class RTAlignmentAcrossELIBsTest {
 				@Override
 				public boolean execute(String a, float b) {
 					float std=rtsByPeptideModSeq.get(a);
-					points.add(new RTRTPoint(b/60f, std, false, a));
+					points.add(new PeptideXYPoint(b/60f, std, false, a));
 					return true;
 				}
 			});

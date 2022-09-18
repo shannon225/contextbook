@@ -62,7 +62,7 @@ public class IonCountingScoringTask extends AbstractLibraryScoringTask {
 				int index=goodStripes.get(i).y;
 
 				FragmentScan stripe=super.stripes.get(index);
-				result.addStripe(score, new float[0], stripe);
+				result.addStripe(score, new float[0], 0.0f, 0.0f, stripe);
 				
 				
 				if (identifiedPeaks>peaksKept) {
