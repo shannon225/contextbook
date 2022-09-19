@@ -735,7 +735,7 @@ public class SearchToBLIB {
 			localizationData=Optional.empty();
 		}
 
-		elib.addIntegratedEntries(libraryEntries, inferrer, localizationData, job.getParameters().getAAConstants(), job.getParameters().getPercolatorThreshold());
+		elib.addIntegratedEntries(!(job instanceof DDASearchJobData), libraryEntries, inferrer, localizationData, job.getParameters().getAAConstants(), job.getParameters().getPercolatorThreshold());
 		
 
 		Logger.logLine("Finished writing to Encyclopedia ELIB at "+new Date().toString());

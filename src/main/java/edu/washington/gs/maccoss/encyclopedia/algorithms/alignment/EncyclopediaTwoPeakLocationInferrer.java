@@ -12,6 +12,7 @@ import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefiner;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.DDASearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibrarySearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
@@ -30,7 +31,7 @@ public class EncyclopediaTwoPeakLocationInferrer {
 	public static PeakLocationInferrerInterface getAlignmentData(ProgressIndicator progress, List<? extends SearchJobData> pecanJobs, ArrayList<PercolatorPeptide> passingPeptides, SearchParameters params) {
 		ProgressIndicator subProgress1=new SubProgressIndicator(progress, 0.5f);
 		Pair<HashMap<SearchJobData,TObjectFloatHashMap<String>>, HashMap<String,double[]>> pair=getArchetypals(subProgress1, pecanJobs, passingPeptides, params);
-		return AlternatePeakLocationInferrer.getInferrer(progress, pecanJobs, pair, params);
+		return AlternatePeakLocationInferrer.getInferrer(progress, passingPeptides, pecanJobs, pair, params);
 	}
 
 	public static Pair<HashMap<SearchJobData, TObjectFloatHashMap<String>>, HashMap<String, double[]>> getArchetypals(ProgressIndicator progress, List<? extends SearchJobData> jobs, SearchParameters params) {
@@ -56,15 +57,16 @@ public class EncyclopediaTwoPeakLocationInferrer {
 				
 				File resultLibrary=libjob.getResultLibrary();
 				LibraryInterface lib=libjob.getLibrary();
-				if (!addedLibraries.contains(lib.getName())) {
+				if (!addedLibraries.contains(lib.getName())&&!(job instanceof DDASearchJobData)) {
+					// don't need fragment ions for DDA searches
 					addedLibraries.add(lib.getName());
 					Logger.logLine("Adding library ["+lib.getName()+"] to ion tracker...");
-					addLibraryToCounter(lib, ionCounter, true, params);
+					addLibraryToCounter(lib, passingPeptideModSeqs, ionCounter, true, params);
 				}
 				try {
 					LibraryInterface results=BlibToLibraryConverter.getFile(resultLibrary);
 					Logger.logLine("Adding results ["+results.getName()+"] to ion tracker...");
-					TObjectFloatHashMap<String> rtMapping=addLibraryToCounter(results, ionCounter, false, params);
+					TObjectFloatHashMap<String> rtMapping=addLibraryToCounter(results, passingPeptideModSeqs, ionCounter, false, params);
 					retentionTimeMappingsInSeconds.put(job, rtMapping);
 					
 					
@@ -96,30 +98,35 @@ public class EncyclopediaTwoPeakLocationInferrer {
 		return new Pair<HashMap<SearchJobData,TObjectFloatHashMap<String>>, HashMap<String,double[]>>(retentionTimeMappingsInSeconds, bestIons);
 	}
 	
-	private static TObjectFloatHashMap<String> addLibraryToCounter(LibraryInterface lib, HashMap<String, CorrelationPeakFrequencyCalculator> ionCounter, boolean isLibrary, SearchParameters params) {
+	private static TObjectFloatHashMap<String> addLibraryToCounter(LibraryInterface lib, HashSet<String> passingPeptideModSeqs, 
+			HashMap<String, CorrelationPeakFrequencyCalculator> ionCounter, boolean isLibrary, SearchParameters params) {
 		TObjectFloatHashMap<String> rtMapping=new TObjectFloatHashMap<String>();
 		try {
 			ArrayList<LibraryEntry> entries=lib.getAllEntries(false, params.getAAConstants());
 			
 			for (LibraryEntry entry : entries) {
 				String peptideModSeq=entry.getPeptideModSeq();
-				rtMapping.put(peptideModSeq, entry.getRetentionTime());
-				CorrelationPeakFrequencyCalculator bestIonsMap=ionCounter.get(peptideModSeq);
-				if (bestIonsMap==null) {
-					bestIonsMap=new CorrelationPeakFrequencyCalculator(params.getFragmentTolerance());
-					ionCounter.put(peptideModSeq, bestIonsMap);
-				}
-				double[] masses=entry.getMassArray();
-				float[] intensity=entry.getIntensityArray();
-				float[] correlation=entry.getCorrelationArray();
-				boolean[] isQuant=entry.getQuantifiedIonsArray();
-				for (int i=0; i<correlation.length; i++) {
-					boolean passesThreshold = isQuant[i]&&(isLibrary||correlation[i]>=TransitionRefiner.quantitativeCorrelationThreshold);
-					float thisCorrelation=0.0f;
-					if (correlation[i]>=TransitionRefiner.identificationCorrelationThreshold) {
-						thisCorrelation=correlation[i];
+
+				// always accept if no passing peptides were used
+				if (passingPeptideModSeqs.size()==0||passingPeptideModSeqs.contains(peptideModSeq)) {
+					rtMapping.put(peptideModSeq, entry.getRetentionTime());
+					CorrelationPeakFrequencyCalculator bestIonsMap=ionCounter.get(peptideModSeq);
+					if (bestIonsMap==null) {
+						bestIonsMap=new CorrelationPeakFrequencyCalculator(params.getFragmentTolerance());
+						ionCounter.put(peptideModSeq, bestIonsMap);
 					}
-					bestIonsMap.increment(masses[i], intensity[i], thisCorrelation, passesThreshold, isLibrary);
+					double[] masses=entry.getMassArray();
+					float[] intensity=entry.getIntensityArray();
+					float[] correlation=entry.getCorrelationArray();
+					boolean[] isQuant=entry.getQuantifiedIonsArray();
+					for (int i=0; i<correlation.length; i++) {
+						boolean passesThreshold = isQuant[i]&&(isLibrary||correlation[i]>=TransitionRefiner.quantitativeCorrelationThreshold);
+						float thisCorrelation=0.0f;
+						if (correlation[i]>=TransitionRefiner.identificationCorrelationThreshold) {
+							thisCorrelation=correlation[i];
+						}
+						bestIonsMap.increment(masses[i], intensity[i], thisCorrelation, passesThreshold, isLibrary);
+					}	
 				}
 			}
 
