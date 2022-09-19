@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Optional;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RTRTPoint;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeptideXYPoint;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeFilter;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -265,8 +265,9 @@ public class LibraryComparisonTest {
 
 	public static void main(String[] args) throws Exception {
 		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
-		File larger=new File("/Users/searle.30/Documents/maccoss/prosit_version_analysis/prosit1410_uniprot_human_jan2021_yeastENO_trypsin_z3_nce33.dlib");	
-		File smaller=new File("/Users/searle.30/Documents/maccoss/prosit_version_analysis/prosit_uniprot_human_jan2021_yeastENO1.fasta.trypsin.abeta.encyclopedia2.z3_nce33.dlib");
+		//File larger=new File("/Users/searleb/Downloads/prosit_uniprot_human_jan2021_yeastENO1.fasta.trypsin.abeta.encyclopedia1.12.31.z3_nce33.dlib"); 
+		File larger=new File("/Users/searleb/Downloads/prosit_uniprot_human_jan2021_yeastENO1.fasta.trypsin.abeta.encyclopedia1.4.10.z3_nce33.dlib");	
+		File smaller=new File("/Users/searleb/Downloads/prosit_uniprot_human_jan2021_yeastENO1.fasta.trypsin.abeta.encyclopedia2.z3_nce33.dlib");
 
 		LibraryFile largerLibrary=new LibraryFile();
 		largerLibrary.openFile(larger);
@@ -298,7 +299,7 @@ public class LibraryComparisonTest {
 					correlations[chargeIndex].add(correlation);
 				}
 				
-				rtPoints.add(new RTRTPoint(entry.getRetentionTime()/60f, match.getRetentionTime()/60f, false, entry.getPeptideModSeq()));
+				rtPoints.add(new PeptideXYPoint(entry.getRetentionTime()/60f, match.getRetentionTime()/60f, false, entry.getPeptideModSeq()));
 				
 				if (rtPoints.size()%100000==0) {
 					System.out.println("Processed "+rtPoints.size());
