@@ -6,19 +6,24 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.Transition
 
 public class IntegratedLibraryEntry extends ChromatogramLibraryEntry {
 	private final TransitionRefinementData refinementData;
+	private final float integrationScore; // higher is better
 	
-	public IntegratedLibraryEntry(String sourceFile, HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray,
+	public IntegratedLibraryEntry(String sourceFile, HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, float integrationScore, double[] massArray,
 			float[] intensityArray, TransitionRefinementData refinementData) {
-		this(sourceFile, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, refinementData.getCorrelationArray(), refinementData);
+		this(sourceFile, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, integrationScore, massArray, intensityArray, refinementData.getCorrelationArray(), refinementData.getQuantitativeIonArray(), refinementData);
 	}
 
-	public IntegratedLibraryEntry(String sourceFile, HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray,
-			float[] intensityArray, float[] correlationArray, TransitionRefinementData refinementData) {
-		super(sourceFile, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, correlationArray, refinementData.getMedianChromatogram(), refinementData.getRange(), refinementData.getAaConstants());
+	public IntegratedLibraryEntry(String sourceFile, HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, float integrationScore, double[] massArray,
+			float[] intensityArray, float[] correlationArray, boolean[] quantifiedIonsArray, TransitionRefinementData refinementData) {
+		super(sourceFile, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, correlationArray, quantifiedIonsArray, refinementData.getMedianChromatogram(), refinementData.getRange(), refinementData.getAaConstants());
 		this.refinementData=refinementData;
+		this.integrationScore=integrationScore;
 	}
 	
 	public TransitionRefinementData getRefinementData() {
 		return refinementData;
+	}
+	public float getIntegrationScore() {
+		return integrationScore;
 	}
 }

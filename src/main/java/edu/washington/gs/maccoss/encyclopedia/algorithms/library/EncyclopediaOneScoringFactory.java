@@ -24,6 +24,16 @@ public class EncyclopediaOneScoringFactory implements LibraryScoringFactory {
 	public EncyclopediaOneScoringFactory(SearchParameters parameters) {
 		this.parameters=parameters;
 	}
+	
+	@Override
+	public String getPrimaryScoreName() {
+		return EncyclopediaOneScorer.getPrimaryScoreName();
+	}
+	
+	@Override
+	public String getName() {
+		return "EncyclopeDIA 1.X Scoring System";
+	}
 
 	@Override
 	public PSMPeakScorer getLibraryScorer(LibraryBackgroundInterface background) {

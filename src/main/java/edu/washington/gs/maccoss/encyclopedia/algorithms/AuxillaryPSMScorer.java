@@ -9,6 +9,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 
 public abstract class AuxillaryPSMScorer {
+	public static final int MISSING_INDEX=-1;
 	protected final SearchParameters parameters;
 	private final float maxPPMError;
 
@@ -90,4 +91,8 @@ public abstract class AuxillaryPSMScorer {
 
 		return new float[] {averageAbsPPM, isotopeDotProduct, averagePPM, percentBlankOverMono, numberMatch};
 	}
+
+
+	public abstract int getParentDeltaMassIndex();
+	public abstract int getFragmentDeltaMassIndex();
 }

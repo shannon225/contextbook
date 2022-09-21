@@ -55,6 +55,18 @@ pipelines:
                 BITBUCKET_USERNAME: $BITBUCKET_USERNAME
                 BITBUCKET_APP_PASSWORD: $BITBUCKET_APP_PASSWORD
                 FILENAME: 'target/encyclopedia-*-executable.jar'
+      - step:
+          name: Push to Dockerhub
+          script:
+            # Get current version number
+            - export VERSION=${BITBUCKET_TAG/encyclopedia-/}
+            - export IMAGE_NAME=searlelab/encyclopedia
+            - docker login -u $DOCKER_HUB_USER -p $DOCKER_HUB_PASSWORD
+            - docker build -t $IMAGE_NAME:$VERSION --build-arg VERSION=$VERSION .
+            - docker push $IMAGE_NAME:$VERSION
+          services:
+            - docker
+
   custom:
     # This custom build allows manual triggering of
     # integration tests on any commit

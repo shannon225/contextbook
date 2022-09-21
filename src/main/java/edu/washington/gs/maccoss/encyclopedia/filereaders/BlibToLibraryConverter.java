@@ -54,7 +54,7 @@ public class BlibToLibraryConverter {
 
 	private static LibraryFile internalGetLibraryFile(File f) {
 		if (!f.exists() || !f.canRead()) {
-			throw new EncyclopediaException("Can't read file " + f.getAbsolutePath());
+			throw new EncyclopediaException("Can't read library file " + f.getAbsolutePath());
 		}
 
 		// first try to read if .ELIB
@@ -84,7 +84,7 @@ public class BlibToLibraryConverter {
 			if (optional.isPresent()) return optional.get();
 		}
 
-		throw new EncyclopediaException("Can't read file type " + f.getAbsolutePath());
+		throw new EncyclopediaException("Can't read library file type " + f.getAbsolutePath());
 	}
 
 	static Optional<LibraryFile> openLibraryFile(File f) {
@@ -134,7 +134,8 @@ public class BlibToLibraryConverter {
 			BlibFile blib = new BlibFile();
 			blib.openFile(blibFile);
 			if (irtFile.isPresent()) {
-				IRTdbFile irt = new IRTdbFile(irtFile.get());
+				IRTdbFile irt = new IRTdbFile();
+				irt.openFile(irtFile.get());
 				irtMap = irt.getIRTs();
 			}
 			blib.getCopyEntriesToLibrary(elib, Optional.ofNullable(irtMap), fastaFile, params);

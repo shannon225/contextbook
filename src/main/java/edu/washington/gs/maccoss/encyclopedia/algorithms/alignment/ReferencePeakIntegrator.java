@@ -28,6 +28,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.PeptideQua
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.PeptideQuantExtractorTask;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.RelativePeakIntensityMatrix;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ChromatogramLibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.DDASearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -96,7 +97,7 @@ public class ReferencePeakIntegrator {
 				keys.add(sampleName);
 				try {
 					ArrayList<IntegratedLibraryEntry> results=integrator.integratePeptides(job);
-					elib.addIntegratedEntries(results, Optional.empty(), Optional.empty(), params.getAAConstants(), params.getPercolatorThreshold());
+					elib.addIntegratedEntries(!(job instanceof DDASearchJobData), results, Optional.empty(), Optional.empty(), params.getAAConstants(), params.getPercolatorThreshold());
 					for (IntegratedLibraryEntry entry : results) {
 						RelativePeakIntensityMatrix matrix=matricies.get(entry.getPeptideModSeq());
 						if (matrix==null) {

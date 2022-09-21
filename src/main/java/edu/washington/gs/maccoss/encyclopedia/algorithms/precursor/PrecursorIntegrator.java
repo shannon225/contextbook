@@ -129,8 +129,12 @@ public class PrecursorIntegrator {
 						chromatograms.add(smoothedTraces[i].getIntensity());
 					}
 				}
+				boolean[] quantitativeIonsArray=new boolean[correlationArray.size()];
+				for (int i = 0; i < quantitativeIonsArray.length; i++) {
+					quantitativeIonsArray[i]=correlationArray.get(i)>TransitionRefiner.quantitativeCorrelationThreshold;
+				}
 				TransitionRefinementData trd=new TransitionRefinementData(peptideModSeq, charge, ions.toArray(new Ion[ions.size()]), chromatograms, 
-						correlationArray.toArray(), integrationArray.toArray(), backgroundArray.toArray(), medianIntensityArray, finalBoundary, 
+						correlationArray.toArray(), quantitativeIonsArray, integrationArray.toArray(), backgroundArray.toArray(), medianIntensityArray, finalBoundary, 
 						deltaMassArray.toArray(), fragmentMasses.toArray(), integrationArray.toArray(), rtArray, null, null, 0.0f, 
 						params.getAAConstants());
 				data.add(trd);

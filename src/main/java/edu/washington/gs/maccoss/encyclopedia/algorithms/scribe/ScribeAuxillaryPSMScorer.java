@@ -45,7 +45,6 @@ public class ScribeAuxillaryPSMScorer extends AuxillaryPSMScorer {
 	public float[] score(LibraryEntry entry, Spectrum spectrum, float[] predictedIsotopeDistribution, PrecursorScanMap precursors) {
 		// precursor scoring
 		float[] precursorScores=getPrecursorScores(entry, spectrum.getScanStartTime(), predictedIsotopeDistribution, precursors);
-		float averageAbsPPM=precursorScores[0];
 		float isotopeDotProduct=precursorScores[1];
 		float averagePPM=precursorScores[2];
 		float percentBlankOverMono=precursorScores[3];
@@ -65,7 +64,6 @@ public class ScribeAuxillaryPSMScorer extends AuxillaryPSMScorer {
 		float[] acquiredIntensities=spectrum.getIntensityArray();
 
 		int numberOfMatchingPeaks=0;
-		double dotProduct=0.0;
 		TDoubleArrayList predictedTargets=new TDoubleArrayList();
 		TFloatArrayList predictedTargetIntensities=new TFloatArrayList();
 		TFloatArrayList actualTargetIntensities=new TFloatArrayList();
@@ -110,8 +108,6 @@ public class ScribeAuxillaryPSMScorer extends AuxillaryPSMScorer {
 						ladder[target.getIndex()-1]=intensity;
 					}
 				}
-				float peakScore=predictedIntensity*intensity*maxCorrelation;
-				dotProduct+=peakScore;
 				predictedTargets.add(targetMass);
 				predictedTargetIntensities.add(predictedIntensity);
 				actualTargetIntensities.add(intensity);
@@ -156,9 +152,8 @@ public class ScribeAuxillaryPSMScorer extends AuxillaryPSMScorer {
 		float rho=0.15f*numImmoniumIonsFound[0];
 		float sp=General.sum(actualTargetIntensities.toArray())*numberOfMatchingPeaks*(1.0f+beta)*(1.0f+rho)/ions.length;
 		
-		float averageFragmentDeltaMasses=0.0f, averageAbsFragDeltaMass=0.0f;
+		float averageFragmentDeltaMasses=0.0f;
 		if (fragmentDeltaMasses.size()==0) {
-			averageAbsFragDeltaMass=(float)acquiredTolerance.getToleranceThreshold();
 			averageFragmentDeltaMasses=(float)acquiredTolerance.getToleranceThreshold();
 		} else {
 			Collections.sort(fragmentDeltaMasses);
@@ -167,46 +162,34 @@ public class ScribeAuxillaryPSMScorer extends AuxillaryPSMScorer {
 			int count=0;
 			for (XYPoint xyPoint : fragmentDeltaMasses) {
 				averageFragmentDeltaMasses+=(float)xyPoint.y;
-				averageAbsFragDeltaMass+=Math.abs((float)xyPoint.y);
 				count++;
 				if (count>numPeaksUsedInAverage) break;
 			}
-			for (int i=count; i<numPeaksUsedInAverage; i++) {
-				averageAbsFragDeltaMass+=(float)acquiredTolerance.getToleranceThreshold();
-			}
 			averageFragmentDeltaMasses=averageFragmentDeltaMasses/count;
-			averageAbsFragDeltaMass=averageAbsFragDeltaMass/numPeaksUsedInAverage;
 		}
 
-		float[] predictedTargetIntensitiesArray=predictedTargetIntensities.toArray();
-		float[] actualTargetIntensitiesArray=actualTargetIntensities.toArray();
+		float[] predictedTargetIntensitiesArray=General.normalizeToL2(predictedTargetIntensities.toArray());
+		float[] actualTargetIntensitiesArray=General.normalizeToL2(actualTargetIntensities.toArray());
 		
-		float sumPredictedTargets=General.sum(predictedTargetIntensitiesArray);
-		float sumActualTargets=General.sum(actualTargetIntensitiesArray);
+		float dotProduct=General.sum(General.multiply(predictedTargetIntensitiesArray, actualTargetIntensitiesArray));
+
+		if (Float.isNaN(dotProduct)||dotProduct<0.0f) dotProduct=0.0f;
+		float protectedDP=dotProduct;
+		if (protectedDP>=1.0f) protectedDP=0.99999f;
+		if (protectedDP<=0.0f) protectedDP=0.00001f;
 		
+		float contrastAngle=1.0f-(2.0f*(float)Math.acos(protectedDP))/(float)Math.PI;
+		float logit=(float)Math.log(protectedDP/(1.0f-protectedDP));
 		float sumOfSquaredErrors=0.0f; // normalized to sum of targeted intensities
-
-		if (predictedTargetIntensitiesArray.length==0) {
-			sumOfSquaredErrors=1.0f;
-		}
 		
 		for (int i=0; i<predictedTargetIntensitiesArray.length; i++) {
-			float predicted=predictedTargetIntensitiesArray[i]/sumPredictedTargets;
-			float actual;
-			if (sumActualTargets==0.0f) {
-				actual=0.0f;
-			} else {
-				actual=actualTargetIntensitiesArray[i]/sumActualTargets;
+			if (predictedTargetIntensitiesArray[i]>0.0&&actualTargetIntensitiesArray[i]>0.0) {
+				float delta=predictedTargetIntensitiesArray[i]-actualTargetIntensitiesArray[i];
+				float deltaSquared=delta*delta;
+				sumOfSquaredErrors+=deltaSquared;
 			}
-			float delta=predicted-actual;
-			float deltaSquared=delta*delta;
-			sumOfSquaredErrors+=deltaSquared;
 		}
 		
-		if (sumOfSquaredErrors<1e-5f) {
-			sumOfSquaredErrors=1e-5f;
-		}
-
 		float xTandem;
 		if (numberOfMatchingPeaks==0) {
 			xTandem=0.0f;
@@ -221,16 +204,23 @@ public class ScribeAuxillaryPSMScorer extends AuxillaryPSMScorer {
 		SparseXCorrCalculator sparseModel=new SparseXCorrCalculator(entry.getPeptideModSeq(), entry.getPrecursorCharge(), parameters);
 		float xCorrModel=sparseModel.score(sparseScan);
 			
-		return new float[] {(float)Log.protectedLog10(dotProduct), xTandem, xCorrLib, xCorrModel, Log.protectedLn(1.0f/sumOfSquaredErrors), 
-				numberOfMatchingPeaks, averageAbsFragDeltaMass, averageFragmentDeltaMasses, isotopeDotProduct, 
-				averageAbsPPM, averagePPM, percentBlankOverMono, numberPrecursorMatch, sp, maxLadderLength};
+		return new float[] {averagePPM, averageFragmentDeltaMasses, dotProduct, contrastAngle, logit, xTandem, xCorrLib, xCorrModel, Log.protectedLn(1.0f/sumOfSquaredErrors), 
+				numberOfMatchingPeaks, isotopeDotProduct, percentBlankOverMono, numberPrecursorMatch, sp, maxLadderLength};
 	}
 
 	public static String[] getScoreNames() {
-		return new String[] {"LogDotProduct", "primary", "xCorrLib", "xCorrModel", "lnInvSumOfSquaredErrors", 
-				"numberOfMatchingPeaks", "averageAbsFragmentDeltaMass", "averageFragmentDeltaMasses", "isotopeDotProduct", 
-				"averageAbsParentDeltaMass", "averageParentDeltaMass", "percentBlankOverMono", "numberPrecursorMatch", "Sp", "maxLadderLength", 
-				"eValue", "numConsidered", "deltaCn"};
+		return new String[] {"averageParentDeltaMass", "averageFragmentDeltaMasses", "DotProduct", "contrastAngle", "logit", "primary", "xCorrLib", "xCorrModel", "scribeScore", 
+				"numberOfMatchingPeaks", "isotopeDotProduct", "percentBlankOverMono", "numberPrecursorMatch", "Sp", "maxLadderLength", 
+				// the following are added after!
+				"eValue", "numConsidered", "deltaCn", "chargeMatch"};
+	}
+	
+	public int getParentDeltaMassIndex() {
+		return 0;
+	}
+	
+	public int getFragmentDeltaMassIndex() {
+		return 1;
 	}
 	
 	@Override

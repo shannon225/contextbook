@@ -24,7 +24,7 @@ import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.set.hash.TIntHashSet;
 
 public class IonAccountingTest {
-	public static void main(String[] args) throws Exception {
+	public static void main2(String[] args) throws Exception {
 		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
 		StripeFileInterface dia=StripeFileGenerator.getFile(new File("/Users/searleb/Documents/teaching/encyclopedia/quantitative samples/23aug2017_hela_serum_timecourse_wide_1a.mzML"), parameters, true);
 		Map<Range, WindowData> ranges=dia.getRanges();
@@ -78,12 +78,33 @@ public class IonAccountingTest {
 			}
 		}
 	}
-	public static void main2(String[] args) throws Exception {
+
+	public static void main(String[] args) throws Exception {
+		File rawFile = new File("/Users/searleb/Documents/OSU/projects/maggi_encyclopedia_results/191231_DIA_500to1100_metzyme_st5_120m_d.dia");
+		//File[] files=new File("/Users/searleb/Documents/OSU/projects/maggi_encyclopedia_results/all").listFiles();
+		//File[] files=new File("/Users/searleb/Documents/OSU/projects/maggi_encyclopedia_results/FK160115").listFiles();
+		//File[] files=new File("/Users/searleb/Documents/OSU/projects/maggi_encyclopedia_results/AE1913").listFiles();
+		File[] files=new File("/Users/searleb/Documents/OSU/projects/maggi_encyclopedia_results/KN210").listFiles();
+
+		for (int i = 0; i < files.length; i++) {
+			if (files[i].getName().toLowerCase().endsWith(".elib")) {
+				processForUniqueness(rawFile, files[i]);
+			}
+		}
+	}
+	
+	public static void main3(String[] args) throws Exception {
+		File rawFile = new File("/Users/searleb/Documents/teaching/encyclopedia/quantitative samples/23aug2017_hela_serum_timecourse_wide_1a.mzML");
+		File resultFile = new File("/Users/searleb/Documents/teaching/encyclopedia/quantitative samples/23aug2017_hela_serum_timecourse_wide_1a.mzML.elib");
+		processForUniqueness(rawFile, resultFile);
+	}
+
+	public static void processForUniqueness(File rawFile, File resultFile) throws Exception {
 		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
-		StripeFileInterface dia=StripeFileGenerator.getFile(new File("/Users/searleb/Documents/teaching/encyclopedia/quantitative samples/23aug2017_hela_serum_timecourse_wide_1a.mzML"), parameters, true);
+		StripeFileInterface dia=StripeFileGenerator.getFile(rawFile, parameters, true);
 		Map<Range, WindowData> ranges=dia.getRanges();
 		
-		LibraryInterface diaLib=BlibToLibraryConverter.getFile(new File("/Users/searleb/Documents/teaching/encyclopedia/quantitative samples/23aug2017_hela_serum_timecourse_wide_1a.mzML.elib"));
+		LibraryInterface diaLib=BlibToLibraryConverter.getFile(resultFile);
 		
 		ArrayList<Range> rangeList=new ArrayList<Range>(ranges.keySet());
 		Collections.sort(rangeList);
@@ -92,9 +113,13 @@ public class IonAccountingTest {
 		//rangeList=new ArrayList<>();
 		//rangeList.add(new Range(440.25, 440.27));
 		///////////////////////////////////////////////////
+
+		int totalNumberOfPeptidesWithAUniqueIon=0;
+		int totalNumberOfPeptidesWithAnIon=0;
+		int totalDIAEntries=0;
 		
 		for (Range target : rangeList) {
-			System.out.println("Precursor: "+target);
+			//System.out.println("Precursor: "+target);
 			
 			final ArrayList<LibraryEntry> diaEntries=diaLib.getEntries(target, false, parameters.getAAConstants());
 			Collections.sort(diaEntries);
@@ -176,13 +201,18 @@ public class IonAccountingTest {
 							// only one problematic peptide
 							LibraryEntry altEntry=diaEntries.get(bestIDs.toArray()[0]);
 							if (!entry.getPeptideSeq().replace('I', 'L').equals(altEntry.getPeptideSeq().replace('I', 'L'))&&Math.round(entry.getPrecursorMZ())!=Math.round(altEntry.getPrecursorMZ())) {
-								System.out.println(numUniqueIons+", "+numIons+", "+bestCount+":\t"+entry.getPeptideModSeq()+" ("+General.toString(entry.getAccessions())+")"+" <-versus-> "+altEntry.getPeptideModSeq()+" ("+General.toString(altEntry.getAccessions())+")");
+								//System.out.println(numUniqueIons+", "+numIons+", "+bestCount+":\t"+entry.getPeptideModSeq()+" ("+General.toString(entry.getAccessions())+")"+" <-versus-> "+altEntry.getPeptideModSeq()+" ("+General.toString(altEntry.getAccessions())+")");
 							}
 						}
 					}
 				}
 			}
-			System.out.println("num peptides with three unique ions: "+numberOfPeptidesWithAUniqueIon+" / "+numberOfPeptidesWithAnIon+" / "+diaEntries.size());
+
+			totalNumberOfPeptidesWithAUniqueIon+=numberOfPeptidesWithAUniqueIon;
+			totalNumberOfPeptidesWithAnIon+=numberOfPeptidesWithAnIon;
+			totalDIAEntries+=diaEntries.size();
+			
+			//System.out.println("num peptides with three unique ions: "+numberOfPeptidesWithAUniqueIon+" / "+numberOfPeptidesWithAnIon+" / "+diaEntries.size());
 			for (int i=0; i<numberOfUniqueIonsPerPeptide.size(); i++) {
 				//System.out.println(numberOfUniqueIonsPerPeptide.get(i)+"\t"+numberOfIonsPerPeptide.get(i));
 				LibraryEntry entry=diaEntries.get(i);
@@ -191,6 +221,7 @@ public class IonAccountingTest {
 				}
 			}
 		}
+		System.out.println("num peptides with three unique ions: "+resultFile.getName()+" / "+totalNumberOfPeptidesWithAUniqueIon+" / "+totalNumberOfPeptidesWithAnIon+" / "+totalDIAEntries+" / "+(totalNumberOfPeptidesWithAUniqueIon/(float)totalNumberOfPeptidesWithAnIon)+" / "+(totalNumberOfPeptidesWithAnIon/(float)totalDIAEntries));
 	}
 	
 	public static class IonAccounter {

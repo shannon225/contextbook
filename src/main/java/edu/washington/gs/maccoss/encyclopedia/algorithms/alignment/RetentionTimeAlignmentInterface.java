@@ -5,10 +5,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface.AlignmentDataPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 
-public interface RetentionTimeAlignmentInterface {
-	List<AlignmentDataPoint> plot(ArrayList<XYPoint> rts, Optional<File> saveFileSeed);
+public interface RetentionTimeAlignmentInterface extends ScoredPSMFilterInterface {
 
 	float getYValue(float xrt);
 
@@ -17,6 +17,8 @@ public interface RetentionTimeAlignmentInterface {
 	float getProbabilityFitsModel(float actualRT, float modelRT);
 	
 	float getDelta(float actualRT, float modelRT);
+
+	List<AlignmentDataPoint> plot(ArrayList<XYPoint> rts, Optional<File> saveFileSeed);
 
 	interface AlignmentDataPoint {
 		/**

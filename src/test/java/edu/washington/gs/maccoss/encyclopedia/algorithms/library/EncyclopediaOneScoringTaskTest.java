@@ -3,19 +3,13 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.library;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map.Entry;
-import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractScoringResult;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.PeptideQuantExtractorTask;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
@@ -25,8 +19,6 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.WindowData;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
-import junit.framework.TestCase;
 
 public class EncyclopediaOneScoringTaskTest {//extends TestCase {
 	public static void main(String[] args) throws Exception {
@@ -82,7 +74,7 @@ public class EncyclopediaOneScoringTaskTest {//extends TestCase {
 		AbstractScoringResult poll=resultsQueue.poll();
 		XYTraceInterface trace=poll.getTrace();
 		
-		System.out.println(trace+" --> "+poll.getScoredMSMS().x.x+" --> scan: "+(poll.getScoredMSMS().x.y.getScanStartTime()/60));
+		System.out.println(trace+" --> "+(poll.getScoredMSMS().getLibraryEntry().getScanStartTime()/60)+" --> scan: "+(poll.getScoredMSMS().getMSMS().getScanStartTime()/60));
 		Charter.launchChart("time", "score", true, trace);
 	}
 }

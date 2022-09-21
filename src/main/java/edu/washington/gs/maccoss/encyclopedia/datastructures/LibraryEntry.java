@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.Quadruplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
@@ -44,10 +45,11 @@ public class LibraryEntry implements Comparable<PeptidePrecursor>, Spectrum, Pep
 	private final double[] massArray;
 	private final float[] intensityArray;
 	private final float[] correlationArray;
+	private final boolean[] quantifiedIonsArray;
 	private final HashSet<String> accessions;
 
 	public LibraryEntry(String source, HashSet<String> accessions, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray, AminoAcidConstants aaConstants) {
-		this(source, accessions, 1, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, getUnitArray(massArray.length), aaConstants);
+		this(source, accessions, 1, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, getUnitArray(massArray.length), getBooleanUnitArray(massArray.length), aaConstants);
 	}
 	
 	private static float[] getUnitArray(int length) {
@@ -55,19 +57,25 @@ public class LibraryEntry implements Comparable<PeptidePrecursor>, Spectrum, Pep
 		Arrays.fill(unit, 1.0f);
 		return unit;
 	}
+	
+	private static boolean[] getBooleanUnitArray(int length) {
+		boolean[] unit=new boolean[length];
+		Arrays.fill(unit, true);
+		return unit;
+	}
 
-	public LibraryEntry(String source, HashSet<String> accessions, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray, float[] correlationArray, AminoAcidConstants aaConstants) {
-		this(source, accessions, 1, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, correlationArray, aaConstants);
+	public LibraryEntry(String source, HashSet<String> accessions, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray, float[] correlationArray, boolean[] quantifiedIonsArray, AminoAcidConstants aaConstants) {
+		this(source, accessions, 1, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, correlationArray, quantifiedIonsArray, aaConstants);
 	}
 
 	public LibraryEntry(String source, HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray, AminoAcidConstants aaConstants) {
-		this(source, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, getUnitArray(massArray.length), aaConstants);
+		this(source, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, getUnitArray(massArray.length), getBooleanUnitArray(massArray.length), aaConstants);
 	}
-	public LibraryEntry(String source, HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray, float[] correlationArray, AminoAcidConstants aaConstants) {
+	public LibraryEntry(String source, HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray, float[] correlationArray, boolean[] quantifiedIonsArray, AminoAcidConstants aaConstants) {
 		this(source, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime,
-				score, massArray, intensityArray, correlationArray, aaConstants, false);
+				score, massArray, intensityArray, correlationArray, quantifiedIonsArray, aaConstants, false);
 	}
-	public LibraryEntry(String source, HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray, float[] correlationArray, AminoAcidConstants aaConstants, boolean keepNegativeIntensities) {
+	public LibraryEntry(String source, HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray, float[] correlationArray, boolean[] quantifiedIonsArray, AminoAcidConstants aaConstants, boolean keepNegativeIntensities) {
 		this(
 				source,
 				accessions,
@@ -82,14 +90,15 @@ public class LibraryEntry implements Comparable<PeptidePrecursor>, Spectrum, Pep
 				massArray,
 				intensityArray,
 				correlationArray,
+				quantifiedIonsArray, 
 				keepNegativeIntensities
 		);
 	}
 
-	public LibraryEntry(String source, HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, String massCorrectedPeptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray, float[] correlationArray) {
-		this(source, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, massCorrectedPeptideModSeq, copies, retentionTime, score, massArray, intensityArray, correlationArray, false);
+	public LibraryEntry(String source, HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, String massCorrectedPeptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray, float[] correlationArray, boolean[] quantifiedIonsArray) {
+		this(source, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, massCorrectedPeptideModSeq, copies, retentionTime, score, massArray, intensityArray, correlationArray, quantifiedIonsArray, false);
 	}
-	public LibraryEntry(String source, HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, String massCorrectedPeptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray, float[] correlationArray, boolean keepNegativeIntensities) {
+	public LibraryEntry(String source, HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, String massCorrectedPeptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray, float[] correlationArray, boolean[] quantifiedIonsArray, boolean keepNegativeIntensities) {
 		this.source=source;
 		this.accessions=new HashSet<String>(accessions);
 		this.spectrumIndex=spectrumIndex;
@@ -110,15 +119,16 @@ public class LibraryEntry implements Comparable<PeptidePrecursor>, Spectrum, Pep
 		int numPeaks=Math.min(massArray.length, correlationArray.length);
 		for (int i=0; i<numPeaks; i++) {
 			if (intensityArray[i]>0||keepNegativeIntensities) {
-				peaks.add(new PeakChromatogram(massArray[i], intensityArray[i], correlationArray[i]));
+				peaks.add(new PeakChromatogram(massArray[i], intensityArray[i], correlationArray[i], quantifiedIonsArray[i]));
 			}
 		}
 		Collections.sort(peaks);
-		Triplet<double[], float[], float[]> arrays=PeakChromatogram.toChromatogramArrays(peaks);
+		Quadruplet<double[], float[], float[], boolean[]> arrays=PeakChromatogram.toChromatogramArrays(peaks);
 		
 		this.massArray=arrays.x;
 		this.intensityArray=arrays.y;
 		this.correlationArray=arrays.z;
+		this.quantifiedIonsArray=arrays.w;
 	}
 	
 	@Override
@@ -132,7 +142,7 @@ public class LibraryEntry implements Comparable<PeptidePrecursor>, Spectrum, Pep
 	 * @return
 	 */
 	public LibraryEntry updateRetentionTime(float rtInSec) {
-		return new LibraryEntry(source, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, massCorrectedPeptideModSeq, copies, rtInSec, score, massArray, intensityArray, correlationArray);
+		return new LibraryEntry(source, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, massCorrectedPeptideModSeq, copies, rtInSec, score, massArray, intensityArray, correlationArray, quantifiedIonsArray);
 	}
 	
 	/**
@@ -142,7 +152,7 @@ public class LibraryEntry implements Comparable<PeptidePrecursor>, Spectrum, Pep
 	 * @return
 	 */
 	public LibraryEntry updateMS2(double[] newMassArray, float[] newIntensityArray) {
-		return new LibraryEntry(source, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, massCorrectedPeptideModSeq, copies, retentionTime, score, newMassArray, newIntensityArray, getUnitArray(newMassArray.length));
+		return new LibraryEntry(source, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, massCorrectedPeptideModSeq, copies, retentionTime, score, newMassArray, newIntensityArray, getUnitArray(newMassArray.length), getBooleanUnitArray(newMassArray.length));
 	}
 	
 	/**
@@ -152,8 +162,8 @@ public class LibraryEntry implements Comparable<PeptidePrecursor>, Spectrum, Pep
 	 * @param newCorrelationArray
 	 * @return
 	 */
-	public LibraryEntry updateMS2(double[] newMassArray, float[] newIntensityArray, float[] newCorrelationArray) {
-		return new LibraryEntry(source, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, massCorrectedPeptideModSeq, copies, retentionTime, score, newMassArray, newIntensityArray, newCorrelationArray);
+	public LibraryEntry updateMS2(double[] newMassArray, float[] newIntensityArray, float[] newCorrelationArray, boolean[] newQuantifiedIonsArray) {
+		return new LibraryEntry(source, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, massCorrectedPeptideModSeq, copies, retentionTime, score, newMassArray, newIntensityArray, newCorrelationArray, newQuantifiedIonsArray);
 	}
 	
 	public LibraryEntry trimToNPeaks(int n, AminoAcidConstants aaConstants) {
@@ -161,7 +171,7 @@ public class LibraryEntry implements Comparable<PeptidePrecursor>, Spectrum, Pep
 		int numPeaks=Math.min(massArray.length, correlationArray.length);
 		for (int i=0; i<numPeaks; i++) {
 			if (intensityArray[i]>0) {
-				peaks.add(new PeakChromatogram(massArray[i], intensityArray[i], correlationArray[i]));
+				peaks.add(new PeakChromatogram(massArray[i], intensityArray[i], correlationArray[i], quantifiedIonsArray[i]));
 			}
 		}
 		Collections.sort(peaks, new QuantitativePeakIntensityComparator()); // sort by intensity (and correlation classes) 
@@ -172,13 +182,14 @@ public class LibraryEntry implements Comparable<PeptidePrecursor>, Spectrum, Pep
 			if (finalPeaks.size()>=n) break;
 		}
 		
-		Triplet<double[], float[], float[]> arrays=PeakChromatogram.toChromatogramArrays(finalPeaks);
+		Quadruplet<double[], float[], float[], boolean[]> arrays=PeakChromatogram.toChromatogramArrays(finalPeaks);
 		Collections.sort(finalPeaks); // sort by m/z
 		
 		double[] trimmedMasses = arrays.x;
 		float[] trimmedIntensities = arrays.y;
 		float[] trimmedCorrelations = arrays.z;
-		return updatePeaks(aaConstants, getPrecursorMZ(), getPeptideModSeq(), trimmedMasses, trimmedIntensities, trimmedCorrelations, false, isDecoy(), isDecoy());
+		boolean[] trimmedQuantifiedIons = arrays.w;
+		return updatePeaks(aaConstants, getPrecursorMZ(), getPeptideModSeq(), trimmedMasses, trimmedIntensities, trimmedCorrelations, trimmedQuantifiedIons, false, isDecoy(), isDecoy());
 	}
 	
 	/**
@@ -352,10 +363,16 @@ public class LibraryEntry implements Comparable<PeptidePrecursor>, Spectrum, Pep
 		return correlationArray;
 	}
 	
-	public ArrayList<Peak> getPeaks() {
+	public boolean[] getQuantifiedIonsArray() {
+		return quantifiedIonsArray;
+	}
+	
+	public ArrayList<Peak> getPeaks(float minimumCorrelation) {
 		ArrayList<Peak> peaks=new ArrayList<Peak>();
 		for (int i = 0; i < massArray.length; i++) {
-			peaks.add(new Peak(massArray[i], intensityArray[i]));
+			if (correlationArray[i]>=minimumCorrelation) {
+				peaks.add(new Peak(massArray[i], intensityArray[i]));
+			}
 		}
 		return peaks;
 	}
@@ -443,6 +460,7 @@ public class LibraryEntry implements Comparable<PeptidePrecursor>, Spectrum, Pep
 			double mass=massArray[i];
 			float intensity=intensityArray[i];
 			float correlation=correlationArray[i];
+			boolean isQuantified=quantifiedIonsArray[i];
 			
 			Optional<Integer> matchIndex=tolerance.getIndex(modelMasses, mass);
 			if (matchIndex.isPresent()) {
@@ -450,22 +468,21 @@ public class LibraryEntry implements Comparable<PeptidePrecursor>, Spectrum, Pep
 				double delta=modelMasses[matchIndex.get()]-mass; // add back error if there is any
 				
 				// shift sequence specific ions
-				reversedPeaks.add(new PeakChromatogram(shiftedMass-delta, intensity, correlation));
+				reversedPeaks.add(new PeakChromatogram(shiftedMass-delta, intensity, correlation, isQuantified));
 			} else {
 				// add unknown peak with no modifications
-				reversedPeaks.add(new PeakChromatogram(mass, intensity, correlation));
+				reversedPeaks.add(new PeakChromatogram(mass, intensity, correlation, isQuantified));
 			}
 		}
 		Collections.sort(reversedPeaks);
-		Triplet<double[], float[], float[]> arrays=PeakChromatogram.toChromatogramArrays(reversedPeaks);
+		Quadruplet<double[], float[], float[], boolean[]> arrays=PeakChromatogram.toChromatogramArrays(reversedPeaks);
 		
-		
-		LibraryEntry updatedEntry=updatePeaks(parameters.getAAConstants(), newPrecursorMz, newSequence, arrays.x, arrays.y, arrays.z, isShuffle, isDecoy, markAsDecoy);
+		LibraryEntry updatedEntry=updatePeaks(parameters.getAAConstants(), newPrecursorMz, newSequence, arrays.x, arrays.y, arrays.z, arrays.w, isShuffle, isDecoy, markAsDecoy);
 		
 		return new Pair<FragmentationModel, LibraryEntry>(reverseModel, updatedEntry);
 	}
 
-	protected LibraryEntry updatePeaks(AminoAcidConstants aaConstants, double newPrecursorMz, String newPeptideModSeq, double[] trimmedMasses, float[] trimmedIntensities, float[] trimmedCorrelations, boolean isShuffle, boolean isDecoy, boolean markAsDecoy) {
+	protected LibraryEntry updatePeaks(AminoAcidConstants aaConstants, double newPrecursorMz, String newPeptideModSeq, double[] trimmedMasses, float[] trimmedIntensities, float[] trimmedCorrelations, boolean[] trimmedQuantifiedIons, boolean isShuffle, boolean isDecoy, boolean markAsDecoy) {
 		HashSet<String> accessions;
 		if (isShuffle || isDecoy) {
 			accessions = new HashSet<String>();
@@ -482,10 +499,10 @@ public class LibraryEntry implements Comparable<PeptidePrecursor>, Spectrum, Pep
 		
 		if (markAsDecoy||this instanceof ReverseLibraryEntry) {
 			return new ReverseLibraryEntry(source, accessions, newPrecursorMz, precursorCharge, newPeptideModSeq, copies, retentionTime, score, 
-					trimmedMasses, trimmedIntensities, trimmedCorrelations, aaConstants);
+					trimmedMasses, trimmedIntensities, trimmedCorrelations, trimmedQuantifiedIons, aaConstants);
 		} else {
 			return new LibraryEntry(source, accessions, spectrumIndex, newPrecursorMz, precursorCharge, newPeptideModSeq, newPeptideModSeq, copies, retentionTime, score, 
-					trimmedMasses, trimmedIntensities, trimmedCorrelations);
+					trimmedMasses, trimmedIntensities, trimmedCorrelations, trimmedQuantifiedIons);
 		}
 	}
 }

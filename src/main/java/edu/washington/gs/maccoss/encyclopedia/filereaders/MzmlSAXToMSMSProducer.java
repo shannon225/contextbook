@@ -5,9 +5,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.text.DateFormat;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
@@ -43,10 +41,14 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.list.array.TFloatArrayList;
 
 public class MzmlSAXToMSMSProducer extends DefaultHandler implements MSMSProducer {
-	
+	public static final int MAX_PRECURSORS_PER_BLOCK = 100;
+	public static final int MAX_STRIPES_PER_SCAN = 1000;
+
 	private final File mzMLFile;
 	private final BlockingQueue<MSMSBlock> mzmlBlockQueue;
 	private final SearchParameters parameters;
+	final private int fraction;
+	
 	private final HashMap<Range, TFloatArrayList> retentionTimesByStripe=new HashMap<Range, TFloatArrayList>();
 	private final HashMap<Range, TFloatArrayList> ionInjectionTimesByStripe=new HashMap<Range, TFloatArrayList>();
 	private final ImmutableMultimap.Builder<String, String> softwareAccessionIdToVersionBuilder = ImmutableMultimap.builder();
@@ -55,7 +57,6 @@ public class MzmlSAXToMSMSProducer extends DefaultHandler implements MSMSProduce
 	private ImmutableList.Builder<InstrumentComponent> instrumentComponentsBuilder = ImmutableList.builder();
 
 	private Throwable error;
-	private int fraction;
 
 	public MzmlSAXToMSMSProducer(File mzMLFile, int fraction, BlockingQueue<MSMSBlock> mzmlBlockQueue, SearchParameters parameters) {
 		this.mzMLFile=mzMLFile;
@@ -470,7 +471,7 @@ public class MzmlSAXToMSMSProducer extends DefaultHandler implements MSMSProduce
 				
 			}
 
-			if (precursors.size()>100||stripes.size()>1000) {
+			if (precursors.size()>MAX_PRECURSORS_PER_BLOCK ||stripes.size()>MAX_STRIPES_PER_SCAN) {
 				putBlock(new MSMSBlock(precursors, stripes));
 				precursors.clear();
 				stripes.clear();

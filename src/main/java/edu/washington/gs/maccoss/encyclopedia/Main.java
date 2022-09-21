@@ -34,8 +34,8 @@ public class Main {
 		} else if (arguments.containsKey("-thesaurus")) {
 			Thesaurus.main(args);
 			
-		//} else if (arguments.containsKey("-scribe")) {
-		//	Scribe.main(args);
+		} else if (arguments.containsKey("-scribe")) {
+			Scribe.main(args);
 			
 		} else if (arguments.containsKey("-browser")) {
 			DIABrowser.main(args);
@@ -55,6 +55,9 @@ public class Main {
 		} else if (arguments.containsKey("-xcordia")) {
 			XCorDIA.main(args);
 			
+		} else if (arguments.containsKey("-batch")) {
+			Batch.main(args);
+			
 		} else if (arguments.containsKey("-h")||arguments.containsKey("-help")||arguments.containsKey("--help")) {
 			Logger.logLine("EncyclopeDIA Help");
 			Logger.timelessLogLine("EncyclopeDIA is a library search engine for DIA data.");
@@ -66,10 +69,11 @@ public class Main {
 			Logger.timelessLogLine("\t-walnut\trun Walnut (use -walnut -h for Walnut help)");
 			Logger.timelessLogLine("\t-thesaurus\trun Thesaurus (use -thesaurus -h for Thesaurus help)");
 			Logger.timelessLogLine("\t-xcordia\trun XCorDIA (use -xcordia -h for XCorDIA help)");
-			//Logger.timelessLogLine("\t-scribe\trun Scribe (use -scribe -h for Scribe help)");
+			Logger.timelessLogLine("\t-scribe\trun Scribe (use -scribe -h for Scribe help)");
 			Logger.timelessLogLine("\t-browser\trun ELIB Browser (use -browser -h for ELIB Browser help)");
 			Logger.timelessLogLine("\t-libexport\trun Library Export (use -libexport -h for Library Export help)");
 			Logger.timelessLogLine("\t-convert\trun files converter (use -convert -h for help)");
+			Logger.timelessLogLine("\t-batch\trun XML driven batch commands (use -batch -h for help)");
 			Logger.timelessLogLine("Other Parameters: ");
 			Logger.timelessLogLine("\t-o\toutput report file (default: [input file]"+EncyclopediaJobData.OUTPUT_FILE_SUFFIX+")");
 

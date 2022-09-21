@@ -1,8 +1,15 @@
 package edu.washington.gs.maccoss.encyclopedia.filewriters;
 
+import java.io.File;
+import java.util.HashSet;
+import java.util.concurrent.BlockingQueue;
+
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractScoringResult;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.RecalibratedPeptideScoringResult;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.RecalibratedSpectrumScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.RescoredPeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.RescoredSpectrumScoringResult;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.ScoredPSM;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -10,13 +17,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
-import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
-
-import java.io.File;
-import java.util.HashSet;
-import java.util.concurrent.BlockingQueue;
 
 public class ScoringResultsToTSVConsumer extends AbstractScoringResultsToTSVConsumer {
 	private final String[] scoreNames;
@@ -37,16 +38,19 @@ public class ScoringResultsToTSVConsumer extends AbstractScoringResultsToTSVCons
 				
 				if (AbstractScoringResult.POISON_RESULT==result) break;
 				if (!printedHeader) {
-					writer.print("id\tTD\tScanNr\t");
+					writer.print("id\tLabel\tScanNr\t");
 					for (String name : scoreNames) {
 						writer.print(name);
 						writer.print('\t');
 					}
 					
+
 					if (result instanceof RescoredPeptideScoringResult||result instanceof RescoredSpectrumScoringResult) {
 						writer.print("deltaRT\t");//discriminantScore\t");
+					} else if (result instanceof RecalibratedPeptideScoringResult||result instanceof RecalibratedSpectrumScoringResult) {
+						writer.print("deltaRT\tms1MassError\tms2MassError\t");//discriminantScore\t");
 					}
-					writer.print("numMissedCleavage\tpepLength\tcharge1\tcharge2\tcharge3\tcharge4\tprecursorMz\tprecursorMass\tRTinMin\tsequence\tprotein");
+					writer.print("numMissedCleavage\tpepLength\tcharge1\tcharge2\tcharge3\tcharge4\tprecursorMz\tprecursorMass\tRTinMin\tsequence\tProteins");
 					// Percolator assumes linux line endings on Mac!
 					switch (os) {
 						case MAC:
@@ -73,12 +77,11 @@ public class ScoringResultsToTSVConsumer extends AbstractScoringResultsToTSVCons
 		LibraryEntry peptide=result.getEntry();
 		int rank=1;
 
-		for (Pair<ScoredObject<FragmentScan>, float[]> goodStripe : result.getGoodMSMSCandidates()) {
+		for (ScoredPSM goodStripe : result.getGoodMSMSCandidates()) {
 			numberProcessed++;
 
-			FragmentScan stripe=goodStripe.x.y;
-			float[] auxScores=goodStripe.y;
-
+			FragmentScan stripe=goodStripe.getMSMS();
+			float[] auxScores=goodStripe.getAuxScores();
 
 			if (stripe!=null) {
 				String psmID= PercolatorPeptide.getPSMID(peptide, stripe.getScanStartTime(), diaFile);
@@ -106,7 +109,7 @@ public class ScoringResultsToTSVConsumer extends AbstractScoringResultsToTSVCons
 				writer.print("\t"+sequence);
 
 				HashSet<String> accessions=peptide.getAccessions();
-				writer.print("\t"+ PSMData.accessionsToString(accessions));
+				writer.print("\t"+ PSMData.accessionsToString(accessions, "\t"));
 
 				// Percolator assumes linux line endings on Mac!
 				switch (os) {

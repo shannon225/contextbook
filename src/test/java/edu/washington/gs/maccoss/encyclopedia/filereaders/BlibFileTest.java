@@ -40,6 +40,10 @@ public class BlibFileTest extends TestCase {
 			public PercolatorExecutionData getPercolatorFiles() {
 				return null;
 			}
+			@Override
+			public SearchJobData updateQuantFile(File f) {
+				return null;
+			}
 			
 			@Override
 			public SearchParameters getParameters() {
@@ -49,6 +53,10 @@ public class BlibFileTest extends TestCase {
 			@Override
 			public StripeFileInterface getDiaFileReader() {
 				return null;
+			}
+			@Override
+			public String getPrimaryScoreName() {
+				return "primary";
 			}
 		};
 

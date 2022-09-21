@@ -8,6 +8,11 @@ import java.util.Optional;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
 import edu.washington.gs.maccoss.encyclopedia.Pecanpie;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorVersion;
@@ -16,6 +21,9 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ScoringBreadthT
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
@@ -60,7 +68,7 @@ public class PecanSearchParameters extends SearchParameters {
 		sb.append(" ").append(OPT_PERC_TRAINING_THRESH).append(" ").append(percolatorTrainingSetThreshold).append("\n");
 		sb.append(" -acquisition "+DataAcquisitionType.toString(dataAcquisitionType)+"\n");
 		sb.append(" -numberOfThreadsUsed "+numberOfThreadsUsed+"\n");
-		sb.append(" -numberOfQuantitativePeaks "+numberOfQuantitativePeaks+"\n");
+		sb.append(" ").append(NUMBER_OF_QUANTITATIVE_PEAKS).append(" ").append(numberOfQuantitativePeaks).append("\n");
 		sb.append(" -minNumOfQuantitativePeaks "+minNumOfQuantitativePeaks+"\n");
 		sb.append(" -alpha "+alpha+"\n");
 		sb.append(" -beta "+beta+"\n");
@@ -73,6 +81,7 @@ public class PecanSearchParameters extends SearchParameters {
 		return sb.toString();
 	}
 	
+	@Override
 	public HashMap<String, String> toParameterMap() {
 		HashMap<String, String> map=new HashMap<String, String>();
 		map.put("-fixed", aaConstants.getFixedModString());
@@ -101,7 +110,7 @@ public class PecanSearchParameters extends SearchParameters {
 		map.put("-acquisition", DataAcquisitionType.toString(dataAcquisitionType));
 		map.put("-numberOfThreadsUsed", numberOfThreadsUsed+"");
 		map.put("-precursorWindowSize", precursorWindowSize+"");
-		map.put("-numberOfQuantitativePeaks", numberOfQuantitativePeaks+"");
+		map.put(NUMBER_OF_QUANTITATIVE_PEAKS, numberOfQuantitativePeaks+"");
 		map.put("-minNumOfQuantitativePeaks", minNumOfQuantitativePeaks+"");
 		map.put("-alpha", alpha+"");
 		map.put("-beta", beta+"");
@@ -113,6 +122,63 @@ public class PecanSearchParameters extends SearchParameters {
 		return map;
 	}
 	
+	@Override
+	public HashMap<String, String> getNonDefaultParameters() {
+		HashMap<String, String> map=toParameterMap();
+		HashMap<String, String> defaults=PecanParameterParser.getDefaultParametersObject().toParameterMap();
+		HashMap<String, String> nonDefaults=new HashMap<>();
+		
+		for (Entry<String, String> entry : map.entrySet()) {
+			if (defaults.containsKey(entry.getKey())) {
+				String defaultValue=defaults.get(entry.getKey());
+				if (!entry.getValue().equals(defaultValue)) {
+					nonDefaults.put(entry.getKey(), entry.getValue());
+				}
+			} else {
+				nonDefaults.put(entry.getKey(), entry.getValue());
+			}
+		}
+		return nonDefaults;
+	}
+	
+	@Override
+	public void writeToXML(Document doc, Element parentElement) {
+		HashMap<String, String> nondefaults=getNonDefaultParameters();
+		
+		Element rootElement=doc.createElement(getClass().getSimpleName());
+		parentElement.appendChild(rootElement);
+		
+		for (Entry<String, String> entry : nondefaults.entrySet()) {
+			Element param=doc.createElement("param");
+			param.setAttribute("key", entry.getKey());
+			param.setAttribute("value", entry.getValue());
+			rootElement.appendChild(param);
+		}
+	}
+	
+	public static PecanSearchParameters readFromXML(Document doc, Element rootElement) {
+		if (!rootElement.getTagName().equals(PecanSearchParameters.class.getSimpleName())) {
+			throw new EncyclopediaException("Unexpected XML parsing element, found ["+rootElement.getTagName()+"] when expecting ["+PecanSearchParameters.class.getSimpleName()+"]");
+		}
+		
+		HashMap<String, String> paramMap=PecanParameterParser.getDefaultParametersObject().toParameterMap();
+		
+		NodeList nodes=rootElement.getChildNodes();
+		for (int i = 0; i < nodes.getLength(); i++) {
+			Node node = nodes.item(i);
+            if (node.getNodeType() == Node.ELEMENT_NODE) {
+                Element element = (Element) node;
+                if ("param".equals(element.getTagName())) {
+                	String key=element.getAttribute("key");
+                	String value=element.getAttribute("value");
+                	paramMap.put(key, value);
+                }
+            }
+		}
+		return PecanParameterParser.parseParameters(paramMap);
+	}
+	
+	@Override
 	public void savePreferences(File backgroundFastaFile, File targetFastaFile) throws IOException,BackingStoreException {
 		Preferences prefs=Preferences.userRoot().node("pecan");
 		HashMap<String, String> map=toParameterMap();
@@ -161,6 +227,7 @@ public class PecanSearchParameters extends SearchParameters {
 			PercolatorVersion percolatorVersionNumber,
 			int percolatorTrainingSetSize,
 			float percolatorTrainingSetThreshold,
+			int percolatorTrainingIterations,
 			float alpha,
 			float beta,
 			DataAcquisitionType dataAcquisitionType,
@@ -194,6 +261,7 @@ public class PecanSearchParameters extends SearchParameters {
 				percolatorVersionNumber,
 				percolatorTrainingSetSize,
 				percolatorTrainingSetThreshold,
+				percolatorTrainingIterations,
 				dataAcquisitionType,
 				numberOfThreadsUsed,
 				expectedPeakWidth,
@@ -241,6 +309,7 @@ public class PecanSearchParameters extends SearchParameters {
 			float percolatorProteinThreshold,
 			int percolatorTrainingSetSize,
 			float percolatorTrainingSetThreshold,
+			int percolatorTrainingIterations,
 			int maxMissedCleavages,
 			byte minCharge,
 			byte maxCharge,
@@ -271,6 +340,7 @@ public class PecanSearchParameters extends SearchParameters {
 				percolatorVersionNumber,
 				percolatorTrainingSetSize,
 				percolatorTrainingSetThreshold,
+				percolatorTrainingIterations,
 				dataAcquisitionType,
 				numberOfJobs,
 				24f,
@@ -331,6 +401,7 @@ public class PecanSearchParameters extends SearchParameters {
 				null,
 				PercolatorExecutor.DEFAULT_TRAINING_SET_SIZE,
 				PercolatorExecutor.DEFAULT_TRAINING_THRESHOLD,
+				PercolatorExecutor.DEFAULT_TRAINING_ITERATIONS,
 				dataAcquisitionType,
 				Runtime.getRuntime().availableProcessors(),
 				24f,
@@ -392,6 +463,7 @@ public class PecanSearchParameters extends SearchParameters {
 				null,
 				PercolatorExecutor.DEFAULT_TRAINING_SET_SIZE,
 				PercolatorExecutor.DEFAULT_TRAINING_THRESHOLD,
+				PercolatorExecutor.DEFAULT_TRAINING_ITERATIONS,
 				DataAcquisitionType.DIA,
 				Runtime.getRuntime().availableProcessors(),
 				24f,
@@ -455,6 +527,7 @@ public class PecanSearchParameters extends SearchParameters {
 				null,
 				PercolatorExecutor.DEFAULT_TRAINING_SET_SIZE,
 				PercolatorExecutor.DEFAULT_TRAINING_THRESHOLD,
+				PercolatorExecutor.DEFAULT_TRAINING_ITERATIONS,
 				DataAcquisitionType.DIA,
 				Runtime.getRuntime().availableProcessors(),
 				24f,

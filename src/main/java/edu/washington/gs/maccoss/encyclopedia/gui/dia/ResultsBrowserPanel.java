@@ -255,6 +255,19 @@ public class ResultsBrowserPanel extends JPanel {
 				LibraryFile.OPEN_IN_PLACE=false;
 
 				ArrayList<LibraryEntry> entries=library.getEntries(new Range(-Float.MAX_VALUE, Float.MAX_VALUE), false, parameters.getAAConstants());
+				int numHaveMinimum=0;
+				int numHaveMaximum=0;
+				for (LibraryEntry entry : entries) {
+					float[] correlation=entry.getCorrelationArray();
+					int n=0;
+					for (float c : correlation) {
+						if (c>=TransitionRefiner.quantitativeCorrelationThreshold) n++;
+					}
+					if (n>=parameters.getMinNumOfQuantitativePeaks()) numHaveMinimum++;
+					if (n>=parameters.getNumberOfQuantitativePeaks()) numHaveMaximum++;
+				}
+				Logger.logLine("Total entries: "+entries.size()+", "+parameters.getMinNumOfQuantitativePeaks()+"+ ions:"+numHaveMinimum+", "+parameters.getNumberOfQuantitativePeaks()+"+ ions:"+numHaveMaximum);
+				
 
 				final Optional<Path> source = library.getSource(parameters);
 				if (source.isPresent()) {
@@ -333,6 +346,19 @@ public class ResultsBrowserPanel extends JPanel {
 		if (locationData<=5) {
 			locationData=400;
 		}
+		if (entry!=null) {
+			AnnotatedLibraryEntry annotated=new AnnotatedLibraryEntry(entry, parameters);
+			double[] masses=annotated.getMassArray();
+			float[] intensities=annotated.getIntensityArray();
+			float[] correlations=annotated.getCorrelationArray();
+			boolean[] quantifiedIonsArray=annotated.getQuantifiedIonsArray();
+			FragmentIon[] ions=annotated.getIonAnnotations();
+			
+			System.out.println(annotated.getPeptideModSeq()+", "+annotated.getPrecursorCharge());
+			for (int i = 0; i < quantifiedIonsArray.length; i++) {
+				System.out.println(masses[i]+"\t"+intensities[i]+"\t"+correlations[i]+"\t"+quantifiedIonsArray[i]+"\t"+ions[i]);
+			}
+		}
 		
 		if (entry==null) {
 			split.setLeftComponent(new JLabel("Select a peptide!"));
@@ -357,6 +383,9 @@ public class ResultsBrowserPanel extends JPanel {
 			entries.add(unit);
 			
 			try {
+				double[] massArray=entry.getMassArray();
+				boolean[] quantifiedIonsArray=entry.getQuantifiedIonsArray();
+				
 				float rtRange=parameters.getLocalizingModification().isPresent()?dia.getGradientLength()/20.0f:(2f*parameters.getExpectedPeakWidth());
 				
 				ArrayList<FragmentScan> stripes=dia.getStripes(entry.getPrecursorMZ(), targetRT-rtRange, targetRT+rtRange, false);
@@ -368,7 +397,17 @@ public class ResultsBrowserPanel extends JPanel {
 				ArrayList<XYTrace> traces=new ArrayList<XYTrace>();
 				for (Entry<FragmentIon, XYTrace> pair : fragmentTraceMap.entrySet()) {
 					if (pair.getKey().getIndex()>1) {
-						traces.add(pair.getValue());
+						Optional<Integer> index = parameters.getFragmentTolerance().getIndex(massArray, pair.getKey().getMass());
+//						if (index.isPresent()) {
+//							System.out.println(pair.getKey().getMass()+"\t"+pair.getKey()+"\t"+index.get()+"\t"+quantifiedIonsArray[index.get()]+"\t"+entry.getCorrelationArray()[index.get()]);
+//						} else {
+//							System.out.println(pair.getKey().getMass()+"\t"+pair.getKey()+"\t"+-1+"\t"+false+"\t"+entry.getCorrelationArray()[index.get()]);
+//						}
+						if (index.isPresent()&&quantifiedIonsArray[index.get()]) {
+							traces.add(pair.getValue());
+						} else {
+							traces.add(pair.getValue().updateType(GraphType.dashedline, Optional.of(1.0f)));
+						}
 					}
 				}
 				Collections.sort(traces);
@@ -541,6 +580,7 @@ public class ResultsBrowserPanel extends JPanel {
 				e.printStackTrace();
 			}
 			Logger.logLine("Finished reading peptide "+entry.getSpectrumName()+" (rt="+ targetRT+")");
+			System.out.println(General.toString(entry.getQuantifiedIonsArray()));
 		}
 		split.setDividerLocation(location);
 	}

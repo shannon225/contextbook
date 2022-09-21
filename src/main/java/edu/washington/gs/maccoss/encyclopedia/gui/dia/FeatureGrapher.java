@@ -7,6 +7,7 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -18,6 +19,7 @@ import javax.swing.JFrame;
 import javax.swing.JTabbedPane;
 
 import org.jfree.chart.ChartPanel;
+import org.jfree.chart.plot.Plot;
 
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
@@ -32,6 +34,9 @@ import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserProducer;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.PivotTableGenerator;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.randomforest.RocPlot;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.randomforest.RocPlot;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
 
@@ -66,10 +71,16 @@ public class FeatureGrapher {
 				row.remove("RTinMin");
 				row.remove("sequence");
 				row.remove("annotation");
+				row.remove("Proteins");
+				row.remove("charge1");
 				row.remove("charge2");
 				row.remove("charge3");
+				row.remove("charge4");
 				row.remove("protein");
 				row.remove("pepLength");
+				row.remove("averageFragmentDeltaMasses");
+				row.remove("averageParentDeltaMass");
+				row.remove("numConsidered");
 				String targetDecoy = row.remove("TD");
 				if (targetDecoy==null) {
 					targetDecoy = row.remove("Label");
@@ -145,57 +156,37 @@ public class FeatureGrapher {
 	}
 
 	public static XYTrace getRocPlot(String name, float[] targets, float[] decoys) {
-		if (name.equals("sumOfSquaredErrors")||name.equals("weightedSumOfSquaredErrors")||name.equals("precursorMass")||name.equals("percentBlankOverMono")||name.equals("numMissedCleavage")||name.equals("lnExpect")) {
+		if (name.equals("sumOfSquaredErrors")||name.equals("weightedSumOfSquaredErrors")||name.equals("precursorMass")||name.equals("percentBlankOverMono")||name.equals("numMissedCleavage")||name.equals("lnExpect")||name.equals("averageAbsParentDeltaMass")||name.equals("averageAbsFragmentDeltaMass")||name.equals("ms1MassError")||name.equals("ms2MassError")) {
 			targets=General.multiply(targets, -1f);
 			decoys=General.multiply(decoys, -1f);
 		}
-		Arrays.sort(targets);
-		Arrays.sort(decoys);
+
+		ArrayList<ScoredObject<Boolean>> scores=new ArrayList<>();
+		for (int i = 0; i < targets.length; i++) {
+			scores.add(new ScoredObject<Boolean>(targets[i], true));
+		}
+		for (int i = 0; i < decoys.length; i++) {
+			scores.add(new ScoredObject<Boolean>(decoys[i], false));
+		}
 		
-		TDoubleArrayList fdr=new TDoubleArrayList();
-		TDoubleArrayList count=new TDoubleArrayList();
-		
-		int indexTargets=targets.length-1;
-		int indexDecoys=decoys.length-1;
-		
+		Collections.sort(scores);
+		Collections.reverse(scores);
+
 		int numTargets=0;
 		int numDecoys=0;
-
-		while (true) {
-			if (targets[indexTargets]>decoys[indexDecoys]) {
+		RocPlot plot=new RocPlot(name);
+		for (ScoredObject<Boolean> score : scores) {
+			if (score.y) {
 				numTargets++;
-				indexTargets--;
-				if (indexTargets<0) break;
 			} else {
 				numDecoys++;
-				indexDecoys--;
-				if (indexDecoys<0) break;
 			}
+
 			float fdrValue=numTargets>0?numDecoys/(float)numTargets:1.0f;
 			if (fdrValue>1.0f) fdrValue=1.0f;
-			fdr.add(fdrValue);
-			count.add(numTargets);
+			plot.addData(fdrValue, numTargets);
 		}
 		
-		double bestFDR=1.0;
-
-		for (int i = fdr.size()-1; i >=0; i--) {
-			if (fdr.get(i)>bestFDR) {
-				fdr.set(i, bestFDR);
-			} else {
-				bestFDR=fdr.get(i);
-			}
-		}
-		TDoubleArrayList qvalue=new TDoubleArrayList();
-		TDoubleArrayList qvalueCount=new TDoubleArrayList();
-		for (int next = 1; next < fdr.size(); next++) {
-			int i=next-1;
-			if (fdr.get(i)!=fdr.get(next)) {
-				qvalue.add(fdr.get(i));
-				qvalueCount.add(count.get(i));
-			}
-		}
-		
-		return new XYTrace(qvalue.toArray(), qvalueCount.toArray(), GraphType.line, name);
+		return plot.getTrace();
 	}
 }

@@ -3,10 +3,10 @@ package edu.washington.gs.maccoss.encyclopedia;
 import com.google.common.collect.Lists;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ParsimonyProteinGrouper;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.AlternatePeakLocationInferrer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.EncyclopediaTwoPeakLocationInferrer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrerInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneScoringFactory;
@@ -38,17 +38,22 @@ import edu.washington.gs.maccoss.encyclopedia.utils.threading.SubProgressIndicat
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 import java.util.zip.DataFormatException;
 
 public class SearchToBLIB {
 	public static void main(String[] args) {
-		HashMap<String, String> arguments=CommandLineParser.parseArguments(args);
+		final Pair<List<String>, HashMap<String, String>> parsedArgs = CommandLineParser.parseMultipleAndRemainingArguments(args, Encyclopedia.INPUT_DIA_TAG);
+		final List<String> diaPaths = parsedArgs.x;
+		final HashMap<String, String> arguments = parsedArgs.y;
+
 		if (arguments.size()==0) {
 			SearchGUIMain.runGUI(ProgramType.EncyclopeDIA);
-			
 		} else if (arguments.containsKey("-h")||arguments.containsKey("-help")||arguments.containsKey("--help")) {
 			Logger.logLine("SearchToLIB Help");
 			Logger.timelessLogLine("You should prefix your arguments with a high memory setting, e.g. \"-Xmx8g\" for 8gb");
@@ -82,26 +87,35 @@ public class SearchToBLIB {
 			System.exit(1);
 			
 		} else {
+			if (diaPaths.isEmpty()) {
+				Logger.errorLine("Your specified input (-i) directory didn't contain any .RAW files!");
+				System.exit(1);
+			}
+
+			final List<File> diaFiles = diaPaths.stream()
+					.map(Paths::get)
+					.map(Path::toFile)
+					.collect(Collectors.toList());
+
 			if (arguments.containsKey("-pecan")||arguments.containsKey("-walnut")) {
 				VersioningDetector.checkVersionCLI(ProgramType.PecanPie);
-				convertPecan(arguments);
+				convertPecan(diaFiles, arguments);
 			} else if (arguments.containsKey("-xcordia")) {
 				VersioningDetector.checkVersionCLI(ProgramType.XCorDIA);
-				convertXCorDIA(arguments);
+				convertXCorDIA(diaFiles, arguments);
 			} else {
 				VersioningDetector.checkVersionCLI(ProgramType.EncyclopeDIA);
-				convertEncyclopedia(arguments);
+				convertEncyclopedia(diaFiles, arguments);
 			}
 		}
 	}
 
-	public static void convertXCorDIA(HashMap<String, String> arguments) {
-		if (!arguments.containsKey("-i")||!arguments.containsKey("-f")||!arguments.containsKey("-o")) {
+	public static void convertXCorDIA(List<File> diaFiles, HashMap<String, String> arguments) {
+		if (!arguments.containsKey("-f")||!arguments.containsKey("-o")) {
 			Logger.errorLine("You are required to specify an input file or directory (-i), an input fasta file (-f) and an output library file (-o)");
 			System.exit(1);
 		}
 
-		File diaFile=new File(arguments.get("-i"));
 		File fastaFile=new File(arguments.get("-f"));
 		File outputFile=new File(arguments.get("-o"));
 		boolean alignBetweenFiles=ParsingUtils.getBoolean("-a", arguments, true);
@@ -112,7 +126,9 @@ public class SearchToBLIB {
 		Logger.timelessLogLine("SearchToLIB XCorDIA version "+ProgramType.getGlobalVersion().toString());
 
 		Logger.timelessLogLine("Parameters:");
-		Logger.timelessLogLine(" -i "+diaFile.getAbsolutePath());
+		for (File diaFile : diaFiles) {
+			Logger.timelessLogLine(" -i " + diaFile.getAbsolutePath());
+		}
 		Logger.timelessLogLine(" -f "+fastaFile.getAbsolutePath());
 		Logger.timelessLogLine(" -o "+outputFile.getAbsolutePath());
 		Logger.timelessLogLine(" -a "+alignBetweenFiles);
@@ -134,20 +150,22 @@ public class SearchToBLIB {
 			}
 			
 			ArrayList<SearchJobData> pecanJobs=new ArrayList<SearchJobData>();
-			if (diaFile.isDirectory()) {
-				File[] files=diaFile.listFiles(StripeFileGenerator.getFilenameFilter());
-				if (files.length==0) {
-					Logger.errorLine("Your specified input (-i) directory didn't contain any .RAW files!");
-					System.exit(1);
-				}
-				
-				for (File file : files) {
-					XCorDIAJobData job=new XCorDIAJobData(Optional.ofNullable(targets), Optional.ofNullable(library), file, fastaFile, factory);
+			for (File diaFile : diaFiles) {
+				if (diaFile.isDirectory()) {
+					File[] files = diaFile.listFiles(StripeFileGenerator.getFilenameFilter());
+					if (files.length == 0) {
+						Logger.errorLine("Your specified input (-i) directory didn't contain any .RAW files: " + diaFile.getAbsolutePath());
+						System.exit(1);
+					}
+
+					for (File file : files) {
+						XCorDIAJobData job = new XCorDIAJobData(Optional.ofNullable(targets), Optional.ofNullable(library), file, fastaFile, factory);
+						pecanJobs.add(job);
+					}
+				} else {
+					XCorDIAJobData job = new XCorDIAJobData(Optional.ofNullable(targets), Optional.ofNullable(library), diaFile, fastaFile, factory);
 					pecanJobs.add(job);
 				}
-			} else {
-				XCorDIAJobData job=new XCorDIAJobData(Optional.ofNullable(targets), Optional.ofNullable(library), diaFile, fastaFile, factory);
-				pecanJobs.add(job);
 			}
 			Logger.logLine("Attempting to process "+pecanJobs.size()+" searches...");
 			convert(new EmptyProgressIndicator(), pecanJobs, outputFile, writeBlib, alignBetweenFiles);
@@ -157,13 +175,12 @@ public class SearchToBLIB {
 		}
 	}
 
-	public static void convertPecan(HashMap<String, String> arguments) {
-		if (!arguments.containsKey("-i")||!arguments.containsKey("-f")||!arguments.containsKey("-o")) {
+	public static void convertPecan(List<File> diaFiles, HashMap<String, String> arguments) {
+		if (!arguments.containsKey("-f")||!arguments.containsKey("-o")) {
 			Logger.errorLine("You are required to specify an input file or directory (-i), an input fasta file (-f) and an output library file (-o)");
 			System.exit(1);
 		}
 
-		File diaFile=new File(arguments.get("-i"));
 		File fastaFile=new File(arguments.get("-f"));
 		File outputFile=new File(arguments.get("-o"));
 		boolean alignBetweenFiles=ParsingUtils.getBoolean("-a", arguments, true);
@@ -174,7 +191,9 @@ public class SearchToBLIB {
 		Logger.logLine("SearchToLIB Pecan version "+ProgramType.getGlobalVersion().toString());
 
 		Logger.timelessLogLine("Parameters:");
-		Logger.timelessLogLine(" -i "+diaFile.getAbsolutePath());
+		for (File diaFile : diaFiles) {
+			Logger.timelessLogLine(" -i " + diaFile.getAbsolutePath());
+		}
 		Logger.timelessLogLine(" -f "+fastaFile.getAbsolutePath());
 		Logger.timelessLogLine(" -o "+outputFile.getAbsolutePath());
 		Logger.timelessLogLine(" -a "+alignBetweenFiles);
@@ -190,20 +209,22 @@ public class SearchToBLIB {
 			}
 			
 			ArrayList<SearchJobData> pecanJobs=new ArrayList<SearchJobData>();
-			if (diaFile.isDirectory()) {
-				File[] files=diaFile.listFiles(StripeFileGenerator.getFilenameFilter());
-				if (files.length==0) {
-					Logger.errorLine("Your specified input (-i) directory didn't contain any .RAW files!");
-					System.exit(1);
-				}
-				
-				for (File file : files) {
-					PecanJobData job=new PecanJobData(Optional.ofNullable(targets), file, fastaFile, factory);
+			for (File diaFile : diaFiles) {
+				if (diaFile.isDirectory()) {
+					File[] files = diaFile.listFiles(StripeFileGenerator.getFilenameFilter());
+					if (files.length == 0) {
+						Logger.errorLine("Your specified input (-i) directory didn't contain any .RAW files: " + diaFile.getAbsolutePath());
+						System.exit(1);
+					}
+
+					for (File file : files) {
+						PecanJobData job = new PecanJobData(Optional.ofNullable(targets), file, fastaFile, factory);
+						pecanJobs.add(job);
+					}
+				} else {
+					PecanJobData job = new PecanJobData(Optional.ofNullable(targets), diaFile, fastaFile, factory);
 					pecanJobs.add(job);
 				}
-			} else {
-				PecanJobData job=new PecanJobData(Optional.ofNullable(targets), diaFile, fastaFile, factory);
-				pecanJobs.add(job);
 			}
 			Logger.logLine("Attempting to process "+pecanJobs.size()+" searches...");
 			convert(new EmptyProgressIndicator(), pecanJobs, outputFile, writeBlib, alignBetweenFiles);
@@ -213,13 +234,12 @@ public class SearchToBLIB {
 		}
 	}
 
-	public static void convertEncyclopedia(HashMap<String, String> arguments) {
-		if (!arguments.containsKey("-i")||!arguments.containsKey("-l")||!arguments.containsKey("-o")||!arguments.containsKey("-f")) {
+	public static void convertEncyclopedia(List<File> diaFiles, HashMap<String, String> arguments) {
+		if (!arguments.containsKey("-l")||!arguments.containsKey("-o")||!arguments.containsKey("-f")) {
 			Logger.errorLine("You are required to specify an input file or directory (-i), an input library file (-l), a fasta database (-f), and an output library file (-o)");
 			System.exit(1);
 		}
 
-		File diaFile=new File(arguments.get("-i"));
 		File fastaFile=new File(arguments.get("-f"));
 		File libraryFile=new File(arguments.get("-l"));
 		File outputFile=new File(arguments.get("-o"));
@@ -227,11 +247,13 @@ public class SearchToBLIB {
 		boolean writeBlib=ParsingUtils.getBoolean("-blib", arguments, false);
 		
 		SearchParameters parameters=SearchParameterParser.parseParameters(arguments);
-		LibraryScoringFactory factory=new EncyclopediaOneScoringFactory(parameters);
+		LibraryScoringFactory factory=EncyclopediaScoringFactory.getScoringFactory(arguments, parameters);
 		Logger.timelessLogLine("SearchToLIB EncyclopeDIA version "+ProgramType.getGlobalVersion().toString());
 
 		Logger.timelessLogLine("Parameters:");
-		Logger.timelessLogLine(" -i "+diaFile.getAbsolutePath());
+		for (File diaFile : diaFiles) {
+			Logger.timelessLogLine(" -i " + diaFile.getAbsolutePath());
+		}
 		Logger.timelessLogLine(" -f "+fastaFile.getAbsolutePath());
 		Logger.timelessLogLine(" -l "+libraryFile.getAbsolutePath());
 		Logger.timelessLogLine(" -o "+outputFile.getAbsolutePath());
@@ -243,20 +265,26 @@ public class SearchToBLIB {
 			LibraryInterface library=BlibToLibraryConverter.getFile(libraryFile);
 			
 			ArrayList<SearchJobData> pecanJobs=new ArrayList<SearchJobData>();
-			if (diaFile.isDirectory()) {
-				File[] files=diaFile.listFiles(StripeFileGenerator.getFilenameFilter());
-				
-				if (files.length==0) {
-					Logger.errorLine("Your specified input (-i) directory didn't contain any .RAW files!");
-					System.exit(1);
-				}
-				for (File file : files) {
-					EncyclopediaJobData job=new EncyclopediaJobData(file, fastaFile, library, factory);
+			for (File diaFile: diaFiles) {
+				if (diaFile.isDirectory()) {
+					File[] files = diaFile.listFiles(StripeFileGenerator.getFilenameFilter());
+					if (files.length == 0) {
+						Logger.errorLine("Your specified input (-i) directory didn't contain any .RAW files: " + diaFile.getAbsolutePath());
+						System.exit(1);
+					}
+
+					if (files.length == 0) {
+						Logger.errorLine("Your specified input (-i) directory didn't contain any .RAW files!");
+						System.exit(1);
+					}
+					for (File file : files) {
+						EncyclopediaJobData job = new EncyclopediaJobData(file, fastaFile, library, factory);
+						pecanJobs.add(job);
+					}
+				} else {
+					EncyclopediaJobData job = new EncyclopediaJobData(diaFile, fastaFile, library, factory);
 					pecanJobs.add(job);
 				}
-			} else {
-				EncyclopediaJobData job=new EncyclopediaJobData(diaFile, fastaFile, library, factory);
-				pecanJobs.add(job);
 			}
 			Logger.logLine("Attempting to process "+pecanJobs.size()+" searches...");
 			convert(new EmptyProgressIndicator(), pecanJobs, outputFile, writeBlib, alignBetweenFiles);
@@ -267,6 +295,10 @@ public class SearchToBLIB {
 	}
 	
 	public static void convert(ProgressIndicator progress, List<? extends SearchJobData> pecanJobs, File libFile, boolean writeBlib, boolean alignBetweenFiles) {
+		convert(progress, pecanJobs, libFile, writeBlib, alignBetweenFiles, null);
+	}
+
+	public static void convert(ProgressIndicator progress, List<? extends SearchJobData> pecanJobs, File libFile, boolean writeBlib, boolean alignBetweenFiles, SearchParameters parameters) {
 		ArrayList<SearchJobData> processedJobs=new ArrayList<SearchJobData>();
 		ArrayList<File> featureFiles=new ArrayList<File>();
 		SearchJobData representativeJob=null;
@@ -303,7 +335,9 @@ public class SearchToBLIB {
 			return;
 		}
 		Logger.logLine("Using "+representativeJob.getDiaFileReader().getOriginalFileName()+" to extract representative search parameters");
-		SearchParameters parameters=representativeJob.getParameters();
+		if (parameters==null) {
+			parameters=representativeJob.getParameters();
+		}
 
 		String filename=libFile.getName();
 		if (filename.lastIndexOf('.')>0) {
@@ -338,7 +372,7 @@ public class SearchToBLIB {
 				runningPercolator=false;
 			} else {
 				Logger.logLine("Running global Percolator analysis.");
-				TableConcatenator.concatenateTables(featureFiles, bigFeatureFile);
+				TableConcatenator.concatenatePINTables(featureFiles, bigFeatureFile, representativeJob.getPrimaryScoreName());
 				
 				// delete if exists
 				if (bigPercolatorFiles.getModelFile().exists()) {
@@ -369,7 +403,7 @@ public class SearchToBLIB {
 				if (alignBetweenFiles) {
 					Logger.logLine("Inferring peak boundaries across files...");
 					try {
-						inferrer=Optional.of(AlternatePeakLocationInferrer.getAlignmentData(new EmptyProgressIndicator(), pecanJobs, passingPeptides.x, parameters));
+						inferrer=Optional.of(EncyclopediaTwoPeakLocationInferrer.getAlignmentData(new EmptyProgressIndicator(), pecanJobs, passingPeptides.x, parameters));
 						Logger.logLine("...Finished peak inference.");
 					} catch (Exception e) {
 						Logger.errorLine("RT alignment between files failed! Perhaps this is to build a chromatogram library and not a quantitative experiment? Attempting to recover without alignment.");
@@ -641,6 +675,8 @@ public class SearchToBLIB {
 					} catch (DataFormatException e) {
 						Logger.errorException(e);
 					}
+				} else {
+					Logger.errorLine("Only exporting report for a single search, so skipping building quantitative tables.");
 				}
 			}
 			
@@ -699,7 +735,7 @@ public class SearchToBLIB {
 			localizationData=Optional.empty();
 		}
 
-		elib.addIntegratedEntries(libraryEntries, inferrer, localizationData, job.getParameters().getAAConstants(), job.getParameters().getPercolatorThreshold());
+		elib.addIntegratedEntries(!(job instanceof DDASearchJobData), libraryEntries, inferrer, localizationData, job.getParameters().getAAConstants(), job.getParameters().getPercolatorThreshold());
 		
 
 		Logger.logLine("Finished writing to Encyclopedia ELIB at "+new Date().toString());

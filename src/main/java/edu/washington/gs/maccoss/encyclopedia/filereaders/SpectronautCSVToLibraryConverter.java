@@ -12,6 +12,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
 public class SpectronautCSVToLibraryConverter {
 
@@ -94,17 +95,18 @@ public class SpectronautCSVToLibraryConverter {
 				private String lastGroup=null;
 				@Override
 				public void processRow(Map<String, String> row) {
+					final String peptideModSeq=OpenSwathTSVToLibraryConverter.getFromMap(row, "ModifiedPeptide");
+					final String chargeString=OpenSwathTSVToLibraryConverter.getFromMap(row, "PrecursorCharge");
+					final String productMz=OpenSwathTSVToLibraryConverter.getFromMap(row, "FragmentMz", "ProductMz");
+					final String libraryIntensity=OpenSwathTSVToLibraryConverter.getFromMap(row, "RelativeIntensity", "RelativeFragmentIntensity", "LibraryIntensity");
+					final String rtString = OpenSwathTSVToLibraryConverter.getFromMap(row, "iRT", "Tr_recalibrated");
+
 					try {
-						String peptideModSeq=OpenSwathTSVToLibraryConverter.getFromMap(row, "ModifiedPeptide");
-						String chargeString=OpenSwathTSVToLibraryConverter.getFromMap(row, "PrecursorCharge");
-						double productMz=Double.parseDouble(OpenSwathTSVToLibraryConverter.getFromMap(row, "FragmentMz"));
-						float libraryIntensity=Float.parseFloat(OpenSwathTSVToLibraryConverter.getFromMap(row, "RelativeIntensity", "RelativeFragmentIntensity"));
-	
-						String group=peptideModSeq+"_"+chargeString+"H";
-						
+						final String group=peptideModSeq+"_"+chargeString+"H";
+
 						if (!group.equals(lastGroup)) {
 							byte charge=Byte.parseByte(chargeString);
-							float iRT=Float.parseFloat(OpenSwathTSVToLibraryConverter.getFromMap(row, "iRT"));
+							float iRT=Float.parseFloat(rtString);
 							
 							if (lastPeptide!=null) peptides.add(new ImmutablePeptideEntry(lastPeptide));
 							
@@ -115,17 +117,32 @@ public class SpectronautCSVToLibraryConverter {
 								Logger.logLine("Read "+peptides.size()+" entries...");
 							}
 						}
-						lastPeptide.addPeak(new Peak(productMz, libraryIntensity));
+						double productMzNumber=Double.parseDouble(productMz);
+						float libraryIntensityNumber=Float.parseFloat(libraryIntensity);
+						lastPeptide.addPeak(new Peak(productMzNumber, libraryIntensityNumber));
 
 					} catch (Exception e) {
-						Logger.errorLine("Error parsing Spectronaut CSV:");
-						Logger.errorException(e);
-						Logger.errorLine("Spectronaut CSV parsing requires the following columns:\n" +
-								" 1) ModifiedPeptide: ["+OpenSwathTSVToLibraryConverter.getFromMap(row, "ModifiedPeptide")+"]\n" + 
-								" 2) PrecursorCharge: ["+OpenSwathTSVToLibraryConverter.getFromMap(row, "PrecursorCharge")+"]\n" + 
-								" 3) FragmentMz: ["+OpenSwathTSVToLibraryConverter.getFromMap(row, "FragmentMz")+"]\n" + 
-								" 4) RelativeIntensity: ["+OpenSwathTSVToLibraryConverter.getFromMap(row, "RelativeIntensity")+"]\n" + 
-								" 5) iRT: ["+OpenSwathTSVToLibraryConverter.getFromMap(row, "iRT")+"]");
+						if (!row.containsKey("Tr_recalibrated")) {  // decide if it's Spectronaut or DIA-NN
+							Logger.errorLine("Error parsing Spectronaut CSV:");
+							Logger.errorException(e);
+							Logger.errorLine("Spectronaut CSV parsing requires the following columns:\n" +
+									" 1) ModifiedPeptide: [" + peptideModSeq + "]\n" +
+									" 2) PrecursorCharge: [" + chargeString + "]\n" +
+									" 3) FragmentMz: [" + productMz + "]\n" +
+									" 4) RelativeIntensity: [" + libraryIntensity + "]\n" +
+									" 5) iRT: [" + rtString + "]");
+							Logger.errorLine("Other headers: "+General.toString(new ArrayList<String>(row.keySet())));
+						} else {
+							Logger.errorLine("Error parsing DIA-NN CSV:");
+							Logger.errorException(e);
+							Logger.errorLine("DIA-NN CSV parsing requires the following columns:\n" +
+									" 1) ModifiedPeptide: [" + peptideModSeq + "]\n" +
+									" 2) PrecursorCharge: [" + chargeString + "]\n" +
+									" 3) ProductMz: [" + productMz + "]\n" +
+									" 4) LibraryIntensity: [" + libraryIntensity + "]\n" +
+									" 5) Tr_recalibrated: [" + rtString + "]");
+							Logger.errorLine("Other headers: "+General.toString(new ArrayList<String>(row.keySet())));
+						}
 						throw new EncyclopediaException(e);
 					}
 				}

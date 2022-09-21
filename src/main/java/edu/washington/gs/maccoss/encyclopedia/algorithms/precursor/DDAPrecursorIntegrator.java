@@ -65,7 +65,10 @@ public class DDAPrecursorIntegrator {
 				if (matchingMSMS!=null) {
 					list.add(new PSMScoredSpectrum(psm, matchingMSMS));
 				} else {
-					Logger.errorLine("Failed to find PSM spectrum ID: "+psm.getSpectrumIndex());
+					// create a "fake" scan at this RT if one wasn't collected so that we can quantify the precursor
+					FragmentScan emptyScan=new FragmentScan("N/A", "N/A", 0, psm.getRetentionTimeInSec(), 0, 0.0f, psm.getPrecursorMZ()-1, psm.getPrecursorMZ()+1,
+							new double[0], new float[0]);
+					list.add(new PSMScoredSpectrum(psm, emptyScan));
 				}
 				
 			}

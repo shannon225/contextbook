@@ -4,7 +4,9 @@ import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.FileDialog;
 import java.awt.Font;
+import java.awt.Frame;
 import java.awt.Graphics2D;
 import java.awt.Shape;
 import java.awt.Toolkit;
@@ -21,17 +23,21 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.sql.SQLException;
 import java.text.AttributedString;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JMenuItem;
+import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 
 import org.jfree.chart.ChartFactory;
@@ -58,11 +64,16 @@ import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 import org.jfree.graphics2d.svg.SVGGraphics2D;
 import org.jfree.graphics2d.svg.SVGUtils;
+import org.jfree.ui.RectangleInsets;
 import org.jfree.ui.TextAnchor;
 
+import com.itextpdf.awt.FontMapper;
 import com.itextpdf.awt.PdfGraphics2D;
 import com.itextpdf.text.Document;
+import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.FontFactory;
 import com.itextpdf.text.Rectangle;
+import com.itextpdf.text.pdf.BaseFont;
 import com.itextpdf.text.pdf.PdfContentByte;
 import com.itextpdf.text.pdf.PdfTemplate;
 import com.itextpdf.text.pdf.PdfWriter;
@@ -70,7 +81,8 @@ import com.itextpdf.text.pdf.PdfWriter;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.Boxplotter.BoxPlotterRenderer;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.Boxplotter.CategoryBoxPlotterRenderer;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
@@ -85,9 +97,12 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.IonType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.Distribution;
+import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
 
 public class Charter {
+	private static final String BASE_FONT_NAME = "Helvetica";//"News Gothic MT";
+
 	public static void main(String[] args) {
 		XYTraceInterface trace=new XYTrace(
 				new double[] { 114.0913405, 147.1128042, 227.1754045, 244.1655682, 355.2339825, 359.1925112, 458.2609252, 484.2765755, 515.2823892, 541.2980395, 640.3664535, 644.3249822, 755.3933965,
@@ -201,8 +216,33 @@ public class Charter {
 		writeAsPDF(chart, f, d);
 	}
 
+	public static void writeAsPDF(JPanel panel, File f, Dimension d) {
+		try {
+			FontFactory.defaultEmbedding = true;
+			
+			// NOTE: this uses itextPDF 4.2, which is LGPL. Do not upgrade to the AGPL version! 
+			Rectangle pagesize=new Rectangle(d.width, d.height);
+			Document document=new Document(pagesize);
+			FileOutputStream os=new FileOutputStream(f);
+			PdfWriter writer=PdfWriter.getInstance(document, os);
+			document.open();
+			PdfContentByte canvas=writer.getDirectContent();
+			PdfTemplate template=canvas.createTemplate(d.width, d.height);
+			Graphics2D g2d=new PdfGraphics2D(template, d.width, d.height);
+			panel.printComponents(g2d);
+			g2d.dispose();
+			canvas.addTemplate(template, 0, 0);
+			document.close();
+			os.close();
+		} catch (Exception e) {
+			Logger.errorException(e);
+		}
+	}
+
 	public static void writeAsPDF(JFreeChart chart, File f, Dimension d) {
 		try {
+			FontFactory.defaultEmbedding = true;
+			
 			// NOTE: this uses itextPDF 4.2, which is LGPL. Do not upgrade to the AGPL version! 
 			Rectangle pagesize=new Rectangle(d.width, d.height);
 			Document document=new Document(pagesize);
@@ -247,6 +287,16 @@ public class Charter {
 		
 		writeAsSVG(getChart(xAxis, yAxis, displayLegend, traces).getChart(), f, d);
 	}
+	public static void writeAsSVG(JPanel panel, File f, Dimension d) {
+		try {
+			SVGGraphics2D g2 = new SVGGraphics2D(d.width, d.height); 
+	        java.awt.Rectangle r = new java.awt.Rectangle(0, 0, d.width, d.height); 
+	        panel.paint(g2); 
+	        SVGUtils.writeToSVG(f, g2.getSVGElement()); 
+		} catch (Exception e) {
+			Logger.errorException(e);
+		}
+	}
 
 	public static void writeAsSVG(JFreeChart chart, File f, Dimension d) {
 		try {
@@ -279,12 +329,13 @@ public class Charter {
 		JFreeChart chart=new JFreeChart(plot);
 		chart.removeLegend();
 		chart.setBackgroundPaint(Color.white);
+		chart.setPadding(new RectangleInsets(10, 10, 10, 10));
 
 		NumberAxis rangeAxis=(NumberAxis) plot.getRangeAxis();
 
-		Font font=new Font("News Gothic MT", Font.PLAIN, 24);
-		Font font2=new Font("News Gothic MT", Font.PLAIN, 32);
-		Font font3=new Font("News Gothic MT", Font.PLAIN, 18);
+		Font font=new Font(BASE_FONT_NAME, Font.PLAIN, 24);
+		Font font2=new Font(BASE_FONT_NAME, Font.PLAIN, 32);
+		Font font3=new Font(BASE_FONT_NAME, Font.PLAIN, 18);
 		rangeAxis.setLabelFont(font2);
 		rangeAxis.setTickLabelFont(font);
 
@@ -389,16 +440,17 @@ public class Charter {
 		plot.setRangeGridlinePaint(Color.white);//gray);
 		plot.setRangeGridlinesVisible(false);
 		JFreeChart chart=new JFreeChart(plot);
+		chart.setPadding(new RectangleInsets(10, 10, 10, 10));
 		chart.setBackgroundPaint(Color.white);
 
 		NumberAxis rangeAxis=(NumberAxis) ((CategoryPlot) plot).getRangeAxis();
 
-		Font font=new Font("News Gothic MT", Font.PLAIN, 24);
-		Font font2=new Font("News Gothic MT", Font.PLAIN, 32);
-		Font font3=new Font("News Gothic MT", Font.PLAIN, 18);
-		font=new Font("News Gothic MT", Font.PLAIN, 12);
-		font2=new Font("News Gothic MT", Font.PLAIN, 16);
-		font3=new Font("News Gothic MT", Font.PLAIN, 16);
+		Font font=new Font(BASE_FONT_NAME, Font.PLAIN, 24);
+		Font font2=new Font(BASE_FONT_NAME, Font.PLAIN, 32);
+		Font font3=new Font(BASE_FONT_NAME, Font.PLAIN, 18);
+		font=new Font(BASE_FONT_NAME, Font.PLAIN, 12);
+		font2=new Font(BASE_FONT_NAME, Font.PLAIN, 16);
+		font3=new Font(BASE_FONT_NAME, Font.PLAIN, 16);
 		rangeAxis.setLabelFont(font2);
 		rangeAxis.setTickLabelFont(font);
 
@@ -453,8 +505,18 @@ public class Charter {
 		}
 		return getBoxplotChart(title, xAxisLabel, yAxisLabel, categories, values);
 	}
-	
+	public static ExtendedChartPanel getBoxplotChart(String title, String xAxisLabel, String yAxisLabel, String[] categories, TDoubleArrayList[] values) {
+		TFloatArrayList[] floatValues=new TFloatArrayList[values.length];
+		for (int i = 0; i < floatValues.length; i++) {
+			floatValues[i]=new TFloatArrayList(General.toFloatArray(values[i].toArray()));
+		}
+		return getBoxplotChart(title, xAxisLabel, yAxisLabel, categories, floatValues);
+	}
+
 	public static ExtendedChartPanel getBoxplotChart(String title, String xAxisLabel, String yAxisLabel, String[] categories, TFloatArrayList[] values) {
+		return getBoxplotChart(title, xAxisLabel, yAxisLabel, categories, values, false);
+	}
+	public static ExtendedChartPanel getBoxplotChart(String title, String xAxisLabel, String yAxisLabel, String[] categories, TFloatArrayList[] values, boolean requireRangeIncludesZero) {
 		assert (categories.length==values.length);
 		boolean displayLegend=false;
 
@@ -463,18 +525,18 @@ public class Charter {
 			dataset.add(Boxplotter.calculateBoxAndWhiskerStatistics(values[i].toArray()), xAxisLabel, categories[i]);
 		}
 
-		BoxPlotterRenderer renderer=new BoxPlotterRenderer();
+		CategoryBoxPlotterRenderer renderer=new CategoryBoxPlotterRenderer();
 		CategoryAxis xAxis=new CategoryAxis(xAxisLabel);
 		NumberAxis yAxis=new NumberAxis(yAxisLabel);
-		yAxis.setAutoRangeIncludesZero(false);
+		yAxis.setAutoRangeIncludesZero(requireRangeIncludesZero);
 		CategoryPlot plot=new CategoryPlot(dataset, xAxis, yAxis, renderer);
 
-		Font font=new Font("News Gothic MT", Font.PLAIN, 24);
-		Font font2=new Font("News Gothic MT", Font.PLAIN, 32);
-		Font font3=new Font("News Gothic MT", Font.PLAIN, 18);
-		font=new Font("News Gothic MT", Font.PLAIN, 10);
-		font2=new Font("News Gothic MT", Font.PLAIN, 14);
-		font3=new Font("News Gothic MT", Font.PLAIN, 14);
+		Font font=new Font(BASE_FONT_NAME, Font.PLAIN, 24);
+		Font font2=new Font(BASE_FONT_NAME, Font.PLAIN, 32);
+		Font font3=new Font(BASE_FONT_NAME, Font.PLAIN, 18);
+		font=new Font(BASE_FONT_NAME, Font.PLAIN, 10);
+		font2=new Font(BASE_FONT_NAME, Font.PLAIN, 14);
+		font3=new Font(BASE_FONT_NAME, Font.PLAIN, 14);
 		final JFreeChart chart=new JFreeChart(title, font, plot, true);
 
 		plot.setBackgroundPaint(Color.white);
@@ -516,7 +578,7 @@ public class Charter {
 	}
 	
 	public static Pair<AttributedString, Double> getAxisScale(String yAxis, double maxY, int fontSize) {
-		Font font2=new Font("News Gothic MT", Font.PLAIN, fontSize);
+		Font font2=new Font(BASE_FONT_NAME, Font.PLAIN, fontSize);
 		HashMap<TextAttribute, Object> m=new HashMap<TextAttribute, Object>(font2.getAttributes());
 		m.put(TextAttribute.SUPERSCRIPT, TextAttribute.SUPERSCRIPT_SUPER);
 		Font font2super=new Font(m);
@@ -555,7 +617,7 @@ public class Charter {
 	}
 	
 
-    private static Shape createRingShape(
+    public static Shape createRingShape(
         double centerX, double centerY, double outerRadius, double thickness)
     {
         Ellipse2D outer = new Ellipse2D.Double(
@@ -582,14 +644,10 @@ public class Charter {
 			maxY=XYTrace.getMaxY(traces)*1.05;
 		}
 
-//		Font font=new Font("News Gothic MT", Font.PLAIN, 24);
-//		Font font2=new Font("News Gothic MT", Font.PLAIN, 32);
-//		Font font3=new Font("News Gothic MT", Font.PLAIN, 18);
-//		Font font4=new Font("News Gothic MT", Font.PLAIN, 14);
-		Font font=new Font("News Gothic MT", Font.PLAIN, fontSize);
-		Font font2=new Font("News Gothic MT", Font.PLAIN, fontSize);
-		Font font3=new Font("News Gothic MT", Font.PLAIN, fontSize);
-		Font font4=new Font("News Gothic MT", Font.PLAIN, fontSize-4);
+		Font font=new Font(BASE_FONT_NAME, Font.PLAIN, fontSize);
+		Font font2=new Font(BASE_FONT_NAME, Font.PLAIN, fontSize);
+		Font font3=new Font(BASE_FONT_NAME, Font.PLAIN, fontSize);
+		Font font4=new Font(BASE_FONT_NAME, Font.PLAIN, fontSize-4);
 
 		Pair<AttributedString, Double> axisScale=getAxisScale(yAxis, maxY, fontSize);
 
@@ -655,7 +713,7 @@ public class Charter {
 
 			case bighollowpoint:
 				renderer=new XYLineAndShapeRenderer();
-				renderer.setSeriesShape(0, createRingShape(0, 0, 3, 1));
+				renderer.setSeriesShape(0, createRingShape(0, 0, 2.5, 0.75));
 				
 				((XYLineAndShapeRenderer) renderer).setBaseLinesVisible(false);
 
@@ -663,7 +721,7 @@ public class Charter {
 
 			case bigpoint:
 				renderer=new XYLineAndShapeRenderer();
-				renderer.setSeriesShape(0, new Ellipse2D.Double(-3, -3, 6, 6));
+				renderer.setSeriesShape(0, new Ellipse2D.Double(-2.5, -2.5, 5, 5));
 				
 				((XYLineAndShapeRenderer) renderer).setBaseLinesVisible(false);
 
@@ -683,6 +741,7 @@ public class Charter {
 
 				break;
 
+			case uncenteredText:
 			case text:
 				renderer=new XYLineAndShapeRenderer();
 				renderer.setSeriesShape(0, new Ellipse2D.Double(-0.5, -0.5, 1, 1));
@@ -715,11 +774,9 @@ public class Charter {
 			case bigpoint:
 			case point:
 			case tinypoint:
-				XYSeries series=new XYSeries(trace.getName());
+				XYSeries series=new XYSeries(trace.getName(), false);
 				for (int i=0; i<x.length; i++) {
-					if (!Double.isNaN(x[i])&&!Double.isNaN(y[i])) {
-						series.add(x[i], y[i]);
-					}
+					series.add(x[i], y[i]);
 				}
 				dataset.addSeries(series);
 				break;
@@ -805,11 +862,22 @@ public class Charter {
 					renderer.setSeriesPaint(index, Color.GRAY);
 				}
 				break;
-				
+
 			case text:
 				for (int i=0; i<x.length; i++) {
 					if (!Double.isNaN(x[i])&&!Double.isNaN(y[i])) {
 						XYTextAnnotation annotation=new XYTextAnnotation(trace.getName(), x[i], y[i]*1.01);
+						annotation.setFont(font4);
+						plot.addAnnotation(annotation);
+					}
+				}
+				break;
+				
+			case uncenteredText:
+				for (int i=0; i<x.length; i++) {
+					if (!Double.isNaN(x[i])&&!Double.isNaN(y[i])) {
+						XYTextAnnotation annotation=new XYTextAnnotation(trace.getName(), x[i], y[i]*1.01);
+						annotation.setTextAnchor(TextAnchor.TOP_LEFT);
 						annotation.setFont(font4);
 						plot.addAnnotation(annotation);
 					}
@@ -837,6 +905,7 @@ public class Charter {
 		plot.setRangeGridlinesVisible(false);
 		JFreeChart chart=new JFreeChart(plot);
 		chart.setBackgroundPaint(Color.white);
+		chart.setPadding(new RectangleInsets(10, 10, 10, 10));
 
 		NumberAxis rangeAxis=(NumberAxis) ((XYPlot) plot).getRangeAxis();
 		rangeAxis.setLabelFont(font2);
@@ -855,6 +924,7 @@ public class Charter {
 			chartPanel.getChart().getLegend().setItemFont(font3);
 		}
 		addCopyDataMenu(xAxis, chartPanel, traces);
+		addSaveAsDlib(chartPanel, traces);
 		
 		//rangeAxis.setTickUnit(new NumberTickUnit(20)); 
 		//domainAxis.setTickUnit(new NumberTickUnit(20));
@@ -926,6 +996,63 @@ public class Charter {
 				StringSelection stringSelection = new StringSelection(sb.toString());
 				Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 				clipboard.setContents(stringSelection, null);
+			}
+		});
+	}
+	
+	private static void addSaveAsDlib(final ExtendedChartPanel chartPanel, final XYTraceInterface... traces) {
+
+		final ArrayList<LibraryEntry> entries=new ArrayList<LibraryEntry>();
+		for (XYTraceInterface trace : traces) {
+			if (trace instanceof AnnotatedLibraryEntry) {
+				AnnotatedLibraryEntry entry=(AnnotatedLibraryEntry)trace;
+				
+				entries.add(entry);
+			}
+		}
+		// don't bother continuing if we don't have any annotated spectra
+		if (entries.size()==0) {
+			return;
+		}
+
+		JMenuItem saveLibItem=new JMenuItem("Append to library...");
+		chartPanel.getPopupMenu().add(saveLibItem, 5);
+		saveLibItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				FileDialog dialog=new FileDialog((Frame)null, "Select a new or existing library file", FileDialog.SAVE);
+				dialog.setFilenameFilter(new SimpleFilenameFilter(LibraryFile.DLIB));
+				dialog.setVisible(true);
+				File[] fs=dialog.getFiles();
+				try {
+					LibraryFile library=new LibraryFile();
+					if (fs!=null&&fs.length>0&&fs[0]!=null) {
+						if (fs[0].exists()&&fs[0].canRead()) {
+							library.openFile(fs[0]);
+							
+						} else {
+							if (!fs[0].getName().toLowerCase().endsWith(LibraryFile.DLIB)) {
+								File newFile=new File(fs[0].getAbsolutePath()+LibraryFile.DLIB);
+								fs[0]=newFile;
+							}
+							library.openFile();
+						}
+
+						library.addEntries(entries, false);
+						library.addProteinsFromEntries(entries);
+						library.createIndices();
+	
+						library.saveAsFile(fs[0]);
+						library.close();
+					}
+				
+				} catch (SQLException sqle) {
+					Logger.errorLine("Found SQL error adding data to library file...");
+					Logger.errorException(sqle);
+				} catch (IOException ioe) {
+					Logger.errorLine("Found IO error adding data to library file...");
+					Logger.errorException(ioe);
+				}
 			}
 		});
 	}

@@ -128,16 +128,18 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 			
 			// a reasonable quant score (in case there are multiples)
 			float[] corr=data.getCorrelationArray();
-			float sum=0.0f;
+			float integrationScore=0.0f;
 			for (int i = 0; i < corr.length; i++) {
 				if (corr[i]>TransitionRefiner.identificationCorrelationThreshold) {
 					// scores anything above the identification threshold on a line to 0
-					sum+=(corr[i]-TransitionRefiner.identificationCorrelationThreshold)/oneMinusThreshold;
+					integrationScore+=(corr[i]-TransitionRefiner.identificationCorrelationThreshold)/oneMinusThreshold;
 				}
 			}
 					
 			double[] fragmentMassArray=FragmentIon.getMasses(data.getFragmentMassArray());
-			IntegratedLibraryEntry entry=new IntegratedLibraryEntry(filename, psmdata.getAccessions(), psmdata.getSpectrumIndex(), psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), psmdata.getPeptideModSeq(), 1, psmdata.getRetentionTime(), sum, fragmentMassArray, data.getIntegrationArray(), data);
+			
+			// FIXME START WORK HERE
+			IntegratedLibraryEntry entry=new IntegratedLibraryEntry(filename, psmdata.getAccessions(), psmdata.getSpectrumIndex(), psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), psmdata.getPeptideModSeq(), 1, psmdata.getRetentionTime(), psmdata.getScore(), integrationScore, fragmentMassArray, data.getIntegrationArray(), data);
 			if (limitToQuantifiable) {
 				if (entry.getIonCount()<params.getMinNumOfQuantitativePeaks()||entry.getTIC()<1.0f) {
 					return Nothing.NOTHING;
@@ -250,7 +252,14 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 			
 		}
 		if (integrateEverything) {
-			// bestIndividualScores are all at different retention times, but all peaks are present if there is any signal for that transition
+			/*
+			 * integrateEverything == “-quantifyAcrossSamples”
+			 * If “-quantifyAcrossSamples” is false, then bestScores forces the center of the peak to be the closest scan to the RT target, as specified by “unitEntry”. Here, “unitEntry” uses:
+			 * 	1)	the reported RT in that sample if above the 1% FDR threshold, 
+			 * 	2)	or the reported RT if that RT falls on the expected RT alignment line (within 3 standard deviations), 
+			 * 	3)	otherwise it is interpolated from the RT alignment line. 
+			 * If “-quantifyAcrossSamples” is true, then bestIndividualFragmentScores tries to hunt for the optimal RT within the window, based on highest DotProduct. The window is defined by the RT target +/- 1.5*expectedPeakWidth (“-expectedPeakWidth” default is 25 seconds). 
+			 */
 			bestScores=bestIndividualFragmentScores; 
 		}
 		
@@ -350,6 +359,6 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		double[] massArray=mzs.toArray();
 		float[] intensityArray=intens.toArray();
 		float[] deltaMassArray=deltaMasses.toArray();
-		return data.addPeakData(deltaMassArray, massArray, intensityArray, retentionTimes.toArray(), identifiedTICRatio);
+		return data.addPeakData(deltaMassArray, massArray, intensityArray, retentionTimes.toArray(), identifiedTICRatio, params.getFragmentTolerance());
 	}
 }

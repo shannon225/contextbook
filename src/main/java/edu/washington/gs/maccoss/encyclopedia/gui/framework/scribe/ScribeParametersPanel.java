@@ -38,14 +38,13 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.ParametersPanelInterface;
-import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchJob;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessor;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessorTableModel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.LabeledComponent;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingJob;
+import edu.washington.gs.maccoss.encyclopedia.jobs.ScribeJob;
+import edu.washington.gs.maccoss.encyclopedia.jobs.SearchJob;
 import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
@@ -187,21 +186,20 @@ public class ScribeParametersPanel extends JPanel implements ParametersPanelInte
 	 * @see edu.washington.gs.maccoss.encyclopedia.gui.pecan.ParametersPanelInterface#getJob(java.io.File, edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessorTableModel)
 	 */
 	@Override
-	public SwingJob getJob(File diaFile, JobProcessorTableModel model) {
+	public void getJob(File diaFile, JobProcessorTableModel model) {
 		SearchParameters parameters=getParameters();
 		File libraryFile=libraryFileChooser.getFile();
 		File fastaFile=getBackgroundFastaFile();
-		if (libraryFile==null) return null;
-		SearchJob job=getJob(diaFile, fastaFile, libraryFile, model, parameters);
+		if (libraryFile==null) return;
+		SearchJob job=getJob(diaFile, fastaFile, libraryFile, parameters);
 
 		if (job!=null) {
 			model.addJob(job);
 		}
-		return job;
 	}
 
 	private static HashMap<File, LibraryInterface> libraries=new HashMap<File, LibraryInterface>();
-	static SearchJob getJob(File diaFile, File fastaFile, File libraryFile, JobProcessor processor, SearchParameters parameters) {
+	static SearchJob getJob(File diaFile, File fastaFile, File libraryFile, SearchParameters parameters) {
 		
 		LibraryInterface library=libraries.get(libraryFile);
 		if (library==null) {
@@ -211,7 +209,7 @@ public class ScribeParametersPanel extends JPanel implements ParametersPanelInte
 		
 		ScribeScoringFactory factory=new ScribeScoringFactory(parameters);
 		ScribeJobData job=new ScribeJobData(diaFile, fastaFile, library, factory);
-		return new ScribeJob(processor, job);
+		return new ScribeJob(job);
 	}
 
 	public ScribeSearchParameters getParameters() {
@@ -247,6 +245,7 @@ public class ScribeParametersPanel extends JPanel implements ParametersPanelInte
 				percolator,
 				PercolatorExecutor.DEFAULT_TRAINING_SET_SIZE,
 				PercolatorExecutor.DEFAULT_TRAINING_THRESHOLD,
+				PercolatorExecutor.DEFAULT_TRAINING_ITERATIONS,
 				dataAcquisitionType,
 				numberOfJobsValue,
 				25f,

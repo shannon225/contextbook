@@ -298,7 +298,7 @@ public class PrositCSVWriter {
 	}
 	
 	// http://proteomicsnews.blogspot.com/2014/06/normalized-collision-energy-calculation.html
-	private static float convertNCE(float nce, byte charge, byte defaultCharge) {
+	protected static float convertNCE(float nce, byte charge, byte defaultCharge) {
 		return nce*getChargeFactor(defaultCharge)/getChargeFactor(charge);
 	}
 

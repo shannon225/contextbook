@@ -45,6 +45,16 @@ public class ExpectedFragmentationScorer extends AuxillaryPSMScorer {
 	}
 
 	@Override
+	public int getParentDeltaMassIndex() {
+		return AuxillaryPSMScorer.MISSING_INDEX;
+	}
+
+	@Override
+	public int getFragmentDeltaMassIndex() {
+		return AuxillaryPSMScorer.MISSING_INDEX;
+	}
+
+	@Override
 	public float[] getMissingDataScores(LibraryEntry entry) {
 		FragmentationModel model=PeptideUtils.getPeptideModel(entry.getPeptideModSeq(), parameters.getAAConstants());
 		FragmentIon[] modelIons=model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge(), false);

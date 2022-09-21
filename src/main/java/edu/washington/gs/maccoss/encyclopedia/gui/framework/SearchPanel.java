@@ -37,6 +37,7 @@ import javax.swing.table.TableColumn;
 import edu.washington.gs.maccoss.encyclopedia.Encyclopedia;
 import edu.washington.gs.maccoss.encyclopedia.Pecanpie;
 import edu.washington.gs.maccoss.encyclopedia.ProgramType;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ThesaurusSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.scribe.ScribeSearchParameters;
@@ -68,6 +69,10 @@ import edu.washington.gs.maccoss.encyclopedia.gui.general.LogConsole;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.MemoryMonitor;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.ProgressRenderer;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingJob;
+import edu.washington.gs.maccoss.encyclopedia.jobs.JobProcessor;
+import edu.washington.gs.maccoss.encyclopedia.jobs.SearchToBLIBJob;
+import edu.washington.gs.maccoss.encyclopedia.jobs.SearchToELIBJob;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.Networking;
 
@@ -84,6 +89,8 @@ public class SearchPanel extends JPanel {
 	private static final ImageIcon featureBrowserIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/feature_icon.png"));
 	private static final ImageIcon helpIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/help_icon.png"));
 	private static final ImageIcon windowSchemeIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/window_scheme_icon.png"));
+	private static final ImageIcon xmlFileIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/xml_file_icon.png"));
+	
 	
 	JobProcessorTableModel processorTableModel=new JobProcessorTableModel();
 	
@@ -163,7 +170,7 @@ public class SearchPanel extends JPanel {
 			}
 			optionsTabs.addTab(xcordia.getProgram().toString(), xcordia.getSmallImage(), xcordia, xcordia.getProgramShortDescription());
 		}
-		if ((false&&ProgramType.Global==program)||ProgramType.Scribe==program) {
+		if ((ProgramType.Global==program)||ProgramType.Scribe==program) {
 			ScribeParametersPanel scribe=new ScribeParametersPanel(this);
 			try {
 				HashMap<String, String> map=ScribeSearchParameters.readPreferences();
@@ -535,7 +542,7 @@ public class SearchPanel extends JPanel {
 		combineELIB.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				SearchPanelUtilities.combineELIBs(SearchPanel.this);
+				SearchPanelUtilities.combineELIBs(SearchPanel.this, getJobProcessor());
 			}
 		});
 		convertMenu.add(combineELIB);
@@ -553,6 +560,24 @@ public class SearchPanel extends JPanel {
 		dataMenu.setMnemonic(KeyEvent.VK_D);
 		bar.add(dataMenu);
 
+		JMenuItem saveDriverItem=new JMenuItem("Save XML driver file", xmlFileIcon);
+		saveDriverItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				SearchPanelUtilities.saveDriverFile(dataMenu, getVisibleTab().getParameters(), getJobProcessor());
+			}
+		});
+		dataMenu.add(saveDriverItem);
+		
+		JMenuItem loadDriverItem=new JMenuItem("Load XML driver file", xmlFileIcon);
+		loadDriverItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				SearchPanelUtilities.loadDriverFile(dataMenu, getVisibleTab().getParameters(), getJobProcessor());
+			}
+		});
+		dataMenu.add(loadDriverItem);
+		
 		JMenuItem mzmlPreprocessorItem=new JMenuItem("Preprocess mzMLs", convertDBIcon);
 		mzmlPreprocessorItem.addActionListener(new ActionListener() {
 			@Override
@@ -561,6 +586,27 @@ public class SearchPanel extends JPanel {
 			}
 		});
 		dataMenu.add(mzmlPreprocessorItem);
+
+		JMenuItem mzmlMergerItem=new JMenuItem("Combine Gas Phase Fractions", convertDBIcon);
+		mzmlMergerItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				SearchPanelUtilities.combineMZMLs(dataMenu, getJobProcessor(), getVisibleTab().getParameters());
+			}
+		});
+		dataMenu.add(mzmlMergerItem);
+
+		JMenuItem elibSeperatorItem=new JMenuItem("Extract Sample-Specific Libraries from ELIB", convertDBIcon);
+		elibSeperatorItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				SearchPanelUtilities.extractSampleSpecificDLIBs(dataMenu, getVisibleTab().getParameters(), getJobProcessor());
+			}
+		});
+		if (enableAdvancedOptions) {
+			elibSeperatorItem.setText("HIDDEN: "+elibSeperatorItem.getText());
+			dataMenu.add(elibSeperatorItem);
+		}
 		
 		JMenuItem subsetDIA=new JMenuItem("Create Subset mzML", convertDBIcon);
 		subsetDIA.addActionListener(new ActionListener() {
@@ -574,25 +620,17 @@ public class SearchPanel extends JPanel {
 			dataMenu.add(subsetDIA);
 		}
 
-		JMenuItem mzmlMergerItem=new JMenuItem("Combine Gas Phase Fractions", convertDBIcon);
-		mzmlMergerItem.addActionListener(new ActionListener() {
+		JMenuItem toggleScoringSystemItem=new JMenuItem("Toggle EncyclopeDIA Scoring System", libraryBrowserIcon);
+		toggleScoringSystemItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				SearchPanelUtilities.combineMZMLs(dataMenu, getVisibleTab().getParameters());
-			}
-		});
-		dataMenu.add(mzmlMergerItem);
-
-		JMenuItem elibSeperatorItem=new JMenuItem("Extract Sample-Specific Libraries from ELIB", convertDBIcon);
-		elibSeperatorItem.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				SearchPanelUtilities.extractSampleSpecificDLIBs(dataMenu, getVisibleTab().getParameters());
+				EncyclopediaScoringFactory.USE_LEGACY_SCORING_SYSTEM=!EncyclopediaScoringFactory.USE_LEGACY_SCORING_SYSTEM;
+				JOptionPane.showMessageDialog(SearchPanel.this,"USE_LEGACY_SCORING_SYSTEM set to "+EncyclopediaScoringFactory.USE_LEGACY_SCORING_SYSTEM,"EncyclopeDIA Scoring System", JOptionPane.PLAIN_MESSAGE);
 			}
 		});
 		if (enableAdvancedOptions) {
-			elibSeperatorItem.setText("HIDDEN: "+elibSeperatorItem.getText());
-			dataMenu.add(elibSeperatorItem);
+			toggleScoringSystemItem.setText("HIDDEN: "+toggleScoringSystemItem.getText());
+			dataMenu.add(toggleScoringSystemItem);
 		}
 		
 		dataMenu.addSeparator();
@@ -881,6 +919,10 @@ public class SearchPanel extends JPanel {
 		}
 	}
 	
+	public JobProcessor getJobProcessor() {
+		return processorTableModel;
+	}
+	
 	public void loadTargetFile() {
 		getVisibleTab().askForSetupFile();
 	}
@@ -899,7 +941,11 @@ public class SearchPanel extends JPanel {
 			if (dialog.getFiles()!=null) {
 				for (File file : dialog.getFiles()) {
 					Logger.logLine("Adding mzML import to queue for ["+file.getAbsolutePath()+"]");
-					getVisibleTab().getJob(file, processorTableModel);
+					try {
+						getVisibleTab().getJob(file, processorTableModel);
+					} catch (Exception e) {
+						JOptionPane.showMessageDialog(frame, e);
+					}
 				}
 			}
 		}

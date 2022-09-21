@@ -42,6 +42,9 @@
 		<walnutTargetName>walnut-${version}-executable</walnutTargetName>
 		<walnutBuildTarget>edu.washington.gs.maccoss.encyclopedia.Walnut</walnutBuildTarget>
 
+		<scribeTargetName>scribe-${version}-executable</scribeTargetName>
+		<scribeBuildTarget>edu.washington.gs.maccoss.encyclopedia.Scribe</scribeBuildTarget>
+
 		<!--
 		By default, skip failsafe integration tests.
 		Reenable by running mvn with `-DskipITs=false`
@@ -93,12 +96,12 @@
 		</repository>
 		<repository>
 			<id>nexus-ebi-release-repo</id>
-			<url>http://www.ebi.ac.uk/Tools/maven/repos/content/groups/ebi-repo/</url>
+			<url>https://www.ebi.ac.uk/Tools/maven/repos/content/groups/ebi-repo/</url>
 		</repository>
 		<repository>
 			<id>ebi-repo</id>
 			<name>The EBI Maven 2 repository</name>
-			<url>http://www.ebi.ac.uk/~maven/m2repo</url>
+			<url>https://www.ebi.ac.uk/~maven/m2repo</url>
 			<releases>
 				<enabled>true</enabled>
 			</releases>
@@ -109,7 +112,7 @@
 		<repository>
 			<id>jzy3d-releases</id>
 			<name>Jzy3d Snapshots</name>
-			<url>http://maven.jzy3d.org/releases</url>
+			<url>https://maven.jzy3d.org/releases</url>
 			<releases>
 				<enabled>true</enabled>
 			</releases>
@@ -120,7 +123,7 @@
 		<repository>
 			<id>genesis-maven2-repository</id>
 			<name>Genesis maven2 repository</name>
-			<url>http://genesis.UGent.be/maven2</url>
+			<url>https://genesis.UGent.be/maven2</url>
 			<layout>default</layout>
 		</repository>
 		<repository>
@@ -187,6 +190,30 @@
 						</configuration>
 					</execution>
 				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-enforcer-plugin</artifactId>
+				<version>3.0.0-M3</version>
+				<executions>
+					<execution>
+						<id>enforce</id>
+						<goals>
+							<goal>enforce</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<rules>
+						<bannedDependencies>
+							<excludes>
+								<exclude>*:jcl-over-slf4j</exclude>
+								<exclude>*:logback-classic</exclude>
+								<exclude>*:logback-core</exclude>
+							</excludes>
+						</bannedDependencies>
+					</rules>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>
@@ -424,6 +451,52 @@
 			</build>
 		</profile>
 		<profile>
+			<!-- build with `mvn -PbuildWalnut ...` to create the walnut executable JAR -->
+			<id>buildScribe</id>
+			<activation>
+				<property>
+					<name>buildJars</name>
+					<value>true</value>
+				</property>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-shade-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>shade-scribe</id>
+								<phase>package</phase>
+								<goals>
+									<goal>shade</goal>
+								</goals>
+								<configuration>
+									<filters>
+										<filter>
+											<artifact>*:*</artifact>
+											<excludes>
+												<exclude>META-INF/*.SF</exclude>
+												<exclude>META-INF/*.DSA</exclude>
+												<exclude>META-INF/*.RSA</exclude>
+											</excludes>
+										</filter>
+									</filters>
+									<finalName>${scribeTargetName}</finalName>
+									<transformers>
+										<transformer
+												implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+											<mainClass>${scribeBuildTarget}</mainClass>
+										</transformer>
+									</transformers>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
 			<!--
 			When running ITs, this profile will activate to add the necessary test data dependency.
 			-->
@@ -515,6 +588,20 @@
 			<groupId>uk.ac.ebi.pride.utilities</groupId>
 			<artifactId>pride-mod</artifactId>
 			<version>2.1.12</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>jcl-over-slf4j</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>ch.qos.logback</groupId>
+					<artifactId>logback-classic</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>ch.qos.logback</groupId>
+					<artifactId>logback-core</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.xerial</groupId>
@@ -556,6 +643,12 @@
 			<groupId>com.brsanthu</groupId>
 			<artifactId>google-analytics-java</artifactId>
 			<version>2.0.0</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>jcl-over-slf4j</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 <!-- 		<dependency>
 			<groupId>com.github.lejon</groupId>
@@ -573,6 +666,33 @@
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-csv</artifactId>
 			<version>1.8</version>
+		</dependency>
+
+		<!-- SDK for S3 URI support -->
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>s3-transfer-manager</artifactId>
+			<version>2.17.123-PREVIEW</version>
+		</dependency>
+		<dependency>
+			<!-- Must be >=4.5.9 for compatibility with AWS SDK -->
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpclient</artifactId>
+			<version>4.5.13</version>
+		</dependency>
+
+		<!-- Java Commons Logging: used for logging from various libraries -->
+		<dependency>
+			<groupId>commons-logging</groupId>
+			<artifactId>commons-logging</artifactId>
+			<version>1.1.1</version>
+		</dependency>
+
+		<!-- Direct libraries using slf4j to pass logs to JCL -->
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-jcl</artifactId>
+			<version>1.7.36</version>
 		</dependency>
 	</dependencies>
 </project>

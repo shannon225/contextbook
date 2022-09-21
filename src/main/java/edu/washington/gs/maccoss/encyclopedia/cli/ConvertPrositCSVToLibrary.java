@@ -14,7 +14,7 @@ public class ConvertPrositCSVToLibrary {
 	public static void main(String[] args) {
 		HashMap<String, String> arguments= CommandLineParser.parseArguments(args);
 		if (arguments.containsKey("-h")||arguments.containsKey("-help")||arguments.containsKey("--help")) {
-			Logger.logLine("Convert Prosit/Spectronaut CSV to library");
+			Logger.logLine("Convert Prosit/Spectronaut/DIA-NN CSV to library");
 			Logger.timelessLogLine("Required Parameters: ");
 			Logger.timelessLogLine("\t-i\tinput .CSV file");
 			Logger.timelessLogLine("\t-f\ttaxon .FASTA database");

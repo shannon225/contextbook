@@ -192,24 +192,56 @@ public class OpenSwathTSVToLibraryConverter {
 			final ArrayList<ImmutablePeptideEntry> peptides=new ArrayList<>();
 			final TIntObjectHashMap<PeptideEntry> peptideMap=new TIntObjectHashMap<>();
 			TableParserMuscle muscle=new TableParserMuscle() {
+				/**
+				 * Used only if the {@code transition_group_id} column is missing.
+				 */
+				int peptideCount = 0;
+
+				/**
+				 * Used only if the {@code transition_group_id} column is missing.
+				 */
+				String lastPeptideModSeq = null;
+
+				/**
+				 * Used only if the {@code transition_group_id} column is missing.
+				 */
+				byte lastPeptideCharge = -1;
+
 				@Override
 				public void processRow(Map<String, String> row) {
 					String decoy=getFromMap(row, "decoy", "Decoy");
 					if (decoy!=null&&Integer.parseInt(decoy)!=0) return;
-					
-					int group=Integer.parseInt(getFromMap(row, "transition_group_id", "TransitionGroupId"));
+
 					String peptideModSeq=parseMods(getFromMap(row, "ModifiedPeptideSequence", "FullUniModPeptideName", "FullPeptideName", "ModifiedSequence", "PeptideSequence", "Sequence", "StrippedSequence"));
 					byte charge=Byte.parseByte(row.get("PrecursorCharge"));
 					double productMz=Double.parseDouble(getFromMap(row, "ProductMz", "FragmentMz"));
 					float libraryIntensity=Float.parseFloat(getFromMap(row, "LibraryIntensity", "RelativeFragmentIntensity"));
 					float iRT=Float.parseFloat(getFromMap(row, "NormalizedRetentionTime", "RetentionTime", "Tr_recalibrated", "iRT", "RetentionTimeCalculatorScore"));
 
-					PeptideEntry thisPeptide=peptideMap.get(group);
+					final String groupIdString = getFromMap(row, "transition_group_id", "TransitionGroupId");
+
+					final int group;
+					if (null == groupIdString) {
+						// Group IDs not reported; assume we can use peptideModSeq/charge. Requires that
+						// each (peptideModSeq, charge) pair has only a single entry in the file and that
+						// all the fragments for a given pair are reported on consecutive lines.
+						if (null == lastPeptideModSeq || !lastPeptideModSeq.equals(peptideModSeq) || 0 > lastPeptideCharge || lastPeptideCharge != charge) {
+							lastPeptideModSeq = peptideModSeq;
+							lastPeptideCharge = charge;
+							group = ++peptideCount;
+						} else {
+							group = peptideCount;
+						}
+					} else {
+						group = Integer.parseInt(groupIdString);
+					}
+
+					PeptideEntry thisPeptide = peptideMap.get(group);
 					if (thisPeptide==null) {
 						thisPeptide=new PeptideEntry(peptideModSeq, charge, iRT*60f, sourceFile);
 						peptideMap.put(group, thisPeptide);
 					}
-					
+
 					if (libraryIntensity>0) {
 						thisPeptide.addPeak(new Peak(productMz, libraryIntensity));
 					}

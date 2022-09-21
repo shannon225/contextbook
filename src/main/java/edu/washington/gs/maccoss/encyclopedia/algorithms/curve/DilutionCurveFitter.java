@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.sql.SQLException;
+import java.text.AttributedString;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -17,18 +18,22 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.DataFormatException;
 
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.axis.LogAxis;
+import org.jfree.chart.axis.LogTick;
 import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.DeviationRenderer;
 import org.jfree.chart.renderer.xy.XYDifferenceRenderer;
 import org.jfree.data.general.Dataset;
+import org.jfree.data.statistics.BoxAndWhiskerItem;
 import org.jfree.data.xy.DefaultIntervalXYDataset;
 import org.jfree.data.xy.XYSeriesCollection;
+import org.jfree.ui.TextAnchor;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeFilter;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -37,8 +42,12 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.Boxplotter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.ExtendedLogAxis;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.NumberBoxAndWhiskerXYDataset;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.XYGraphingTrace;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.Boxplotter.XYBoxPlotterRenderer;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
@@ -56,6 +65,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndic
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TObjectFloatHashMap;
+import gnu.trove.procedure.TObjectFloatProcedure;
 
 public class DilutionCurveFitter {
 	public static void main3(String[] args) {
@@ -78,7 +88,7 @@ public class DilutionCurveFitter {
 		TFloatArrayList expectedList=new TFloatArrayList(expected);
 		expectedList.reverse();
 		DilutionFit bestFit=process("NLVPMVATVQGQNLK", "PROTEIN", expectedList.toArray(), actualList.toArray(), General.max(actual), true).x;
-		ChartPanel panel=graph("NLVPMVATVQGQNLK", expectedList.toArray(), actualList.toArray(), bestFit);
+		ChartPanel panel=graph("NLVPMVATVQGQNLK", expectedList.toArray(), actualList.toArray(), bestFit, Optional.empty());
 		Charter.launchChart(panel, "NLVPMVATVQGQNLK");
 	}
 	
@@ -90,15 +100,20 @@ public class DilutionCurveFitter {
 		
 		File dataFile=new File("/Users/searleb/Documents/cobbs/2021jan12_cobbs_ln229/figures/prms/final_119_and_248_PRM_peptide_quant_report.csv");
 		File sampleOrganizationFile=new File("/Users/searleb/Documents/cobbs/2021jan12_cobbs_ln229/figures/prms/prm_sample_organization.csv");
+
 		
-		final ArrayList<ScoredObject<String>> expectedConcentrations = getExpectedConcentrationsFromCSV(sampleOrganizationFile);
+		Pair<ArrayList<ScoredObject<String>>, Map<String, TObjectFloatHashMap<String>>> concentrationPair=getExpectedConcentrationsFromCSV(sampleOrganizationFile);
+		final ArrayList<ScoredObject<String>> expectedConcentrations=concentrationPair.x;
+		final Map<String, TObjectFloatHashMap<String>> unknowns=concentrationPair.y;
 		final float[] expected = adjustForZeroConcentrations(expectedConcentrations);
 
 		final ArrayList<FitPeptide> fitPeptides=fitCurves(outputDirectory, dataFile, expectedConcentrations, expected, "HCMV", true);
+		final HashMap<String, Map<String, TObjectFloatHashMap<String>>> unknownData=extractUnknowns(dataFile, unknowns, "HCMV");
 		
 		for (FitPeptide fit : fitPeptides) {
-			ChartPanel panel=graph(fit.peptideModSeq, fit.expectedRelativeIntensities, fit.actualRelativeIntensities, fit.bestFit);
-			Charter.writeAsPDF(panel.getChart(), new File(targetDirectory, fit.peptideModSeq+".pdf"), new Dimension(300, 300));
+			Map<String, TObjectFloatHashMap<String>> data=unknownData.get(fit.peptideModSeq);
+			ChartPanel panel=graph(fit.peptideModSeq, fit.expectedRelativeIntensities, fit.actualRelativeIntensities, fit.bestFit, Optional.ofNullable(data));
+			Charter.writeAsPDF(panel.getChart(), new File(targetDirectory, fit.peptideModSeq+".pdf"), new Dimension(400, 300));
 		}
 	}
 	
@@ -162,7 +177,9 @@ public class DilutionCurveFitter {
 		rtInSecRange=new Range(12*60f, 95*60f);
 		final ArrayList<Range> subRanges=rtInSecRange.chunkIntoBins(fittingParams.getNumberOfRTAnchors());
 		
-		final ArrayList<ScoredObject<String>> expectedConcentrations = getExpectedConcentrationsFromCSV(sampleOrganizationFile);
+		Pair<ArrayList<ScoredObject<String>>, Map<String, TObjectFloatHashMap<String>>> concentrationPair= getExpectedConcentrationsFromCSV(sampleOrganizationFile);
+		final ArrayList<ScoredObject<String>> expectedConcentrations=concentrationPair.x;
+		
 		final float[] expected = adjustForZeroConcentrations(expectedConcentrations);
 		
 		Pair<String[], float[]> anchorData=extractAnchorPeptides(dataFile, fittingParams,
@@ -314,6 +331,60 @@ public class DilutionCurveFitter {
 		return fitPeptides;
 	}
 
+	private static HashMap<String, Map<String, TObjectFloatHashMap<String>>> extractUnknowns(File dataFile, final Map<String, TObjectFloatHashMap<String>> unknownSamples, final String requiredAccessionText) throws FileNotFoundException, UnsupportedEncodingException {
+		final HashMap<String, Map<String, TObjectFloatHashMap<String>>> unknowns=new HashMap<>();
+		if (unknownSamples==null||unknownSamples.size()==0) return unknowns;
+		
+		TableParserMuscle muscle = new TableParserMuscle() {
+			public void processRow(Map<String, String> row) {
+				String peptide=row.get("Peptide"); // from EncyclopeDIA
+				if (peptide==null) peptide=row.get("Peptide Modified Sequence"); // from Skyline
+				String protein=row.get("Protein"); // from EncyclopeDIA
+				if (protein==null) protein=row.get("Protein Name"); // from Skyline
+				
+				if (requiredAccessionText!=null&&protein.indexOf(requiredAccessionText)==-1) {
+					return;
+				}
+				
+				TreeMap<String, TObjectFloatHashMap<String>> thisPeptideUnknowns=new TreeMap<>();
+				unknowns.put(peptide, thisPeptideUnknowns);
+				
+				for (Entry<String, TObjectFloatHashMap<String>> entry : unknownSamples.entrySet()) {
+					String group=entry.getKey();
+					TObjectFloatHashMap<String> groupUnknowns=new TObjectFloatHashMap<>();
+					thisPeptideUnknowns.put(group, groupUnknowns);
+
+					entry.getValue().forEachEntry(new TObjectFloatProcedure<String>() {
+						@Override
+						public boolean execute(String column, float normalization) {
+							float concentration;
+							try {
+								concentration=Float.parseFloat(row.get(column));
+							} catch (NumberFormatException nfe) {
+								concentration=0.0f;
+							}
+							groupUnknowns.put(column, concentration*normalization);
+							return true;
+						}
+					});
+				}
+			}
+			
+			public void cleanup() {
+			}
+		};
+		
+		if (dataFile.getName().toLowerCase().endsWith(".csv")) {
+			TableParser.parseCSV(dataFile, muscle);
+		} else {
+			TableParser.parseTSV(dataFile, muscle);
+		}
+
+		Logger.logLine("Found unknowns for "+unknowns.size()+" total peptides.");
+		
+		return unknowns;
+	}
+
 	private static ArrayList<LibraryEntry> scheduleAssay(final File outputDirectory, final File targetDirectory,
 			final File nontargetDirectory, AbstractDilutionCurveFittingParameters fittingParams,
 			final HashMap<String, LibraryEntry> libraryEntryByPeptideModSeq, final AlignmentWithAnchors rtAlignment,
@@ -348,6 +419,7 @@ public class DilutionCurveFitter {
 		int count=0;
 		HashMap<String, ArrayList<FitPeptide>> targetPeptidesByProtein=new HashMap<String, ArrayList<FitPeptide>>();
 		ArrayList<FitPeptide> nontargetedPeptides=new ArrayList<FitPeptide>();
+		// assumes fitPeptides are sorted
 		addpeptides:for (FitPeptide fit : fitPeptides) {
 			ArrayList<FitPeptide> list=targetPeptidesByProtein.get(fit.proteinKey);
 			if (list==null) {
@@ -399,7 +471,7 @@ public class DilutionCurveFitter {
 				addPeptideToAssay(assayWriter, entry, rtInSec, fittingParams.getWindowInMin());
 				targetEntries.add(entry.updateRetentionTime(rtInSec));
 
-				ChartPanel panel=graph(fit.peptideModSeq, fit.expectedRelativeIntensities, fit.actualRelativeIntensities, fit.bestFit);
+				ChartPanel panel=graph(fit.peptideModSeq, fit.expectedRelativeIntensities, fit.actualRelativeIntensities, fit.bestFit, Optional.empty());
 				Charter.writeAsPDF(panel.getChart(), new File(targetDirectory, fit.peptideModSeq+".pdf"), new Dimension(300, 300));
 				
 				count++;
@@ -412,7 +484,7 @@ public class DilutionCurveFitter {
 		}
 		
 		for (FitPeptide fit : nontargetedPeptides) {
-			ChartPanel panel=graph(fit.peptideModSeq, fit.expectedRelativeIntensities, fit.actualRelativeIntensities, fit.bestFit);
+			ChartPanel panel=graph(fit.peptideModSeq, fit.expectedRelativeIntensities, fit.actualRelativeIntensities, fit.bestFit, Optional.empty());
 			Charter.writeAsPDF(panel.getChart(), new File(nontargetDirectory, fit.peptideModSeq+".pdf"), new Dimension(300, 300));
 		}
 		
@@ -423,7 +495,7 @@ public class DilutionCurveFitter {
 		return targetEntries;
 	}
 
-	private static void writeLibraryEntries(SearchParameters params, final File exportLibraryFile,
+	static void writeLibraryEntries(SearchParameters params, final File exportLibraryFile,
 			ArrayList<LibraryEntry> targetEntries) throws IOException, SQLException {
 		LibraryFile exportLibrary=new LibraryFile();
 		exportLibrary.openFile();
@@ -436,7 +508,7 @@ public class DilutionCurveFitter {
 		exportLibrary.close();
 	}
 
-	private static void writeSchedulingGraph(final File outputDirectory, float[] assayRT, float[] assayDensity) {
+	static void writeSchedulingGraph(final File outputDirectory, float[] assayRT, float[] assayDensity) {
 		XYTrace trace=new XYTrace(assayRT, assayDensity, GraphType.area, "Scheduling density");
 		ChartPanel panel=Charter.getChart("Retention Time (min)", "Number of Peptides", true, trace);
 		Charter.writeAsPDF(panel.getChart(), new File(outputDirectory, "assay_density.pdf"), new Dimension(600, 300));
@@ -458,7 +530,7 @@ public class DilutionCurveFitter {
 		return clone;
 	}
     
-	private static HashMap<String, LibraryEntry> getLibraryData(SearchParameters params, File rtAlignFile) throws IOException, SQLException, DataFormatException {
+	static HashMap<String, LibraryEntry> getLibraryData(SearchParameters params, File rtAlignFile) throws IOException, SQLException, DataFormatException {
 		LibraryFile rtAlignLibrary=new LibraryFile();
 		rtAlignLibrary.openFile(rtAlignFile);
 		ArrayList<LibraryEntry> entries=rtAlignLibrary.getAllEntries(false, params.getAAConstants());
@@ -489,21 +561,43 @@ public class DilutionCurveFitter {
 		return expected;
 	}
 
-	private static ArrayList<ScoredObject<String>> getExpectedConcentrationsFromCSV(File sampleOrganizationFile) {
+	private static Pair<ArrayList<ScoredObject<String>>, Map<String, TObjectFloatHashMap<String>>> getExpectedConcentrationsFromCSV(File sampleOrganizationFile) {
 		final ArrayList<ScoredObject<String>> expectedConcentrations=new ArrayList<ScoredObject<String>>();
+		final TreeMap<String, TObjectFloatHashMap<String>> unknowns=new TreeMap<>();
 		
 		System.out.println("Reading "+sampleOrganizationFile.getName()+"...");
 		TableParser.parseCSV(sampleOrganizationFile, new TableParserMuscle() {
 			public void processRow(Map<String, String> row) {
 				String name=row.get("filename");
-				float concentration=Float.parseFloat(row.get("concentration"));
-				expectedConcentrations.add(new ScoredObject<String>(concentration, name));
+				String concentrationString = row.get("concentration");
+				String normalizationString = row.get("normalization");
+				try {
+					float concentration=Float.parseFloat(concentrationString);
+					expectedConcentrations.add(new ScoredObject<String>(concentration, name));
+				} catch (NumberFormatException nfe) {
+					// not a number, so parse as an unknown group
+					TObjectFloatHashMap<String> list=unknowns.get(concentrationString);
+					if (list==null) {
+						list=new TObjectFloatHashMap<>();
+						unknowns.put(concentrationString, list);
+					}
+					
+					float normalization=1.0f;
+					if (normalizationString!=null&&normalizationString.length()>0) {
+						try {
+							normalization=Float.parseFloat(normalizationString);
+						} catch (NumberFormatException nfe2) {
+							Logger.errorLine("Failed to parse normalization constant from "+name+", defaulting to 1.0");
+						}
+					}
+					list.put(name, normalization);
+				}
 			}
 			
 			public void cleanup() {
 			}
 		});
-		return expectedConcentrations;
+		return new Pair<>(expectedConcentrations, unknowns);
 	}
 	
 	public static Pair<DilutionFit, Float> process(String peptide, String protein, float[] expected, float[] actual, float maxMeasuredValue, boolean useLineNoise) {
@@ -621,7 +715,7 @@ public class DilutionCurveFitter {
 		return new Pair<DilutionFit, Float>(bestFit,minRSquared);
 	}
 	
-	public static ChartPanel graph(String peptide, float[] expected, float[] actual, DilutionFit bestFit) {
+	public static ChartPanel graph(String peptide, float[] expected, float[] actual, DilutionFit bestFit, Optional<Map<String, TObjectFloatHashMap<String>>> unknowns) {
 		expected=expected.clone();
 		actual=actual.clone();
 		
@@ -659,14 +753,63 @@ public class DilutionCurveFitter {
 		
 		float lod=(float)Math.pow(10, bestFit.getLOD());
 		float loq=(float)Math.pow(10, bestFit.getLOQ());
-		float maxActual=General.max(actual);
-		XYTrace lodTrace=new XYTrace(new float[] {lod, lod}, new float[] {minNonZeroActual, maxActual}, GraphType.line, "LOD="+lod, Color.red, 2f);
-		XYTrace loqTrace=new XYTrace(new float[] {loq, loq}, new float[] {minNonZeroActual, maxActual}, GraphType.line, "LOQ="+loq, Color.cyan, 2f);
+		float maxExpectedWithMargin=General.max(expected)*10;
+		float minExpected = General.min(expected);
+		float minExpectedWithMargin=minExpected/10;
+
+		float adjustmentForUnknowns=0.0f;
+		if (unknowns.isPresent()) {
+			adjustmentForUnknowns=10000f;
+		}
+		
+		XYTrace lodTrace=new XYTrace(new float[] {lod}, new float[] {bestFit.getUnloggedPredicted(lod)}, GraphType.bighollowpoint, "LOD="+lod, Color.gray, 10f);
+		XYTrace loqTrace=new XYTrace(new float[] {minExpected/5, maxExpectedWithMargin*adjustmentForUnknowns, Float.NaN, loq, loq}, new float[] {loq, loq, Float.NaN, minExpectedWithMargin, maxExpectedWithMargin/10}, GraphType.dashedline, "LOQ="+loq, Color.red, 2f);
 		
 		XYTrace actualTrace=new XYTrace(expectedFound.toArray(), actualFound.toArray(), GraphType.bigpoint, peptide, Color.BLACK, 10f);
 		XYTrace actualMissingTrace=new XYTrace(expectedMissing.toArray(), actualMissing.toArray(), GraphType.bighollowpoint, "Missing", Color.BLACK, 10f);
-		ChartPanel panel=Charter.getChart("Expected", "Actual", true, actualTrace, actualMissingTrace, lodTrace, loqTrace);
+
+		ChartPanel panel=Charter.getChart("Expected", "Actual", true, actualTrace, actualMissingTrace, lodTrace);
+
+		XYPlot plot = panel.getChart().getXYPlot();
+		int currentCount=plot.getDatasetCount();
+
+		// DRAW BOX PLOT FOR UNKNOWNS
+		int boxItemWidth = 12;
+		int unknownCount=0;
+		TreeMap<Double, String> unknownXLocations=new TreeMap<>();
+		if (unknowns.isPresent()) {
+			float currentXValue=maxExpectedWithMargin/3;
+			Map<String, TObjectFloatHashMap<String>> unknownMap=unknowns.get();
+			for (Entry<String, TObjectFloatHashMap<String>> entry : unknownMap.entrySet()) {
+				TObjectFloatHashMap<String> unknownData=entry.getValue();
+				currentXValue=currentXValue*4.0f;
+				unknownXLocations.put(Double.valueOf(currentXValue), entry.getKey());
+				
+				NumberBoxAndWhiskerXYDataset boxplotDataset=new NumberBoxAndWhiskerXYDataset("Unknowns");
+				float[] values = General.divide(unknownData.values(), bestFit.maxValue);
+				BoxAndWhiskerItem stats = Boxplotter.calculateINFProtectedBoxAndWhiskerStatistics(values, maxExpectedWithMargin, minExpectedWithMargin, minExpectedWithMargin, true);
+				
+				boxplotDataset.add(currentXValue, stats);
+				
+				plot.setDataset(currentCount, boxplotDataset);
+				XYBoxPlotterRenderer boxplotRenderer = new XYBoxPlotterRenderer(boxItemWidth, true);
+				boxplotRenderer.setSeriesVisibleInLegend(0, false);
+				boxplotRenderer.setSeriesPaint(0, colors[unknownCount%colors.length]);
+				plot.setRenderer(currentCount, boxplotRenderer);
+				unknownCount++;
+				currentCount++;
+			}
+		}
 		
+		// DRAW LOQ
+		XYGraphingTrace loqGraphingTrace=new XYGraphingTrace(loqTrace);
+		XYSeriesCollection loqDataset=new XYSeriesCollection();
+		loqDataset.addSeries(loqGraphingTrace.getSeries());
+		plot.setDataset(currentCount, loqDataset);
+		plot.setRenderer(currentCount, loqGraphingTrace.getRenderer());
+		currentCount++;
+		
+		// DRAW STANDARD DEVIATION SHADING
 		TFloatArrayList expectedPlusLODList=new TFloatArrayList(expected);
 		expectedPlusLODList.add(lod);
 		expectedPlusLODList.sort();
@@ -677,24 +820,48 @@ public class DilutionCurveFitter {
 		float[] expectedLower=bestFit.getUnloggedLowerError(expectedPlusLOD);
 		float[] expectedUpper=bestFit.getUnloggedUpperError(expectedPlusLOD);
 		dataset.addSeries("Calculated", General.toDoubleArray(new float[][] {expectedPlusLOD, expectedPlusLOD, expectedPlusLOD, predicted, expectedLower, expectedUpper}));
-		
-		
-		XYPlot plot = panel.getChart().getXYPlot();
-		int currentCount=plot.getDatasetCount();
 		plot.setDataset(currentCount, dataset);
+		
 		DeviationRenderer renderer = new DeviationRenderer(true, false);
-		renderer.setSeriesFillPaint(0, new Color(255, 255, 0, 125));
+		renderer.setSeriesFillPaint(0, new Color(255, 255, 0, 175));
 		renderer.setSeriesStroke(0, new BasicStroke(2, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0.0f, new float[] {3.0f, 5.0f}, 0.0f));
 		renderer.setSeriesPaint(0, Color.gray);
-
+		renderer.setSeriesVisibleInLegend(0, false);
 		plot.setRenderer(currentCount, renderer);
 		
 		ValueAxis domain=plot.getDomainAxis();
 		ValueAxis range=plot.getRangeAxis();
-		LogAxis newDomain = new LogAxis("Expected");
+		ExtendedLogAxis newDomain = new ExtendedLogAxis("Expected") {
+			@Override
+			protected LogTick getMinorTick(TextAnchor textAnchor, double v) {
+				if (v>1) return null;
+				return super.getMinorTick(textAnchor, v);
+			}
+			@Override
+			protected LogTick getMajorTick(TextAnchor textAnchor, double v) {
+				if (v>1) return null;
+				return super.getMajorTick(textAnchor, v);
+			}
+		};
+		for (Entry<Double, String> entry : unknownXLocations.entrySet()) {
+			newDomain.addAutomaticTicks(entry.getKey(), entry.getValue());
+		}
 		newDomain.setLabelFont(domain.getLabelFont());
 		newDomain.setTickLabelFont(domain.getTickLabelFont());
-		LogAxis newRange =new LogAxis("Actual");
+		
+		ExtendedLogAxis newRange =new ExtendedLogAxis("Actual") {
+			@Override
+			protected LogTick getMinorTick(TextAnchor textAnchor, double v) {
+				if (v>1) return null;
+				return super.getMinorTick(textAnchor, v);
+			}
+			@Override
+			protected LogTick getMajorTick(TextAnchor textAnchor, double v) {
+				if (v>1) return null;
+				return super.getMajorTick(textAnchor, v);
+			}
+		};
+		
 		newRange.setLabelFont(range.getLabelFont());
 		newRange.setTickLabelFont(range.getTickLabelFont());
 
@@ -702,6 +869,8 @@ public class DilutionCurveFitter {
 		plot.setRangeAxis(newRange);
 		return panel;
 	}
+	
+	public static Color[] colors=new Color[] {new Color(95,158,160), new Color(240,230,140), new Color(255, 215, 0), new Color(205,173,0), new Color(139,117,0), new Color(139,76,57), new Color(139,0,0)};
 
 	public static class AlignmentWithAnchors {
 		final RetentionTimeFilter rtAlignment;
@@ -801,17 +970,15 @@ public class DilutionCurveFitter {
 			return expectedYs;
 		}
 		public float[] getUnloggedUpperError(float[] xs) {
+			float loq=getLOQ();
 			float[] expectedYs=new float[xs.length];
 			for (int i = 0; i < expectedYs.length; i++) {
 				float x=xs[i];
 
 				float loggedX=Log.log10(x);
-				float expectedY=getPredicted(loggedX);
-				if (expectedY>noiseMax) {
-					expectedY+=NUM_STDEVS_FOR_LOQ*linearStdev;
-				} else {
-					// noise level
-					expectedY+=NUM_STDEVS_FOR_LOQ*getStdev();
+				float expectedY=getPredicted(loggedX)+NUM_STDEVS_FOR_LOQ*linearStdev;
+				if (expectedY<loq) {
+					expectedY=loq;
 				}
 				expectedYs[i]=(float)Math.pow(10, expectedY);
 			}

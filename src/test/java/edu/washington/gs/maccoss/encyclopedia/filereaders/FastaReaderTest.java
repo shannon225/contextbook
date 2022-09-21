@@ -39,7 +39,7 @@ import gnu.trove.set.hash.TIntHashSet;
 import junit.framework.TestCase;
 
 public class FastaReaderTest extends TestCase {
-	public static void main(String[] args) throws Exception {
+	public static void mainW(String[] args) throws Exception {
 		PecanSearchParameters parameters=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"), false, true, false);
 		File f=new File("/Users/searleb/Documents/maccoss/barnes/chris_barnes/mus_musculus_reviewed_uniprot.fasta"); 
 		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f, parameters);
@@ -64,11 +64,11 @@ public class FastaReaderTest extends TestCase {
 		}
 	}
 	
-	public static void mainW(String[] args) throws Exception {
+	public static void main(String[] args) throws Exception {
 		PecanSearchParameters parameters=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"), false, true, false);
 		
 		LibraryFile library=new LibraryFile();
-		library.openFile(new File ("/Users/searleb/Documents/encyclopedia/small_file/pan_human_library_600to603.dlib"));
+		library.openFile(new File ("/Users/searleb/Documents/teaching/encyclopedia/hela_pecan_narrow_library_604to616.dlib"));
 		
 		ArrayList<LibraryEntry> spectra=library.getAllEntries(false, parameters.getAAConstants());
 		HashSet<String> accessions=new HashSet<>();
@@ -76,9 +76,9 @@ public class FastaReaderTest extends TestCase {
 			accessions.addAll(entry.getAccessions());
 		}
 		
-		File f=new File("/Users/searleb/Documents/school/uniprot-9606.fasta");
+		File f=new File("/Users/searleb/Documents/teaching/encyclopedia/uniprot-9606.fasta");
 		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f, parameters);
-		FastaWriter writer=new FastaWriter(new File ("/Users/searleb/Documents/encyclopedia/small_file/pan_human_library_600to603.fasta"));
+		FastaWriter writer=new FastaWriter(new File ("/Users/searleb/Documents/teaching/encyclopedia/uniprot-9606_604to616.fasta"));
 		for (FastaEntryInterface entry : entries) {
 			if (accessions.contains(entry.getAccession())) {
 				writer.write(entry);

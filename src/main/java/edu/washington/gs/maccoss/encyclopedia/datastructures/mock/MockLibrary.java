@@ -39,7 +39,6 @@ public class MockLibrary implements LibraryInterface {
 		return new ArrayList<LibraryEntry>(Arrays.asList(entries));
 	}
 	
-	@Override
 	public HashMap<String, String> getAccessions(Collection<String> peptideSeqs) throws IOException, SQLException, DataFormatException {
 		HashSet<String> set=new HashSet<>(peptideSeqs);
 		HashMap<String, String> accessions=new HashMap<>();
@@ -51,7 +50,6 @@ public class MockLibrary implements LibraryInterface {
 		return accessions;
 	}
 	
-	@Override
 	public ArrayList<LibraryEntry> getUnlinkedEntries(Range precursorMz, boolean sqrt, AminoAcidConstants aaConstants) throws IOException, SQLException, DataFormatException {
 		return getEntries(precursorMz, sqrt, aaConstants);
 	}
@@ -66,16 +64,6 @@ public class MockLibrary implements LibraryInterface {
 		}
 		return returnables;
 	}
-	
-//	@Override
-//	public HashMap<PeptidePrecursor, ArrayList<LibraryEntry>> getEntries(ArrayList<PeptidePrecursor> entries, boolean sqrt) throws IOException, SQLException, DataFormatException {
-//		HashMap<PeptidePrecursor, ArrayList<LibraryEntry>> map=new HashMap<PeptidePrecursor, ArrayList<LibraryEntry>>();
-//		for (PeptidePrecursor peptidePrecursor : entries) {
-//			ArrayList<LibraryEntry> results=getEntries(peptidePrecursor.getPeptideModSeq(),  peptidePrecursor.getPrecursorCharge(), sqrt);
-//			map.put(peptidePrecursor, results);
-//		}
-//		return map;
-//	}
 
 	@Override
 	public ArrayList<LibraryEntry> getEntries(Range precursorMz, boolean sqrt, AminoAcidConstants aaConstants) throws IOException, SQLException, DataFormatException {
@@ -88,7 +76,6 @@ public class MockLibrary implements LibraryInterface {
 		return returnables;
 	}
 	
-	@Override
 	public Range getMinMaxMZ() throws IOException, SQLException {
 		double min=Double.MAX_VALUE;
 		double max=0.0;

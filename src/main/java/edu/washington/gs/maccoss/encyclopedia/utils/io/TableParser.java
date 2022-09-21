@@ -1,6 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.io;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 
 import java.io.File;
 import java.io.InputStream;
@@ -65,11 +66,15 @@ public class TableParser {
 				try {
 					producerFuture.get();
 				} catch (ExecutionException e) {
+					Logger.errorLine("Exception found reading table: "+e.getMessage());
+					Logger.errorException(e);
 					throw new EncyclopediaException("Error reading tabular file", e);
 				}
 				try {
 					consumerFuture.get();
 				} catch (ExecutionException e) {
+					Logger.errorLine("Exception found parsing table: "+e.getMessage());
+					Logger.errorException(e);
 					throw new EncyclopediaException("Error parsing tabular file (" + muscle.getClass().getName() + ")", e);
 				}
 			} catch (InterruptedException e) {

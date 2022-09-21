@@ -224,6 +224,25 @@ public class General {
 		return toString(i, ",");
 	}
 	
+	public static String toString(boolean[] i, String delim) {
+		StringBuilder sb=new StringBuilder();
+		for (boolean g : i) {
+			if (sb.length()>0) {
+				sb.append(delim);
+			}
+			if (g) {
+				sb.append('T');
+			} else {
+				sb.append('F');
+			}
+		}
+		return sb.toString();
+	}
+	
+	public static String toString(boolean[] i) {
+		return toString(i, ",");
+	}
+	
 	public static String toString(@SuppressWarnings("rawtypes") List i) {
 		StringBuilder sb=new StringBuilder();
 		for (Object g : i) {
@@ -416,6 +435,26 @@ public class General {
 		}
 		return f;
 	}
+
+	public static float[] divide(float[] v1, float[] v2) {
+		assert(v1.length==v2.length);
+		
+		float[] r=new float[v1.length];
+		for (int i=0; i<r.length; i++) {
+			r[i]=v1[i]/v2[i];
+		}
+		return r;
+	}
+	
+	public static float[] normalizeToL2(float[] y) {
+		return divide(y, (float)Math.sqrt(sum(multiply(y, y))));
+	}
+	public static float[] normalizeToSum(float[] y) {
+		return divide(y, sum(y));
+	}
+	public static float[] normalizeToMaxOne(float[] y) {
+		return divide(y, max(y));
+	}
 	
 	public static float[] firstDerivative(float[] v) {
 		float[] d=new float[v.length-1];
@@ -606,6 +645,14 @@ public class General {
 		float[] r=new float[v1.length];
 		for (int i=0; i<r.length; i++) {
 			r[i]=v1[i]-v;
+		}
+		return r;
+	}
+
+	public static float[] subtract(float[] v1, float[] v2) {
+		float[] r=new float[v1.length];
+		for (int i=0; i<r.length; i++) {
+			r[i]=v1[i]-v2[i];
 		}
 		return r;
 	}

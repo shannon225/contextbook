@@ -4,7 +4,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Desktop;
-import java.awt.Dimension;
 import java.awt.FileDialog;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -16,12 +15,10 @@ import java.awt.event.MouseListener;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.StringTokenizer;
@@ -43,21 +40,31 @@ import javax.swing.JTextArea;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
-import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaToPrositCSVParameters;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryEntryCleaner;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryToBlibConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MS2PIPReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MSPReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.MaxquantMSMSConverter;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.MzmlToDIAConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.OpenSwathTSVToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SpectronautCSVToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
@@ -71,14 +78,23 @@ import edu.washington.gs.maccoss.encyclopedia.filewriters.PrositCSVWriter;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.StripeFileMerger;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.StripeFileTrimmer;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.AboutDialog;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserList;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.LabeledComponent;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingWorkerProgress;
+import edu.washington.gs.maccoss.encyclopedia.jobs.CombineELIBsAndExtractGroupSpecificLibrariesJob;
+import edu.washington.gs.maccoss.encyclopedia.jobs.JobProcessor;
+import edu.washington.gs.maccoss.encyclopedia.jobs.SearchJob;
+import edu.washington.gs.maccoss.encyclopedia.jobs.WorkerJob;
+import edu.washington.gs.maccoss.encyclopedia.jobs.XMLDriverFactory;
+import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
+import edu.washington.gs.maccoss.encyclopedia.utils.StringUtils;
+import edu.washington.gs.maccoss.encyclopedia.utils.io.XMLObject;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
-import gnu.trove.map.hash.TCharDoubleHashMap;
+import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 
 public class SearchPanelUtilities {
 	private static final ImageIcon convertDBIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/convertdb.png"));
@@ -321,42 +337,182 @@ public class SearchPanelUtilities {
 		dialog.setVisible(true);
 	}
 	
-	public static void combineELIBs(Component root) {
+	public static void saveDriverFile(Component root, final SearchParameters params, final JobProcessor processor) {
+		JFrame frame = (JFrame)SwingUtilities.getRoot(root);
+
+		ArrayList<SearchJobData> jobData=new ArrayList<SearchJobData>();
+		for (WorkerJob job : processor.getQueue()) {
+			if (job instanceof SearchJob) {
+				jobData.add(((SearchJob)job).getSearchData());
+			}
+		}
+		if (jobData.size()<1) {
+			JOptionPane.showMessageDialog(frame, "Please queue at least one RAW file first!");
+			
+		} else {
+			FileDialog dialog=new FileDialog(frame, "Select an XML file", FileDialog.SAVE);
+			SimpleFilenameFilter filter = new SimpleFilenameFilter(XMLDriverFactory.DRIVER_XML_EXTENSION);
+			dialog.setFilenameFilter(filter);
+			dialog.setVisible(true);
+			File[] files=dialog.getFiles();
+			if (files!=null&&files.length>0) {
+				ArrayList<WorkerJob> queue=processor.getQueue();
+				File file=files[0];
+				if (!filter.accept(file.getName())) {
+					file=new File(file.getParent(), file.getName()+XMLDriverFactory.DRIVER_XML_EXTENSION);
+				}
+
+				XMLDriverFactory.writeXML(queue, file);
+			}
+		}
+	}
+	
+	public static void loadDriverFile(Component root, final SearchParameters params, final JobProcessor processor) {
+		JFrame frame = (JFrame)SwingUtilities.getRoot(root);
+
+		FileDialog dialog=new FileDialog(frame, "Select an XML file", FileDialog.LOAD);
+		SimpleFilenameFilter filter = new SimpleFilenameFilter(XMLDriverFactory.DRIVER_XML_EXTENSION);
+		dialog.setFilenameFilter(filter);
+		dialog.setVisible(true);
+		File[] files=dialog.getFiles();
+		if (files!=null&&files.length>0) {
+
+			ArrayList<WorkerJob> queue=XMLDriverFactory.readXML(files[0]);
+
+			for (WorkerJob job : queue) {
+				processor.addJob(job);
+			}
+		}
+	}
+	
+	public static void extractSampleSpecificDLIBs(Component root, final SearchParameters params, final JobProcessor processor) {
+		JFrame frame = (JFrame)SwingUtilities.getRoot(root);
+
+		ArrayList<SearchJobData> jobData=new ArrayList<SearchJobData>();
+		for (WorkerJob job : processor.getQueue()) {
+			if (job instanceof SearchJob) {
+				jobData.add(((SearchJob)job).getSearchData());
+			}
+		}
+		if (jobData.size()<2) {
+			JOptionPane.showMessageDialog(frame, "Please queue at least two RAW files first!");
+			
+		} else {
+			final JDialog dialog=new JDialog(frame, "Extact Sample-Specific Libraries from ELIB", true);
+	
+			final FileChooserPanel diaFileChooser=new FileChooserPanel(null, "Single-injection DIA example", new SimpleFilenameFilter(MzmlToDIAConverter.MZML_EXTENSION, StripeFile.DIA_EXTENSION), true, true);
+			final FileChooserPanel saveDirFileChooser=new FileChooserPanel(null, "Save Directory", new FilenameFilter() {
+				@Override
+				public boolean accept(File dir, String name) {
+					if (dir.exists()&&!dir.isDirectory()) {
+						return false;
+					}
+					return true;
+				}
+			}, true, false);
+	
+			JPanel options=new JPanel();
+			options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
+			options.add(diaFileChooser);
+			options.add(saveDirFileChooser);
+			
+			JPanel buttons=new JPanel();
+			buttons.setLayout(new FlowLayout(FlowLayout.CENTER));
+			JButton okButton=new JButton("OK");
+			okButton.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					final File saveDir=saveDirFileChooser.getFile();
+					final File exampleDIAFile=diaFileChooser.getFile(); // can be missing (null)
+					if (saveDir!=null) {
+						dialog.setVisible(false);
+						dialog.dispose();
+	
+						Logger.logLine("Added extact sample-specific libraries into ["+saveDir.getAbsolutePath()+"]");
+						processor.addJob(new CombineELIBsAndExtractGroupSpecificLibrariesJob(saveDir, Optional.of(exampleDIAFile), params, processor));
+					} else {
+						JOptionPane.showMessageDialog(frame, "You must specify an ELIB or DLIB library file!", "Incomplete options!", JOptionPane.WARNING_MESSAGE, convertDBIcon);
+					}
+				}
+			});
+			buttons.add(okButton);
+			JButton cancelButton=new JButton("Cancel");
+			cancelButton.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					dialog.setVisible(false);
+					dialog.dispose();
+				}
+			});
+			buttons.add(cancelButton);
+			
+			JPanel mainpane=new JPanel(new BorderLayout());
+			mainpane.add(options, BorderLayout.CENTER);
+			mainpane.add(buttons, BorderLayout.SOUTH);
+			mainpane.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10), BorderFactory.createTitledBorder("Parameters:")));
+			
+			dialog.getContentPane().add(mainpane, BorderLayout.CENTER);
+			dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+			dialog.pack(); 
+			dialog.setSize(500, 200);
+			dialog.setVisible(true);
+		}
+	}
+	
+	public static void combineELIBs(Component root, final JobProcessor processor) {
 		final JFrame frame = (JFrame)SwingUtilities.getRoot(root);
 		final JDialog dialog=new JDialog(frame, "Combine Libraries", true);
 		
-		final FileChooserPanel saveFileChooser=new FileChooserPanel(null, "Library", new SimpleFilenameFilter(".dlib", ".elib"), true, false);
+		final FileChooserPanel saveFileChooser=new FileChooserPanel(null, "Library", new SimpleFilenameFilter(".dlib"), true, false);
+
+		final FileChooserList choosers=new FileChooserList("Library File (.dlib or .elib)", new SimpleFilenameFilter(".dlib", ".elib"));
 		
-		final JPanel choosers=new JPanel();
-		choosers.setLayout(new BoxLayout(choosers, BoxLayout.Y_AXIS));
-		choosers.add(new FileChooserPanel(null, "Add Library", new SimpleFilenameFilter(".dlib", ".elib"), false));
-		
-		JPanel organizer=new JPanel(new BorderLayout());
-		organizer.add(choosers, BorderLayout.NORTH);
-		JScrollPane scrollPane = new JScrollPane(organizer); 
-		scrollPane.setPreferredSize(new Dimension(500, 400));
-		JButton addChooserButton=new JButton("Add Additional Library Selector", fileAddIcon);
-		addChooserButton.addActionListener(new ActionListener() {
-			
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				choosers.add(new FileChooserPanel(null, "Add Library", new SimpleFilenameFilter(".dlib", ".elib"), false), choosers.getComponentCount()-1);
-				choosers.revalidate();
-				choosers.repaint();
-			}
-		});
 		final JCheckBox rtAlignBox=new JCheckBox("RT align samples");
+		final JCheckBox removeDuplicatesBox=new JCheckBox("Remove duplicates");
 		final JCheckBox higherScoresAreBetterBox=new JCheckBox("Higher scores are better");
 		rtAlignBox.setSelected(false);
+		removeDuplicatesBox.setSelected(true);
 		higherScoresAreBetterBox.setSelected(false);
+
+		removeDuplicatesBox.addChangeListener(new ChangeListener() {
+			@Override
+			public void stateChanged(ChangeEvent e) {
+				higherScoresAreBetterBox.setEnabled(removeDuplicatesBox.isSelected());
+			}
+		});
 
 		JPanel options=new JPanel();
 		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
-		options.add(scrollPane);
-		options.add(addChooserButton);
+		options.add(choosers);
 		options.add(saveFileChooser);
 		options.add(rtAlignBox);
+		options.add(removeDuplicatesBox);
 		options.add(higherScoresAreBetterBox);
+		
+		choosers.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				ArrayList<File> filelist=choosers.getFiles();
+				if (filelist.size()>0) {
+					// choose the last file's directory to place the new file
+					File directory=filelist.get(filelist.size()-1).getParentFile();
+					
+					String[] names=new String[filelist.size()];
+					for (int i = 0; i < names.length; i++) {
+						names[i]=filelist.get(i).getName();
+					}
+					String filename=StringUtils.getCommonName(names, "combined");
+					if (filename.toLowerCase().endsWith(LibraryFile.ELIB)) {
+						filename=filename.substring(0, filename.length()-LibraryFile.ELIB.length())+LibraryFile.DLIB;
+					} else if (!filename.toLowerCase().endsWith(LibraryFile.DLIB)) {
+						filename=filename+LibraryFile.DLIB;
+					}
+					
+					File savefile=new File(directory, filename);
+					saveFileChooser.update(savefile);
+				}
+			}
+		});
 		
 		JPanel buttons=new JPanel();
 		buttons.setLayout(new FlowLayout(FlowLayout.CENTER));
@@ -365,73 +521,33 @@ public class SearchPanelUtilities {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				final ArrayList<File> files=new ArrayList<>();
-				for (Component c : choosers.getComponents()) {
-					if (c instanceof FileChooserPanel) {
-						File f=((FileChooserPanel)c).getFile();
-						if (f!=null&&f.exists()) {
-							files.add(f);
-						}
+				for (File f : choosers.getFiles()) {
+					if (f!=null&&f.exists()) {
+						files.add(f);
 					}
 				}
 
 				final File saveFile=saveFileChooser.getFile();
 				final boolean higherScoresAreBetter=higherScoresAreBetterBox.isSelected();
 				final boolean rtAlign=rtAlignBox.isSelected();
+				final boolean removeDuplicates=removeDuplicatesBox.isSelected();
 				
 				if (files.size()>0&&saveFile!=null) {
 					dialog.setVisible(false);
 					dialog.dispose();
-					
-					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame)SwingUtilities.getWindowAncestor(root), "Please wait...", "Reading Library Files") {
-						@Override
-						protected Nothing doInBackgroundForReal() throws Exception {
-							HashMap<String, ArrayList<LibraryEntry>> groupedEntries=new HashMap<>();
-							for (File elibFile : files) {
-								LibraryFile library=new LibraryFile();
-								library.openFile(elibFile);
-								ArrayList<LibraryEntry> localEntries = library.getAllEntries(false,  new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
-								//groupedEntries.put(elibFile.getName(), localEntries);
-								for (LibraryEntry entry : localEntries) {
-									ArrayList<LibraryEntry> list=groupedEntries.get(entry.getSource());
-									if (list==null) {
-										list=new ArrayList<>();
-										groupedEntries.put(entry.getSource(), list);
-									}
-									list.add(entry);
-								}
-								Logger.logLine("Found "+localEntries.size()+" entries from "+elibFile.getName());
-								library.close();
-							}
-							
-							ArrayList<LibraryEntry> allEntries;
-							if (rtAlign) {
-								allEntries=LibraryEntryCleaner.correctRTs(groupedEntries, saveFile);
-							} else {
-								allEntries=new ArrayList<>();
-								for (ArrayList<LibraryEntry> list : groupedEntries.values()) {
-									allEntries.addAll(list);
-								}
-							}
-							allEntries=LibraryEntryCleaner.removeDuplicateEntries(allEntries, higherScoresAreBetter);
 
-							LibraryFile saveLibrary=new LibraryFile();
-							saveLibrary.openFile();
-							saveLibrary.dropIndices();
-							saveLibrary.addEntries(allEntries);
-							saveLibrary.addProteinsFromEntries(allEntries);
-							saveLibrary.createIndices();
-							saveLibrary.saveAsFile(saveFile);
-							
-							saveLibrary.close();
-							Logger.logLine("Saved "+saveFile.getName()+", "+allEntries.size()+" total");
-							
-							return Nothing.NOTHING;
-						}
+					WorkerJob job=new WorkerJob() {
 						@Override
-						protected void doneForReal(Nothing t) {
+						public String getJobTitle() {
+							return "Merge raw files into "+saveFile.getName();
+						}
+
+						@Override
+						public void runJob(ProgressIndicator progress) throws Exception {
+							LibraryUtilities.mergeLibraries(progress, files, saveFile, rtAlign, removeDuplicates, higherScoresAreBetter);
 						}
 					};
-					worker.execute();
+					processor.addJob(job);
 					
 				} else {
 					JOptionPane.showMessageDialog(frame, "You must specify at least one library file!", "Incomplete options!", JOptionPane.WARNING_MESSAGE, convertDBIcon);
@@ -460,107 +576,44 @@ public class SearchPanelUtilities {
 		dialog.setVisible(true);
 	}
 	
-	public static void extractSampleSpecificDLIBs(Component root, SearchParameters parameters) {
-		final JFrame frame = (JFrame)SwingUtilities.getRoot(root);
-		final JDialog dialog=new JDialog(frame, "Extact Sample-Specific Libraries from ELIB", true);
-
-		final FileChooserPanel elibFileChooser=new FileChooserPanel(null, "Library", new SimpleFilenameFilter(".elib"), true, true);
-		final FileChooserPanel saveDirFileChooser=new FileChooserPanel(null, "Save Directory", new FilenameFilter() {
-			@Override
-			public boolean accept(File dir, String name) {
-				return true;
-			}
-		}, true, false);
-
-		JPanel options=new JPanel();
-		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
-		options.add(elibFileChooser);
-		options.add(saveDirFileChooser);
-		
-		JPanel buttons=new JPanel();
-		buttons.setLayout(new FlowLayout(FlowLayout.CENTER));
-		JButton okButton=new JButton("OK");
-		okButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				final File saveDir=saveDirFileChooser.getFile();
-				final File elibFile=elibFileChooser.getFile();
-				if (elibFile!=null&&elibFile.exists()&&saveDir!=null) {
-					dialog.setVisible(false);
-					dialog.dispose();
-
-					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame)SwingUtilities.getWindowAncestor(root), "Please wait...", "Extracting Library File") {
-						@Override
-						protected Nothing doInBackgroundForReal() throws Exception {
-							LibraryFile library=new LibraryFile();
-							library.openFile(elibFile);
-							LibraryUtilities.extractSampleSpecificLibraries(saveDir, library);
-							
-							return Nothing.NOTHING;
-						}
-						@Override
-						protected void doneForReal(Nothing t) {
-						}
-					};
-					worker.execute();
-				} else {
-					JOptionPane.showMessageDialog(frame, "You must specify an ELIB or DLIB library file!", "Incomplete options!", JOptionPane.WARNING_MESSAGE, convertDBIcon);
-				}
-			}
-		});
-		buttons.add(okButton);
-		JButton cancelButton=new JButton("Cancel");
-		cancelButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				dialog.setVisible(false);
-				dialog.dispose();
-			}
-		});
-		buttons.add(cancelButton);
-		
-		JPanel mainpane=new JPanel(new BorderLayout());
-		mainpane.add(options, BorderLayout.CENTER);
-		mainpane.add(buttons, BorderLayout.SOUTH);
-		mainpane.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10), BorderFactory.createTitledBorder("Parameters:")));
-		
-		dialog.getContentPane().add(mainpane, BorderLayout.CENTER);
-		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-		dialog.pack(); 
-		dialog.setSize(500, 200);
-		dialog.setVisible(true);
-	}
-	
-	public static void combineMZMLs(Component root, SearchParameters parameters) {
+	public static void combineMZMLs(Component root, final JobProcessor processor, SearchParameters parameters) {
 		final JFrame frame = (JFrame)SwingUtilities.getRoot(root);
 		final JDialog dialog=new JDialog(frame, "Combine DIA or mzML Gas Phase Fractions", true);
 		
 		final FileChooserPanel saveFileChooser=new FileChooserPanel(null, "DIA File", new SimpleFilenameFilter(".dia"), true, false);
 		
-		final JPanel choosers=new JPanel();
-		choosers.setLayout(new BoxLayout(choosers, BoxLayout.Y_AXIS));
-		choosers.add(new FileChooserPanel(null, "Add GPF DIA/mzML File", new SimpleFilenameFilter(".mzML", ".dia"), false));
+		final FileChooserList choosers=new FileChooserList("GPF DIA/mzML File", new SimpleFilenameFilter(".mzML", ".dia"));
 		
-		JPanel organizer=new JPanel(new BorderLayout());
-		organizer.add(choosers, BorderLayout.NORTH);
-		JScrollPane scrollPane = new JScrollPane(organizer); 
-		scrollPane.setPreferredSize(new Dimension(500, 400));
-		JButton addChooserButton=new JButton("Add Additional GPF DIA/mzML Selector", fileAddIcon);
-		addChooserButton.addActionListener(new ActionListener() {
-			
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				choosers.add(new FileChooserPanel(null, "Add GPF DIA/mzML", new SimpleFilenameFilter(".mzML", ".dia"), false), choosers.getComponentCount()-1);
-				choosers.revalidate();
-				choosers.repaint();
-			}
-		});
 
 		JPanel options=new JPanel();
 		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
-		options.add(scrollPane);
-		options.add(addChooserButton);
+		options.add(choosers);
 		options.add(saveFileChooser);
+		
+		choosers.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				ArrayList<File> filelist=choosers.getFiles();
+				if (filelist.size()>0) {
+					// choose the last file's directory to place the new file
+					File directory=filelist.get(filelist.size()-1).getParentFile();
+					
+					String[] names=new String[filelist.size()];
+					for (int i = 0; i < names.length; i++) {
+						names[i]=filelist.get(i).getName();
+					}
+					String filename=StringUtils.getCommonName(names, "combined");
+					if (filename.toLowerCase().endsWith(".mzml")) {
+						filename=filename.substring(0, filename.length()-5)+StripeFile.DIA_EXTENSION;
+					} else if (!filename.toLowerCase().endsWith(StripeFile.DIA_EXTENSION)) {
+						filename=filename+StripeFile.DIA_EXTENSION;
+					}
+					
+					File savefile=new File(directory, filename);
+					saveFileChooser.update(savefile);
+				}
+			}
+		});
 		
 		JPanel buttons=new JPanel();
 		buttons.setLayout(new FlowLayout(FlowLayout.CENTER));
@@ -569,12 +622,9 @@ public class SearchPanelUtilities {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				final ArrayList<File> files=new ArrayList<>();
-				for (Component c : choosers.getComponents()) {
-					if (c instanceof FileChooserPanel) {
-						File f=((FileChooserPanel)c).getFile();
-						if (f!=null&&f.exists()) {
-							files.add(f);
-						}
+				for (File f : choosers.getFiles()) {
+					if (f!=null&&f.exists()) {
+						files.add(f);
 					}
 				}
 
@@ -584,17 +634,18 @@ public class SearchPanelUtilities {
 					dialog.setVisible(false);
 					dialog.dispose();
 					
-					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame)SwingUtilities.getWindowAncestor(root), "Please wait...", "Reading Library Files") {
+					WorkerJob job=new WorkerJob() {
 						@Override
-						protected Nothing doInBackgroundForReal() throws Exception {
-							StripeFileMerger.merge(files.toArray(new File[files.size()]), saveFile, parameters);
-							return Nothing.NOTHING;
+						public String getJobTitle() {
+							return "Merge raw files into "+saveFile.getName();
 						}
+
 						@Override
-						protected void doneForReal(Nothing t) {
+						public void runJob(ProgressIndicator progress) throws Exception {
+							StripeFileMerger.merge(progress, files.toArray(new File[files.size()]), saveFile, parameters);
 						}
 					};
-					worker.execute();
+					processor.addJob(job);
 					
 				} else {
 					JOptionPane.showMessageDialog(frame, "You must specify at least one DIA/mzML file!", "Incomplete options!", JOptionPane.WARNING_MESSAGE, convertDBIcon);
@@ -654,7 +705,7 @@ public class SearchPanelUtilities {
 		mzRange.add(new JSpinner(maxMZ));
 
 		options.add(new LabeledComponent("Precursor Range (m/z)", mzRange));
-		options.add(new LabeledComponent("Rention Time Range (min)", rtRange));
+		options.add(new LabeledComponent("Retention Time Range (min)", rtRange));
 		
 		JPanel buttons=new JPanel();
 		buttons.setLayout(new FlowLayout(FlowLayout.CENTER));
@@ -762,7 +813,7 @@ public class SearchPanelUtilities {
 		options.add(new LabeledComponent("Precursor Range (m/z)", mzRange));
 		options.add(new LabeledComponent("Rention Time Range (min)", rtRange));
 		
-		options.add(new JLabel("Subset peptides:", JLabel.LEFT));
+		options.add(new JLabel("Subset peptides/accessions (requires exact matches):", JLabel.LEFT));
 		options.add(scrollPane);
 		
 		JPanel buttons=new JPanel();

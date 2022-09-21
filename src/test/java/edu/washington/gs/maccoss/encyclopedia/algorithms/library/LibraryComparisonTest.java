@@ -2,15 +2,25 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.library;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Optional;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RTRTPoint;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeFilter;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Ion;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Correlation;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.PivotTableGenerator;
 import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
@@ -134,7 +144,7 @@ public class LibraryComparisonTest {
 		savefile.saveAsFile(new File(kb.getParentFile(), "massive_kb_with_prosit_rts.dlib"));
 		System.out.println("done!");
 	}
-	public static void main(String[] args) throws Exception {
+	public static void main4(String[] args) throws Exception {
 		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
 
 //		File[] libraryFilesDDA=new File[] {
@@ -251,5 +261,67 @@ public class LibraryComparisonTest {
 			}
 		}
 		file.close();
+	}
+
+	public static void main(String[] args) throws Exception {
+		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
+		File larger=new File("/Users/searle.30/Documents/maccoss/prosit_version_analysis/prosit1410_uniprot_human_jan2021_yeastENO_trypsin_z3_nce33.dlib");	
+		File smaller=new File("/Users/searle.30/Documents/maccoss/prosit_version_analysis/prosit_uniprot_human_jan2021_yeastENO1.fasta.trypsin.abeta.encyclopedia2.z3_nce33.dlib");
+
+		LibraryFile largerLibrary=new LibraryFile();
+		largerLibrary.openFile(larger);
+		ArrayList<LibraryEntry> largerEntries=largerLibrary.getAllEntries(false, parameters.getAAConstants());
+		HashMap<String, LibraryEntry> largerMap=new HashMap<>();
+		for (LibraryEntry entry : largerEntries) {
+			String key=entry.getPeptideModSeq()+"+"+entry.getPrecursorCharge()+"H";
+			largerMap.put(key, entry);
+		}
+		
+		LibraryFile smallerLibrary=new LibraryFile();
+		smallerLibrary.openFile(smaller);
+		ArrayList<LibraryEntry> smallerEntries=smallerLibrary.getAllEntries(false, parameters.getAAConstants());
+		
+		TFloatArrayList[] correlations=new TFloatArrayList[5]; // number of charge states
+		for (int i = 0; i < correlations.length; i++) {
+			correlations[i]=new TFloatArrayList();
+		}
+		ArrayList<XYPoint> rtPoints=new ArrayList<>(); 
+		
+		for (LibraryEntry entry : smallerEntries) {
+			String key=entry.getPeptideModSeq()+"+"+entry.getPrecursorCharge()+"H";
+			LibraryEntry match=largerMap.get(key);
+			if (match!=null) {
+				AnnotatedLibraryEntry dda=AnnotatedLibraryEntry.getAnnotationsOnly(entry, parameters);
+				float correlation=(float)Correlation.getPearsons(match, dda, parameters.getFragmentTolerance());
+				int chargeIndex=entry.getPrecursorCharge()-1;
+				if (chargeIndex>=0&&chargeIndex<correlations.length) {
+					correlations[chargeIndex].add(correlation);
+				}
+				
+				rtPoints.add(new RTRTPoint(entry.getRetentionTime()/60f, match.getRetentionTime()/60f, false, entry.getPeptideModSeq()));
+				
+				if (rtPoints.size()%100000==0) {
+					System.out.println("Processed "+rtPoints.size());
+				}
+			}
+		}
+		
+		System.out.println((smallerEntries.size()-rtPoints.size())+" <-- "+rtPoints.size()+" --> "+(largerEntries.size()-rtPoints.size()));
+		
+		RetentionTimeFilter filter=RetentionTimeFilter.getFilter(rtPoints, smaller.getName(), larger.getName());
+		filter.plot(rtPoints, Optional.ofNullable(null));
+		
+		ArrayList<XYTraceInterface> traces=new ArrayList<XYTraceInterface>();
+		for (int i = 0; i < correlations.length; i++) {
+			if (correlations[i].size()>0) {
+				float[] corrData=correlations[i].toArray();
+				ArrayList<XYPoint> pivot=PivotTableGenerator.createPivotTable(corrData, 0.9f, 1f, 0.001f);
+				traces.add(new XYTrace(pivot, GraphType.line, "+"+(i+1)+"H"));
+			}
+		}
+		Charter.launchChart("Correlation", "Count", true, traces.toArray(new XYTraceInterface[0]));
+		
+		smallerLibrary.close();
+		largerLibrary.close();
 	}
 }

@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.concurrent.BlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractScoringResult;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.ScoredPSM;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -38,10 +39,10 @@ public class PecanScoringResultsToTSVConsumer extends AbstractScoringResultsToTS
 				AbstractScoringResult result=resultsQueue.take();
 				if (AbstractScoringResult.POISON_RESULT==result) break;
 				if (!printedHeader) {
-					writer.print("id\tTD\tScanNr\ttopN\trank\tpeakZScore\tpeakCalibratedScore\tdeltaSn\t"
+					writer.print("id\tLabel\tScanNr\ttopN\trank\tpeakZScore\tpeakCalibratedScore\tdeltaSn\t"
 							+ "avgIdotp\tmidIdotp\tpeakScore\tpeakWeightedScore\tNCI\tCIMassErrMean\tCIMassErrVar\tprecursorMassErrMean\t"
 							+ "precursorMassErrVar\tpeakSimilarity\tsampledTimes\tmidTime\tspectraNorm\t"
-							+ "pepLength\tcharge2\tcharge3\tprecursorMz\tsequence\tprotein");
+							+ "pepLength\tcharge2\tcharge3\tprecursorMz\tsequence\tProteins");
 					// Percolator assumes linux line endings on Mac!
 					switch (os) {
 						case MAC:
@@ -63,12 +64,12 @@ public class PecanScoringResultsToTSVConsumer extends AbstractScoringResultsToTS
 				float firstScore=result.getBestScore();
 				float secondScore=result.getSecondBestScore();
 
-				for (Pair<ScoredObject<FragmentScan>, float[]> goodStripe : result.getGoodMSMSCandidates()) {
+				for (ScoredPSM goodStripe : result.getGoodMSMSCandidates()) {
 					numberProcessed++;
 					
-					float primaryScore=goodStripe.x.x;
-					FragmentScan stripe=goodStripe.x.y;
-					float[] auxScores=goodStripe.y;
+					float primaryScore=goodStripe.getPrimaryScore();
+					FragmentScan stripe=goodStripe.getMSMS();
+					float[] auxScores=goodStripe.getAuxScores();
 					
 					if (rank<=numberOfPeaksPerPeptide) {
 						float deltaCn=firstScore<=0?0.0f:Math.min(1.0f, (primaryScore-secondScore)/firstScore); // if secondScore<0 then deltaCn can be >1, so protect against that
@@ -133,7 +134,7 @@ public class PecanScoringResultsToTSVConsumer extends AbstractScoringResultsToTS
 						writer.print("\t"+sequence);
 						
 						HashSet<String> accessions=peptide.getAccessions();
-						writer.print("\t"+PSMData.accessionsToString(accessions));
+						writer.print("\t"+PSMData.accessionsToString(accessions, "\t"));
 
 						// Percolator assumes linux line endings on Mac!
 						switch (os) {

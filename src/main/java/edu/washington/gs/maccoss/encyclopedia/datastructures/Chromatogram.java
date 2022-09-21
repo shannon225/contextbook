@@ -5,5 +5,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 public interface Chromatogram extends Spectrum {
 	public Range getRtRange();
 	public float[] getCorrelationArray();
+	public boolean[] getQuantifiedIonsArray();
 	public float[] getMedianChromatogram();
 }

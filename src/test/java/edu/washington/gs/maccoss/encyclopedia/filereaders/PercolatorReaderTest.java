@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
@@ -88,6 +89,10 @@ public class PercolatorReaderTest extends TestCase {
 		public HashMap<Range, WindowData> getRanges() {
 			throw new UnsupportedOperationException();
 		}
+		
+		public Map<String,String> getMetadata() throws IOException ,SQLException {
+			throw new UnsupportedOperationException();
+		};
 
 		@Override
 		public void openFile(File userFile) throws IOException, SQLException {

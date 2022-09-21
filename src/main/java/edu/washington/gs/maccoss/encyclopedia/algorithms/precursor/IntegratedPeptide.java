@@ -130,7 +130,7 @@ public class IntegratedPeptide implements HasRetentionTime {
 			rts.add(pep.getRetentionTimeInSec());
 		}
 		
-		float[] isotopicDistribution=IsotopicDistributionCalculator.getIsotopeDistribution(psms.get(0).getPeptideData().getPeptideModSeq(), params.getAAConstants());
+		float[] isotopicDistribution=IsotopicDistributionCalculator.getIsotopeDistribution(peptideModSeq, params.getAAConstants());
 		ArrayList<TransitionRefinementData> trd=PrecursorIntegrator.integratePeptide(peptideModSeq, isotopicDistribution, rts.toArray(), traces, params);
 		
 		ArrayList<IntegratedLibraryEntry> entries=new ArrayList<>();
@@ -153,8 +153,10 @@ public class IntegratedPeptide implements HasRetentionTime {
 				FragmentScan msms=bestPSM.getMsms();
 				float[] fakeCorrelationArray=new float[msms.getMassArray().length];
 				Arrays.fill(fakeCorrelationArray, 1.0f);
+				boolean[] fakeQuantifiableIonsArray=new boolean[msms.getMassArray().length];
+				Arrays.fill(fakeQuantifiableIonsArray, true);
 				IntegratedLibraryEntry entry=new IntegratedLibraryEntry(sourceFile, psm.getAccessions(), psm.getSpectrumIndex(), psm.getPrecursorMZ(), psm.getPrecursorCharge(), 
-						psm.getPeptideModSeq(), copies, msms.getScanStartTime(), psm.getScore(), msms.getMassArray(), msms.getIntensityArray(), fakeCorrelationArray, data);
+						psm.getPeptideModSeq(), copies, msms.getScanStartTime(), psm.getScore(), bestPSM.getPeptideData().getSortingScore(), msms.getMassArray(), msms.getIntensityArray(), fakeCorrelationArray, fakeQuantifiableIonsArray, data);
 				entries.add(entry);
 			}
 		}

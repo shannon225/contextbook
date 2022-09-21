@@ -20,6 +20,10 @@ public class PecanRawScorer implements PSMPeakScorer {
 		this.fragmentTolerance = fragmentTolerance;
 		this.auxScorer=auxScorer;
 	}
+	
+	public static String getPrimaryScoreName() {
+		return "primary";
+	}
 
 	@Override
 	public float score(LibraryEntry entry, Spectrum spectrum, float[] predictedIsotopeDistribution, PrecursorScanMap precursors) {
@@ -42,6 +46,16 @@ public class PecanRawScorer implements PSMPeakScorer {
 	@Override
 	public String[] getAuxScoreNames(LibraryEntry entry) {
 		return auxScorer.getScoreNames(entry);
+	}
+
+	@Override
+	public int getParentDeltaMassIndex() {
+		return auxScorer.getParentDeltaMassIndex();
+	}
+
+	@Override
+	public int getFragmentDeltaMassIndex() {
+		return auxScorer.getFragmentDeltaMassIndex();
 	}
 
 	@Override

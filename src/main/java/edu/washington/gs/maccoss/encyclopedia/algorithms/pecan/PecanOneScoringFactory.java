@@ -56,4 +56,8 @@ public class PecanOneScoringFactory implements PecanScoringFactory {
 	public PeptideScoringResultsConsumer getResultsConsumer(BlockingQueue<AbstractScoringResult> resultsQueue, StripeFileInterface diaFile) {
 		return new PecanScoringResultsToTSVConsumer(featureFile, diaFile, resultsQueue, parameters.getNumberOfReportedPeaks());
 	}
+	@Override
+	public String getPrimaryScoreName() {
+		return PecanRawScorer.getPrimaryScoreName();
+	}
 }

@@ -15,7 +15,7 @@ public interface ParametersPanelInterface {
 	ImageIcon getImage();
 	
 	Optional<String> canLoadData();
-	SwingJob getJob(File diaFile, JobProcessorTableModel model);
+	void getJob(File diaFile, JobProcessorTableModel model);
 	void askForSetupFile();
 	SearchParameters getParameters();
 	void savePreferences();

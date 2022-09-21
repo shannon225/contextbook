@@ -19,6 +19,10 @@ public class DotProduct implements PSMPeakScorer {
 	public DotProduct(SearchParameters parameters) {
 		this.parameters=parameters;
 	}
+	
+	public static String getPrimaryScoreName() {
+		return "DotProduct";
+	}
 
 	/* (non-Javadoc)
 	 * @see edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer#score(edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry, edu.washington.gs.maccoss.encyclopedia.datastructures.Stripe)
@@ -36,6 +40,16 @@ public class DotProduct implements PSMPeakScorer {
 	@Override
 	public String[] getAuxScoreNames(LibraryEntry entry) {
 		return new String[0];
+	}
+
+	@Override
+	public int getParentDeltaMassIndex() {
+		return -1;
+	}
+
+	@Override
+	public int getFragmentDeltaMassIndex() {
+		return -1;
 	}
 
 	@Override

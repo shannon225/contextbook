@@ -21,6 +21,7 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.chart.annotations.XYTextAnnotation;
 import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.plot.CombinedRangeXYPlot;
+import org.jfree.ui.RectangleInsets;
 import org.jfree.ui.TextAnchor;
 
 import javax.swing.*;
@@ -450,7 +451,9 @@ public class MultiResultsBrowserPanel extends JPanel {
 						// ADD label the domain of the left most plots (FIXME FIND A BETTER WAY TO DO THIS)
 				        parent = new CombinedRangeXYPlot(rangeAxis);
 
-						final ChartPanel chartPanel=new ChartPanel(new JFreeChart(parent), false);
+						JFreeChart chart = new JFreeChart(parent);
+						chart.setPadding(new RectangleInsets(10, 10, 10, 10));
+						final ChartPanel chartPanel=new ChartPanel(chart, false);
 						chartPanel.getChart().removeLegend();
 						chartPanel.getChart().setBackgroundPaint(Color.white);
 						chartPanel.setMinimumDrawWidth(0);

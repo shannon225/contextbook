@@ -4,12 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.Set;
 import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
@@ -22,8 +19,9 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.WindowData;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
+import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
+import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import gnu.trove.list.array.TFloatArrayList;
 
 public class StripeFileMerger {
@@ -42,18 +40,20 @@ public class StripeFileMerger {
 
 		File dir=new File("/Volumes/searle_ssd/cobbs/SN606_RIPA/");
 		
-		merge(new File[] {new File(dir, "20200708_BCS_LOOM_COBBS_GPFDIA_SN606_1.mzML"), new File(dir,"20200708_BCS_LOOM_COBBS_GPFDIA_SN606_2.mzML"),
+		merge(new EmptyProgressIndicator(),
+				new File[] {new File(dir, "20200708_BCS_LOOM_COBBS_GPFDIA_SN606_1.mzML"), new File(dir,"20200708_BCS_LOOM_COBBS_GPFDIA_SN606_2.mzML"),
 				new File(dir,"20200708_BCS_LOOM_COBBS_GPFDIA_SN606_3.mzML"), new File(dir,"20200708_BCS_LOOM_COBBS_GPFDIA_SN606_4.mzML"),
 				new File(dir,"20200708_BCS_LOOM_COBBS_GPFDIA_SN606_5.mzML"), new File(dir,"20200708_BCS_LOOM_COBBS_GPFDIA_SN606_6.mzML")}, 
 				new File(dir, "SN606_combined.dia"), parameters);
 	}
-	public static StripeFile merge(File[] fs, File newFile, SearchParameters parameters) throws IOException, SQLException, DataFormatException {
+	public static StripeFile merge(ProgressIndicator progress, File[] fs, File newFile, SearchParameters parameters) throws IOException, SQLException, DataFormatException {
 		StripeFile stripeFile=new StripeFile(false);
 		stripeFile.openFile();
 		HashMap<Range, WindowData> dutyCycleMap=new HashMap<>();
 		
 		int scanIndex=0;
 		for (int i = 0; i < fs.length; i++) {
+			progress.update("Adding "+fs[i].getName()+" to merged file", i/(fs.length+1.0f));
 			Logger.logLine("Adding "+fs[i].getName()+" to merged file ("+(i+1)+" of "+fs.length+")...");
 			StripeFileInterface thisStripeFile=StripeFileGenerator.getFile(fs[i], parameters);
 			Map<Range, WindowData> ranges = thisStripeFile.getRanges();
@@ -85,6 +85,7 @@ public class StripeFileMerger {
 			
 			thisStripeFile.close();
 		}
+		progress.update("Finished merging, finalizing "+newFile.getName(), fs.length/(fs.length+1.0f));
 		Logger.logLine("Finished merging, finalizing "+newFile.getName());
 
 		stripeFile.setFileName(newFile.getName(), null, newFile.getAbsolutePath());
@@ -95,6 +96,7 @@ public class StripeFileMerger {
 		
 		stripeFile=new StripeFile();
 		stripeFile.openFile(newFile);
+		progress.update("Finished writing "+newFile.getName(), 1.0f);
 		return stripeFile;
 	}
 }

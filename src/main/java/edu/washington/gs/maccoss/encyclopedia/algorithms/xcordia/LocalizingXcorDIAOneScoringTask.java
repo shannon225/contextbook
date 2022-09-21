@@ -201,8 +201,10 @@ public class LocalizingXcorDIAOneScoringTask extends AbstractLibraryScoringTask 
 				}
 				sumCorrelation+=correlation*correlation;
 			}
-			
-			result.addStripe(maxXCorr, General.concatenate(auxScoreArray, maxXCorr, evalue, seedEntries.size()>1?1:0, numberOfPeaks, sumCorrelation), stripe);
+
+			float deltaPrecursorMass=scorer.getParentDeltaMassIndex()>=0?auxScoreArray[scorer.getParentDeltaMassIndex()]:0.0f;
+			float deltaFragmentMass=scorer.getFragmentDeltaMassIndex()>=0?auxScoreArray[scorer.getFragmentDeltaMassIndex()]:0.0f;
+			result.addStripe(maxXCorr, General.concatenate(auxScoreArray, maxXCorr, evalue, seedEntries.size()>1?1:0, numberOfPeaks, sumCorrelation), deltaPrecursorMass, deltaFragmentMass, stripe);
 			resultsQueue.add(result);
 
 			String annotation;
@@ -391,8 +393,12 @@ public class LocalizingXcorDIAOneScoringTask extends AbstractLibraryScoringTask 
 			float evalue=evalueCalculator.getNegLnEValue(data.xCorr);
 			FragmentScan stripe = stripes.get(data.spectrumIndex);
 			float[] auxScoreArray=scorer.auxScore(xcordiaEntry, stripe, isotopesByEntry.get(xcordiaEntry), precursors);
+
+			float deltaPrecursorMass=scorer.getParentDeltaMassIndex()>=0?auxScoreArray[scorer.getParentDeltaMassIndex()]:0.0f;
+			float deltaFragmentMass=scorer.getFragmentDeltaMassIndex()>=0?auxScoreArray[scorer.getFragmentDeltaMassIndex()]:0.0f;
 			
-			result.addStripe(data.xCorr, General.concatenate(auxScoreArray, data.xCorr, evalue, seedEntries.size()>1?1:0, data.numberOfPeaks, data.sumCorrelation), stripe);
+			result.addStripe(data.xCorr, General.concatenate(auxScoreArray, data.xCorr, evalue, seedEntries.size()>1?1:0, data.numberOfPeaks, data.sumCorrelation),
+					deltaPrecursorMass, deltaFragmentMass, stripe);
 			resultsQueue.add(result);
 
 			String annotation;

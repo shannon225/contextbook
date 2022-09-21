@@ -11,6 +11,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Executor;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -24,8 +25,6 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.FastaWriter;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
-import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
-import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector.OS;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.FileConcatenator;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.OutputMessage;
@@ -33,7 +32,12 @@ import edu.washington.gs.maccoss.encyclopedia.utils.threading.ExternalExecutor;
 
 public class PercolatorExecutor extends ExternalExecutor {
 	public static final String PI_0_TAG="pi_0=";
-	public static final PercolatorVersion DEFAULT_VERSION_NUMBER=PercolatorVersion.v3p05;
+
+	/**
+	 * Instead use {@link PercolatorVersion#DEFAULT_VERSION}.
+	 */
+	@Deprecated
+	public static final PercolatorVersion DEFAULT_VERSION_NUMBER=PercolatorVersion.DEFAULT_VERSION;
 
 	/**
 	 * The default value that Percolator uses for the {@code -t/--testFDR} parameter.
@@ -70,6 +74,7 @@ public class PercolatorExecutor extends ExternalExecutor {
 	 * for more information about the {@code -t/--testFDR} parameter.
 	 */
 	public static final float DEFAULT_TRAINING_THRESHOLD = PERCOLATOR_TRAINING_THRESHOLD_FALLBACK_VALUE;
+	public static final int DEFAULT_TRAINING_ITERATIONS = 10;
 
 	private static final Pattern PERCOLATOR_VERSION_PATTERN = Pattern.compile("Percolator version (.+),");
 	private static final String SELECTING_PI_0 = "Selecting pi_0=";
@@ -167,7 +172,7 @@ public class PercolatorExecutor extends ExternalExecutor {
 		}
 	}
 
-	private static void checkResult(PercolatorExecutor e) throws EncyclopediaException {
+	private static void checkResult(ExternalExecutor e) throws EncyclopediaException {
 		if (0 != e.getResultCode()) {
 			throw new EncyclopediaException("Percolator exited with non-zero status: " + e.getResultCode());
 		}
@@ -178,7 +183,7 @@ public class PercolatorExecutor extends ExternalExecutor {
 	}
 
 	static String[] generateCommand(PercolatorVersion percolatorVersion, PercolatorExecutionData commandData, int round) {
-		File percolator=getPercolator(percolatorVersion);
+		File percolator = percolatorVersion.getPercolator();
 
 		ArrayList<String> params=new ArrayList<>();
 		
@@ -205,7 +210,10 @@ public class PercolatorExecutor extends ExternalExecutor {
 			} catch (IOException ioe) {
 				Logger.errorLine("Problem extracting Percolator weights from "+modelFile.getName()+". Continuing without using weights...");
 				Logger.errorException(ioe);
+				params.add("--maxiter"); params.add(Integer.toString(commandData.getParameters().getPercolatorTrainingIterations()));
 			}
+		} else {
+			params.add("--maxiter"); params.add(Integer.toString(commandData.getParameters().getPercolatorTrainingIterations()));
 		}
 		
 		if (percolatorVersion.getMajorVersion()>2) {
@@ -236,48 +244,48 @@ public class PercolatorExecutor extends ExternalExecutor {
 		return fastaPlusDecoy;
 	}
 
-	static File getPercolator(PercolatorVersion percolatorVersionNumber) {
+	public static String checkPercolatorVersion(PercolatorVersion version) throws IOException, InterruptedException {
+		final ExternalExecutor executor = new ExternalExecutor(new String[] {
+				version.getPercolator().getAbsolutePath(), "--help"
+		});
 
-		try {
-			File percolator=File.createTempFile("Percolator-" + percolatorVersionNumber + "-", ".exe");
-			percolator.deleteOnExit();
+		final BlockingQueue<OutputMessage> result=executor.start();
 
-			OS os=OSDetector.getOS();
-			switch (os) {
-				case WINDOWS: {
-					InputStream is=PercolatorExecutor.class.getResourceAsStream("/bin/percolator-"+percolatorVersionNumber+".exe");
-					Files.copy(is, percolator.toPath(), StandardCopyOption.REPLACE_EXISTING);
-					percolator.setExecutable(true);
+		String errorMessage=null;
+		Optional<String> percolatorExecutableVersion = Optional.empty();
+		while (!executor.isFinished()||!result.isEmpty()) {
+			if (!result.isEmpty()) {
+				OutputMessage data=result.take();
+				if (true || !data.isStdOutput()) {
+					if (!percolatorExecutableVersion.isPresent()) {
+						String message = data.getMessage();
+						percolatorExecutableVersion = getPercolatorVersionFromOutput(message);
 
-					// not necessary for the crux version of percolator
-					//loadLibraryFile(percolator, "xerces-c_3_1.dll");
-					//loadLibraryFile(percolator, "msvcr120.dll");
-					//loadLibraryFile(percolator, "msvcp120.dll");
+						if (percolatorExecutableVersion.isPresent()) {
+							Logger.logLine(data.getMessage());
+						}
+					}
 
-					return percolator;
+					errorMessage = getErrorMessage(data);
+					if (null != errorMessage) {
+						Logger.errorLine(data.getMessage());
+					}
 				}
-				case MAC: {
-					InputStream is=PercolatorExecutor.class.getResourceAsStream("/bin/percolator-"+percolatorVersionNumber+".mac");
-					Files.copy(is, percolator.toPath(), StandardCopyOption.REPLACE_EXISTING);
-					percolator.setExecutable(true);
-					return percolator;
-				}
-				case LINUX:
-					InputStream is=PercolatorExecutor.class.getResourceAsStream("/bin/percolator-"+percolatorVersionNumber+".lin");
-					Files.copy(is, percolator.toPath(), StandardCopyOption.REPLACE_EXISTING);
-					percolator.setExecutable(true);
-					return percolator;
+			} else {
+				Thread.sleep(10);
 			}
-			throw new EncyclopediaException("Sorry, Percolator for "+OSDetector.getOSName(os)+" is not set up yet!");
-		} catch (IOException ioe) {
-			throw new EncyclopediaException("Unexpected exception finding Percolator", ioe);
 		}
-	}
 
-	static void loadLibraryFile(File percolator, String target) throws IOException {
-		File file=new File(percolator.getParentFile(), target);
-		file.deleteOnExit();
-		InputStream is=PercolatorExecutor.class.getResourceAsStream("/bin/"+target);
-		Files.copy(is, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+		if (errorMessage!=null) {
+			throw new EncyclopediaException(errorMessage);
+		}
+
+		checkResult(executor);
+
+		if (!percolatorExecutableVersion.isPresent()) {
+			throw new IllegalStateException("Did not find Percolator version!");
+		}
+
+		return percolatorExecutableVersion.get();
 	}
 }
