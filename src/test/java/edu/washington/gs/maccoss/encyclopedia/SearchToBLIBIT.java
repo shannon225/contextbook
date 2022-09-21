@@ -9,12 +9,12 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOne
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutionData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorProteinGroup;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.QuantitativeSearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
@@ -24,6 +24,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
+import junit.framework.AssertionFailedError;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Assume;
@@ -38,10 +39,6 @@ import java.sql.*;
 import java.util.*;
 import java.util.function.IntConsumer;
 import java.util.stream.Collectors;
-import java.nio.file.Paths;
-import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.List;
 import java.util.zip.DataFormatException;
 
 import static edu.washington.gs.maccoss.encyclopedia.tests.EncyclopediaTestUtils.getResourceAsTempFile;
@@ -234,7 +231,7 @@ public class SearchToBLIBIT {
 		Files.delete(libFile); // can't exist (we're trying to create it)
 		FileUtils.forceDeleteOnExit(libFile.toFile());
 
-		final List<SearchJobData> jobData = ImmutableList.of(
+		final List<EncyclopediaJobData> jobData = ImmutableList.of(
 				getSearchJobDataA(),
 				getSearchJobDataB()
 		);
@@ -255,6 +252,25 @@ public class SearchToBLIBIT {
 			assertTrue("Result file had no entries", 0 < numEntries);
 
 			assertValidAlib(file, jobData);
+
+			// Check entries match the original library
+			LibraryInterface searchLibrary = jobData.iterator().next().getLibrary();
+			file.getAllEntries(false, searchParameters.getAAConstants())
+					.forEach(e -> {
+						final ArrayList<LibraryEntry> entries;
+						try {
+							entries = searchLibrary.getEntries(e.getPeptideModSeq(), e.getPrecursorCharge(), false);
+						} catch (IOException | SQLException | DataFormatException ex) {
+							Logger.errorException(ex);
+							throw new AssertionFailedError(ex.getMessage());
+						}
+
+						assertFalse("No entries for " + e.getPeptideModSeq() + "+" + e.getPrecursorCharge() + " in library", entries.isEmpty());
+
+						// There should only be one?
+						assertArrayEquals(entries.iterator().next().getMassArray(), e.getMassArray(), 0.00001);
+						assertArrayEquals(entries.iterator().next().getIntensityArray(), e.getIntensityArray(), 0.00001f);
+					});
 		} finally {
 			file.close();
 		}
@@ -654,7 +670,7 @@ public class SearchToBLIBIT {
 	 *
 	 * @see SearchToBLIB.OutputFormat#ALIB
 	 */
-	private void assertValidAlib(LibraryFile file, List<SearchJobData> jobData) throws SQLException, IOException, DataFormatException {
+	private void assertValidAlib(LibraryFile file, List<? extends SearchJobData> jobData) throws SQLException, IOException, DataFormatException {
 		try (Connection c = file.getConnection()) {
 			try (Statement s = c.createStatement()) {
 				try (ResultSet rs = s.executeQuery("SELECT count() FROM entries;")) {
@@ -811,15 +827,15 @@ public class SearchToBLIBIT {
 		}
 	}
 
-	private SearchJobData getSearchJobDataA() throws IOException, SQLException {
+	private EncyclopediaJobData getSearchJobDataA() throws IOException, SQLException {
 		return makeJobData(library, diaA, featuresTxtA, fasta, peptideOutputA, decoyOutputA, elibA);
 	}
 
-	private SearchJobData getSearchJobDataB() throws IOException, SQLException {
+	private EncyclopediaJobData getSearchJobDataB() throws IOException, SQLException {
 		return makeJobData(library, diaB, featuresTxtB, fasta, peptideOutputB, decoyOutputB, elibB);
 	}
 
-	private QuantitativeSearchJobData makeJobData(Path library, Path dia, Path featuresTxt, Path fasta, Path peptideOutput, Path decoyOutput, Path resultsElib) throws IOException, SQLException {
+	private EncyclopediaJobData makeJobData(Path library, Path dia, Path featuresTxt, Path fasta, Path peptideOutput, Path decoyOutput, Path resultsElib) throws IOException, SQLException {
 		Assume.assumeTrue(Files.exists(dia));
 
 		final StripeFile diaReader = new StripeFile(true) ;
