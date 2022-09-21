@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.common.primitives.Floats;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ParsimonyProteinGrouper;
@@ -32,6 +33,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.*;
 import edu.washington.gs.maccoss.encyclopedia.utils.*;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableConcatenator;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.LinearInterpolatedFunction;
@@ -998,7 +1000,7 @@ public class SearchToBLIB {
 				writePercolatorToElib(elib, percolatorExecutionData, parameters);
 
 				// Now compute and write the set of entries that to capture the alignment/transition refinement
-				elib.addEntries(getAlignmentEntries(passingPeptides.x, inferrer, parameters));
+				elib.addEntries(getAlignmentEntries(passingPeptides.x, jobs, inferrer, parameters));
 
 				// Write information about each job to the ELIB
 				float increment = 1.0f / jobs.size();
@@ -1088,18 +1090,19 @@ public class SearchToBLIB {
 	 * @see OutputFormat#ALIB
 	 *
 	 * @param passingPeptides The set of passing peptide IDs from Percolator
+	 * @param jobs
 	 * @param inferrer The retention time alignment and transition refinement results for the experiment. Importantly,
 	 *                 all entries will include only the quantitative ions from this inferrer.
 	 *
 	 * @return A set of entries suitable for insertion in the ELIB (ALIB) file.
 	 */
-	private static ArrayList<LibraryEntry> getAlignmentEntries(List<? extends PeptidePrecursorWithProteins> passingPeptides, PeakLocationInferrerInterface inferrer, SearchParameters parameters) {
+	private static ArrayList<LibraryEntry> getAlignmentEntries(List<? extends PercolatorPeptide> passingPeptides, List<? extends SearchJobData> jobs, PeakLocationInferrerInterface inferrer, SearchParameters parameters) {
 		return passingPeptides.stream()
-				.map(p -> toAlignmentEntry(p, inferrer, parameters))
+				.map(p -> toAlignmentEntry(p, jobs, inferrer, parameters))
 				.collect(Collectors.toCollection(ArrayList::new));
 	}
 
-	private static LibraryEntry toAlignmentEntry(PeptidePrecursorWithProteins peptide, PeakLocationInferrerInterface inferrer, SearchParameters parameters) {
+	private static LibraryEntry toAlignmentEntry(PercolatorPeptide peptide, List<? extends SearchJobData> jobs, PeakLocationInferrerInterface inferrer, SearchParameters parameters) {
 		float warpedRTInSec;
 		try {
 			// We want the aligned ("seed") RT, not the time in any specific sample, so we pass a "bogus" job. TODO: BIG RISK (NPE, interface abuse)
@@ -1108,13 +1111,75 @@ public class SearchToBLIB {
 			warpedRTInSec = -1f;
 		}
 
-		double[] masses = inferrer.getTopNBestIons(peptide.getPeptideModSeq(), peptide.getPrecursorCharge());
-		if (null == masses) {
-			masses = new double[0];
+		final double[] quantIons = inferrer.getTopNBestIons(peptide.getPeptideModSeq(), peptide.getPrecursorCharge());
+
+		// Look up the original entry from the search library.
+		// Be sure we get it from the correct job's library, as they aren't guaranteed to be the same!
+		final String file = peptide.getFile();
+
+		LibraryEntry entry = null;
+
+		final Set<String> checkedLibraries = Sets.newHashSet();
+		for (SearchJobData job : jobs) {
+			if (!Objects.equals(file, job.getDiaFileReader().getOriginalFileName())) {
+				// Skip jobs that don't match this peptide ID
+				continue;
+			}
+
+			if (!(job instanceof EncyclopediaJobData)) {
+				// Skip jobs without a library
+				continue;
+			}
+
+			final LibraryInterface library = ((EncyclopediaJobData) job).getLibrary();
+			if (!checkedLibraries.add(library.getName())) {
+				// Already checked this library; skip it
+				continue;
+			}
+
+			final ArrayList<LibraryEntry> entries;
+			try {
+				entries = library.getEntries(peptide.getPeptideModSeq(), peptide.getPrecursorCharge(), false);
+			} catch (IOException | SQLException | DataFormatException e) {
+				// Unable to read entries from library! We don't want to excessively log, so just move on.
+				continue;
+			}
+
+			// Take the highest-scoring peptide (assumes higher scores are better)
+			final Optional<LibraryEntry> bestEntry = entries.stream().max(Comparator.comparing(LibraryEntry::getScore));
+
+			if (!bestEntry.isPresent()) {
+				// Try a different job's library
+				continue;
+			}
+
+			entry = bestEntry.get();
+			break;
 		}
 
-		final float[] intensities = new float[masses.length];
-		Arrays.fill(intensities, 1f);
+		if (null == entry) {
+			throw new IllegalStateException("Unable to find entry in original search library for " + peptide.getPsmID());
+		}
+
+		final double[] masses = entry.getMassArray();
+		final float[] intensities = entry.getIntensityArray();
+		final float[] correlations = entry.getCorrelationArray();
+
+		final MassTolerance tol = parameters.getLibraryFragmentTolerance();
+
+		// will initialize to all false
+		final boolean[] quantifiedIons = new boolean[masses.length];
+
+		// Could be faster if we avoid quadratic search but we can't be certain
+		// that either array is sorted, and the # of quant ions should be small.
+		for (int i = 0; i < masses.length; i++) {
+			for (double quantIon : quantIons) {
+				if (tol.equals(masses[i], quantIon)) {
+					quantifiedIons[i] = true;
+					break;
+				}
+			}
+		}
 
 		return new LibraryEntry(
 				"global",
@@ -1128,6 +1193,8 @@ public class SearchToBLIB {
 				peptide.getScore(),
 				masses,
 				intensities,
+				correlations,
+				quantifiedIons,
 				parameters.getAAConstants()
 		);
 	}
