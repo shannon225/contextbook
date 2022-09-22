@@ -41,6 +41,8 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.SubProgressIndicator;
+import gnu.trove.list.TDoubleList;
+import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.map.TObjectFloatMap;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
@@ -1464,14 +1466,35 @@ public class SearchToBLIB {
 					" e.PeptideModSeq," +
 					" e.RTInSeconds," +
 					" e.MassArray," +
-					" e.MassEncodedLength" +
+					" e.MassEncodedLength," +
+					" e.QuantifiedIonsArray" +
 					" FROM entries e;"
 			)) {
 				try (ResultSet rs = ps.executeQuery()) {
 					while (rs.next()) {
 						final String modSeq = rs.getString(1);
 
-						bestIons.put(modSeq, ByteConverter.toDoubleArray(CompressionUtils.decompress(rs.getBytes(3), rs.getInt(4))));
+						final double[] masses = ByteConverter.toDoubleArray(CompressionUtils.decompress(rs.getBytes(3), rs.getInt(4)));
+
+						final boolean[] quantifiedIons;
+						final byte[] compressedQuantIons = rs.getBytes(5);
+						if (null == compressedQuantIons || 0 == compressedQuantIons.length) {
+							quantifiedIons = new boolean[masses.length];
+							Arrays.fill(quantifiedIons, true); // old results shouldn't be used as alignments, but OK
+						} else {
+							quantifiedIons = ByteConverter.toBooleanArray(CompressionUtils.decompress(compressedQuantIons));
+						}
+
+						final TDoubleList quantIonMasses = new TDoubleArrayList();
+						for (int i = 0; i < masses.length; i++) {
+							if (i < quantifiedIons.length) { // clamp in bounds; should be unnecessary
+								if (quantifiedIons[i]) {
+									quantIonMasses.add(masses[i]);
+								}
+							}
+						}
+
+						bestIons.put(modSeq, quantIonMasses.toArray());
 
 						final float rtInSec = rs.getFloat(2);
 						if (rs.wasNull() || !Float.isFinite(rtInSec) || rtInSec < 0) { // null/nan, infinite, or negative values should not be recorded in the alignment
