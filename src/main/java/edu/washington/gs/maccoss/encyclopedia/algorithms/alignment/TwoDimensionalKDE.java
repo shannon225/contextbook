@@ -188,101 +188,113 @@ public class TwoDimensionalKDE {
 		return new LinearInterpolatedFunction(points);
 	}
 	
-	public void traceNorthEast(int i, int j, ArrayList<XYPoint> prev) {
-		float x=xRange.mapBackToRange(i, 0, resolution-1);
-		float y=yRange.mapBackToRange(j, 0, resolution-1);
-		prev.add(new XYPoint(x, y));
-		
-		if (i>=resolution-1||j>=resolution-1) {
-			return;
-		}
-		
-		float east=twoDimensionalHistogram[i+1][j];
-		float northeast=twoDimensionalHistogram[i+1][j+1];
-		float north=twoDimensionalHistogram[i][j+1];
-		float max=Math.max(Math.max(east, north), northeast);
-		
-		if (northeast==max||east==north) {
-			traceNorthEast(i+1, j+1, prev);
-		} else if (east==max) {
-			// We want to go east
-			// First check if the last move was north
-			// (but only if there was a previous move)
-			if (prev.size() >= 2) {
-				final XYPoint last = prev.get(prev.size() - 2);
-				if (last.x == x) {
-					// If the previous points X coord is the same
-					// as this point, the last move was to the north.
-					// Thus we remove this current point and just move
-					// northeast from the last point.
-					prev.remove(prev.size() - 1);
-				}
+	public void traceNorthEast(int initialI, int initialJ, ArrayList<XYPoint> prev) {
+		int i = initialI;
+		int j = initialJ;
+
+		while (true) {// gauranteed to exit because each step either i or j (or both) increases
+			float x = xRange.mapBackToRange(i, 0, resolution - 1);
+			float y = yRange.mapBackToRange(j, 0, resolution - 1);
+			prev.add(new XYPoint(x, y));
+
+			if (i >= resolution - 1 || j >= resolution - 1) {
+				return;
 			}
-			traceNorthEast(i+1, j, prev);
-		} else {
-			// We want to go north
-			// First check if the last move was east
-			// (but only if there was a previous move)
-			if (prev.size() >= 2) {
-				final XYPoint last = prev.get(prev.size() - 2);
-				if (last.y == y) {
-					// If the previous points Y coord is the same
-					// as this point, the last move was to the east.
-					// Thus we remove this current point and just move
-					// northeast from the last point.
-					prev.remove(prev.size() - 1);
+
+			float east = twoDimensionalHistogram[i + 1][j];
+			float northeast = twoDimensionalHistogram[i + 1][j + 1];
+			float north = twoDimensionalHistogram[i][j + 1];
+			float max = Math.max(Math.max(east, north), northeast);
+
+			if (northeast == max || east == north) {
+				i++;
+				j++;
+			} else if (east == max) {
+				// We want to go east
+				// First check if the last move was north
+				// (but only if there was a previous move)
+				if (prev.size() >= 2) {
+					final XYPoint last = prev.get(prev.size() - 2);
+					if (last.x == x) {
+						// If the previous points X coord is the same
+						// as this point, the last move was to the north.
+						// Thus we remove this current point and just move
+						// northeast from the last point.
+						prev.remove(prev.size() - 1);
+					}
 				}
+				i++;
+			} else {
+				// We want to go north
+				// First check if the last move was east
+				// (but only if there was a previous move)
+				if (prev.size() >= 2) {
+					final XYPoint last = prev.get(prev.size() - 2);
+					if (last.y == y) {
+						// If the previous points Y coord is the same
+						// as this point, the last move was to the east.
+						// Thus we remove this current point and just move
+						// northeast from the last point.
+						prev.remove(prev.size() - 1);
+					}
+				}
+				j++;
 			}
-			traceNorthEast(i, j+1, prev);
 		}
 	}
 	
-	public void traceSouthWest(int i, int j, ArrayList<XYPoint> prev) {
-		float x=xRange.mapBackToRange(i, 0, resolution-1);
-		float y=yRange.mapBackToRange(j, 0, resolution-1);
-		prev.add(new XYPoint(x, y));
-		
-		if (i<=0||j<=0) {
-			return;
-		}
-		
-		float west=twoDimensionalHistogram[i-1][j];
-		float southwest=twoDimensionalHistogram[i-1][j-1];
-		float south=twoDimensionalHistogram[i][j-1];
-		float max=Math.max(Math.max(west, south), southwest);
-		
-		if (southwest==max||west==south) {
-			traceSouthWest(i-1, j-1, prev);
-		} else if (west==max) {
-			// We want to go west
-			// First check if the last move was south
-			// (but only if there was a previous move)
-			if (prev.size() >= 2) {
-				final XYPoint last = prev.get(prev.size() - 2);
-				if (last.x == x) {
-					// If the previous points X coord is the same
-					// as this point, the last move was to the south.
-					// Thus we remove this current point and just move
-					// southwest from the last point.
-					prev.remove(prev.size() - 1);
-				}
+	public void traceSouthWest(int initialI, int initialJ, ArrayList<XYPoint> prev) {
+		int i = initialI;
+		int j = initialJ;
+
+		while (true) { // gauranteed to exit because each step either i or j (or both) decreases
+			float x = xRange.mapBackToRange(i, 0, resolution - 1);
+			float y = yRange.mapBackToRange(j, 0, resolution - 1);
+			prev.add(new XYPoint(x, y));
+
+			if (i <= 0 || j <= 0) {
+				return;
 			}
-			traceSouthWest(i-1, j, prev);
-		} else {
-			// We want to go south
-			// First check if the last move was west
-			// (but only if there was a previous move)
-			if (prev.size() >= 2) {
-				final XYPoint last = prev.get(prev.size() - 2);
-				if (last.y == y) {
-					// If the previous points Y coord is the same
-					// as this point, the last move was to the west.
-					// Thus we remove this current point and just move
-					// southwest from the last point.
-					prev.remove(prev.size() - 1);
+
+			float west = twoDimensionalHistogram[i - 1][j];
+			float southwest = twoDimensionalHistogram[i - 1][j - 1];
+			float south = twoDimensionalHistogram[i][j - 1];
+			float max = Math.max(Math.max(west, south), southwest);
+
+			if (southwest == max || west == south) {
+				i--;
+				j--;
+			} else if (west == max) {
+				// We want to go west
+				// First check if the last move was south
+				// (but only if there was a previous move)
+				if (prev.size() >= 2) {
+					final XYPoint last = prev.get(prev.size() - 2);
+					if (last.x == x) {
+						// If the previous points X coord is the same
+						// as this point, the last move was to the south.
+						// Thus we remove this current point and just move
+						// southwest from the last point.
+						prev.remove(prev.size() - 1);
+					}
 				}
+				i--;
+			} else {
+				// We want to go south
+				// First check if the last move was west
+				// (but only if there was a previous move)
+				if (prev.size() >= 2) {
+					final XYPoint last = prev.get(prev.size() - 2);
+					if (last.y == y) {
+						// If the previous points Y coord is the same
+						// as this point, the last move was to the west.
+						// Thus we remove this current point and just move
+						// southwest from the last point.
+						prev.remove(prev.size() - 1);
+					}
+				}
+				j--;
 			}
-			traceSouthWest(i, j-1, prev);
 		}
 	}
 	
