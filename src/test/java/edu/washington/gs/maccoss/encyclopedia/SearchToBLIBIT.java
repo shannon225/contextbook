@@ -347,7 +347,7 @@ public class SearchToBLIBIT {
 
 			assertValidAlib(file, jobData);
 
-			assertSameInferrer(inferrer, SearchToBLIB.readInferrer(file, jobData, searchParameters), jobData);
+			assertSameInferrer(inferrer, SearchToBLIB.readInferrer(file, jobData, searchParameters), passingPeptides.x, jobData);
 		} finally {
 			file.close();
 		}
@@ -805,13 +805,28 @@ public class SearchToBLIBIT {
 		assertHasPercolatorMetadata(file);
 	}
 
-	private void assertSameInferrer(PeakLocationInferrerInterface expected, PeakLocationInferrerInterface actual, List<SearchJobData> jobs) {
+	private void assertSameInferrer(PeakLocationInferrerInterface expected, PeakLocationInferrerInterface actual, ArrayList<PercolatorPeptide> passingPeptides, List<SearchJobData> jobs) {
+		// Check that quant ions match for every peptide
+		for (PercolatorPeptide peptide : passingPeptides) {
+			final String modSeq = peptide.getPeptideModSeq();
+			final byte charge = peptide.getPrecursorCharge();
+
+			assertArrayEquals(
+					String.format("Wrong quant ions for %s", modSeq),
+					expected.getTopNBestIons(modSeq, charge),
+					actual.getTopNBestIons(modSeq, charge),
+					DELTA
+			);
+		}
+
+		// Check each peptide's predicted RT in each job. Only check for peptides
+		// recorded in the alignment, as there may be some additional passing peptides
+		// that won't match precisely!?
+
 		final Set<String> allPeptides = jobs.stream()
 				.flatMap(j -> expected.getAlignmentData(j).stream())
 				.map(RetentionTimeAlignmentInterface.AlignmentDataPoint::getPeptideModSeq)
 				.collect(Collectors.toSet());
-
-		// Check each peptide's predicted RT in each job
 		for (SearchJobData job : jobs) {
 			for (String modSeq : allPeptides) {
 				assertEquals(
