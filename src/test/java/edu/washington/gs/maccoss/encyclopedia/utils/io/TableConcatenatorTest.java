@@ -55,7 +55,7 @@ public class TableConcatenatorTest extends TestCase {
 		
 		TableConcatenator.concatenatePINTables(list, output, "primary");
 		
-		assertEquals(110198, output.length());
+		assertEquals(110924, output.length());
 		assertEquals(302, Files.lines(output.toPath()).count());
 	}
 
