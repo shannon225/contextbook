@@ -4,10 +4,9 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrerInterface;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RTRTPoint;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeptideXYPoint;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface.AlignmentDataPoint;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeFilter;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefinementData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
@@ -225,7 +224,7 @@ public class SearchToBLIBTest {
 
 	private static final Random random = new Random();
 	private static int counter = 0;
-	private static RTRTPoint mockDataPoint() {
+	private static PeptideXYPoint mockDataPoint() {
 		final float lib = 100 * random.nextFloat() + 1;
 
 		final float delta;
@@ -239,6 +238,6 @@ public class SearchToBLIBTest {
 
 		final float actual = lib + delta;
 
-		return new RTRTPoint(lib, actual, false, "peptide" + ++counter);
+		return new PeptideXYPoint(lib, actual, false, "peptide" + ++counter);
 	}
 }
