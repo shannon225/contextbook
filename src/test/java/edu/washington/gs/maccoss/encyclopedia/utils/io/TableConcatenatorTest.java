@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.utils.io;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -54,9 +55,8 @@ public class TableConcatenatorTest extends TestCase {
 		
 		TableConcatenator.concatenatePINTables(list, output, "primary");
 		
-		assertEquals(101522, output.length());
+		assertEquals(110198, output.length());
 		assertEquals(302, Files.lines(output.toPath()).count());
-		
 	}
 
 }

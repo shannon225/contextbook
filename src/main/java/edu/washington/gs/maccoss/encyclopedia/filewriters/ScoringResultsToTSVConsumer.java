@@ -20,6 +20,8 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
 
 public class ScoringResultsToTSVConsumer extends AbstractScoringResultsToTSVConsumer {
+	public static final String deltaRTName="deltaRT";
+	
 	private final String[] scoreNames;
 	private final SearchParameters params;
 
@@ -46,9 +48,9 @@ public class ScoringResultsToTSVConsumer extends AbstractScoringResultsToTSVCons
 					
 
 					if (result instanceof RescoredPeptideScoringResult||result instanceof RescoredSpectrumScoringResult) {
-						writer.print("deltaRT\t");//discriminantScore\t");
+						writer.print(deltaRTName+"\t");//discriminantScore\t");
 					} else if (result instanceof RecalibratedPeptideScoringResult||result instanceof RecalibratedSpectrumScoringResult) {
-						writer.print("deltaRT\tms1MassError\tms2MassError\t");//discriminantScore\t");
+						writer.print(deltaRTName+"\tms1MassError\tms2MassError\t");//discriminantScore\t");
 					}
 					writer.print("numMissedCleavage\tpepLength\tcharge1\tcharge2\tcharge3\tcharge4\tprecursorMz\tprecursorMass\tRTinMin\tsequence\tProteins");
 					// Percolator assumes linux line endings on Mac!

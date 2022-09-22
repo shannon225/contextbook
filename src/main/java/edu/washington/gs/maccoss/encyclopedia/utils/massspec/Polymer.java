@@ -6,6 +6,66 @@ public abstract class Polymer {
 	public abstract double getMass(int n);
 	public abstract byte getCharge();
 
+	public static Polymer unknown1=new Polymer() {
+		public String getName() {
+			return "Unknown1";
+		}
+		public double getMass(int n) {
+			//[C2H4O]nH2O
+			return MassConstants.nh3+MassConstants.hydrogenMass+n*(MassConstants.carbonMass*2+MassConstants.hydrogenMass*4+MassConstants.oxygenMass)+MassConstants.protonMass;
+		}
+		
+		@Override
+		public byte getCharge() {
+			return 1;
+		}
+	};
+
+	public static Polymer unknown2=new Polymer() {
+		public String getName() {
+			return "Unknown2";
+		}
+		public double getMass(int n) {
+			//[C2H4O]nH2O
+			return 2*MassConstants.nh3+MassConstants.hydrogenMass+n*(MassConstants.carbonMass*2+MassConstants.hydrogenMass*4+MassConstants.oxygenMass)+MassConstants.protonMass;
+		}
+		
+		@Override
+		public byte getCharge() {
+			return 1;
+		}
+	};
+
+	public static Polymer unknown3=new Polymer() {
+		public String getName() {
+			return "Unknown3";
+		}
+		public double getMass(int n) {
+			//[C2H4O]nH2O
+			return 40+MassConstants.nh3+MassConstants.hydrogenMass+n*(MassConstants.carbonMass*2+MassConstants.hydrogenMass*4+MassConstants.oxygenMass)+MassConstants.protonMass;
+		}
+		
+		@Override
+		public byte getCharge() {
+			return 1;
+		}
+	};
+
+	public static Polymer unknown4=new Polymer() {
+		public String getName() {
+			return "Unknown4";
+		}
+		public double getMass(int n) {
+			//[C2H4O]nH2O
+			return 40+2*MassConstants.nh3+MassConstants.hydrogenMass+n*(MassConstants.carbonMass*2+MassConstants.hydrogenMass*4+MassConstants.oxygenMass)+MassConstants.protonMass;
+		}
+		
+		@Override
+		public byte getCharge() {
+			return 1;
+		}
+	};
+
 	public static Polymer peg=new Polymer() {
 		public String getName() {
 			return "PEG";
@@ -240,5 +300,5 @@ public abstract class Polymer {
 			return 1;
 		}
 	};
-	public static Polymer[] polymers=new Polymer[] {peg, pegP2, pegP3, ppg, triton, reducedTriton, tritonNa, reducedTritonNa, tritonX101, tritonX101R, polysiloxane, tween20, tween40, tween60, tween80};
+	public static Polymer[] polymers=new Polymer[] {peg, pegP2, pegP3, ppg, triton, reducedTriton, tritonNa, reducedTritonNa, tritonX101, tritonX101R, polysiloxane, tween20, tween40, tween60, tween80, unknown1, unknown2, unknown3, unknown4};
 }
