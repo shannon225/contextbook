@@ -113,7 +113,7 @@ public class TwoDimensionalKDETest extends TestCase {
 		}
 	}
 
-	public void testTrace() {
+	public void testTraceNorthEast() {
 		ArrayList<XYPoint> points = new ArrayList<>();
 		final int max = 900;
 		for (int i=0; i < max; i++) {
@@ -131,6 +131,27 @@ public class TwoDimensionalKDETest extends TestCase {
 		assertEquals(12308.685f, trace.getYValue(600), 0.000005f);
 		assertEquals(97413.055f, trace.getYValue(800), 0.000005f);
 		assertEquals(99420.234f, trace.getYValue(809), 0.000005f);
+
+	}
+
+	public void testTraceSouthwest() {
+		ArrayList<XYPoint> points = new ArrayList<>();
+		final int max = 900;
+		for (int i=0; i < max; i++) {
+			points.add(new XYPoint(i*Math.sin(i), -i*Math.cos(i)));
+		}
+		int resolution = 11;
+		final TwoDimensionalKDE twoDimensionalKDE = new TwoDimensionalKDE(points, resolution);
+		final Function trace = twoDimensionalKDE.trace();
+
+		// spot-check some values
+		assertEquals(410.02866f, trace.getXValue(600), 0.000005f);
+		assertEquals(786.4395f, trace.getXValue(800), 0.000005f);
+		assertEquals(795.42413f, trace.getXValue(809), 0.000005f);
+
+		assertEquals(709.7225f, trace.getYValue(600), 0.000005f);
+		assertEquals(813.58367f, trace.getYValue(800), 0.000005f);
+		assertEquals(822.5991f, trace.getYValue(809), 0.000005f);
 
 	}
 }
