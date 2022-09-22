@@ -300,5 +300,5 @@ public abstract class Polymer {
 			return 1;
 		}
 	};
-	public static Polymer[] polymers=new Polymer[] {peg, pegP2, pegP3, ppg, triton, reducedTriton, tritonNa, reducedTritonNa, tritonX101, tritonX101R, polysiloxane, tween20, tween40, tween60, tween80, unknown1, unknown2, unknown3, unknown4};
+	public static Polymer[] polymers=new Polymer[] {peg, pegP2, pegP3, ppg, triton, reducedTriton, tritonNa, reducedTritonNa, tritonX101, tritonX101R, polysiloxane, tween20, tween40, tween60, tween80};
 }
