@@ -10,19 +10,20 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.function.BiConsumer;
 
 import edu.washington.gs.maccoss.encyclopedia.filewriters.ScoringResultsToTSVConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
-import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedianDouble;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.KDE;
 import gnu.trove.list.array.TDoubleArrayList;
+import gnu.trove.list.array.TFloatArrayList;
 
 public class TableConcatenator {
+	private static final float TARGET_CONSISTENCY_PERCENTAGE = 0.5f;
 	private static final String DELIM = "\t";
 
 	/**
@@ -94,19 +95,20 @@ public class TableConcatenator {
 		Logger.logLine("Found indicies for sequence: "+sequenceIndex+", "+primaryScore+": "+primaryScoreIndex+", and "+deltaRTName+": "+deltaRTIndex);
 
 		// calculate deltaRT distributions
-		HashMap<String, TDoubleArrayList> deltaRTsBySequence=new HashMap<>();
+		HashMap<String, TFloatArrayList> scoresBySequence=new HashMap<>();
+		HashMap<String, TFloatArrayList> deltaRTsBySequence=new HashMap<>();
 		final HashMap<String, DeltaRTData> deltaRTDataBySequence=new HashMap<>();
 		boolean scoreRT = deltaRTIndex>=0;
 		if (scoreRT) {
 			for (File file : tables) {
 				Logger.logLine("Getting delta retention times for input file "+file.getName());
-				DeltaRTMuscle muscle=new DeltaRTMuscle(deltaRTsBySequence, sequenceIndex, deltaRTIndex);
+				DeltaRTMuscle muscle=new DeltaRTMuscle(deltaRTsBySequence, scoresBySequence, sequenceIndex, primaryScoreIndex, deltaRTIndex);
 				LineParser.parseFile(file, muscle);
 			}
-			deltaRTsBySequence.forEach(new BiConsumer<String, TDoubleArrayList>() {
+			deltaRTsBySequence.forEach(new BiConsumer<String, TFloatArrayList>() {
 				@Override
-				public void accept(String t, TDoubleArrayList u) {
-					deltaRTDataBySequence.put(t, new DeltaRTData(u));
+				public void accept(String t, TFloatArrayList u) {
+					deltaRTDataBySequence.put(t, new DeltaRTData(u, scoresBySequence.get(t)));
 				}
 			});
 		}
@@ -127,7 +129,7 @@ public class TableConcatenator {
 		FileWriter fileStream=new FileWriter(output);
 		PrintWriter out=new PrintWriter(fileStream);
 		if (scoreRT) {
-			columnNames=General.insert(columnNames, 3, "scoreRatioToMax", "absDeltaDeltaRT", "irqDeltaRT");
+			columnNames=General.insert(columnNames, 3, "consistencyScore", "absDeltaDeltaRT", "irqDeltaRT");
 		}
 		out.println(General.toString(columnNames, DELIM));
 		for (ScoredRow row : rows) {
@@ -140,23 +142,32 @@ public class TableConcatenator {
 	protected static class DeltaRTData {
 		private final float modeDeltaRT;
 		private final float irqDeltaRT;
-		public DeltaRTData(TDoubleArrayList deltaRTs) {
-			KDE distribution=new KDE(deltaRTs.toArray(), 1.0);
+		private final float top20PercentPrimaryScore;
+		public DeltaRTData(TFloatArrayList deltaRTs, TFloatArrayList primaryScores) {
+			KDE distribution=new KDE(General.toDoubleArray(deltaRTs.toArray()), 1.0);
 			this.modeDeltaRT = (float)distribution.getMode();
-			this.irqDeltaRT = (float)QuickMedianDouble.iqr(deltaRTs.toArray());
+			this.irqDeltaRT = QuickMedian.iqr(deltaRTs.toArray());
+			
+			// need at least 3 samples to be "consistent"
+			float consistencyPercentage=Math.max(TARGET_CONSISTENCY_PERCENTAGE, 3.0f/primaryScores.size());
+			this.top20PercentPrimaryScore=QuickMedian.select(primaryScores.toArray(), consistencyPercentage);
 		}
 	}
 	
 	protected static class DeltaRTMuscle implements LineParserMuscle {
 		RuntimeException error=null;
-		private final HashMap<String, TDoubleArrayList> dataset; // only works because tableparser threading still runs just a single processing job
+		private final HashMap<String, TFloatArrayList> deltaRTList; // only works because tableparser threading still runs just a single processing job
+		private final HashMap<String, TFloatArrayList> scoreList; // only works because tableparser threading still runs just a single processing job
 		private final int sequenceIndex;
+		private final int primaryScoreIndex;
 		private final int deltaRTIndex;
 		private boolean isFirst=true;
-		public DeltaRTMuscle(HashMap<String, TDoubleArrayList> dataset, int sequenceIndex, int deltaRTIndex) {
+		public DeltaRTMuscle(HashMap<String, TFloatArrayList> deltaRTList, HashMap<String, TFloatArrayList> scoreList, int sequenceIndex, int primaryScoreIndex, int deltaRTIndex) {
 			super();
-			this.dataset=dataset;
+			this.deltaRTList=deltaRTList;
+			this.scoreList=scoreList;
 			this.sequenceIndex=sequenceIndex;
+			this.primaryScoreIndex=primaryScoreIndex;
 			this.deltaRTIndex=deltaRTIndex;
 		}
 
@@ -170,6 +181,7 @@ public class TableConcatenator {
 			String[] data=row.split(DELIM, -1);
 			
 			String sequence=data[sequenceIndex];
+			String primaryScoreValue=data[primaryScoreIndex];
 			String deltaRTString=data[deltaRTIndex];
 			
 			if (sequence==null) {
@@ -177,6 +189,14 @@ public class TableConcatenator {
 				throw error;
 			} else if (deltaRTString==null) {
 				error=new EncyclopediaException("Couldn't find deltaRT ("+deltaRTString+")! Index: "+deltaRTIndex+", Row: "+row);
+				throw error; 
+			}
+			
+			float primary;
+			try {
+				primary=Float.parseFloat(primaryScoreValue);
+			} catch (NumberFormatException nfe) {
+				error=new EncyclopediaException("Couldn't parse primary score ("+primaryScoreValue+")! Index: "+primaryScoreIndex+", Row: "+row);
 				throw error; 
 			}
 			
@@ -188,10 +208,17 @@ public class TableConcatenator {
 				throw error; 
 			}
 			
-			TDoubleArrayList list=dataset.get(sequence);
+			TFloatArrayList list=scoreList.get(sequence);
 			if (list==null) {
-				list=new TDoubleArrayList();
-				dataset.put(sequence, list);
+				list=new TFloatArrayList();
+				scoreList.put(sequence, list);
+			}
+			list.add(primary);
+			
+			list=deltaRTList.get(sequence);
+			if (list==null) {
+				list=new TFloatArrayList();
+				deltaRTList.put(sequence, list);
 			}
 			list.add(deltaRT);
 		}
@@ -234,7 +261,6 @@ public class TableConcatenator {
 			
 			String sequence=data[sequenceIndex];
 			String primaryScoreValue=data[primaryScoreIndex];
-			String deltaRTString=data[deltaRTIndex];
 			
 			if (sequence==null) {
 				error=new EncyclopediaException("Couldn't find sequence in PIN file!");
@@ -252,30 +278,35 @@ public class TableConcatenator {
 				throw error; 
 			}
 			
-			float deltaRT;
-			try {
-				deltaRT=Float.parseFloat(deltaRTString);
-			} catch (NumberFormatException nfe) {
-				error=new EncyclopediaException("Couldn't parse deltaRT ("+deltaRTString+")! Index: "+deltaRTIndex+", Row: "+row);
-				throw error; 
-			}
 			DeltaRTData deltaData=deltaRTDataBySequence.get(sequence);
-			float deltaDeltaRT, irqDeltaRT;
+			float deltaDeltaRT, irqDeltaRT, top20PercentPrimaryScore;
 			if (deltaData!=null) {
+				String deltaRTString=data[deltaRTIndex];
+				
+				float deltaRT;
+				try {
+					deltaRT=Float.parseFloat(deltaRTString);
+				} catch (NumberFormatException nfe) {
+					error=new EncyclopediaException("Couldn't parse deltaRT ("+deltaRTString+")! Index: "+deltaRTIndex+", Row: "+row);
+					throw error; 
+				}
+				
 				deltaDeltaRT=Math.abs(deltaData.modeDeltaRT-deltaRT);
 				irqDeltaRT=deltaData.irqDeltaRT;
+				top20PercentPrimaryScore=deltaData.top20PercentPrimaryScore;
 			} else {
 				deltaDeltaRT=0.0f;
 				irqDeltaRT=0.0f;
+				top20PercentPrimaryScore=0.0f;
 			}
 			
 			ScoredRow previous=dataset.get(sequence);
 			if (previous==null) {
-				dataset.put(sequence, new ScoredRow(sequence, primary, primary, deltaDeltaRT, irqDeltaRT, row));
+				dataset.put(sequence, new ScoredRow(sequence, primary, primary, deltaDeltaRT, irqDeltaRT, top20PercentPrimaryScore, row));
 			} else {
 				// if the new score is either 10% better than the previous max score OR the delta is closer (and it's within 10% of the previous max score)
 				if (previous.getTruemaxScore()<primary*0.9f||(previous.getTruemaxScore()*0.9f<primary&&previous.getDeltaDeltaRT()>deltaDeltaRT)) {
-					dataset.put(sequence, new ScoredRow(sequence, primary, Math.max(primary, previous.getTruemaxScore()), deltaDeltaRT, irqDeltaRT, row));
+					dataset.put(sequence, new ScoredRow(sequence, primary, Math.max(primary, previous.getTruemaxScore()), deltaDeltaRT, irqDeltaRT, top20PercentPrimaryScore, row));
 				}
 			}
 		}
@@ -295,14 +326,16 @@ public class TableConcatenator {
 		private final float score;
 		private final float deltaDeltaRT;
 		private final float irqDeltaRT;
+		private final float top20PercentPrimaryScore;
 		private final String row;
 		
-		public ScoredRow(String peptide, float score, float truemaxScore, float deltaDeltaRT, float irqDeltaRT, String row) {
+		public ScoredRow(String peptide, float score, float truemaxScore, float deltaDeltaRT, float irqDeltaRT, float top20PercentPrimaryScore, String row) {
 			this.peptide=peptide;
 			this.score=score;
 			this.truemaxScore=truemaxScore;
 			this.deltaDeltaRT=deltaDeltaRT;
 			this.irqDeltaRT=irqDeltaRT;
+			this.top20PercentPrimaryScore=top20PercentPrimaryScore;
 			this.row=row;
 		}
 
@@ -334,11 +367,10 @@ public class TableConcatenator {
 		}
 
 		public String getRow(boolean addAuxScores) {
-			// row + scoreRatioToMax, absDeltaDeltaRT, irqDeltaRT
+			// row + top20PercentPrimaryScore, absDeltaDeltaRT, irqDeltaRT
 			if (addAuxScores) {
 				String[] values=row.split(DELIM, -1);
-				float ratio = truemaxScore==0?0:score/truemaxScore;
-				String[] insert=General.insert(values, 3, Float.toString(ratio), Float.toString(deltaDeltaRT), Float.toString(irqDeltaRT));
+				String[] insert=General.insert(values, 3, Float.toString(top20PercentPrimaryScore), Float.toString(deltaDeltaRT), Float.toString(irqDeltaRT));
 				return General.toString(insert, DELIM);
 			} else {
 				return row;
