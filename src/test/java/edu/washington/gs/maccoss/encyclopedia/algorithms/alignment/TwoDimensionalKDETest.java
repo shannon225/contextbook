@@ -134,7 +134,7 @@ public class TwoDimensionalKDETest extends TestCase {
 
 	}
 
-	public void testTraceSouthwest() {
+	public void testTraceSouthWest() {
 		ArrayList<XYPoint> points = new ArrayList<>();
 		final int max = 900;
 		for (int i=0; i < max; i++) {
