@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.Function;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.MedianInterpolatorTest;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.CosineGaussian;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.Distribution;
@@ -110,5 +111,26 @@ public class TwoDimensionalKDETest extends TestCase {
 				assertEquals(expected[i][j], histogram[i][j], 0.0000005f);
 			}
 		}
+	}
+
+	public void testTrace() {
+		ArrayList<XYPoint> points = new ArrayList<>();
+		final int max = 900;
+		for (int i=0; i < max; i++) {
+			points.add(new XYPoint(i+i%13,  (i-max/2)*(i-max/2)-(i%7)));
+		}
+		int resolution = 11;
+		final TwoDimensionalKDE twoDimensionalKDE = new TwoDimensionalKDE(points, resolution);
+		final Function trace = twoDimensionalKDE.trace();
+
+		// spot-check some values
+		assertEquals(547.4994f, trace.getXValue(600), 0.000005f);
+		assertEquals(548.3961f, trace.getXValue(800), 0.000005f);
+		assertEquals(548.4365f, trace.getXValue(809), 0.000005f);
+
+		assertEquals(12308.685f, trace.getYValue(600), 0.000005f);
+		assertEquals(97413.055f, trace.getYValue(800), 0.000005f);
+		assertEquals(99420.234f, trace.getYValue(809), 0.000005f);
+
 	}
 }
