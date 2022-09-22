@@ -48,7 +48,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
 public class StripeFile extends SQLFile implements StripeFileInterface {
 	public static final DateFormat m_ISO8601Local = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-	private static final Version MOST_RECENT_VERSION = new Version(0, 4, 0);
+	private static final Version MOST_RECENT_VERSION = new Version(0, 5, 0);
 
 	private static final String UNKNOWN_VALUE="unknown";
 	public static final String FILELOCATION_ATTRIBUTE="filelocation";
@@ -464,7 +464,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	 */
 	public void addStripe(ArrayList<FragmentScan> stripes) throws IOException, SQLException {
 		try (Connection c = getConnection()) {
-			try (PreparedStatement prep = c.prepareStatement("insert into spectra (SpectrumName, PrecursorName, SpectrumIndex, ScanStartTime, Fraction, IonInjectionTime, IsolationWindowLower, IsolationWindowCenter, IsolationWindowUpper, MassEncodedLength, MassArray, IntensityEncodedLength, IntensityArray)" + " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)")) {
+			try (PreparedStatement prep = c.prepareStatement("insert into spectra (SpectrumName, PrecursorName, SpectrumIndex, ScanStartTime, Fraction, IonInjectionTime, IsolationWindowLower, IsolationWindowCenter, IsolationWindowUpper, PrecursorCharge, MassEncodedLength, MassArray, IntensityEncodedLength, IntensityArray)" + " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)")) {
 				// handle commits manually
 				c.setAutoCommit(false);
 
@@ -487,6 +487,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 			prep.setDouble(index++, stripe.getIsolationWindowLower());
 			prep.setDouble(index++, stripe.getIsolationWindowCenter());
 			prep.setDouble(index++, stripe.getIsolationWindowUpper());
+			prep.setInt(index++, stripe.getCharge());
 			byte[] massByteArray = ByteConverter.toByteArray(stripe.getMassArray());
 			prep.setInt(index++, massByteArray.length);
 			prep.setBytes(index++, CompressionUtils.compress(massByteArray));
@@ -507,7 +508,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 		try {
 			Statement s=c.createStatement();
 			try {
-				ResultSet rs=s.executeQuery("select SpectrumName, PrecursorName, SpectrumIndex, ScanStartTime, IsolationWindowLower, IsolationWindowUpper, MassEncodedLength, MassArray, IntensityEncodedLength, IntensityArray, IonInjectionTime, Fraction from spectra "
+				ResultSet rs=s.executeQuery("select SpectrumName, PrecursorName, SpectrumIndex, ScanStartTime, IsolationWindowLower, IsolationWindowUpper, PrecursorCharge, MassEncodedLength, MassArray, IntensityEncodedLength, IntensityArray, IonInjectionTime, Fraction from spectra "
 						+"where IsolationWindowLower <= "+targetMz+" and IsolationWindowUpper >= "+targetMz+" and ScanStartTime between "+minRT+" and "+maxRT);
 
 				final Vector<FragmentScan> stripes=new Vector<FragmentScan>();
@@ -524,21 +525,22 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 					final float scanStartTime=rs.getFloat(4);
 					final double isolationWindowLower=rs.getDouble(5);
 					final double isolationWindowUpper=rs.getDouble(6);
-					final int massEncodedLength=rs.getInt(7);
-					final byte[] massBytes=rs.getBytes(8);
-					final int intensityEncodedLength=rs.getInt(9);
-					final byte[] intensityBytes=rs.getBytes(10);
-					Float nullableIonInjectionTime=rs.getFloat(11);
+					final int precursorCharge=rs.getInt(7);
+					final int massEncodedLength=rs.getInt(8);
+					final byte[] massBytes=rs.getBytes(9);
+					final int intensityEncodedLength=rs.getInt(10);
+					final byte[] intensityBytes=rs.getBytes(11);
+					Float nullableIonInjectionTime=rs.getFloat(12);
 					if (rs.wasNull()) {
 						nullableIonInjectionTime=null;
 					}
 					final Float ionInjectionTime=nullableIonInjectionTime;
-					final int fraction=rs.getInt(12);
+					final int fraction=rs.getInt(13);
 					executor.submit(new Runnable() {
 						@Override
 						public void run() {
 							try {
-								stripes.add(getStripe(sqrt, spectrumName, precursorName, spectrumIndex, scanStartTime, fraction, ionInjectionTime, isolationWindowLower, isolationWindowUpper, massEncodedLength, massBytes,
+								stripes.add(getStripe(sqrt, spectrumName, precursorName, spectrumIndex, scanStartTime, fraction, ionInjectionTime, isolationWindowLower, isolationWindowUpper, precursorCharge, massEncodedLength, massBytes,
 										intensityEncodedLength, intensityBytes));
 							} catch (DataFormatException dfe) {
 								throw new EncyclopediaException(dfe);
@@ -573,7 +575,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 		try {
 			Statement s=c.createStatement();
 			try {
-				ResultSet rs=s.executeQuery("select SpectrumName, PrecursorName, SpectrumIndex, ScanStartTime, IsolationWindowLower, IsolationWindowUpper, MassEncodedLength, MassArray, IntensityEncodedLength, IntensityArray, IonInjectionTime, Fraction from spectra "
+				ResultSet rs=s.executeQuery("select SpectrumName, PrecursorName, SpectrumIndex, ScanStartTime, IsolationWindowLower, IsolationWindowUpper, PrecursorCharge, MassEncodedLength, MassArray, IntensityEncodedLength, IntensityArray, IonInjectionTime, Fraction from spectra "
 						+"where  IsolationWindowLower <= "+targetMzRange.getStop()+" and IsolationWindowUpper >= "+targetMzRange.getStart()+" and ScanStartTime between "+minRT+" and "+maxRT);
 
 				final Vector<FragmentScan> stripes=new Vector<FragmentScan>();
@@ -590,22 +592,23 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 					final float scanStartTime=rs.getFloat(4);
 					final float isolationWindowLower=rs.getFloat(5);
 					final float isolationWindowUpper=rs.getFloat(6);
-					final int massEncodedLength=rs.getInt(7);
-					final byte[] massBytes=rs.getBytes(8);
-					final int intensityEncodedLength=rs.getInt(9);
-					final byte[] intensityBytes=rs.getBytes(10);
-					Float nullableIonInjectionTime=rs.getFloat(11);
+					final int precursorCharge=rs.getInt(7);
+					final int massEncodedLength=rs.getInt(8);
+					final byte[] massBytes=rs.getBytes(9);
+					final int intensityEncodedLength=rs.getInt(10);
+					final byte[] intensityBytes=rs.getBytes(11);
+					Float nullableIonInjectionTime=rs.getFloat(12);
 					if (rs.wasNull()) {
 						nullableIonInjectionTime=null;
 					}
 					final Float ionInjectionTime=nullableIonInjectionTime;
-					final int fraction=rs.getInt(12);
+					final int fraction=rs.getInt(13);
 					
 					executor.submit(new Runnable() {
 						@Override
 						public void run() {
 							try {
-								stripes.add(getStripe(sqrt, spectrumName, precursorName, spectrumIndex, scanStartTime, fraction, ionInjectionTime, isolationWindowLower, isolationWindowUpper, massEncodedLength, massBytes,
+								stripes.add(getStripe(sqrt, spectrumName, precursorName, spectrumIndex, scanStartTime, fraction, ionInjectionTime, isolationWindowLower, isolationWindowUpper, precursorCharge, massEncodedLength, massBytes,
 										intensityEncodedLength, intensityBytes));
 							} catch (DataFormatException dfe) {
 								throw new EncyclopediaException(dfe);
@@ -641,7 +644,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 		try {
 			Statement s=c.createStatement();
 			try {
-				ResultSet rs=s.executeQuery("select SpectrumName, PrecursorName, SpectrumIndex, ScanStartTime, IsolationWindowLower, IsolationWindowUpper, MassEncodedLength, MassArray, IntensityEncodedLength, IntensityArray, IonInjectionTime, Fraction from spectra "
+				ResultSet rs=s.executeQuery("select SpectrumName, PrecursorName, SpectrumIndex, ScanStartTime, IsolationWindowLower, IsolationWindowUpper, PrecursorCharge, MassEncodedLength, MassArray, IntensityEncodedLength, IntensityArray, IonInjectionTime, Fraction from spectra "
 						+"where  IsolationWindowLower <= "+targetMzRange.getStop()+" and IsolationWindowUpper >= "+targetMzRange.getStart()+" and ScanStartTime between "+minRT+" and "+maxRT);
 
 				int cores=Runtime.getRuntime().availableProcessors();
@@ -657,18 +660,19 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 					final float scanStartTime=rs.getFloat(4);
 					final float isolationWindowLower=rs.getFloat(5);
 					final float isolationWindowUpper=rs.getFloat(6);
-					final int massEncodedLength=rs.getInt(7);
-					final byte[] massBytes=rs.getBytes(8);
-					final int intensityEncodedLength=rs.getInt(9);
-					final byte[] intensityBytes=rs.getBytes(10);
-					Float nullableIonInjectionTime=rs.getFloat(11);
+					final int precursorCharge=rs.getInt(7);
+					final int massEncodedLength=rs.getInt(8);
+					final byte[] massBytes=rs.getBytes(9);
+					final int intensityEncodedLength=rs.getInt(10);
+					final byte[] intensityBytes=rs.getBytes(11);
+					Float nullableIonInjectionTime=rs.getFloat(12);
 					if (rs.wasNull()) {
 						nullableIonInjectionTime=null;
 					}
 					final Float ionInjectionTime=nullableIonInjectionTime;
-					final int fraction=rs.getInt(12);
+					final int fraction=rs.getInt(13);
 					
-					FragmentScan msms=getStripe(sqrt, spectrumName, precursorName, spectrumIndex, scanStartTime, fraction, ionInjectionTime, isolationWindowLower, isolationWindowUpper, massEncodedLength, massBytes,
+					FragmentScan msms=getStripe(sqrt, spectrumName, precursorName, spectrumIndex, scanStartTime, fraction, ionInjectionTime, isolationWindowLower, isolationWindowUpper, precursorCharge, massEncodedLength, massBytes,
 							intensityEncodedLength, intensityBytes);
 					fragmentScans.add(msms);
 
@@ -698,13 +702,13 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	}
 
 	private FragmentScan getStripe(boolean sqrt, String spectrumName, String precursorName, int spectrumIndex, Float scanStartTime, int fraction, Float ionInjectionTime, double isolationWindowLower,
-			double isolationWindowUpper, int massEncodedLength, byte[] massBytes, int intensityEncodedLength, byte[] intensityBytes) throws IOException, DataFormatException {
+			double isolationWindowUpper, int precursorCharge, int massEncodedLength, byte[] massBytes, int intensityEncodedLength, byte[] intensityBytes) throws IOException, DataFormatException {
 		double[] massArray=ByteConverter.toDoubleArray(CompressionUtils.decompress(massBytes, massEncodedLength));
 		float[] intensityArray=ByteConverter.toFloatArray(CompressionUtils.decompress(intensityBytes, intensityEncodedLength));
 		if (sqrt) {
 			intensityArray=General.protectedSqrt(intensityArray);
 		}
-		return new FragmentScan(spectrumName, precursorName, spectrumIndex, scanStartTime, fraction, ionInjectionTime, isolationWindowLower, isolationWindowUpper, massArray, intensityArray);
+		return new FragmentScan(spectrumName, precursorName, spectrumIndex, scanStartTime, fraction, ionInjectionTime, isolationWindowLower, isolationWindowUpper, massArray, intensityArray, (byte)precursorCharge);
 	}
 
 	public Version getVersion() throws IOException, SQLException {
@@ -743,7 +747,11 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 			Logger.logLine("Updating to DIA file to save numWindows data...");
 			s.execute("alter table ranges add column numWindows int");
 		}
-		
+		if (new Version(0, 5, 0).amIAbove(currentVersion)) {
+			Logger.logLine("Updating to DIA file to save charge data...");
+			s.execute("alter table spectra add PrecursorCharge fraction int");
+			s.execute("update spectra set PrecursorCharge=0");
+		}
 	}
 
 	private void populateTICColumn(Connection connection) throws SQLException, IOException {
@@ -808,7 +816,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 
 				s.execute("create table if not exists metadata ( Key string not null, Value string not null, primary key (Key) )");
 				s.execute("create table if not exists ranges ( Start float not null, Stop float not null, DutyCycle float not null, NumWindows int )");
-				s.execute("create table if not exists spectra ( Fraction int not null, SpectrumName string not null, PrecursorName string, SpectrumIndex int not null, ScanStartTime float not null, IonInjectionTime float, IsolationWindowLower float not null, IsolationWindowCenter float not null, IsolationWindowUpper float not null, MassEncodedLength int not null, MassArray blob not null, IntensityEncodedLength int not null, IntensityArray blob not null, primary key (SpectrumIndex) )");
+				s.execute("create table if not exists spectra ( Fraction int not null, SpectrumName string not null, PrecursorName string, SpectrumIndex int not null, ScanStartTime float not null, IonInjectionTime float, IsolationWindowLower float not null, IsolationWindowCenter float not null, IsolationWindowUpper float not null, PrecursorCharge int not null, MassEncodedLength int not null, MassArray blob not null, IntensityEncodedLength int not null, IntensityArray blob not null, primary key (SpectrumIndex) )");
 				s.execute("create table if not exists precursor ( Fraction int not null, SpectrumName string not null, SpectrumIndex int not null, ScanStartTime float not null, IonInjectionTime float, IsolationWindowLower float not null, IsolationWindowUpper float not null, MassEncodedLength int not null, MassArray blob not null, IntensityEncodedLength int not null, IntensityArray blob not null, TIC float, primary key (SpectrumIndex) )");
 
 				s.execute("create index if not exists \"spectra_index_isolation_window_lower\" on \"spectra\" (\"IsolationWindowLower\" ASC)");

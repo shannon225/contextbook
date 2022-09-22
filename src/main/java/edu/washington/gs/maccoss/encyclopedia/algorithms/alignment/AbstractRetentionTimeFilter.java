@@ -16,6 +16,7 @@ import java.util.Optional;
 
 import com.google.common.collect.ImmutableList;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.ScoredPSM;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
@@ -52,6 +53,15 @@ public class AbstractRetentionTimeFilter implements RetentionTimeAlignmentInterf
 	@Override
 	public List<AlignmentDataPoint> plot(List<XYPoint> rts, Optional<File> saveFileSeed) {
 		return plot(rts, saveFileSeed, "library", "actual");
+	}
+
+	@Override
+	public void makePlots(ArrayList<ScoredPSM> psms, Optional<File> saveFileSeed) {
+		ArrayList<XYPoint> rts=new ArrayList<>();
+		for (ScoredPSM psm : psms) {
+			rts.add(psm.getRTData());
+		}
+		plot(rts, saveFileSeed);
 	}
 
 	public List<AlignmentDataPoint> plot(List<XYPoint> rts, Optional<File> saveFileSeed, String xAxis, String yAxis) {
@@ -157,8 +167,8 @@ public class AbstractRetentionTimeFilter implements RetentionTimeAlignmentInterf
 	
 					float prob=getProbabilityFitsModel((float)xyPoint.y, (float)xyPoint.x);
 					
-					if (xyPoint instanceof RTRTPoint) {
-						RTRTPoint rtPoint=(RTRTPoint)xyPoint;
+					if (xyPoint instanceof PeptideXYPoint) {
+						PeptideXYPoint rtPoint=(PeptideXYPoint)xyPoint;
 						writer.println(xyPoint.x+"\t"+xyPoint.y+"\t"+modelRT+"\t"+delta+"\t"+prob+"\t"+rtPoint.isDecoy()+"\t"+rtPoint.getPeptideModSeq());
 					} else {
 						writer.println(xyPoint.x+"\t"+xyPoint.y+"\t"+modelRT+"\t"+delta+"\t"+prob+"\t?\t?");
@@ -220,7 +230,26 @@ public class AbstractRetentionTimeFilter implements RetentionTimeAlignmentInterf
 		}
 	}
 
+
 	
+	@Override
+	public boolean passesFilter(ScoredPSM psm) {
+		float modelRT=psm.getLibraryEntry().getScanStartTime()/60f;
+		float actualRT=psm.getMSMS().getScanStartTime()/60f;
+		boolean passes=this.getProbabilityFitsModel(actualRT, modelRT)>=AbstractRetentionTimeFilter.rejectionPValue;
+
+		return passes;
+	}
+
+	@Override
+	public float[] getAdditionalScores(ScoredPSM psm) {
+		float modelRT=psm.getLibraryEntry().getScanStartTime()/60f;
+		float actualRT=psm.getMSMS().getScanStartTime()/60f;
+
+		float deltaRT=Math.abs(this.getDelta(actualRT, modelRT));
+		return new float[] {deltaRT};
+	}
+
 	/**
 	 * Allow fetching data that's been written to disk.
 	 */

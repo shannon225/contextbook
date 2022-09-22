@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -35,10 +36,10 @@ public class AlternatePeakLocationInferrer {
 	public static PeakLocationInferrerInterface getAlignmentData(ProgressIndicator progress, List<? extends SearchJobData> pecanJobs, ArrayList<PercolatorPeptide> passingPeptides, SearchParameters params) {
 		ProgressIndicator subProgress1=new SubProgressIndicator(progress, 0.5f);
 		Pair<HashMap<SearchJobData,TObjectFloatHashMap<String>>, HashMap<String,double[]>> pair=getArchetypals(subProgress1, pecanJobs, passingPeptides, params);
-		return getInferrer(progress, pecanJobs, pair, params);
+		return getInferrer(progress, passingPeptides, pecanJobs, pair, params);
 	}
 
-	public static PeakLocationInferrerInterface getInferrer(ProgressIndicator progress,
+	public static PeakLocationInferrerInterface getInferrer(ProgressIndicator progress, ArrayList<PercolatorPeptide> passingPeptides,
 			List<? extends SearchJobData> pecanJobs,
 			Pair<HashMap<SearchJobData, TObjectFloatHashMap<String>>, HashMap<String, double[]>> pair,
 			SearchParameters params) {
@@ -58,6 +59,9 @@ public class AlternatePeakLocationInferrer {
 					bestJob=entry.getKey();
 				}
 			}
+		}
+		if (bestJob==null) {
+			throw new EncyclopediaException("No search job produced sufficient peptides to be the seed experiment, failing alignment.");
 		}
 		Logger.logLine("Setting "+bestJob.getDiaFileReader().getOriginalFileName()+" as the seed experiment.");
 		TObjectFloatHashMap<String> bestRTInSec=peptideMappings.get(bestJob);
@@ -122,6 +126,33 @@ public class AlternatePeakLocationInferrer {
 					}
 				});
 			}
+		}
+		
+		// add in remaining peptides that don't pass the filters in individual runs
+		EXTRAPEPS: for (PercolatorPeptide pep : passingPeptides) {
+			if (!alignedRTInMinBySequenceMap.containsKey(pep.getPeptideModSeq())) {
+				String fileName=pep.getFile();
+
+				for (SearchJobData job : pecanJobs) {
+					if (job.getDiaFileReader().getOriginalFileName().equals(fileName)) {
+						RetentionTimeAlignmentInterface map = alignmentMap.get(job);
+						float alignedRT=map==null?pep.getRT()/60:map.getXValue(pep.getRT()/60f);
+						
+						alignedRTInMinBySequenceMap.put(pep.getPeptideModSeq(), alignedRT);
+						continue EXTRAPEPS;
+					}
+				}
+			}
+		}
+
+		int found=0;
+		for (PercolatorPeptide pep : passingPeptides) {
+			if (alignedRTInMinBySequenceMap.containsKey(pep.getPeptideModSeq())) {
+				found++;
+			}
+		}
+		if (passingPeptides.size()!=found) {;
+			Logger.errorLine("Found inconsistent number of RT times when integrating peptides: "+passingPeptides.size()+" != "+found);
 		}
 
 		return new SimplePeakLocationInferrer(alignmentMap, alignmentDataMap, alignedRTInMinBySequenceMap, bestIons, params);

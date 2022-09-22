@@ -45,7 +45,6 @@ public class ScribeAuxillaryPSMScorer extends AuxillaryPSMScorer {
 	public float[] score(LibraryEntry entry, Spectrum spectrum, float[] predictedIsotopeDistribution, PrecursorScanMap precursors) {
 		// precursor scoring
 		float[] precursorScores=getPrecursorScores(entry, spectrum.getScanStartTime(), predictedIsotopeDistribution, precursors);
-		float averageAbsPPM=precursorScores[0];
 		float isotopeDotProduct=precursorScores[1];
 		float averagePPM=precursorScores[2];
 		float percentBlankOverMono=precursorScores[3];
@@ -153,9 +152,8 @@ public class ScribeAuxillaryPSMScorer extends AuxillaryPSMScorer {
 		float rho=0.15f*numImmoniumIonsFound[0];
 		float sp=General.sum(actualTargetIntensities.toArray())*numberOfMatchingPeaks*(1.0f+beta)*(1.0f+rho)/ions.length;
 		
-		float averageFragmentDeltaMasses=0.0f, averageAbsFragDeltaMass=0.0f;
+		float averageFragmentDeltaMasses=0.0f;
 		if (fragmentDeltaMasses.size()==0) {
-			averageAbsFragDeltaMass=(float)acquiredTolerance.getToleranceThreshold();
 			averageFragmentDeltaMasses=(float)acquiredTolerance.getToleranceThreshold();
 		} else {
 			Collections.sort(fragmentDeltaMasses);
@@ -164,15 +162,10 @@ public class ScribeAuxillaryPSMScorer extends AuxillaryPSMScorer {
 			int count=0;
 			for (XYPoint xyPoint : fragmentDeltaMasses) {
 				averageFragmentDeltaMasses+=(float)xyPoint.y;
-				averageAbsFragDeltaMass+=Math.abs((float)xyPoint.y);
 				count++;
 				if (count>numPeaksUsedInAverage) break;
 			}
-			for (int i=count; i<numPeaksUsedInAverage; i++) {
-				averageAbsFragDeltaMass+=(float)acquiredTolerance.getToleranceThreshold();
-			}
 			averageFragmentDeltaMasses=averageFragmentDeltaMasses/count;
-			averageAbsFragDeltaMass=averageAbsFragDeltaMass/numPeaksUsedInAverage;
 		}
 
 		float[] predictedTargetIntensitiesArray=General.normalizeToL2(predictedTargetIntensities.toArray());
@@ -211,16 +204,23 @@ public class ScribeAuxillaryPSMScorer extends AuxillaryPSMScorer {
 		SparseXCorrCalculator sparseModel=new SparseXCorrCalculator(entry.getPeptideModSeq(), entry.getPrecursorCharge(), parameters);
 		float xCorrModel=sparseModel.score(sparseScan);
 			
-		return new float[] {dotProduct, contrastAngle, logit, xTandem, xCorrLib, xCorrModel, Log.protectedLn(1.0f/sumOfSquaredErrors), 
-				numberOfMatchingPeaks, averageAbsFragDeltaMass, averageFragmentDeltaMasses, isotopeDotProduct, 
-				averageAbsPPM, averagePPM, percentBlankOverMono, numberPrecursorMatch, sp, maxLadderLength};
+		return new float[] {averagePPM, averageFragmentDeltaMasses, dotProduct, contrastAngle, logit, xTandem, xCorrLib, xCorrModel, Log.protectedLn(1.0f/sumOfSquaredErrors), 
+				numberOfMatchingPeaks, isotopeDotProduct, percentBlankOverMono, numberPrecursorMatch, sp, maxLadderLength};
 	}
 
 	public static String[] getScoreNames() {
-		return new String[] {"DotProduct", "contrastAngle", "logit", "primary", "xCorrLib", "xCorrModel", "lnInvSumOfSquaredErrors", 
-				"numberOfMatchingPeaks", "averageAbsFragmentDeltaMass", "averageFragmentDeltaMasses", "isotopeDotProduct", 
-				"averageAbsParentDeltaMass", "averageParentDeltaMass", "percentBlankOverMono", "numberPrecursorMatch", "Sp", "maxLadderLength", 
-				"eValue", "numConsidered", "deltaCn"};
+		return new String[] {"averageParentDeltaMass", "averageFragmentDeltaMasses", "DotProduct", "contrastAngle", "logit", "primary", "xCorrLib", "xCorrModel", "scribeScore", 
+				"numberOfMatchingPeaks", "isotopeDotProduct", "percentBlankOverMono", "numberPrecursorMatch", "Sp", "maxLadderLength", 
+				// the following are added after!
+				"eValue", "numConsidered", "deltaCn", "chargeMatch"};
+	}
+	
+	public int getParentDeltaMassIndex() {
+		return 0;
+	}
+	
+	public int getFragmentDeltaMassIndex() {
+		return 1;
 	}
 	
 	@Override

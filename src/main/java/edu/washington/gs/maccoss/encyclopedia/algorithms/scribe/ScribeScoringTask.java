@@ -85,6 +85,10 @@ public class ScribeScoringTask extends AbstractLibraryScoringTask {
 					double target = entry.getPrecursorMZ()+(j+1)*MassConstants.neutronMass/entry.getPrecursorCharge();
 					match=match||parameters.getPrecursorTolerance().equals(target, msms.getPrecursorMZ());	
 				}
+				// required charge
+//				if (msms.getCharge()!=0&&msms.getCharge()!=entry.getPrecursorCharge()) {
+//					match=false;
+//				}
 				if (match) {
 					SparseXCorrSpectrum xcorrEntry=getXCorrEntry(entry);
 					
@@ -142,6 +146,7 @@ public class ScribeScoringTask extends AbstractLibraryScoringTask {
 				float deltaCn=(xcorr==0.0f||secondMaxXCorr==0.0f)?0.0f:(xcorr-secondMaxXCorr)/maxXCorr;
 
 				LibraryEntry entry=super.entries.get(index);
+				int chargeMatch=(msms.getCharge()==0||msms.getCharge()==entry.getPrecursorCharge())?1:0;
 					
 				float[] predictedIsotopeDistribution=getIsotopeDistribution(entry);
 				float[] auxScoreArray=scorerFunction.auxScore(entry, msms, predictedIsotopeDistribution, precursors);
@@ -150,7 +155,9 @@ public class ScribeScoringTask extends AbstractLibraryScoringTask {
 					//System.out.println("cut\t"+3);
 					//continue;
 				}
-				result.addPeptide(score, General.concatenate(auxScoreArray, evalue, map.size(), deltaCn), entry);
+				float deltaPrecursorMass=auxScoreArray[scorerFunction.getParentDeltaMassIndex()];
+				float deltaFragmentMass=auxScoreArray[scorerFunction.getFragmentDeltaMassIndex()];
+				result.addPeptide(score, General.concatenate(auxScoreArray, evalue, map.size(), deltaCn, chargeMatch), deltaPrecursorMass, deltaFragmentMass, entry);
 				
 				if (identifiedPeaks>peaksKept) {
 					// keep N+1 peaks

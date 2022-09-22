@@ -19,7 +19,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import gnu.trove.list.array.TFloatArrayList;
 
 public class DIAProcessor {
-	static final int DEFAULT_QUEUE_CAPACITY = 2;
+	static final int DEFAULT_QUEUE_CAPACITY = 1;
 	private final SpectrumProcessor processor;
 	private final SearchParameters parameters;
 	

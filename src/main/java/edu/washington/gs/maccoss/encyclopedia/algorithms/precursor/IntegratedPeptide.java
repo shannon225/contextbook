@@ -130,7 +130,7 @@ public class IntegratedPeptide implements HasRetentionTime {
 			rts.add(pep.getRetentionTimeInSec());
 		}
 		
-		float[] isotopicDistribution=IsotopicDistributionCalculator.getIsotopeDistribution(psms.get(0).getPeptideData().getPeptideModSeq(), params.getAAConstants());
+		float[] isotopicDistribution=IsotopicDistributionCalculator.getIsotopeDistribution(peptideModSeq, params.getAAConstants());
 		ArrayList<TransitionRefinementData> trd=PrecursorIntegrator.integratePeptide(peptideModSeq, isotopicDistribution, rts.toArray(), traces, params);
 		
 		ArrayList<IntegratedLibraryEntry> entries=new ArrayList<>();

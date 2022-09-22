@@ -223,7 +223,7 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 							new float[] {fragmentDeltaMassAverage, fragmentDeltaMassVariance, duration, maxIDP, midIDP, precursorPPMVariance, bgsubScores[index],
 									sumZScores[index]/scanAveragingWindow, rank, rawScores[index]});
 					
-					result.addStripe(goodStripes.get(i).x/scanAveragingWindow, completeAuxArray, medianStripe);
+					result.addStripe(goodStripes.get(i).x/scanAveragingWindow, completeAuxArray, 0.0f, 0.0f, medianStripe);
 
 					if (identifiedPeaks>getPecanSearchParameters().getNumberOfReportedPeaks()) {
 						// keep N+1 peaks

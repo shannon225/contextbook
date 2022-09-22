@@ -37,10 +37,10 @@ public class LibraryRTComparisonTest {
 				float p=hcdPhospho.get(pep);
 				
 				if (h!=0.0f&&b!=0.0f) {
-					cidPhosphoPair.add(new RTRTPoint(b, h, false, pep));
+					cidPhosphoPair.add(new PeptideXYPoint(b, h, false, pep));
 				}
 				if (h!=0.0f&&p!=0.0f) {
-					hcdPhosphoPair.add(new RTRTPoint(p, h, false, pep));
+					hcdPhosphoPair.add(new PeptideXYPoint(p, h, false, pep));
 				}
 				return true;
 			}
@@ -101,10 +101,10 @@ public class LibraryRTComparisonTest {
 				float p=proteomeTools.get(pep);
 				
 				if (h!=0.0f&&b!=0.0f) {
-					hiVSbruderer2017Pair.add(new RTRTPoint(b, h, false, pep));
+					hiVSbruderer2017Pair.add(new PeptideXYPoint(b, h, false, pep));
 				}
 				if (h!=0.0f&&p!=0.0f) {
-					hiVSproteomeToolsPair.add(new RTRTPoint(p, h, false, pep));
+					hiVSproteomeToolsPair.add(new PeptideXYPoint(p, h, false, pep));
 				}
 				return true;
 			}

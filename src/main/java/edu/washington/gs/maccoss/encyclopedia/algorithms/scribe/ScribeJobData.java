@@ -97,8 +97,8 @@ public class ScribeJobData extends DDASearchJobData implements LibrarySearchJobD
 			Node node = nodes.item(i);
             if (node.getNodeType() == Node.ELEMENT_NODE) {
                 Element element = (Element) node;
-                if (element.getTagName().equals(SearchParameters.class.getSimpleName())) {
-                	readParams=SearchParameters.readFromXML(doc, element);
+                if (element.getTagName().equals(ScribeSearchParameters.class.getSimpleName())) {
+                	readParams=ScribeSearchParameters.readFromXML(doc, element);
                 }
             }
 		}

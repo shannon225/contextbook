@@ -55,6 +55,34 @@ public class GeneralTest extends TestCase {
 		}
 	}
 	
+	public void testInsert() {
+		String[] s1=new String[] {"a", "b", "c", "d", "e"};
+		String[] s2=new String[] {"1", "2", "3"};
+		String[] r=General.concatenate(s1, s2);
+		String[] expected=new String[] {"a", "b", "c", "d", "e", "1", "2", "3"};
+		for (int i = 0; i < r.length; i++) {
+			assertEquals(r[i], expected[i]);
+		}
+		
+		r=General.insert(s1, 0, s2);
+		expected=new String[] {"1", "2", "3", "a", "b", "c", "d", "e"};
+		for (int i = 0; i < r.length; i++) {
+			assertEquals(r[i], expected[i]);
+		}
+
+		r=General.insert(s1, 2, s2);
+		expected=new String[] {"a", "b", "1", "2", "3", "c", "d", "e"};
+		for (int i = 0; i < r.length; i++) {
+			assertEquals(r[i], expected[i]);
+		}
+
+		r=General.insert(s1, 5, s2);
+		expected=new String[] {"a", "b", "c", "d", "e", "1", "2", "3"};
+		for (int i = 0; i < r.length; i++) {
+			assertEquals(r[i], expected[i]);
+		}
+	}
+	
 	public void testArrayIncrement() {
 		int[] indices=new int[2];
 		for (int i=0; i<1000; i++) {

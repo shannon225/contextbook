@@ -1,15 +1,12 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.alignment;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-
-import com.google.common.collect.ComparisonChain;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 
-public interface RetentionTimeAlignmentInterface {
+import java.io.File;
+import java.util.List;
+import java.util.Optional;
+
+public interface RetentionTimeAlignmentInterface extends ScoredPSMFilterInterface {
 	List<AlignmentDataPoint> plot(List<XYPoint> rts, Optional<File> saveFileSeed);
 
 	float getYValue(float xrt);
@@ -19,6 +16,8 @@ public interface RetentionTimeAlignmentInterface {
 	float getProbabilityFitsModel(float actualRT, float modelRT);
 	
 	float getDelta(float actualRT, float modelRT);
+
+	List<AlignmentDataPoint> plot(List<XYPoint> rts, Optional<File> saveFileSeed);
 
 	interface AlignmentDataPoint {
 		/**

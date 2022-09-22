@@ -37,6 +37,16 @@ public class XCorDIAOneScorer implements PSMScorer {
 		return score(entry, spectrum);
 	}
 
+	@Override
+	public int getParentDeltaMassIndex() {
+		return auxScorer.getParentDeltaMassIndex();
+	}
+
+	@Override
+	public int getFragmentDeltaMassIndex() {
+		return auxScorer.getFragmentDeltaMassIndex();
+	}
+
 	public float score(LibraryEntry entry, Spectrum spectrum) {
 		if (entry instanceof XCorrLibraryEntry&&spectrum instanceof XCorrStripe) {
 			return ((XCorrLibraryEntry) entry).score(((XCorrStripe)spectrum).getXcorrSpectrum());

@@ -2,6 +2,7 @@ EncyclopeDIA changelog for user-facing changes:
 
 encyclopedia-2.0.0-SNAPSHOT
  - Feature: added Scribe searching for DDA
+ - Feature: updated scoring system to EncyclopeDIA 2.0, default is still 1.0
  - Feature: added spectrum-specific browsing and annotation to peptide browser, added precursor browsing and the ability to export or append spectra to libraries
  - Feature: support for DIA-NN libraries through OpenSwath/Spectronaut parser
  - Feature: added "-mergeLibraries" command line option to merge/RT align across multiple libraries

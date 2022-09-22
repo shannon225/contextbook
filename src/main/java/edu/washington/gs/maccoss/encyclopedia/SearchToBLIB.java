@@ -595,6 +595,7 @@ public class SearchToBLIB {
 						Logger.logLine("...Finished peak inference.");
 					} catch (Exception e) {
 						Logger.errorLine("RT alignment between files failed! Perhaps this is to build a chromatogram library and not a quantitative experiment? Attempting to recover without alignment.");
+						Logger.errorException(e);
 						inferrer=Optional.empty();
 					}
 				} else {
@@ -809,6 +810,8 @@ public class SearchToBLIB {
 					} catch (DataFormatException e) {
 						Logger.errorException(e);
 					}
+				} else {
+					Logger.errorLine("Only exporting report for a single search, so skipping building quantitative tables.");
 				}
 			}
 
@@ -866,7 +869,7 @@ public class SearchToBLIB {
 			localizationData=Optional.empty();
 		}
 
-		elib.addIntegratedEntries(libraryEntries, inferrer, localizationData, job.getParameters().getAAConstants(), job.getParameters().getPercolatorThreshold());
+		elib.addIntegratedEntries(!(job instanceof DDASearchJobData), libraryEntries, inferrer, localizationData, job.getParameters().getAAConstants(), job.getParameters().getPercolatorThreshold());
 		
 
 		Logger.logLine("Finished writing to Encyclopedia ELIB at "+new Date().toString());

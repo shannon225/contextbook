@@ -104,7 +104,11 @@ public class EncyclopediaOneScoringTask extends AbstractLibraryScoringTask {
 					if (Float.isNaN(evalue)) {
 						evalue=-1.0f;
 					}
-					result.addStripe(score, General.concatenate(auxScoreArray, evalue), stripe);
+
+					float deltaPrecursorMass=auxScorer.getParentDeltaMassIndex()>=0?auxScoreArray[auxScorer.getParentDeltaMassIndex()]:0.0f;
+					float deltaFragmentMass=auxScorer.getFragmentDeltaMassIndex()>=0?auxScoreArray[auxScorer.getFragmentDeltaMassIndex()]:0.0f;
+					
+					result.addStripe(score, General.concatenate(auxScoreArray, evalue), deltaPrecursorMass, deltaFragmentMass, stripe);
 					
 					// block out a 40 scan window
 					int lowerWindow=index-2*movingAverageLength;

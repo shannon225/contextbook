@@ -24,8 +24,9 @@ import java.util.zip.DataFormatException;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.ScoredPSM;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractScoringResult;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RTRTPoint;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeptideXYPoint;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeFilter;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
@@ -499,8 +500,8 @@ public class Encyclopedia {
 					LibraryEntry entry=result.getEntry();
 					float entryTime=entry.getScanStartTime();
 
-					Pair<ScoredObject<FragmentScan>, float[]> first=result.getScoredMSMS();
-					XYPoint point=new RTRTPoint(entryTime/60.0f, first.x.y.getScanStartTime()/60.0f, entry.isDecoy(), entry.getPeptideModSeq());
+					ScoredPSM first=result.getScoredMSMS();
+					XYPoint point=new PeptideXYPoint(entryTime/60.0f, first.getMSMS().getScanStartTime()/60.0f, entry.isDecoy(), entry.getPeptideModSeq());
 					rtSet.add(point);
 				}
 			}

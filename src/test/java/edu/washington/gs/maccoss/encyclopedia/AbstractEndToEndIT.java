@@ -397,7 +397,7 @@ public abstract class AbstractEndToEndIT {
 		assertTrue(
 				String.format(
 						"Fewer peptides than expected in %s: %d < %.02f",
-						newFile.getName(),
+						newFile.getName()+", (actual: "+peptides.size()+", expected:"+expectedPeptides.size()+")",
 						peptides.size(),
 						LOWER_BOUND_PEPTIDE_MATCH * expectedPeptides.size()
 				),
@@ -407,13 +407,12 @@ public abstract class AbstractEndToEndIT {
 		assertTrue(
 				String.format(
 						"More peptides than expected in %s: %d > %.02f",
-						newFile.getName(),
+						newFile.getName()+", (actual: "+peptides.size()+", expected:"+expectedPeptides.size()+")",
 						peptides.size(),
 						UPPER_BOUND_PEPTIDE_MATCH * expectedPeptides.size()
 				),
 				peptides.size() < UPPER_BOUND_PEPTIDE_MATCH * expectedPeptides.size()
 		);
-
 		final long peptideMatches = peptides.stream()
 				.filter(hasPeptideMatch(expectedPeptides))
 				.count();
@@ -424,7 +423,7 @@ public abstract class AbstractEndToEndIT {
 		double percentage = peptideMatches / ((double) peptides.size());
 
 		try {
-			assertTrue("Fewer than 85% peptides match reference in " + newFile.getName(), percentage > (1 / UPPER_BOUND_PEPTIDE_MATCH));
+			assertTrue("Fewer than 85% peptides match reference in " + newFile.getName()+", (actual: "+percentage+")", percentage > (1 / UPPER_BOUND_PEPTIDE_MATCH));
 		} catch (AssertionError e) {
 			// If the percentage is within epsilon of the bound, ignore the assertion failure.
 			try {
@@ -434,8 +433,8 @@ public abstract class AbstractEndToEndIT {
 			}
 		}
 
-		assertTrue("pi0 lower than expected in " + newFile.getName(), Double.parseDouble(newFile.getMetadata().get("pi0")) > LOWER_BOUND_PI0_MATCH * (Double.parseDouble(expectedPi0)));
-		assertTrue("pi0 greater than expected in " + newFile.getName(), Double.parseDouble(newFile.getMetadata().get("pi0")) < UPPER_BOUND_PI0_MATCH * (Double.parseDouble(expectedPi0)));
+		assertTrue("pi0 lower than expected in " + newFile.getName()+", (actual: "+newFile.getMetadata().get("pi0")+")", Double.parseDouble(newFile.getMetadata().get("pi0")) > LOWER_BOUND_PI0_MATCH * (Double.parseDouble(expectedPi0)));
+		assertTrue("pi0 greater than expected in " + newFile.getName()+", (actual: "+newFile.getMetadata().get("pi0")+")", Double.parseDouble(newFile.getMetadata().get("pi0")) < UPPER_BOUND_PI0_MATCH * (Double.parseDouble(expectedPi0)));
 	}
 
 	/**
@@ -934,10 +933,10 @@ public abstract class AbstractEndToEndIT {
 
 		System.out.println("Peptides: " + peptideCount);
 		System.out.println("Proteins: " + proteinCount);
-		assertTrue("More than " + MAX_POSSIBLE_PEPTIDES + " peptides identified in " + outputFile.getName(), MAX_POSSIBLE_PEPTIDES >= peptideCount);
-		assertTrue("Fewer than " + peptideFloor + " peptides identified in " + outputFile.getName(), peptideFloor <= peptideCount);
-		assertTrue("More than " + MAX_POSSIBLE_PROTEIN_GROUPS + " protein groups identified in " + outputFile.getName(), MAX_POSSIBLE_PROTEIN_GROUPS >= proteinCount);
-		assertTrue("Fewer than " + proteinFloor + " protein groups identified in " + outputFile.getName(), proteinFloor <= proteinCount);
+		assertTrue("More than " + MAX_POSSIBLE_PEPTIDES + " peptides identified in " + outputFile.getName()+", (actual: "+peptideCount+")", MAX_POSSIBLE_PEPTIDES >= peptideCount);
+		assertTrue("Fewer than " + peptideFloor + " peptides identified in " + outputFile.getName()+", (actual: "+peptideCount+")", peptideFloor <= peptideCount);
+		assertTrue("More than " + MAX_POSSIBLE_PROTEIN_GROUPS + " protein groups identified in " + outputFile.getName()+", (actual: "+proteinCount+")", MAX_POSSIBLE_PROTEIN_GROUPS >= proteinCount);
+		assertTrue("Fewer than " + proteinFloor + " protein groups identified in " + outputFile.getName()+", (actual: "+proteinCount+")", proteinFloor <= proteinCount);
 		//assertTrue("Peptide identified outside of " + STANDARD_RANGE + " in " + outputFile.getName(), STANDARD_RANGE.contains(outputFile.getMinMaxMZ()));
 	}
 

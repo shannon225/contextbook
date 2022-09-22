@@ -370,7 +370,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	 * @throws IOException
 	 * @throws SQLException
 	 */
-	public void addIntegratedEntries(ArrayList<IntegratedLibraryEntry> entries, Optional<PeakLocationInferrerInterface> inferrer, Optional<HashMap<String, ModificationLocalizationData>> localizationData, AminoAcidConstants aaConstants, float fdrThreshold)
+	public void addIntegratedEntries(boolean requireFragmentIons, ArrayList<IntegratedLibraryEntry> entries, Optional<PeakLocationInferrerInterface> inferrer, Optional<HashMap<String, ModificationLocalizationData>> localizationData, AminoAcidConstants aaConstants, float fdrThreshold)
 			throws IOException, SQLException {
 		// first add normal data
 		HashMap<String, LibraryEntry> repeatsCatcher=new HashMap<String, LibraryEntry>();
@@ -504,7 +504,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 				ArrayList<Pair<TransitionRefinementData, String>> filteredDataAndSourceList=new ArrayList<Pair<TransitionRefinementData, String>>();
 
 				for (Pair<TransitionRefinementData, String> pair : dataAndSourceList) {
-					if (inferrer.get().getTopNBestIons(pair.x.getPeptideModSeq(), pair.x.getPrecursorCharge())!=null) {
+					if ((!requireFragmentIons)||inferrer.get().getTopNBestIons(pair.x.getPeptideModSeq(), pair.x.getPrecursorCharge())!=null) {
 						filteredDataAndSourceList.add(pair);
 					} else {
 						numFilteredEntries++;
@@ -522,7 +522,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			int start=0;
 			int stop=NUMBER_OF_PEPTIDE_ENTRIES_AT_ONCE;
 			while (stop<dataAndSourceList.size()) {
-				internalWritePeptideQuantLibraryEntriesToConnection(c, inferrer, dataAndSourceList.subList(start, stop), aaConstants);
+				internalWritePeptideQuantLibraryEntriesToConnection(c, requireFragmentIons, inferrer, dataAndSourceList.subList(start, stop), aaConstants);
 				if (localizationData.isPresent()) {
 					internalWritePeptideLocalizationsToConnection(c, inferrer, localizationData.get(), localizationFDRValues, dataAndSourceList.subList(start, stop));
 				}
@@ -530,7 +530,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 				stop=stop+NUMBER_OF_PEPTIDE_ENTRIES_AT_ONCE;
 			}
 			if (start<dataAndSourceList.size()) {
-				internalWritePeptideQuantLibraryEntriesToConnection(c, inferrer, dataAndSourceList.subList(start, dataAndSourceList.size()), aaConstants);
+				internalWritePeptideQuantLibraryEntriesToConnection(c, requireFragmentIons, inferrer, dataAndSourceList.subList(start, dataAndSourceList.size()), aaConstants);
 				if (localizationData.isPresent()) {
 					internalWritePeptideLocalizationsToConnection(c, inferrer, localizationData.get(), localizationFDRValues, dataAndSourceList.subList(start, dataAndSourceList.size()));
 				}
@@ -558,13 +558,13 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	private static final int NUMBER_OF_PEPTIDE_ENTRIES_AT_ONCE=20;
 	// private static final int NUMBER_OF_FRAGMENT_ENTRIES_AT_ONCE=4;
 
-	private void internalWritePeptideQuantLibraryEntriesToConnection(Connection c, Optional<PeakLocationInferrerInterface> inferrer, List<Pair<TransitionRefinementData, String>> dataAndSouceList, AminoAcidConstants aaConstants)
+	private void internalWritePeptideQuantLibraryEntriesToConnection(Connection c, boolean requireFragmentIons, Optional<PeakLocationInferrerInterface> inferrer, List<Pair<TransitionRefinementData, String>> dataAndSouceList, AminoAcidConstants aaConstants)
 			throws SQLException, IOException {
 		int numValidEntries=0;
 		for (int i=0; i<dataAndSouceList.size(); i++) {
 			if (inferrer.isPresent()) {
 				Optional<QuantitativeDIAData> topNIntensity=inferrer.get().getQuantitativeData(dataAndSouceList.get(i).x);
-				if (topNIntensity.isPresent()) {
+				if ((!requireFragmentIons)||topNIntensity.isPresent()) {
 					numValidEntries++;
 				}
 			} else {
@@ -588,13 +588,13 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 
 			for (int i=0; i<dataAndSouceList.size(); i++) {
 				Pair<TransitionRefinementData, String> pair=dataAndSouceList.get(i);
-				if (inferrer.isPresent()) {
+				if (inferrer.isPresent()&&requireFragmentIons) {
 					Optional<QuantitativeDIAData> topNIntensity=inferrer.get().getQuantitativeData(dataAndSouceList.get(i).x);
 					if (topNIntensity.isPresent()) {
-						pepIndex=prepareQuantData(pair.x, pair.y, inferrer, peptidePrep, pepIndex, aaConstants);
+						pepIndex=prepareQuantData(requireFragmentIons, pair.x, pair.y, inferrer, peptidePrep, pepIndex, aaConstants);
 					}
 				} else {
-					pepIndex=prepareQuantData(pair.x, pair.y, inferrer, peptidePrep, pepIndex, aaConstants);
+					pepIndex=prepareQuantData(requireFragmentIons, pair.x, pair.y, inferrer, peptidePrep, pepIndex, aaConstants);
 				}
 			}
 			if (pepIndex>1) {
@@ -662,9 +662,9 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		return index;
 	}
 
-	public int prepareQuantData(TransitionRefinementData data, String sourceFile, Optional<PeakLocationInferrerInterface> inferrer, PreparedStatement peptidePrep, int index, AminoAcidConstants aaConstants) throws SQLException, IOException {
+	public int prepareQuantData(boolean requireFragmentIons, TransitionRefinementData data, String sourceFile, Optional<PeakLocationInferrerInterface> inferrer, PreparedStatement peptidePrep, int index, AminoAcidConstants aaConstants) throws SQLException, IOException {
 		QuantitativeDIAData topN;
-		if (inferrer.isPresent()) {
+		if (inferrer.isPresent()&&requireFragmentIons) {
 			Optional<QuantitativeDIAData> topNIntensity=inferrer.get().getQuantitativeData(data);
 			if (!topNIntensity.isPresent()) {
 				// not enough ions to quantify peptide

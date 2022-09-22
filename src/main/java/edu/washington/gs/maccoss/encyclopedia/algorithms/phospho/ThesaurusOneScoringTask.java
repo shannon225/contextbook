@@ -283,7 +283,11 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 				}
 
 				AbstractScoringResult result=new PeptideScoringResult(bestForm.localizedEntry);
-				result.addStripe(score, General.concatenate(auxScoreArray, evalue, data.getLocalizationScore()), apex);
+
+				float deltaPrecursorMass=scorer.getParentDeltaMassIndex()>=0?auxScoreArray[scorer.getParentDeltaMassIndex()]:0.0f;
+				float deltaFragmentMass=scorer.getFragmentDeltaMassIndex()>=0?auxScoreArray[scorer.getFragmentDeltaMassIndex()]:0.0f;
+				
+				result.addStripe(score, General.concatenate(auxScoreArray, evalue, data.getLocalizationScore()), deltaPrecursorMass, deltaFragmentMass, apex);
 
 				if (replaceBestNonLocalizedResult) {
 					bestNonlocalizedResult=result;

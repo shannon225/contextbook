@@ -97,8 +97,8 @@ public class SpectronautCSVToLibraryConverter {
 				public void processRow(Map<String, String> row) {
 					final String peptideModSeq=OpenSwathTSVToLibraryConverter.getFromMap(row, "ModifiedPeptide");
 					final String chargeString=OpenSwathTSVToLibraryConverter.getFromMap(row, "PrecursorCharge");
-					final double productMz=Double.parseDouble(OpenSwathTSVToLibraryConverter.getFromMap(row, "FragmentMz", "ProductMz"));
-					final float libraryIntensity=Float.parseFloat(OpenSwathTSVToLibraryConverter.getFromMap(row, "RelativeIntensity", "RelativeFragmentIntensity", "LibraryIntensity"));
+					final String productMz=OpenSwathTSVToLibraryConverter.getFromMap(row, "FragmentMz", "ProductMz");
+					final String libraryIntensity=OpenSwathTSVToLibraryConverter.getFromMap(row, "RelativeIntensity", "RelativeFragmentIntensity", "LibraryIntensity");
 					final String rtString = OpenSwathTSVToLibraryConverter.getFromMap(row, "iRT", "Tr_recalibrated");
 
 					try {
@@ -117,7 +117,9 @@ public class SpectronautCSVToLibraryConverter {
 								Logger.logLine("Read "+peptides.size()+" entries...");
 							}
 						}
-						lastPeptide.addPeak(new Peak(productMz, libraryIntensity));
+						double productMzNumber=Double.parseDouble(productMz);
+						float libraryIntensityNumber=Float.parseFloat(libraryIntensity);
+						lastPeptide.addPeak(new Peak(productMzNumber, libraryIntensityNumber));
 
 					} catch (Exception e) {
 						if (!row.containsKey("Tr_recalibrated")) {  // decide if it's Spectronaut or DIA-NN

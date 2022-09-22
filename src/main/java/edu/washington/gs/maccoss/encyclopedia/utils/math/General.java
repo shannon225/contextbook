@@ -154,6 +154,22 @@ public class General {
 		return true;
 	}
 	
+	public static String[] insert(String[] a, int index, String... s) {
+		String[] r=new String[a.length+s.length];
+		System.arraycopy(a, 0, r, 0, index);
+		System.arraycopy(a, index, r, index+s.length, a.length-index);
+		System.arraycopy(s, 0, r, index, s.length);
+		return r;
+	}
+	
+	public static float[] insert(float[] a, int index, float... s) {
+		float[] r=new float[a.length+s.length];
+		System.arraycopy(a, 0, r, 0, index);
+		System.arraycopy(a, index, r, index+s.length, a.length-index);
+		System.arraycopy(s, 0, r, index, s.length);
+		return r;
+	}
+	
 	public static String[] concatenate(String[] a, String... s) {
 		String[] r=new String[a.length+s.length];
 		System.arraycopy(a, 0, r, 0, a.length);
