@@ -261,7 +261,6 @@ public class TableConcatenator {
 			
 			String sequence=data[sequenceIndex];
 			String primaryScoreValue=data[primaryScoreIndex];
-			String deltaRTString=data[deltaRTIndex];
 			
 			if (sequence==null) {
 				error=new EncyclopediaException("Couldn't find sequence in PIN file!");
@@ -279,16 +278,19 @@ public class TableConcatenator {
 				throw error; 
 			}
 			
-			float deltaRT;
-			try {
-				deltaRT=Float.parseFloat(deltaRTString);
-			} catch (NumberFormatException nfe) {
-				error=new EncyclopediaException("Couldn't parse deltaRT ("+deltaRTString+")! Index: "+deltaRTIndex+", Row: "+row);
-				throw error; 
-			}
 			DeltaRTData deltaData=deltaRTDataBySequence.get(sequence);
 			float deltaDeltaRT, irqDeltaRT, top20PercentPrimaryScore;
 			if (deltaData!=null) {
+				String deltaRTString=data[deltaRTIndex];
+				
+				float deltaRT;
+				try {
+					deltaRT=Float.parseFloat(deltaRTString);
+				} catch (NumberFormatException nfe) {
+					error=new EncyclopediaException("Couldn't parse deltaRT ("+deltaRTString+")! Index: "+deltaRTIndex+", Row: "+row);
+					throw error; 
+				}
+				
 				deltaDeltaRT=Math.abs(deltaData.modeDeltaRT-deltaRT);
 				irqDeltaRT=deltaData.irqDeltaRT;
 				top20PercentPrimaryScore=deltaData.top20PercentPrimaryScore;
