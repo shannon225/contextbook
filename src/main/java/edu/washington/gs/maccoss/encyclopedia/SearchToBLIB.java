@@ -41,10 +41,13 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.SubProgressIndicator;
+import gnu.trove.iterator.TDoubleIterator;
 import gnu.trove.list.TDoubleList;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.map.TObjectFloatMap;
 import gnu.trove.map.hash.TObjectFloatHashMap;
+import gnu.trove.set.TDoubleSet;
+import gnu.trove.set.hash.TDoubleHashSet;
 
 import java.io.*;
 import java.nio.file.Path;
@@ -1177,22 +1180,41 @@ public class SearchToBLIB {
 			// Could be faster if we avoid quadratic search but we can't be certain
 			// that either array is sorted, and the # of quant ions should be small.
 
+			final TDoubleSet quantIonSet = new TDoubleHashSet(quantIons);
+
 			for (int i = 0; i < masses.length; i++) {
-				for (double quantIon : quantIons) {
+				for(TDoubleIterator iterator = quantIonSet.iterator(); iterator.hasNext();) {
+					final double quantIon = iterator.next();
+
 					if (tol.equals(masses[i], quantIon)) {
 						quantifiedIons[i] = true;
+						iterator.remove(); // don't use this quant ion again, we already found it
+
 						break;
 					}
 				}
 			}
-		}
 
-		// Sanity check for quant ions -- sometimes they might be missing from the entry?
-		// This isn't a precise check, but good enough for our purposes. Integration tests
-		// will make more detailed checks of the logic to ensure each ion is correctly
-		// passed through.
-		if (quantIons.length != General.sum(quantifiedIons)) {
-			throw new IllegalStateException("Unable to locate all quantitative ions: expected " + quantIons.length + " found " + General.sum(quantifiedIons));
+			// Sanity checks for quant ions
+
+			if (!quantIonSet.isEmpty()) {
+				throw new IllegalStateException(
+						"Did not find quant ions in entry for "
+						+ peptide.getPeptideModSeq() + " : "
+						+ Arrays.toString(quantIonSet.toArray())
+				);
+			}
+
+			if (quantIons.length != General.sum(quantifiedIons)) {
+				throw new IllegalStateException(
+						"Unable to locate all quantitative ions for "
+								+ peptide.getPeptideModSeq()
+								+ ": expected "
+								+ quantIons.length
+								+ " found "
+								+ General.sum(quantifiedIons)
+				);
+			}
 		}
 
 		return new LibraryEntry(
