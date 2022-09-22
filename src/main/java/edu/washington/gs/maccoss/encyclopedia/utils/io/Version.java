@@ -2,6 +2,8 @@ package edu.washington.gs.maccoss.encyclopedia.utils.io;
 
 import java.util.StringTokenizer;
 
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+
 public class Version implements Comparable<Version> {
 	private final int major;
 	private final int minor;
@@ -36,7 +38,14 @@ public class Version implements Comparable<Version> {
 				if (snapshot) {
 					revision=Integer.parseInt(last.substring(0, last.length()-9));
 				} else {
-					revision=Integer.parseInt(last);
+					int parsedRevision=0;
+					try {
+						parsedRevision=Integer.parseInt(last);
+					} catch (NumberFormatException nfe) {
+						Logger.logLine("Unexpected revision "+last+", assuming -1");
+						parsedRevision=-1;
+					}
+					revision=parsedRevision;
 				}
 			} else {
 				revision=0;
