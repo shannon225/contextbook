@@ -1170,13 +1170,17 @@ public class SearchToBLIB {
 		// will initialize to all false
 		final boolean[] quantifiedIons = new boolean[masses.length];
 
-		// Could be faster if we avoid quadratic search but we can't be certain
-		// that either array is sorted, and the # of quant ions should be small.
-		for (int i = 0; i < masses.length; i++) {
-			for (double quantIon : quantIons) {
-				if (tol.equals(masses[i], quantIon)) {
-					quantifiedIons[i] = true;
-					break;
+		// Quant ions array is sometimes null; treat as though it's empty
+		if (null != quantIons) {
+			// Could be faster if we avoid quadratic search but we can't be certain
+			// that either array is sorted, and the # of quant ions should be small.
+
+			for (int i = 0; i < masses.length; i++) {
+				for (double quantIon : quantIons) {
+					if (tol.equals(masses[i], quantIon)) {
+						quantifiedIons[i] = true;
+						break;
+					}
 				}
 			}
 		}
