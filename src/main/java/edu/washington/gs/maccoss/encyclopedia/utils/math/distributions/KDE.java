@@ -17,6 +17,18 @@ public class KDE implements Distribution {
 	private final double prior;
 	private final double mean;
 	private final double stdev;
+	
+	public KDE(double[] values, double prior) {
+		this(getUnitWeightedValues(values), prior);
+	}
+	
+	private static ArrayList<WeightedValue> getUnitWeightedValues(double[] values) {
+		ArrayList<WeightedValue> list=new ArrayList<WeightedValue>();
+		for (int i = 0; i < values.length; i++) {
+			list.add(new WeightedValue(values[i], 1));
+		}
+		return list;
+	}
 
 	public KDE(ArrayList<WeightedValue> values, double prior) {
 		this.prior=prior;

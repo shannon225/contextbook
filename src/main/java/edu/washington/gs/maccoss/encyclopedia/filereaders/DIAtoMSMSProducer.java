@@ -3,6 +3,8 @@ package edu.washington.gs.maccoss.encyclopedia.filereaders;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.concurrent.BlockingQueue;
 import java.util.zip.DataFormatException;
@@ -73,6 +75,8 @@ public class DIAtoMSMSProducer implements MSMSProducer {
 	private void processStripeFile(StripeFileInterface stripeFile, float minRT, float maxRT) throws IOException, SQLException, DataFormatException {
 		ArrayList<PrecursorScan> precursors=stripeFile.getPrecursors(minRT, maxRT);
 		ArrayList<FragmentScan> fragments=stripeFile.getStripes(new Range(-Float.MAX_VALUE, Float.MAX_VALUE), minRT, maxRT, false);
+		Collections.sort(precursors);
+		Collections.sort(fragments);
 
 		putBlock(new MSMSBlock(precursors, fragments));
 	}

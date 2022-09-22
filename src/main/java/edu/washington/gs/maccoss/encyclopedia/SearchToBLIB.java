@@ -407,6 +407,7 @@ public class SearchToBLIB {
 						Logger.logLine("...Finished peak inference.");
 					} catch (Exception e) {
 						Logger.errorLine("RT alignment between files failed! Perhaps this is to build a chromatogram library and not a quantitative experiment? Attempting to recover without alignment.");
+						Logger.errorException(e);
 						inferrer=Optional.empty();
 					}
 				} else {
