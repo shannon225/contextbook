@@ -7,8 +7,6 @@ import java.util.List;
 import java.util.Optional;
 
 public interface RetentionTimeAlignmentInterface extends ScoredPSMFilterInterface {
-	List<AlignmentDataPoint> plot(List<XYPoint> rts, Optional<File> saveFileSeed);
-
 	float getYValue(float xrt);
 
 	float getXValue(float yrt);

@@ -96,7 +96,7 @@ public class AlternatePeakLocationInferrer {
 					public boolean execute(String modSeq, float b) {
 						float alt=rtInSec.get(modSeq);
 						if (rtInSec.getNoEntryValue()!=alt) {
-							points.add(new RTRTPoint(b / 60f, alt / 60f, // both in minutes
+							points.add(new PeptideXYPoint(b / 60f, alt / 60f, // both in minutes
 							                         false, modSeq));
 						}
 						return true;

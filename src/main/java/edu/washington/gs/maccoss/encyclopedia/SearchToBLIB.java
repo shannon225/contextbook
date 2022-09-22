@@ -6,6 +6,7 @@ import com.google.common.collect.Sets;
 import com.google.common.primitives.Floats;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ParsimonyProteinGrouper;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.ScoredPSM;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.*;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface.AlignmentDataPoint;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
@@ -37,6 +38,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.LinearInterpolatedFunction;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.RTProbabilityModel;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
@@ -1488,21 +1490,29 @@ public class SearchToBLIB {
 						}
 					}
 
-					final RetentionTimeAlignmentInterface alignment = new RetentionTimeAlignmentInterface() {
+					final LinearInterpolatedFunction rtWarper = new LinearInterpolatedFunction(alignmentPoints);
+
+					/**
+					 * Points are sorted by delta (x), but function is not monotonic. NOT INVERTIBLE!
+					 */
+					final LinearInterpolatedFunction probFn = new LinearInterpolatedFunction(alignmentData.stream()
+							// Filter out raw knots without delta/probability fields
+							.filter(p -> Float.isFinite(p.getDelta()) && Floats.isFinite(p.getProbability()))
+							.map(p -> new XYPoint(p.getDelta(), p.getProbability()))
+							.sorted(Comparator.comparingDouble(XYPoint::getX))
+							.collect(Collectors.toCollection(ArrayList::new))
+					);
+
+
+					Optional<RTProbabilityModel> probModel = Optional.of(new RTProbabilityModel() {
+						@Override
+						public float getProbability(float retentionTime, float delta) {
+							return probFn.getYValue(delta);
+						}
+					});
+
+					final RetentionTimeAlignmentInterface alignment = new AbstractRetentionTimeFilter(rtWarper, probModel, null, null) {
 						static final double MATCH_TOLERANCE = 1e-3;
-
-						final LinearInterpolatedFunction rtWarper = new LinearInterpolatedFunction(alignmentPoints);
-
-						/**
-						 * Points are sorted by delta (x), but function is not monotonic. NOT INVERTIBLE!
-						 */
-						final LinearInterpolatedFunction probModel = new LinearInterpolatedFunction(alignmentData.stream()
-								// Filter out raw knots without delta/probability fields
-								.filter(p -> Float.isFinite(p.getDelta()) && Floats.isFinite(p.getProbability()))
-								.map(p -> new XYPoint(p.getDelta(), p.getProbability()))
-								.sorted(Comparator.comparingDouble(XYPoint::getX))
-								.collect(Collectors.toCollection(ArrayList::new))
-						);
 
 						@Override
 						public List<AlignmentDataPoint> plot(List<XYPoint> rts, Optional<File> saveFileSeed) {
@@ -1519,12 +1529,6 @@ public class SearchToBLIB {
 						@Override
 						public float getXValue(float yrt) {
 							return rtWarper.getXValue(yrt);
-						}
-
-						@Override
-						public float getProbabilityFitsModel(float actualRT, float modelRT) {
-							final float delta = getDelta(actualRT, modelRT);
-							return probModel.getYValue(delta);
 						}
 
 						@Override

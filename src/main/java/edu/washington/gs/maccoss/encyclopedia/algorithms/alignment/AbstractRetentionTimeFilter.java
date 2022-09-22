@@ -40,7 +40,7 @@ public class AbstractRetentionTimeFilter implements RetentionTimeAlignmentInterf
 	protected final String xAxis;
 	protected final String yAxis;
 	
-	AbstractRetentionTimeFilter(Function rtWarper, Optional<RTProbabilityModel> model, String xAxis, String yAxis) {
+	public AbstractRetentionTimeFilter(Function rtWarper, Optional<RTProbabilityModel> model, String xAxis, String yAxis) {
 		this.rtWarper=rtWarper;
 		this.model=model;
 		this.xAxis=xAxis;
