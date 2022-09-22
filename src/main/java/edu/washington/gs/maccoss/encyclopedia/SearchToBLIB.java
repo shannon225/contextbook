@@ -1187,6 +1187,14 @@ public class SearchToBLIB {
 			}
 		}
 
+		// Sanity check for quant ions -- sometimes they might be missing from the entry?
+		// This isn't a precise check, but good enough for our purposes. Integration tests
+		// will make more detailed checks of the logic to ensure each ion is correctly
+		// passed through.
+		if (quantIons.length != General.sum(quantifiedIons)) {
+			throw new IllegalStateException("Unable to locate all quantitative ions: expected " + quantIons.length + " found " + General.sum(quantifiedIons));
+		}
+
 		return new LibraryEntry(
 				"global",
 				peptide.getAccessions(),
