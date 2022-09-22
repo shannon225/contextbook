@@ -811,12 +811,32 @@ public class SearchToBLIBIT {
 			final String modSeq = peptide.getPeptideModSeq();
 			final byte charge = peptide.getPrecursorCharge();
 
-			assertArrayEquals(
-					String.format("Wrong quant ions for %s", modSeq),
-					expected.getTopNBestIons(modSeq, charge),
-					actual.getTopNBestIons(modSeq, charge),
-					DELTA
-			);
+			final double[] expectedIons = expected.getTopNBestIons(modSeq, charge);
+			final double[] actualIons = actual.getTopNBestIons(modSeq, charge);
+
+			if (null == expectedIons) {
+				assertTrue(null == actualIons || actualIons.length == 0);
+			} else {
+				Arrays.sort(expectedIons);
+				Arrays.sort(actualIons);
+
+				for (int i = 0; i < expectedIons.length; i++) {
+					// We can only assert as tightly as the quant-ion-to-entry-ion matching is.
+					final double tol = searchParameters.getLibraryFragmentTolerance().getTolerance(expectedIons[i]);
+					assertEquals(
+							String.format(
+									"Wrong quant ions for %s (differed at index %d). Expected: %f Actual: %f",
+									modSeq,
+									i,
+									expectedIons[i],
+									actualIons[i]
+							),
+							expectedIons[i],
+							actualIons[i],
+							tol + DELTA // dilate tolerance by numerical precision of assertions in this test
+					);
+				}
+			}
 		}
 
 		// Check each peptide's predicted RT in each job. Only check for peptides

@@ -1166,14 +1166,19 @@ public class SearchToBLIB {
 			throw new IllegalStateException("Unable to find entry in original search library for " + peptide.getPsmID());
 		}
 
-		final double[] masses = entry.getMassArray();
-		final float[] intensities = entry.getIntensityArray();
-		final float[] correlations = entry.getCorrelationArray();
+		final double[] entryMasses = entry.getMassArray();
+		final float[] entryIntensities = entry.getIntensityArray();
+		final float[] entryCorrelations = entry.getCorrelationArray();
 
 		final MassTolerance tol = parameters.getLibraryFragmentTolerance();
 
 		// will initialize to all false
-		final boolean[] quantifiedIons = new boolean[masses.length];
+		final boolean[] entryQuantifiedIons = new boolean[entryMasses.length];
+
+		// Final arrays may differ from the entry (if we have to insert additional quant ions)
+		final double[] masses;
+		final float[] intensities, correlations;
+		final boolean[] quantifiedIons;
 
 		// Quant ions array is sometimes null; treat as though it's empty
 		if (null != quantIons) {
@@ -1182,12 +1187,12 @@ public class SearchToBLIB {
 
 			final TDoubleSet quantIonSet = new TDoubleHashSet(quantIons);
 
-			for (int i = 0; i < masses.length; i++) {
+			for (int i = 0; i < entryMasses.length; i++) {
 				for(TDoubleIterator iterator = quantIonSet.iterator(); iterator.hasNext();) {
 					final double quantIon = iterator.next();
 
-					if (tol.equals(masses[i], quantIon)) {
-						quantifiedIons[i] = true;
+					if (tol.equals(entryMasses[i], quantIon)) {
+						entryQuantifiedIons[i] = true;
 						iterator.remove(); // don't use this quant ion again, we already found it
 
 						break;
@@ -1195,16 +1200,60 @@ public class SearchToBLIB {
 				}
 			}
 
-			// Sanity checks for quant ions
+			if (quantIonSet.isEmpty()) {
+				masses = entryMasses;
+				intensities = entryIntensities;
+				correlations = entryCorrelations;
+				quantifiedIons = entryQuantifiedIons;
+			} else {
+				// Any quant ions not found in the entry must be inserted.
 
-			if (!quantIonSet.isEmpty()) {
-				throw new IllegalStateException(
-						"Did not find quant ions in entry for "
-						+ peptide.getPeptideModSeq() + " : "
-						+ Arrays.toString(quantIonSet.toArray())
-				);
+				final int len = entryMasses.length + quantIonSet.size();
+				masses = new double[len];
+				intensities = new float[len];
+				correlations = new float[len];
+				quantifiedIons = new boolean[len];
+
+				final double[] toInsert = quantIonSet.toArray();
+				Arrays.sort(toInsert);
+
+				// Just assume masses are sorted -- will do weird stuff if not but _should_ work.
+				// i -- index in entry
+				// j -- index in toInsert
+				// k -- index in final arrays
+				int j = 0, k = 0;
+				for (int i = 0; i < entryMasses.length; i++) {
+					for (; j < toInsert.length && toInsert[j] < entryMasses[i]; j++) {
+						// Time to insert a mass
+						masses[k] = toInsert[j];
+						intensities[k] = 0f;
+						correlations[k] = 0f;
+						quantifiedIons[k] = true;
+
+						k += 1; // move to next insertion location
+					}
+
+					// Now the next mass to insert is greater than the current entry mass
+					masses[k] = entryMasses[i];
+					intensities[k] = entryIntensities[i];
+					correlations[k] = entryCorrelations[i];
+					quantifiedIons[k] = entryQuantifiedIons[i];
+
+					k += 1; // move to next insertion location
+				}
+
+				// Insert remaining masses at end
+				for (; j < toInsert.length; j++) {
+					masses[k] = toInsert[j];
+					intensities[k] = 0f;
+					correlations[k] = 0f;
+					quantifiedIons[k] = true;
+
+					k += 1; // move to next insertion location
+				}
 			}
 
+			// Sanity checks for quant ions
 			if (quantIons.length != General.sum(quantifiedIons)) {
 				throw new IllegalStateException(
 						"Unable to locate all quantitative ions for "
@@ -1215,6 +1264,11 @@ public class SearchToBLIB {
 								+ General.sum(quantifiedIons)
 				);
 			}
+		} else {
+			masses = entryMasses;
+			intensities = entryIntensities;
+			correlations = entryCorrelations;
+			quantifiedIons = entryQuantifiedIons;
 		}
 
 		return new LibraryEntry(
@@ -1231,7 +1285,8 @@ public class SearchToBLIB {
 				intensities,
 				correlations,
 				quantifiedIons,
-				parameters.getAAConstants()
+				parameters.getAAConstants(),
+				true // force preserving peaks with non-positive intensity (like any we had to add)
 		);
 	}
 
