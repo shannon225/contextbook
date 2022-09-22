@@ -49,10 +49,10 @@ public class WindowDownsamplerTest extends TestCase {
 		
 		assertEquals(3, file.getPrecursors(0, Float.MAX_VALUE).size());
 		ArrayList<FragmentScan> stripes = file.getStripes(new Range(0, 99999), 0.0f, Float.MAX_VALUE, false);
-		
-			for (FragmentScan fragmentScan : stripes) {
-				System.out.println(fragmentScan.getScanStartTime()+"\t"+fragmentScan.getRange());
-			}
+	
+		for (FragmentScan fragmentScan : stripes) {
+			System.out.println(fragmentScan.getScanStartTime()+"\t"+fragmentScan.getRange());
+		}
 		assertEquals(12, stripes.size());
 	}
 	
