@@ -66,4 +66,49 @@ public class TwoDimensionalKDETest extends TestCase {
 			}
 		}
 	}
+
+	public void testStackOverflow() {
+		int resolution = 10000;
+
+		ArrayList<XYPoint> points = new ArrayList<>();
+		final int max = 900;
+		for (int i = 0; i< max; i++) {
+			points.add(new XYPoint(i, i));
+		}
+
+		final TwoDimensionalKDE twoDimensionalKDE = new TwoDimensionalKDE(points, resolution);
+		try {
+			twoDimensionalKDE.traceNorthEast(0, 0, new ArrayList<>());
+		} catch (StackOverflowError soe) {
+			fail("Reproduced stack overflow in TwoDimensionalKDE!");
+		}
+	}
+
+	public void testHistogram() {
+		ArrayList<XYPoint> points = new ArrayList<>();
+		final int max = 900;
+		for (int i=0; i < max; i++) {
+			points.add(new XYPoint(i, i-(i%7)));
+		}
+		int resolution = 10;
+		final TwoDimensionalKDE twoDimensionalKDE = new TwoDimensionalKDE(points, resolution);
+		final float[][] histogram = twoDimensionalKDE.getTwoDimensionalHistogram();
+
+		float[][] expected = new float[][] {{78.5398f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
+				{9.424778f, 147.6548f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
+				{0.0f, 6.2831855f, 150.7964f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
+				{0.0f, 0.0f, 3.1415927f, 153.938f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
+				{0.0f, 0.0f, 0.0f, 0.0f, 153.938f, 3.1415927f, 0.0f, 0.0f, 0.0f, 0.0f},
+				{0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 157.0796f, 0.0f, 0.0f, 0.0f, 0.0f},
+				{0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 4.712389f, 152.3672f, 0.0f, 0.0f, 0.0f},
+				{0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.5707964f, 153.938f, 1.5707964f, 0.0f},
+				{0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 152.3672f, 4.712389f},
+				{0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 78.5398f}};
+
+		for (int i=0; i<expected.length; i++) {
+			for (int j=0; j<expected[i].length; j++) {
+				assertEquals(expected[i][j], histogram[i][j], 0.0000005f);
+			}
+		}
+	}
 }
