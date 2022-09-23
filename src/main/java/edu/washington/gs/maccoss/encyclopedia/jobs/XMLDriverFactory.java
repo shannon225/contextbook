@@ -92,6 +92,8 @@ public class XMLDriverFactory {
 						jobs.add(SearchToBLIBJob.readFromXML(doc, element, new SimpleJobProcessor(jobs)));
 					} else if (CombineELIBsAndExtractGroupSpecificLibrariesJob.class.getSimpleName().equals(element.getTagName())) {
 						jobs.add(CombineELIBsAndExtractGroupSpecificLibrariesJob.readFromXML(doc, element, new SimpleJobProcessor(jobs)));
+					} else if (AlignmentOnlyLibraryJob.class.getSimpleName().equals(element.getTagName())) {
+						jobs.add(AlignmentOnlyLibraryJob.readFromXML(doc, element, new SimpleJobProcessor(jobs)));
 					}
 				}
 			}
