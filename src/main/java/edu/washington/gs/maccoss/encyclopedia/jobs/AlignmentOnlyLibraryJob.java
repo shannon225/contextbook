@@ -1,23 +1,53 @@
 package edu.washington.gs.maccoss.encyclopedia.jobs;
 
 import edu.washington.gs.maccoss.encyclopedia.SearchToBLIB;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.io.XMLObject;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.XMLUtils;
+import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import java.io.File;
+import java.util.ArrayList;
 
-public class AlignmentOnlyLibraryJob extends LibExportJob {
+public class AlignmentOnlyLibraryJob implements WorkerJob, XMLObject {
+	private final File destFile;
+	private final JobProcessor processor;
+
 	public AlignmentOnlyLibraryJob(File destFile, JobProcessor processor) {
-		super(
-				destFile,
-				SearchToBLIB.OutputFormat.ALIB,
-				true, // alignBetweenFiles MUST be true for ALIB export
-				processor
-		);
+		this.destFile = destFile;
+		this.processor = processor;
+	}
+
+	@Override
+	public void runJob(ProgressIndicator progress) throws Exception {
+		ArrayList<SearchJobData> jobData=new ArrayList<SearchJobData>();
+		for (WorkerJob job : processor.getQueue()) {
+			if (job instanceof SearchJob) {
+				jobData.add(((SearchJob)job).getSearchData());
+			}
+		}
+
+		Logger.logLine("Found "+jobData.size()+" jobs in the queue to combine...");
+
+		if (!jobData.isEmpty()) {
+			final SearchJobData reprJob = jobData.iterator().next();
+			Logger.logLine("Extracting representative search parameters from job " + reprJob.getDiaFileReader().getOriginalFileName());
+
+			SearchToBLIB.convert(
+					progress,
+					jobData,
+					destFile,
+					SearchToBLIB.OutputFormat.ALIB,
+					true, // Must be true for ALIB export
+					reprJob.getParameters()
+			);
+		}
 	}
 
 	@Override
@@ -26,12 +56,11 @@ public class AlignmentOnlyLibraryJob extends LibExportJob {
 	}
 
 	@Override
-	public Element writeToXML(Document doc, Element parentElement) {
+	public void writeToXML(Document doc, Element parentElement) {
 		Element rootElement=doc.createElement(getClass().getSimpleName());
 		parentElement.appendChild(rootElement);
 
 		XMLUtils.writeTag(doc, rootElement, "elibFile", destFile.getAbsolutePath());
-		return rootElement;
 	}
 
 	public static AlignmentOnlyLibraryJob readFromXML(Document doc, Element rootElement, JobProcessor processor) {
