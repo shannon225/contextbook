@@ -35,11 +35,10 @@ public class AlignmentOnlyLibraryJob extends LibExportJob {
 	}
 
 	public static AlignmentOnlyLibraryJob readFromXML(Document doc, Element rootElement, JobProcessor processor) {
-		if (!rootElement.getTagName().equals(SearchToELIBJob.class.getSimpleName())) {
-			throw new EncyclopediaException("Unexpected XML parsing element, found ["+rootElement.getTagName()+"] when expecting ["+SearchToELIBJob.class.getSimpleName()+"]");
+		if (!rootElement.getTagName().equals(AlignmentOnlyLibraryJob.class.getSimpleName())) {
+			throw new EncyclopediaException("Unexpected XML parsing element, found ["+rootElement.getTagName()+"] when expecting ["+AlignmentOnlyLibraryJob.class.getSimpleName()+"]");
 		}
 		File elibFile=null;
-		boolean alignBetweenFiles=false;
 
 		NodeList nodes=rootElement.getChildNodes();
 
