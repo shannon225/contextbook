@@ -60,6 +60,9 @@ public class AlternatePeakLocationInferrer {
 				}
 			}
 		}
+		if (bestJob==null) {
+			throw new EncyclopediaException("No search job produced sufficient peptides to be the seed experiment, failing alignment.");
+		}
 		Logger.logLine("Setting "+bestJob.getDiaFileReader().getOriginalFileName()+" as the seed experiment.");
 		TObjectFloatHashMap<String> bestRTInSec=peptideMappings.get(bestJob);
 
