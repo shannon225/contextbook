@@ -180,9 +180,28 @@ public class Encyclopedia {
 			} catch (Exception e) {
 				Logger.errorLine("Encountered Fatal Error!");
 				Logger.errorException(e);
+
+				// Forcibly exit with error to avoid hanging the process if there are any leftover user threads
+				// that weren't properly cleaned up as a result of the error. First we log any hung / remaining
+				// threads though, to aid debugging.
+
+				for (Entry<Thread, StackTraceElement[]> threadEntry : Thread.getAllStackTraces().entrySet()) {
+					if (threadEntry.getKey().isDaemon()) {
+						continue;
+					}
+
+					Logger.errorLine("\nLeftover user thread will be KILLED: " + threadEntry.getKey().getName());
+					for (StackTraceElement element : threadEntry.getValue()) {
+						Logger.errorLine("  " + element);
+					}
+				}
+
+				System.exit(1); // nonzero status indicates error
 			} finally {
 				Logger.close();
 			}
+
+			// Do not forcibly exit; this can cause a hang if any user threads aren't cleaned up.
 		}
 	}
 
