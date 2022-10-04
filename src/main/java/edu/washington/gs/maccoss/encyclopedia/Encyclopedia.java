@@ -189,6 +189,9 @@ public class Encyclopedia {
 					if (threadEntry.getKey().isDaemon()) {
 						continue;
 					}
+					if (Thread.currentThread().equals(threadEntry.getKey())) {
+						continue;
+					}
 
 					Logger.errorLine("\nLeftover user thread will be KILLED: " + threadEntry.getKey().getName());
 					for (StackTraceElement element : threadEntry.getValue()) {
