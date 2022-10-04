@@ -180,9 +180,31 @@ public class Encyclopedia {
 			} catch (Exception e) {
 				Logger.errorLine("Encountered Fatal Error!");
 				Logger.errorException(e);
+
+				// Forcibly exit with error to avoid hanging the process if there are any leftover user threads
+				// that weren't properly cleaned up as a result of the error. First we log any hung / remaining
+				// threads though, to aid debugging.
+
+				for (Entry<Thread, StackTraceElement[]> threadEntry : Thread.getAllStackTraces().entrySet()) {
+					if (threadEntry.getKey().isDaemon()) {
+						continue;
+					}
+					if (Thread.currentThread().equals(threadEntry.getKey())) {
+						continue;
+					}
+
+					Logger.errorLine("\nLeftover user thread will be KILLED: " + threadEntry.getKey().getName());
+					for (StackTraceElement element : threadEntry.getValue()) {
+						Logger.errorLine("  " + element);
+					}
+				}
+
+				System.exit(1); // nonzero status indicates error
 			} finally {
 				Logger.close();
 			}
+
+			// Do not forcibly exit; this can cause a hang if any user threads aren't cleaned up.
 		}
 	}
 
@@ -322,101 +344,110 @@ public class Encyclopedia {
 		consumer2Thread.start();
 		consumer3Thread.start();
 
-		// get stripes
-		int rangesFinished=0;
-		float numberOfTasks=2.0f+ranges.size();
-		for (Range range : ranges) {
-			String baseMessage="Working on "+range+" m/z";
-			float baseIncrement=1.0f/numberOfTasks;
-			float baseProgress=(1.0f+rangesFinished)/numberOfTasks;
-			progress.update(baseMessage, baseProgress);
-			
-			float dutyCycle=stripefile.getRanges().get(range).getAverageDutyCycle();
-			if (dutyCycle <= 0f) {
-				// A stripe with only one scan will get duty cycle
-				// of zero. This will only happen in the case of a
-				// bad file, or DDA data (where precursor ranges are
-				// typically unique). Note that this doesn't guard
-				// against (positive) infinity or NaN, but if these
-				// values occur it's unclear how to interpret them.
-				continue;
-			}
-			Logger.logLine("Processing "+range+" m/z, ("+dutyCycle+" second duty cycle)");
-			
-			ArrayList<FragmentScan> stripes=stripefile.getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, true);
-			Collections.sort(stripes);
+		// Try-finally to ensure all threads are cleaned up.
+		try {
+			// get stripes
+			int rangesFinished = 0;
+			float numberOfTasks = 2.0f + ranges.size();
+			for (Range range : ranges) {
+				String baseMessage = "Working on " + range + " m/z";
+				float baseIncrement = 1.0f / numberOfTasks;
+				float baseProgress = (1.0f + rangesFinished) / numberOfTasks;
+				progress.update(baseMessage, baseProgress);
 
-			if (stripes.size() < 3) {
-				// A stripe with very few scans indicates that either
-				// the file is bad, or this is DDA data. Similar to
-				// above, we simply skip this stripe.
-				continue;
-			}
+				float dutyCycle = stripefile.getRanges().get(range).getAverageDutyCycle();
+				if (dutyCycle <= 0f) {
+					// A stripe with only one scan will get duty cycle
+					// of zero. This will only happen in the case of a
+					// bad file, or DDA data (where precursor ranges are
+					// typically unique). Note that this doesn't guard
+					// against (positive) infinity or NaN, but if these
+					// values occur it's unclear how to interpret them.
+					continue;
+				}
+				Logger.logLine("Processing " + range + " m/z, (" + dutyCycle + " second duty cycle)");
 
-			// prepare executor for background
-			ThreadFactory threadFactory=new ThreadFactoryBuilder().setNameFormat("STRIPE_"+range.getStart()+"to"+range.getStop()+"-%d").setDaemon(true).build();
-			LinkedBlockingQueue<Runnable> workQueue=new LinkedBlockingQueue<Runnable>();
-			ExecutorService executor=new ThreadPoolExecutor(cores, cores, Long.MAX_VALUE, TimeUnit.NANOSECONDS, workQueue, threadFactory); 
+				ArrayList<FragmentScan> stripes = stripefile.getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, true);
+				Collections.sort(stripes);
 
-			int count=0;
-			ArrayList<LibraryEntry> entries=library.getEntries(range, true, parameters.getAAConstants());
-			LibraryBackgroundInterface background=new LibraryBackground(entries);
-			PSMScorer scorer=taskFactory.getLibraryScorer(background);
-			
-			for (LibraryEntry entry : entries) {
-				count++;
-				ArrayList<LibraryEntry> tasks=new ArrayList<LibraryEntry>();
-				tasks.add(entry);
-				tasks.add(entry.getDecoy(parameters));
-				
-				float extraDecoys=parameters.getNumberOfExtraDecoyLibrariesSearched();
-				while (extraDecoys>0.0f) {
-					if (extraDecoys<1.0f) {
-						// check percentage
-						float test=RandomGenerator.random(count);
-						if (test>extraDecoys) {
-							break;
+				if (stripes.size() < 3) {
+					// A stripe with very few scans indicates that either
+					// the file is bad, or this is DDA data. Similar to
+					// above, we simply skip this stripe.
+					continue;
+				}
+
+				// prepare executor for background
+				ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("STRIPE_" + range.getStart() + "to" + range.getStop() + "-%d").setDaemon(true).build();
+				LinkedBlockingQueue<Runnable> workQueue = new LinkedBlockingQueue<Runnable>();
+				ExecutorService executor = new ThreadPoolExecutor(cores, cores, Long.MAX_VALUE, TimeUnit.NANOSECONDS, workQueue, threadFactory);
+
+				int count = 0;
+				ArrayList<LibraryEntry> entries = library.getEntries(range, true, parameters.getAAConstants());
+				LibraryBackgroundInterface background = new LibraryBackground(entries);
+				PSMScorer scorer = taskFactory.getLibraryScorer(background);
+
+				for (LibraryEntry entry : entries) {
+					count++;
+					ArrayList<LibraryEntry> tasks = new ArrayList<LibraryEntry>();
+					tasks.add(entry);
+					tasks.add(entry.getDecoy(parameters));
+
+					float extraDecoys = parameters.getNumberOfExtraDecoyLibrariesSearched();
+					while (extraDecoys > 0.0f) {
+						if (extraDecoys < 1.0f) {
+							// check percentage
+							float test = RandomGenerator.random(count);
+							if (test > extraDecoys) {
+								break;
+							}
 						}
+						extraDecoys = extraDecoys - 1.0f;
+						LibraryEntry shuffle = entry.getShuffle(parameters, Float.hashCode(extraDecoys), false);
+						tasks.add(shuffle);
+						tasks.add(shuffle.getDecoy(parameters));
 					}
-					extraDecoys=extraDecoys-1.0f;
-					LibraryEntry shuffle=entry.getShuffle(parameters, Float.hashCode(extraDecoys), false);
-					tasks.add(shuffle);
-					tasks.add(shuffle.getDecoy(parameters));
-				}
-				
-				ArrayList<FragmentScan> localStripes;
-				if (rtAlignment.isPresent()&&parameters.getRtWindowInMin()>0.0f) {
-					float rtTargetInMin=rtAlignment.get().getYValue(entry.getRetentionTime()/60);
-					localStripes=getScanSubsetFromStripes((rtTargetInMin-parameters.getRtWindowInMin())*60f, (rtTargetInMin+parameters.getRtWindowInMin())*60f, stripes);
-				} else {
-					localStripes=stripes;
-				}
-				executor.submit(taskFactory.getScoringTask(scorer, tasks, localStripes, range, dutyCycle, precursors, resultsQueue));
-			}
-			
-			executor.shutdown();
-			while (!executor.isTerminated()) {
-				Logger.logLine(workQueue.size()+" peptides remaining for "+range+"...");
-				float finishedFraction=(count-workQueue.size())/(float)count;
-				progress.update(baseMessage, baseProgress+baseIncrement*(0.2f+finishedFraction*0.8f));
-				Thread.sleep(500);
-			}
-			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-			
-			rangesFinished++;
-		}
-		resultsQueue.put(AbstractScoringResult.POISON_RESULT);
 
-		consumer1Thread.join();
-		consumer2Thread.join();
-		consumer3Thread.join();
-		teeConsumer.close();
-		progress.update("Organizing results", (1.0f+rangesFinished)/numberOfTasks);
+					ArrayList<FragmentScan> localStripes;
+					if (rtAlignment.isPresent() && parameters.getRtWindowInMin() > 0.0f) {
+						float rtTargetInMin = rtAlignment.get().getYValue(entry.getRetentionTime() / 60);
+						localStripes = getScanSubsetFromStripes((rtTargetInMin - parameters.getRtWindowInMin()) * 60f, (rtTargetInMin + parameters.getRtWindowInMin()) * 60f, stripes);
+					} else {
+						localStripes = stripes;
+					}
+					executor.submit(taskFactory.getScoringTask(scorer, tasks, localStripes, range, dutyCycle, precursors, resultsQueue));
+				}
+
+				executor.shutdown();
+				while (!executor.isTerminated()) {
+					Logger.logLine(workQueue.size() + " peptides remaining for " + range + "...");
+					float finishedFraction = (count - workQueue.size()) / (float) count;
+					progress.update(baseMessage, baseProgress + baseIncrement * (0.2f + finishedFraction * 0.8f));
+					Thread.sleep(500);
+				}
+				executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+
+				rangesFinished++;
+			}
+
+			progress.update("Organizing results", (1.0f+rangesFinished)/numberOfTasks);
+		} finally {
+			// The queue MUST be poisoned to avoid a hang due to leftover threads!
+			resultsQueue.put(AbstractScoringResult.POISON_RESULT);
+
+			// Wait until the threads we started finish, to ensure they've cleaned up
+			// before we move on e.g. with handling a thrown exception.
+			consumer1Thread.join();
+			consumer2Thread.join();
+			consumer3Thread.join();
+			teeConsumer.close();
+		}
+
 		Logger.logLine(writeResultsConsumer.getNumberProcessed()+" total peptides processed.");
+
 		return saveResultsConsumer;
 	}
 
-	
 	static ArrayList<FragmentScan> getScanSubsetFromStripes(float minRT, float maxRT, ArrayList<FragmentScan> allScansInStripe) {
 		ArrayList<FragmentScan> subset=new ArrayList<FragmentScan>();
 		for (FragmentScan scan : allScansInStripe) {
