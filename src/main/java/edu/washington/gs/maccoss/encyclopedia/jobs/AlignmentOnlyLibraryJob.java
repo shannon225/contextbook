@@ -16,7 +16,7 @@ import java.io.File;
 import java.util.ArrayList;
 
 public class AlignmentOnlyLibraryJob implements WorkerJob, XMLObject {
-	private final File destFile;
+	final File destFile;
 	private final JobProcessor processor;
 
 	public AlignmentOnlyLibraryJob(File destFile, JobProcessor processor) {

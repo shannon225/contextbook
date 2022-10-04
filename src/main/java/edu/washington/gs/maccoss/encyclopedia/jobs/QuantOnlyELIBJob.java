@@ -91,13 +91,12 @@ public class QuantOnlyELIBJob implements WorkerJob, XMLObject {
 	}
 
 	@Override
-	public Element writeToXML(Document doc, Element parentElement) {
+	public void writeToXML(Document doc, Element parentElement) {
 		Element rootElement=doc.createElement(getClass().getSimpleName());
 		parentElement.appendChild(rootElement);
 
 		XMLUtils.writeTag(doc, rootElement, "elibFile", destFile.getAbsolutePath());
 		XMLUtils.writeTag(doc, rootElement, "alignmentFrom", alignmentFile.getAbsolutePath());
-		return rootElement;
 	}
 
 	public static QuantOnlyELIBJob readFromXML(Document doc, Element rootElement, JobProcessor processor) {
