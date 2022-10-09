@@ -1606,9 +1606,9 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 				Version version = doesTableExist(c, "metadata") ? getVersion() : null;
 
 				if (version!=null) {
-					if (userFile!=null) {
-						Logger.logLine("Opening library "+userFile.getName()+" (version: "+version+")");
-					}
+//					if (userFile!=null) {
+//						Logger.logLine("Opening library "+userFile.getName()+" (version: "+version+")");
+//					}
 
 					if (new Version(0, 1, 2).amIAbove(version) && version.amIAbove(new Version(0, 0, 9))) {
 						if (userFile!=null) {
