@@ -268,7 +268,7 @@ public class LibraryComparisonTest {
 		file.close();
 	}
 	
-	public static void main(String[] args) throws Exception {
+	public static void main6(String[] args) throws Exception {
 		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
 		File predictDir=new File("/Users/searleb/Documents/damien/dda_library_search/hela_nce_test/libraries");
 		HashMap<String, HashMap<String, LibraryEntry>> libraries=new HashMap<>();
@@ -334,11 +334,11 @@ public class LibraryComparisonTest {
 		}
 	}
 
-	public static void main5(String[] args) throws Exception {
+	public static void main(String[] args) throws Exception {
 		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
-		//File larger=new File("/Users/searleb/Downloads/prosit_uniprot_human_jan2021_yeastENO1.fasta.trypsin.abeta.encyclopedia1.12.31.z3_nce33.dlib"); 
-		File larger=new File("/Users/searleb/Downloads/prosit_uniprot_human_jan2021_yeastENO1.fasta.trypsin.abeta.encyclopedia1.4.10.z3_nce33.dlib");	
-		File smaller=new File("/Users/searleb/Downloads/prosit_uniprot_human_jan2021_yeastENO1.fasta.trypsin.abeta.encyclopedia2.z3_nce33.dlib");
+		File larger=new File("/Users/searleb/Documents/damien/dda_library_search/non-tryptics/scribe_regression/uniprot_human_25apr2019.fasta.trypsin.z1-4_nce33.dlib");	
+		File smaller=new File("/Users/searleb/Documents/damien/dda_library_search/non-tryptics/scribe_regression/uniprot_human-reference_reviewed_2022mar02.prosit_input.tryp_nce29.prosit_hcd2020.dlib");	
+		//File smaller=new File("/Users/searleb/Documents/damien/dda_library_search/non-tryptics/scribe_regression/uniprot_human-reference_reviewed_2022mar02_Cartographer220413_z234_nce28_trypsin_SHORTNAME.dlib");
 
 		LibraryFile largerLibrary=new LibraryFile();
 		largerLibrary.openFile(larger);
