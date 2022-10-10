@@ -160,6 +160,7 @@ public class MSPReader {
 						HashSet<String> accessions=new HashSet<String>();
 						if (accession!=null) accessions.add(accession);
 						
+						precursorMZ=aaConstants.getChargedMass(peptideModSeq, precursorCharge);
 						if (retentionTime==0.0f) Logger.errorLine("MSP parsing error: expected to find retention time for "+peptideModSeq+" but it was missing."); 
 						if (precursorMZ==0.0) Logger.errorLine("MSP parsing error: expected to find precursor M/Z for "+peptideModSeq+" but it was missing."); 
 						if (precursorCharge==(byte)0) Logger.errorLine("MSP parsing error: expected to find charge for "+peptideModSeq+" but it was missing."); 
@@ -191,7 +192,8 @@ public class MSPReader {
 								Pair<double[], float[]> peakArrays=Peak.toArrays(peaks);
 								HashSet<String> accessions=new HashSet<String>();
 								if (accession!=null) accessions.add(accession);
-								
+
+								precursorMZ=aaConstants.getChargedMass(peptideModSeq, precursorCharge);
 								if (retentionTime==0.0f) Logger.errorLine("MSP parsing error: expected to find retention time for "+peptideModSeq+" but it was missing."); 
 								if (precursorMZ==0.0) Logger.errorLine("MSP parsing error: expected to find precursor M/Z for "+peptideModSeq+" but it was missing."); 
 								if (precursorCharge==(byte)0) Logger.errorLine("MSP parsing error: expected to find charge for "+peptideModSeq+" but it was missing."); 
@@ -224,7 +226,7 @@ public class MSPReader {
 				} else if (eachline.startsWith("Charge: ")) {
 					precursorCharge=Byte.parseByte(eachline.substring(8));
 				} else if (eachline.startsWith("PrecursorMZ: ")) {
-					precursorMZ=Double.parseDouble(eachline.substring(13));
+					//precursorMZ=Double.parseDouble(eachline.substring(13));
 				} else if (eachline.startsWith("RetentionTimeMins: ")) {
 					retentionTime=Float.parseFloat(eachline.substring(19))*60f;
 				} else if (eachline.startsWith("Comment: ")) {
@@ -234,7 +236,7 @@ public class MSPReader {
 					HashMap<String, String> map=split(eachline);
 					String precursorMZString = map.get("Parent");
 					if (precursorMZString!=null) {
-						precursorMZ=Double.parseDouble(precursorMZString);
+						//precursorMZ=Double.parseDouble(precursorMZString);
 					}
 					String scoreString=map.get("Unassigned");
 					
@@ -377,7 +379,8 @@ public class MSPReader {
 				Pair<double[], float[]> peakArrays=Peak.toArrays(peaks);
 				HashSet<String> accessions=new HashSet<String>();
 				if (accession!=null) accessions.add(accession);
-				
+
+				precursorMZ=aaConstants.getChargedMass(peptideModSeq, precursorCharge);
 				if (retentionTime==0.0f) Logger.errorLine("MSP parsing error: expected to find retention time for "+peptideModSeq+" but it was missing."); 
 				if (precursorMZ==0.0) Logger.errorLine("MSP parsing error: expected to find precursor M/Z for "+peptideModSeq+" but it was missing."); 
 				if (precursorCharge==(byte)0) Logger.errorLine("MSP parsing error: expected to find charge for "+peptideModSeq+" but it was missing."); 
