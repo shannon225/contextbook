@@ -47,6 +47,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryEntryCleaner;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
@@ -307,6 +308,7 @@ public class Scribe {
 						double targetStop=range.getStop()+MassConstants.neutronMass*NUMBER_OF_ISOTOPES_ABOVE_MONOISOTOPIC;
 						double widerStop=targetStop+parameters.getFragmentTolerance().getTolerance(targetStop);
 						ArrayList<LibraryEntry> entries=library.getEntries(new Range(widerStart, widerStop), true, parameters.getAAConstants());
+						//entries=LibraryEntryCleaner.filterIons(entries, 0.01f);
 						if (entries.size()==0) return Nothing.NOTHING;
 						
 						ArrayList<FragmentScan> stripes=stripefile.getStripes(range, -Float.MAX_VALUE, Float.MAX_VALUE, true);
