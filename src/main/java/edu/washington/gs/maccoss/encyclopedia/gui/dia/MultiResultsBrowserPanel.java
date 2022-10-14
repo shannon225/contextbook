@@ -570,12 +570,12 @@ public class MultiResultsBrowserPanel extends JPanel {
 				null, GraphType.dashedline);
 
 		traces.addAll(targetFragmentTraceMap.values());
-		double maxY=0.0;
+		double maxY=0.1;
 		
 		for (Entry<FragmentIon, XYTrace> ionEntry : targetFragmentTraceMap.entrySet()) {
 			XYTrace trace=ionEntry.getValue();
 			XYPoint xy=trace.getMaxXYInRange(rangeInMins);
-			if (xy.getY()>maxY) {
+			if (xy!=null&&xy.getY()>maxY) {
 				maxY=xy.getY();
 			}
 			double intensity=targetIonObjects.get(ionEntry.getKey());
