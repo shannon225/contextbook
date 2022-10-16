@@ -730,7 +730,7 @@ public class SearchToBLIB {
 						for (ProteinGroupInterface pg : proteins) {
 							proteinGroups.add(pg);
 						}
-						LibraryReportExtractor.extractMatrix(elib, proteinGroups, true);
+						LibraryReportExtractor.extractMatrix(elib, proteinGroups, false);
 					} catch (DataFormatException e) {
 						Logger.errorException(e);
 					}

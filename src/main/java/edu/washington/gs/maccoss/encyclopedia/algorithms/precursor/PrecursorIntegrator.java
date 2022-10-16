@@ -23,15 +23,18 @@ import gnu.trove.map.hash.TByteObjectHashMap;
 import gnu.trove.procedure.TByteObjectProcedure;
 
 public class PrecursorIntegrator {
+	private static final float REQUIRED_ION_PERCENTAGE_OF_DISTRIBUTION = 0.5f;
+	
 	@SuppressWarnings("unchecked")
 	public static ArrayList<TransitionRefinementData> integratePeptide(String peptideModSeq, float[] expectedIsotopicDistribution, float[] psmRTsInSec, ArrayList<PeakTrace<PrecursorIon>> traces, SearchParameters params) {
 		TByteObjectHashMap<PeakTrace<PrecursorIon>[]> tracesByCharge = getTracesByCharge(traces);
 
 		ArrayList<PeakTrace<PrecursorIon>> distributionCorrectedTraces = new ArrayList<>();
+		// for each charge state
 		tracesByCharge.forEachEntry(new TByteObjectProcedure<PeakTrace<PrecursorIon>[]>() {
 			@Override
 			public boolean execute(byte charge, PeakTrace<PrecursorIon>[] traces) {
-				// remove the -1 trace for quant
+				// remove the -1 trace for quant (it is only used to confirm detection since there shouldn't be any -1 signal)
 				PeakTrace<PrecursorIon>[] tracesCopy=new PeakTrace[traces.length-1];
 				System.arraycopy(traces, 1, tracesCopy, 0, tracesCopy.length);
 				
@@ -50,7 +53,7 @@ public class PrecursorIntegrator {
 					
 					float minScaler=Float.MAX_VALUE;
 					for (int i=0; i<intensities.length; i++) {
-						if (expectedIsotopicDistribution[i]>0.25f) {
+						if (expectedIsotopicDistribution[i]>REQUIRED_ION_PERCENTAGE_OF_DISTRIBUTION) {
 							float scaler=intensities[i]/expectedIsotopicDistribution[i];
 							if (minScaler>scaler) {
 								minScaler=scaler;
@@ -90,12 +93,6 @@ public class PrecursorIntegrator {
 			genericSmoothedAndNormalized=generify(smoothedAndNormalized.y);
 			median=PeakTrace.getMedianTrace(genericSmoothedAndNormalized); // perhaps sub with something that requires starting from a certain RT?
 			boundary = getBoundaries(median, psmRTsInSec, params);
-//			System.out.println(General.max(median.getIntensity())+" --> "+boundary);
-//			
-//			for (PeakTrace peakTrace : originalTraces) {
-//				System.out.println("Trace:"+getBoundaries(peakTrace, psmRTsInSec)+", "+peakTrace.getIon()+" --> "+General.toString(peakTrace.getIntensity()));
-//			}
-//			Charter.launchChart(Charter.getChart("Delta RT", "Normalized Intensity (%)", true, 1, genericSmoothedAndNormalized.toArray(new PeakTrace[genericSmoothedAndNormalized.size()])), "Median");
 		}
 		
 		final PeakTrace<String> finalMedian=PeakTrace.getMedianTrace(genericSmoothedAndNormalized, boundary);

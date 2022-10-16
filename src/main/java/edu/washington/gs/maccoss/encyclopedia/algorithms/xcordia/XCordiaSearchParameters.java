@@ -85,6 +85,7 @@ public class XCordiaSearchParameters extends PecanSearchParameters {
 			boolean doNotUseGlobalFDR,
 			Optional<File> precursorIsolationRangeFile, 
 			Optional<File> percolatorModelFile, 
+			boolean normalizeByTIC,
 			boolean enableAdvancedOptions
 	) {
 		super(
@@ -128,6 +129,7 @@ public class XCordiaSearchParameters extends PecanSearchParameters {
 				doNotUseGlobalFDR,
 				precursorIsolationRangeFile,
 				percolatorModelFile,
+				normalizeByTIC,
 				enableAdvancedOptions
 		);
 	}
@@ -232,6 +234,7 @@ public class XCordiaSearchParameters extends PecanSearchParameters {
 				params.isDoNotUseGlobalFDR(),
 				params.getPrecursorIsolationRangeFile(),
 				params.getPercolatorModelFile(),
+				params.isNormalizeByTIC(),
 				params.isEnableAdvancedOptions()
 		);
 	}

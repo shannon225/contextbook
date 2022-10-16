@@ -264,6 +264,7 @@ public class ScribeParametersPanel extends JPanel implements ParametersPanelInte
 				false,
 				Optional.empty(),
 				Optional.empty(),
+				true,
 				false
 		);
 

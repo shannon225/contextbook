@@ -276,6 +276,7 @@ public class ThesaurusParametersPanel extends JPanel implements ParametersPanelI
 				considerRearrangement,
 				Optional.empty(),
 				Optional.empty(),
+				true,
 				false
 		);
 

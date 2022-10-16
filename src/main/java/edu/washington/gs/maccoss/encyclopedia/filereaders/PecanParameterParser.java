@@ -55,6 +55,7 @@ public class PecanParameterParser {
 		map.put("-minIntensity", "-1.0");
 		map.put("-requireVariableMods", "false");
         map.put("-filterPeaklists", "false");
+        map.put("-normalizeByTIC", "true");
 		return map;
 	}
 	
@@ -110,6 +111,7 @@ public class PecanParameterParser {
         final boolean doNotUseGlobalFDR;
         final Optional<File> percolatorModelFile;
         final Optional<File> precursorIsolationRangeFile;
+        final boolean normalizeByTIC;
         final boolean enableAdvancedOptions;
 
 		ModificationMassMap variableMods=new ModificationMassMap(parameters.get("-variable"));
@@ -289,6 +291,7 @@ public class PecanParameterParser {
 		requireVariableMods=ParsingUtils.getBoolean("-requireVariableMods", parameters, false);
 		filterPeaklists = ParsingUtils.getBoolean("-filterPeaklists", parameters, false);
 		doNotUseGlobalFDR = ParsingUtils.getBoolean("-doNotUseGlobalFDR", parameters, false);
+		normalizeByTIC = ParsingUtils.getBoolean("-normalizeByTIC", parameters, true);
 		enableAdvancedOptions = ParsingUtils.getBoolean(SearchParameters.ENABLE_ADVANCED_OPTIONS, parameters, false);
 
 		return new PecanSearchParameters(
@@ -332,6 +335,7 @@ public class PecanParameterParser {
 				doNotUseGlobalFDR,
 				precursorIsolationRangeFile,
 				percolatorModelFile,
+				normalizeByTIC,
 				enableAdvancedOptions
 		);
 	}
