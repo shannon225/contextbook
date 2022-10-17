@@ -183,7 +183,7 @@ public class ScribeAuxillaryPSMScorer extends AuxillaryPSMScorer {
 		float sumOfSquaredErrors=0.0f; // normalized to sum of targeted intensities
 		
 		for (int i=0; i<predictedTargetIntensitiesArray.length; i++) {
-			if (predictedTargetIntensitiesArray[i]>0.0&&actualTargetIntensitiesArray[i]>0.0) {
+			if (predictedTargetIntensitiesArray[i]>0.0||actualTargetIntensitiesArray[i]>0.0) {
 				float delta=predictedTargetIntensitiesArray[i]-actualTargetIntensitiesArray[i];
 				float deltaSquared=delta*delta;
 				sumOfSquaredErrors+=deltaSquared;
@@ -212,7 +212,7 @@ public class ScribeAuxillaryPSMScorer extends AuxillaryPSMScorer {
 		return new String[] {"averageParentDeltaMass", "averageFragmentDeltaMasses", "DotProduct", "contrastAngle", "logit", "primary", "xCorrLib", "xCorrModel", "scribeScore", 
 				"numberOfMatchingPeaks", "isotopeDotProduct", "percentBlankOverMono", "numberPrecursorMatch", "Sp", "maxLadderLength", 
 				// the following are added after!
-				"eValue", "numConsidered", "deltaCn", "chargeMatch"};
+				"eValue", "numConsidered", "chargeMatch"};
 	}
 	
 	public int getParentDeltaMassIndex() {
