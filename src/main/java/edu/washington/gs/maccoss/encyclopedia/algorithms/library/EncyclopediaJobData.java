@@ -289,15 +289,16 @@ public class EncyclopediaJobData extends QuantitativeSearchJobData implements Li
 							try (Connection c = new SQLFile() {}.getConnection(getResultLibrary())) {
 								try (Statement s = c.createStatement()) {
 									try (ResultSet rs = s.executeQuery(
-											"SELECT sourcefile" +
-													" FROM entries" +
+											"SELECT Value" +
+													" FROM Metadata" +
+													" WHERE Key = 'sourcefile'" +
 													" LIMIT 1;"
 									)) {
 										if (rs.next()) {
 											originalFileName = rs.getString(1);
 											break SET_NAME;
 										} else {
-											throw new SQLException("No entries in results ELIB!");
+											throw new SQLException("No `sourcefile` in results ELIB's `metadata`!");
 										}
 									}
 								}
