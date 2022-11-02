@@ -168,6 +168,11 @@ public class ScribeParametersPanel extends JPanel implements ParametersPanelInte
 		return backgroundFasta.getFile();
 	}
 	
+	@Override
+	public boolean canCreateChromatogramLibraries() {
+		return false;
+	}
+	
 	/* (non-Javadoc)
 	 * @see edu.washington.gs.maccoss.encyclopedia.gui.pecan.ParametersPanelInterface#canLoadData()
 	 */

@@ -205,14 +205,14 @@ public class ScribeAuxillaryPSMScorer extends AuxillaryPSMScorer {
 		float xCorrModel=sparseModel.score(sparseScan);
 			
 		return new float[] {averagePPM, averageFragmentDeltaMasses, dotProduct, contrastAngle, logit, xTandem, xCorrLib, xCorrModel, Log.protectedLn(1.0f/sumOfSquaredErrors), 
-				numberOfMatchingPeaks, isotopeDotProduct, percentBlankOverMono, numberPrecursorMatch, sp, maxLadderLength};
+				numberOfMatchingPeaks, isotopeDotProduct, percentBlankOverMono, numberPrecursorMatch, Log.protectedLog10(sp), maxLadderLength};
 	}
 
 	public static String[] getScoreNames() {
 		return new String[] {"averageParentDeltaMass", "averageFragmentDeltaMasses", "DotProduct", "contrastAngle", "logit", "primary", "xCorrLib", "xCorrModel", "scribeScore", 
-				"numberOfMatchingPeaks", "isotopeDotProduct", "percentBlankOverMono", "numberPrecursorMatch", "Sp", "maxLadderLength", 
+				"numberOfMatchingPeaks", "isotopeDotProduct", "percentBlankOverMono", "numberPrecursorMatch", "logSp", "maxLadderLength", 
 				// the following are added after!
-				"eValue", "numConsidered", "chargeMatch"};
+				"eValue", "deltaScore", "numConsidered", "chargeMatch"};
 	}
 	
 	public int getParentDeltaMassIndex() {

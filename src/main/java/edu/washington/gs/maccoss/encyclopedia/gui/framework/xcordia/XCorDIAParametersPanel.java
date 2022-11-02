@@ -188,6 +188,11 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 		return image;
 	}
 	
+	@Override
+	public boolean canCreateChromatogramLibraries() {
+		return true;
+	}
+	
 	public Optional<String> canLoadData() {
 		if (backgroundFasta.getFile()==null) {
 			return Optional.of("Please load a background FASTA file first!");
