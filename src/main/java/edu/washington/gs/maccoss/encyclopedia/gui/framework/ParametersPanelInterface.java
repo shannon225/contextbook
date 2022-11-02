@@ -8,7 +8,6 @@ import javax.swing.ImageIcon;
 import edu.washington.gs.maccoss.encyclopedia.ProgramType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessorTableModel;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingJob;
 
 public interface ParametersPanelInterface {
 	ProgramType getProgram();
@@ -20,4 +19,5 @@ public interface ParametersPanelInterface {
 	SearchParameters getParameters();
 	void savePreferences();
 	File getBackgroundFastaFile();
+	boolean canCreateChromatogramLibraries();
 }

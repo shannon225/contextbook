@@ -245,6 +245,7 @@ public class PecanSearchParameters extends SearchParameters {
 			boolean doNotUseGlobalFDR, 
 			Optional<File> precursorIsolationRangeFile, 
 			Optional<File> percolatorModelFile, 
+			boolean normalizeByTIC,
 			boolean enableAdvancedOptions) {
 		super(
 				aaConstants,
@@ -281,6 +282,7 @@ public class PecanSearchParameters extends SearchParameters {
 				doNotUseGlobalFDR, 
 				precursorIsolationRangeFile,
 				percolatorModelFile,
+				normalizeByTIC,
 				enableAdvancedOptions
 		);
 		this.minPeptideLength=minPeptideLength;
@@ -360,6 +362,7 @@ public class PecanSearchParameters extends SearchParameters {
 				false, 
 				Optional.empty(),
 				Optional.empty(),
+				true,
 				false
 		);
 		minPeptideLength=5;
@@ -421,6 +424,7 @@ public class PecanSearchParameters extends SearchParameters {
 				false,
 				Optional.empty(),
 				Optional.empty(),
+				true,
 				false);
 		minPeptideLength=5;
 		maxPeptideLength=100;
@@ -483,6 +487,7 @@ public class PecanSearchParameters extends SearchParameters {
 				false, 
 				Optional.empty(),
 				Optional.empty(),
+				true,
 				false
 		);
 		minPeptideLength=5;
@@ -547,6 +552,7 @@ public class PecanSearchParameters extends SearchParameters {
 				false, 
 				Optional.empty(),
 				Optional.empty(),
+				true,
 				false);
 		this.maxMissedCleavages=maxMissedCleavages;
 		minPeptideLength=5;

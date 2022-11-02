@@ -70,6 +70,7 @@ public class SearchParameters implements XMLObject {
     protected final boolean enableAdvancedOptions;
     protected final Optional<File> precursorIsolationRangeFile;
     protected final Optional<File> percolatorModelFile;
+    protected final boolean normalizeByTIC;
     
     public Optional<ArrayList<Range>> getPrecursorIsolationRanges() {
 		return precursorIsolationRanges;
@@ -78,7 +79,9 @@ public class SearchParameters implements XMLObject {
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, double precursorOffsetPPM, double precursorIsolationMargin, MassTolerance fragmentTolerance, double fragmentOffsetPPM, MassTolerance libraryFragmentTolerance, DigestionEnzyme enzyme,
 			float percolatorThreshold, float percolatorProteinThreshold, PercolatorVersion percolatorVersionNumber, int percolatorTrainingSetSize, float percolatorTrainingSetThreshold,
 			int percolatorTrainingIterations, DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, 
-			int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, int topNTargetsUsed, float minIntensity, Optional<PeptideModification> localizingModification, ScoringBreadthType CASiLBreadthType, float getNumberOfExtraDecoyLibrariesSearched, boolean quantifyAcrossSamples, boolean verifyModificationIons, float rtWindowInMin, boolean filterPeaklists, boolean doNotUseGlobalFDR, Optional<File> precursorIsolationRangeFile, Optional<File> percolatorModelFile, boolean enableAdvancedOptions) {
+			int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, int topNTargetsUsed, float minIntensity, Optional<PeptideModification> localizingModification, ScoringBreadthType CASiLBreadthType, 
+			float getNumberOfExtraDecoyLibrariesSearched, boolean quantifyAcrossSamples, boolean verifyModificationIons, float rtWindowInMin, boolean filterPeaklists, boolean doNotUseGlobalFDR, 
+			Optional<File> precursorIsolationRangeFile, Optional<File> percolatorModelFile, boolean normalizeByTIC, boolean enableAdvancedOptions) {
 		this.aaConstants=aaConstants;
 		this.fragType=fragType;
 		this.precursorTolerance=precursorTolerance;
@@ -113,6 +116,7 @@ public class SearchParameters implements XMLObject {
         this.doNotUseGlobalFDR=doNotUseGlobalFDR;
         this.precursorIsolationRangeFile=precursorIsolationRangeFile;
         this.percolatorModelFile=percolatorModelFile;
+        this.normalizeByTIC=normalizeByTIC;
         this.enableAdvancedOptions=enableAdvancedOptions;
         
         ArrayList<Range> ranges=null;
@@ -512,5 +516,8 @@ public class SearchParameters implements XMLObject {
     
     public Optional<File> getPrecursorIsolationRangeFile() {
 		return precursorIsolationRangeFile;
+	}
+    public boolean isNormalizeByTIC() {
+		return normalizeByTIC;
 	}
 }

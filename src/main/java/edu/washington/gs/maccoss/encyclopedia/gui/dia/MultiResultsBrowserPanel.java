@@ -406,7 +406,7 @@ public class MultiResultsBrowserPanel extends JPanel {
 
 				if (fragmentTraces!=null) {
 					for (XYTrace xyTrace : fragmentTraces) {
-						if (xyTrace.getType()==GraphType.line) {
+						if (xyTrace.getType()==GraphType.line&&xyTrace.size()>0) {
 							globalMaxYFragment=Math.max(globalMaxYFragment, xyTrace.getMaxY());
 						}
 					}
@@ -570,16 +570,18 @@ public class MultiResultsBrowserPanel extends JPanel {
 				null, GraphType.dashedline);
 
 		traces.addAll(targetFragmentTraceMap.values());
-		double maxY=0.0;
+		double maxY=0.1;
 		
 		for (Entry<FragmentIon, XYTrace> ionEntry : targetFragmentTraceMap.entrySet()) {
 			XYTrace trace=ionEntry.getValue();
 			XYPoint xy=trace.getMaxXYInRange(rangeInMins);
-			if (xy.getY()>maxY) {
-				maxY=xy.getY();
+			if (xy!=null) {
+				if (xy.getY()>maxY) {
+					maxY=xy.getY();
+				}
+				double intensity=targetIonObjects.get(ionEntry.getKey());
+				traces.add(new XYTrace(new double[] {xy.x}, new double[] {xy.y}, GraphType.text, trace.getName()+" ("+formatter.format(intensity).toLowerCase()+")"));
 			}
-			double intensity=targetIonObjects.get(ionEntry.getKey());
-			traces.add(new XYTrace(new double[] {xy.x}, new double[] {xy.y}, GraphType.text, trace.getName()+" ("+formatter.format(intensity).toLowerCase()+")"));
 		}
 		
 		traces.addAll(offTargetFragmentTraceMap.values());

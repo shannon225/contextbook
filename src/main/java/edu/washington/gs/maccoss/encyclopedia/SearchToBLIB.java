@@ -36,8 +36,10 @@ import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.SubProgressIndicator;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.SQLException;
@@ -298,42 +300,51 @@ public class SearchToBLIB {
 		convert(progress, pecanJobs, libFile, writeBlib, alignBetweenFiles, null);
 	}
 
-	public static void convert(ProgressIndicator progress, List<? extends SearchJobData> pecanJobs, File libFile, boolean writeBlib, boolean alignBetweenFiles, SearchParameters parameters) {
-		ArrayList<SearchJobData> processedJobs=new ArrayList<SearchJobData>();
-		ArrayList<File> featureFiles=new ArrayList<File>();
-		SearchJobData representativeJob=null;
-
-		pecanJobs = Lists.newArrayList(pecanJobs); // mutable copy
-
-		// Sort files in alphabetical order for deterministic Percolator sampling
-		Collections.sort(pecanJobs, (a, b) -> a.getDiaFileReader().getOriginalFileName().compareTo(b.getDiaFileReader().getOriginalFileName()));
-		
-		for (int i=0; i<pecanJobs.size(); i++) {
-			SearchJobData job=pecanJobs.get(i);
-			if (!job.hasBeenRun()) {
-				Logger.logLine("Can't find a "+job.getSearchType()+" analysis of "+job.getDiaFileReader().getOriginalFileName()+", skipping extraction on that file.");
-				continue;
-			} else {
-				processedJobs.add(job);
-			}
-			if (representativeJob==null) {
-				representativeJob=job;
-			}
-			featureFiles.add(job.getPercolatorFiles().getInputTSV());
-		}
-		pecanJobs=processedJobs;
-
-		if (representativeJob==null) {
+	public static void convert(ProgressIndicator progress, Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides, List<? extends SearchJobData> origPecanJobs, File libFile, boolean writeBlib, boolean alignBetweenFiles, SearchParameters parameters) {
+		List<? extends SearchJobData> pecanJobs = getProcessedJobs(origPecanJobs);
+		if (pecanJobs.size()==0) {
 			Logger.errorLine("Can't find any representative jobs! Failing...");
 
-			for (int i=0; i<pecanJobs.size(); i++) {
-				SearchJobData job=pecanJobs.get(i);
+			for (int i=0; i<origPecanJobs.size(); i++) {
+				SearchJobData job=origPecanJobs.get(i);
 				Logger.errorLine(" Checking raw file "+(i+1)+": "+job.getDiaFileReader().getFile().exists());
 				Logger.errorLine(" Checking feature file "+(i+1)+": "+job.getPercolatorFiles().getInputTSV().exists());
 				Logger.errorLine(" Checking result file "+(i+1)+": "+job.getPercolatorFiles().getPeptideOutputFile().exists());
 			}
 			return;
 		}
+
+		SearchJobData representativeJob=pecanJobs.get(0);
+		Logger.logLine("Using "+representativeJob.getDiaFileReader().getOriginalFileName()+" to extract representative search parameters");
+		if (parameters==null) {
+			parameters=representativeJob.getParameters();
+		}
+
+		quantifySamples(progress, pecanJobs, libFile, writeBlib, alignBetweenFiles, parameters, passingPeptides, Optional.ofNullable(null));
+	}
+
+	public static void convert(ProgressIndicator progress, List<? extends SearchJobData> origPecanJobs, File libFile, boolean writeBlib, boolean alignBetweenFiles, SearchParameters parameters) {
+		List<? extends SearchJobData> pecanJobs = getProcessedJobs(origPecanJobs);
+		if (pecanJobs.size()==0) {
+			Logger.errorLine("Can't find any representative jobs! Failing...");
+
+			for (int i=0; i<origPecanJobs.size(); i++) {
+				SearchJobData job=origPecanJobs.get(i);
+				Logger.errorLine(" Checking raw file "+(i+1)+": "+job.getDiaFileReader().getFile().exists());
+				Logger.errorLine(" Checking feature file "+(i+1)+": "+job.getPercolatorFiles().getInputTSV().exists());
+				Logger.errorLine(" Checking result file "+(i+1)+": "+job.getPercolatorFiles().getPeptideOutputFile().exists());
+			}
+			return;
+		}
+
+		SearchJobData representativeJob=pecanJobs.get(0);
+		
+		ArrayList<File> featureFiles=new ArrayList<File>();
+		for (int i=0; i<pecanJobs.size(); i++) {
+			SearchJobData job=pecanJobs.get(i);
+			featureFiles.add(job.getPercolatorFiles().getInputTSV());
+		}
+		
 		Logger.logLine("Using "+representativeJob.getDiaFileReader().getOriginalFileName()+" to extract representative search parameters");
 		if (parameters==null) {
 			parameters=representativeJob.getParameters();
@@ -352,82 +363,129 @@ public class SearchToBLIB {
 		
 		final float threshold=parameters.getEffectivePercolatorThreshold();
 		try {
-			Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides;
-			boolean runningPercolator=true;
-			if (featureFiles.size()==1) {
-				Logger.logLine("Only one file, so no need to re-run Percolator.");
-				// if there's only one file then don't need to re-run percolator
-				passingPeptides=PercolatorReader.getPassingPeptidesFromTSV(representativeJob.getPercolatorFiles().getPeptideOutputFile(), parameters, false);
-				runningPercolator=false;
-				
-			} else if (parameters.isDoNotUseGlobalFDR()) {
-				Logger.logLine("Warning, user asked to not use global FDR!");
-				passingPeptides=getPeptidesWithoutGlobalFDR(pecanJobs, parameters).x;
-				runningPercolator=false;
-				
-			} else if (bigPercolatorFile.exists()&&bigPercolatorFile.canRead()&&bigPercolatorDecoyFile.exists()&&bigPercolatorDecoyFile.canRead()) {
-				Logger.logLine("Found previously run global Percolator.");
-				// if we've already run percolator then don't need to re-run percolator
-				passingPeptides=PercolatorReader.getPassingPeptidesFromTSV(bigPercolatorFile, parameters, false);
-				runningPercolator=false;
-			} else {
-				Logger.logLine("Running global Percolator analysis.");
-				TableConcatenator.concatenatePINTables(featureFiles, bigFeatureFile, representativeJob.getPrimaryScoreName());
-				
-				// delete if exists
-				if (bigPercolatorFiles.getModelFile().exists()) {
-					bigPercolatorFiles.getModelFile().delete();
-				}
-				int modelNumber = Integer.MAX_VALUE; // always use the last model (if reusing a model)
-				passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), bigPercolatorFiles, threshold, parameters.getAAConstants(), modelNumber);
-			}
+			Pair<Pair<ArrayList<PercolatorPeptide>, Float>, Boolean> percolatorDataPair = getPassingPercolatorPeptides(
+					parameters, pecanJobs, representativeJob, featureFiles, bigFeatureFile, bigPercolatorFile,
+					bigPercolatorDecoyFile, bigPercolatorFiles, threshold);
 
-			Logger.logLine("Identified "+passingPeptides.x.size()+" peptides across all files at a "+(threshold*100.0f)+"% FDR threshold.");
-
-			boolean foundLibrary=false;
-			if ((!runningPercolator)&&libFile.exists()&&libFile.canRead()) {
-				// didn't have to run percolator, so check if we can read the lib file
-				try {
-					LibraryFile lib=new LibraryFile();
-					lib.openFile(libFile);
-					Logger.logLine("Found library file and tested for reading. It seems ok so proceeding with that file!");
-					foundLibrary=true;
-					
-				} catch (Exception e) {
-					Logger.logLine("Found library file and tested for reading. Reading failed, so overwriting!");
-				}
-			}
+			boolean foundLibrary = checkLibraryForAvailability(libFile, percolatorDataPair.y);
 			
 			if (!foundLibrary) {
-				Optional<PeakLocationInferrerInterface> inferrer;
-				if (alignBetweenFiles) {
-					Logger.logLine("Inferring peak boundaries across files...");
-					try {
-						inferrer=Optional.of(EncyclopediaTwoPeakLocationInferrer.getAlignmentData(new EmptyProgressIndicator(), pecanJobs, passingPeptides.x, parameters));
-						Logger.logLine("...Finished peak inference.");
-					} catch (Exception e) {
-						Logger.errorLine("RT alignment between files failed! Perhaps this is to build a chromatogram library and not a quantitative experiment? Attempting to recover without alignment.");
-						Logger.errorException(e);
-						inferrer=Optional.empty();
-					}
-				} else {
-					Logger.logLine("No RT alignment between files necessary.");
-					inferrer=Optional.empty();
-				}
+				Optional<PercolatorExecutionData> globalPercolatorFiles = Optional.ofNullable(featureFiles.size()==1?null:bigPercolatorFiles);
 				
-				if (writeBlib) {
-					convertBlib(progress, pecanJobs, libFile, Optional.of(passingPeptides.x), inferrer);
-				} else {
-					convertElib(progress, pecanJobs, libFile, Optional.of(passingPeptides), Optional.ofNullable(featureFiles.size()==1?null:bigPercolatorFiles), inferrer, parameters);
-				}
+				quantifySamples(progress, pecanJobs, libFile, writeBlib, alignBetweenFiles, parameters, percolatorDataPair.x,
+						globalPercolatorFiles);
 			}
-			progress.update(passingPeptides.x.size()+" peptides identified at "+(threshold*100.0f)+"% FDR", 1.0f);
+			progress.update(percolatorDataPair.x.x.size()+" peptides identified at "+(threshold*100.0f)+"% FDR", 1.0f);
 		} catch (IOException ioe) {
 			Logger.errorLine("Error creating concatenated feature file");
 			Logger.errorException(ioe);
 		} catch (InterruptedException ie) {
 			Logger.errorLine("Error creating concatenated feature file");
 			Logger.errorException(ie);
+		}
+	}
+
+	private static Pair<Pair<ArrayList<PercolatorPeptide>, Float>, Boolean> getPassingPercolatorPeptides(
+			SearchParameters parameters, List<? extends SearchJobData> pecanJobs, SearchJobData representativeJob,
+			ArrayList<File> featureFiles, File bigFeatureFile, File bigPercolatorFile, File bigPercolatorDecoyFile,
+			PercolatorExecutionData bigPercolatorFiles, final float threshold)
+			throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
+		Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides;
+		boolean runningPercolator=true;
+		if (featureFiles.size()==1) {
+			Logger.logLine("Only one file, so no need to re-run Percolator.");
+			// if there's only one file then don't need to re-run percolator
+			passingPeptides=PercolatorReader.getPassingPeptidesFromTSV(representativeJob.getPercolatorFiles().getPeptideOutputFile(), parameters, false);
+			runningPercolator=false;
+			
+		} else if (parameters.isDoNotUseGlobalFDR()) {
+			Logger.logLine("Warning, user asked to not use global FDR!");
+			passingPeptides=getPeptidesWithoutGlobalFDR(pecanJobs, parameters).x;
+			runningPercolator=false;
+			
+		} else if (bigPercolatorFile.exists()&&bigPercolatorFile.canRead()&&bigPercolatorDecoyFile.exists()&&bigPercolatorDecoyFile.canRead()) {
+			Logger.logLine("Found previously run global Percolator.");
+			// if we've already run percolator then don't need to re-run percolator
+			passingPeptides=PercolatorReader.getPassingPeptidesFromTSV(bigPercolatorFile, parameters, false);
+			runningPercolator=false;
+		} else {
+			Logger.logLine("Running global Percolator analysis.");
+			TableConcatenator.concatenatePINTables(featureFiles, bigFeatureFile, representativeJob.getPrimaryScoreName());
+			
+			// delete if exists
+			if (bigPercolatorFiles.getModelFile().exists()) {
+				bigPercolatorFiles.getModelFile().delete();
+			}
+			int modelNumber = Integer.MAX_VALUE; // always use the last model (if reusing a model)
+			passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), bigPercolatorFiles, threshold, parameters.getAAConstants(), modelNumber);
+		}
+		
+		Pair<Pair<ArrayList<PercolatorPeptide>, Float>, Boolean> percolatorDataPair=new Pair<>(passingPeptides, runningPercolator);
+
+		Logger.logLine("Identified "+percolatorDataPair.x.x.size()+" peptides across all files at a "+(threshold*100.0f)+"% FDR threshold.");
+		return percolatorDataPair;
+	}
+
+	private static boolean checkLibraryForAvailability(File libFile, boolean runningPercolator) {
+		boolean foundLibrary=false;
+		if ((!runningPercolator)&&libFile.exists()&&libFile.canRead()) {
+			// didn't have to run percolator, so check if we can read the lib file
+			try {
+				LibraryFile lib=new LibraryFile();
+				lib.openFile(libFile);
+				Logger.logLine("Found library file and tested for reading. It seems ok so proceeding with that file!");
+				foundLibrary=true;
+				
+			} catch (Exception e) {
+				Logger.logLine("Found library file and tested for reading. Reading failed, so overwriting!");
+			}
+		}
+		return foundLibrary;
+	}
+
+	private static List<? extends SearchJobData> getProcessedJobs(List<? extends SearchJobData> origPecanJobs) {
+		ArrayList<SearchJobData> processedJobs=new ArrayList<SearchJobData>();
+		List<? extends SearchJobData> pecanJobsObj = Lists.newArrayList(origPecanJobs); // mutable copy
+		// Sort files in alphabetical order for deterministic Percolator sampling
+		Collections.sort(pecanJobsObj, (a, b) -> a.getDiaFileReader().getOriginalFileName().compareTo(b.getDiaFileReader().getOriginalFileName()));
+		
+		for (int i=0; i<pecanJobsObj.size(); i++) {
+			SearchJobData job=pecanJobsObj.get(i);
+			if (!job.hasBeenRun()) {
+				Logger.logLine("Can't find a "+job.getSearchType()+" analysis of "+job.getDiaFileReader().getOriginalFileName()+", skipping extraction on that file.");
+				continue;
+			} else {
+				processedJobs.add(job);
+			}
+		}
+
+		return processedJobs;
+	}
+
+	private static void quantifySamples(ProgressIndicator progress, List<? extends SearchJobData> pecanJobs,
+			File libFile, boolean writeBlib, boolean alignBetweenFiles, SearchParameters parameters,
+			Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides,
+			Optional<PercolatorExecutionData> globalPercolatorFiles) {
+		Optional<PeakLocationInferrerInterface> inferrer;
+		if (alignBetweenFiles) {
+			Logger.logLine("Inferring peak boundaries across files...");
+			try {
+				inferrer=Optional.of(EncyclopediaTwoPeakLocationInferrer.getAlignmentData(new EmptyProgressIndicator(), pecanJobs, passingPeptides.x, parameters));
+				Logger.logLine("...Finished peak inference.");
+			} catch (Exception e) {
+				Logger.errorLine("RT alignment between files failed! Perhaps this is to build a chromatogram library and not a quantitative experiment? Attempting to recover without alignment.");
+				Logger.errorException(e);
+				inferrer=Optional.empty();
+			}
+		} else {
+			Logger.logLine("No RT alignment between files necessary.");
+			inferrer=Optional.empty();
+		}
+		
+		if (writeBlib) {
+			convertBlib(progress, pecanJobs, libFile, Optional.of(passingPeptides.x), inferrer);
+		} else {
+			convertElib(progress, pecanJobs, libFile, Optional.of(passingPeptides), globalPercolatorFiles, inferrer, parameters);
 		}
 	}
 
@@ -672,7 +730,7 @@ public class SearchToBLIB {
 						for (ProteinGroupInterface pg : proteins) {
 							proteinGroups.add(pg);
 						}
-						LibraryReportExtractor.extractMatrix(elib, proteinGroups, true);
+						LibraryReportExtractor.extractMatrix(elib, proteinGroups, false);
 					} catch (DataFormatException e) {
 						Logger.errorException(e);
 					}

@@ -55,10 +55,10 @@ import edu.washington.gs.maccoss.encyclopedia.gui.dia.PeptideExtractingBrowserPa
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.ResultsBrowserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.WindowingSchemeWizard;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.AustinsSpecialEncyclopediaPanel;
-import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.ThesaurusParametersPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.EncyclopediaParametersPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.LindsaysSpecialEncyclopediaPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.MoMosSpecialEncyclopediaPanel;
+import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.ThesaurusParametersPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.pecan.PecanParametersPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.scribe.ScribeParametersPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.xcordia.XCorDIAParametersPanel;
@@ -69,7 +69,6 @@ import edu.washington.gs.maccoss.encyclopedia.gui.general.LogConsole;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.MemoryMonitor;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.ProgressRenderer;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingJob;
 import edu.washington.gs.maccoss.encyclopedia.jobs.JobProcessor;
 import edu.washington.gs.maccoss.encyclopedia.jobs.SearchToBLIBJob;
 import edu.washington.gs.maccoss.encyclopedia.jobs.SearchToELIBJob;
@@ -240,17 +239,19 @@ public class SearchPanel extends JPanel {
 			}
 		});
 		
-		
 		JPanel buttonPanel=new JPanel(new FlowLayout());
 		buttonPanel.add(chooseFile);
 		//buttonPanel.add(alignBetweenFiles);
 
-		if (ProgramType.PecanPie!=program) {
+		if (ProgramType.PecanPie==program) {
+			buttonPanel.add(saveBlib);
+		} else if (ProgramType.Scribe==program) {
+			buttonPanel.add(saveElib);
+		} else {
 			buttonPanel.add(saveChromElib);
 			buttonPanel.add(saveElib);
+			buttonPanel.add(saveBlib);
 		}
-		
-		buttonPanel.add(saveBlib);
 		
 		files.add(new JLabel("<html><p style=\"font-size:12px; font-family: Helvetica, sans-serif\"><b>Jobs: "), BorderLayout.WEST);
 		files.add(buttonPanel, BorderLayout.EAST);

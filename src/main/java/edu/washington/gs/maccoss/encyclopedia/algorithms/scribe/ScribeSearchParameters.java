@@ -145,6 +145,7 @@ public class ScribeSearchParameters extends SearchParameters {
 			boolean doNotUseGlobalFDR,
 			Optional<File> precursorIsolationRangeFile, 
 			Optional<File> percolatorModelFile,
+			boolean normalizeByTIC,
 			boolean enableAdvancedOptions
 	) {
 		super(
@@ -182,6 +183,7 @@ public class ScribeSearchParameters extends SearchParameters {
 				doNotUseGlobalFDR,
 				precursorIsolationRangeFile,
 				percolatorModelFile,
+				normalizeByTIC,
 				enableAdvancedOptions
 		);
 	}
@@ -221,6 +223,7 @@ public class ScribeSearchParameters extends SearchParameters {
 				params.isDoNotUseGlobalFDR(),
 				params.getPrecursorIsolationRangeFile(),
 				params.getPercolatorModelFile(),
+				params.isNormalizeByTIC(),
 				params.isEnableAdvancedOptions()
 		);
 	}

@@ -186,8 +186,6 @@ public class Scribe {
 				Logger.logLine("Found unexpected exception trying to read old results: ");
 				Logger.logException(e);
 				Logger.logLine("Just going to go ahead and reprocess this file!");
-				Logger.errorLine("ACTUALLY JUST QUITTING FOR DEBUGGING FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME"); // FIXME
-				System.exit(1); // FIXME
 			}
 		}
 		
