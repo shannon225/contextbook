@@ -43,7 +43,7 @@ public class ScribeScoringTaskTest extends TestCase {
 			
 			ScribeScoringTask task=new ScribeScoringTask(scorer, entries, stripes, precursors, resultsQueue, parameters);
 			task.call();
-			assertEquals("AWNAYPYC[+57.021464]R", resultsQueue.peek().getEntry().getPeptideModSeq());
+			assertEquals("IQAVIDAGVC[+57.021464]R", resultsQueue.peek().getEntry().getPeptideModSeq());
 		} catch (Exception e) {
 			fail(e.getMessage());
 		}
