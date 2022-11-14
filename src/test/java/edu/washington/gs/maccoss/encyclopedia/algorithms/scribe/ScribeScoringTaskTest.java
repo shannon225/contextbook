@@ -50,10 +50,6 @@ public class ScribeScoringTaskTest extends TestCase {
 
 			task.call();
 
-			ArrayList<ScoredPSM> goodMSMSCandidates = resultsQueue.peek().getGoodMSMSCandidates();
-			for (ScoredPSM scoredPSM : goodMSMSCandidates) {
-				System.out.println(scoredPSM.getPrimaryScore()+"\t"+scoredPSM.getLibraryEntry().getPeptideModSeq());
-			}
 			assertEquals("IQAVIDAGVC[+57.021464]R", resultsQueue.peek().getEntry().getPeptideModSeq());
 		} catch (Exception e) {
 			fail(e.getMessage());

@@ -159,6 +159,11 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 	}
 	
 	@Override
+	public boolean canCreateChromatogramLibraries() {
+		return true;
+	}
+	
+	@Override
 	public void askForSetupFile() {
 		libraryFileChooser.askForFiles();
 	}

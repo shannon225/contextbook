@@ -81,6 +81,13 @@ public class FeatureGrapher {
 				row.remove("averageFragmentDeltaMasses");
 				row.remove("averageParentDeltaMass");
 				row.remove("numConsidered");
+				row.remove("chargeMatch");
+				row.remove("percentBlankOverMono");
+				row.remove("numberPrecursorMatch");
+				row.remove("maxLadderLength");
+				row.remove("numMissedCleavage");
+				row.remove("numberOfMatchingPeaks");
+				row.remove("precursorMass");
 				String targetDecoy = row.remove("TD");
 				if (targetDecoy==null) {
 					targetDecoy = row.remove("Label");
@@ -158,7 +165,9 @@ public class FeatureGrapher {
 	}
 
 	public static XYTrace getRocPlot(String name, float[] targets, float[] decoys) {
-		if (name.equals("sumOfSquaredErrors")||name.equals("weightedSumOfSquaredErrors")||name.equals("precursorMass")||name.equals("percentBlankOverMono")||name.equals("numMissedCleavage")||name.equals("lnExpect")||name.equals("averageAbsParentDeltaMass")||name.equals("averageAbsFragmentDeltaMass")||name.equals("ms1MassError")||name.equals("ms2MassError")) {
+		if (name.equals("sumOfSquaredErrors")||name.equals("weightedSumOfSquaredErrors")||name.equals("precursorMass")||name.equals("percentBlankOverMono")||
+				name.equals("numMissedCleavage")||name.equals("lnExpect")||name.equals("averageAbsParentDeltaMass")||name.equals("averageAbsFragmentDeltaMass")||
+				name.equals("ms1MassError")||name.equals("ms2MassError")||name.equals("deltaRT")) {
 			targets=General.multiply(targets, -1f);
 			decoys=General.multiply(decoys, -1f);
 		}

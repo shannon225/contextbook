@@ -37,6 +37,7 @@ import gnu.trove.map.hash.TFloatFloatHashMap;
 
 public class ScribeScoringTask extends AbstractLibraryScoringTask {
 	// FIXME shouldn't be static (long term)
+	private static final float SCORE_CONSTANT=10f; // force positive scores for delta calculation
 	private static final HashMap<String, SparseXCorrSpectrum> libraryEntryMap=new HashMap<String, SparseXCorrSpectrum>();
 	private static final HashMap<String, float[]> isotopeDistributions=new HashMap<String, float[]>();
 	private final ScribeScorer scorerFunction;
@@ -74,9 +75,9 @@ public class ScribeScoringTask extends AbstractLibraryScoringTask {
 			
 			ArrayList<ScoredIndex> goodHits=new ArrayList<ScoredIndex>();
 			TFloatFloatHashMap map=new TFloatFloatHashMap(); // x=index, y=score
-//			float maxXCorr=-1f;
-//			String maxSequence=null;
-//			float secondMaxXCorr=-1f;
+			float maxScore=-SCORE_CONSTANT;
+			String maxSequence=null;
+			float secondMaxScore=-SCORE_CONSTANT;
 			//float[] xcorrs=new float[super.entries.size()];
 			for (int i=0; i<super.entries.size(); i++) {
 				LibraryEntry entry=super.entries.get(i);
@@ -94,10 +95,11 @@ public class ScribeScoringTask extends AbstractLibraryScoringTask {
 					
 					//float score=xcorrMSMS.score(xcorrEntry);
 					//xcorrs[i]=score;
-					float[] otherScores=score(entry, msms);
-					float score=otherScores[1];
+					float[] scores=score(entry, msms);
+					float score=scores[1]+0.03f*scores[0];
+					if (Float.isNaN(score)) continue;
 					
-					if (otherScores[0]>0) {
+					if (scores[0]>0) {
 						//float composite=xcorrs[i]; // "main" score is based on xcorr
 						//float composite=otherScores[0]; // "main" score is based on xtandem
 						//float composite=otherScores[1]; // "main" score is based on sum of squared errors
@@ -105,25 +107,25 @@ public class ScribeScoringTask extends AbstractLibraryScoringTask {
 						//float composite=otherScores[3]; // "main" score is based on spectral angle
 						//float composite=otherScores[4]; // "main" score is based on logit
 						
-						float composite=otherScores[1];//xcorrs[i]*0.37f+otherScores[0]*0.017f+otherScores[1]*0.61f+0.61f;
-						goodHits.add(new ScoredIndex(composite, i));
-						map.put(i, composite);
+						//float composite=otherScores[1];//xcorrs[i]*0.37f+otherScores[0]*0.017f+otherScores[1]*0.61f+0.61f;
+						goodHits.add(new ScoredIndex(score, i));
+						map.put(i, score);
+					
+						if (maxSequence==null) {
+							maxSequence=entry.getPeptideSeq();
+							maxScore=score;
+						} else if (score>maxScore) {
+							if (!SimilarPeptideBinner.areSimilarEnough(maxSequence, entry.getPeptideSeq())) {
+								secondMaxScore=maxScore;
+							}
+							maxSequence=entry.getPeptideSeq();
+							maxScore=score;
+						} else if (score>secondMaxScore) {
+							if (!SimilarPeptideBinner.areSimilarEnough(maxSequence, entry.getPeptideSeq())) {
+								secondMaxScore=score;
+							}
+						}
 					}
-//					
-//					if (maxSequence==null) {
-//						maxSequence=entry.getPeptideSeq();
-//						maxXCorr=score;
-//					} else if (score>maxXCorr) {
-//						if (!SimilarPeptideBinner.areSimilarEnough(maxSequence, entry.getPeptideSeq())) {
-//							secondMaxXCorr=maxXCorr;
-//						}
-//						maxSequence=entry.getPeptideSeq();
-//						maxXCorr=score;
-//					} else if (score>secondMaxXCorr) {
-//						if (!SimilarPeptideBinner.areSimilarEnough(maxSequence, entry.getPeptideSeq())) {
-//							secondMaxXCorr=score;
-//						}
-//					}
 				}
 			}
 			if (map.size()==0) { // maxXCorr==0 indicates no peaks
@@ -144,7 +146,7 @@ public class ScribeScoringTask extends AbstractLibraryScoringTask {
 				float evalue=calculator.getNegLnEValue(score);
 				//float xcorr=xcorrs[index];
 				
-				//float deltaCn=(score==0.0f||secondMaxXCorr==0.0f)?0.0f:(score-secondMaxXCorr)/maxXCorr;
+				float deltaScore=(maxScore+SCORE_CONSTANT<=0.0f||secondMaxScore+SCORE_CONSTANT<=0.0f)?-1.0f:((score-secondMaxScore)/(maxScore+SCORE_CONSTANT));
 
 				LibraryEntry entry=super.entries.get(index);
 				int chargeMatch=(msms.getCharge()==0||msms.getCharge()==entry.getPrecursorCharge())?1:0;
@@ -158,7 +160,7 @@ public class ScribeScoringTask extends AbstractLibraryScoringTask {
 				}
 				float deltaPrecursorMass=auxScoreArray[scorerFunction.getParentDeltaMassIndex()];
 				float deltaFragmentMass=auxScoreArray[scorerFunction.getFragmentDeltaMassIndex()];
-				result.addPeptide(score, General.concatenate(auxScoreArray, evalue, map.size(), chargeMatch), deltaPrecursorMass, deltaFragmentMass, entry);
+				result.addPeptide(score, General.concatenate(auxScoreArray, evalue, deltaScore, map.size(), chargeMatch), deltaPrecursorMass, deltaFragmentMass, entry);
 				
 				if (identifiedPeaks>peaksKept) {
 					// keep N+1 peaks
