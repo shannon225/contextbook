@@ -141,14 +141,6 @@ public class Scribe {
 	
 				ScribeSearchParameters parameters=ScribeSearchParameters.convertFromEncyclopeDIA(SearchParameterParser.parseParameters(arguments));
 				ScribeScoringFactory factory=new ScribeScoringFactory(parameters);
-				
-				Logger.logLine("Scribe version "+ProgramType.getGlobalVersion().toString());
-	
-				Logger.logLine("Parameters:");
-				Logger.logLine(" "+INPUT_DIA_TAG+" "+diaFile.getAbsolutePath());
-				Logger.logLine(" "+TARGET_LIBRARY_TAG+" "+libraryFile.getAbsolutePath());
-				Logger.logLine(" "+OUTPUT_RESULT_TAG+" "+outputFile.getAbsolutePath());
-				Logger.logLine(parameters.toString());
 
 				LibraryInterface library=BlibToLibraryConverter.getFile(libraryFile, fastaFile, parameters);
 				ScribeJobData job=new ScribeJobData(diaFile, fastaFile, library, outputFile, factory);
@@ -188,6 +180,13 @@ public class Scribe {
 				Logger.logLine("Just going to go ahead and reprocess this file!");
 			}
 		}
+		
+		Logger.logLine("Using "+job.getTaskFactory().getName());
+		Logger.logLine("Input File: "+job.getDiaFileReader().getOriginalFileName());
+		Logger.logLine("Library File: "+job.getLibrary().getName());
+		Logger.logLine("Result File: "+job.getResultLibrary().getName());
+		Logger.logLine("Parameters:");
+		Logger.logLine(job.getParameters().toString());
 		
 		Logger.logLine("Converting files...");
 		progress.update("Converting files...", Float.MIN_VALUE);

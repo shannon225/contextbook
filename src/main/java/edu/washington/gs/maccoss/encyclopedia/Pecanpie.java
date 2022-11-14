@@ -158,13 +158,6 @@ public class Pecanpie {
 				} else {
 					targets=null;
 				}
-	
-				Logger.logLine("Parameters:");
-				Logger.logLine(" "+INPUT_DIA_TAG+" "+diaFile.getAbsolutePath());
-				Logger.logLine(" "+BACKGROUND_FASTA_TAG+" "+fastaFile.getAbsolutePath());
-				Logger.logLine(" "+TARGET_FASTA_TAG+" "+arguments.get(TARGET_FASTA_TAG));
-				Logger.logLine(" "+OUTPUT_RESULT_TAG+" "+outputFile.getAbsolutePath());
-				Logger.logLine(parameters.toString());
 				
 				PecanJobData job=new PecanJobData(Optional.ofNullable(targets), diaFile, fastaFile, outputFile, factory);
 
@@ -216,6 +209,13 @@ public class Pecanpie {
 		PecanSearchParameters parameters=taskFactory.getParameters();
 		
 		int cores=parameters.getNumberOfThreadsUsed();
+
+		Logger.logLine("Using "+jobData.getTaskFactory().getName());
+		Logger.logLine("Input File: "+jobData.getDiaFileReader().getOriginalFileName());
+		Logger.logLine("FASTA File: "+jobData.getFastaFile().getName());
+		Logger.logLine("Result File: "+jobData.getResultLibrary().getName());
+		Logger.logLine("Parameters:");
+		Logger.logLine(jobData.getParameters().toString());
 
 		Logger.logLine("Converting files...");
 		progress.update("Converting files...", Float.MIN_VALUE);

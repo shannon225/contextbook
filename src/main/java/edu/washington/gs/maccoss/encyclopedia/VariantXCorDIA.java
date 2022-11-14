@@ -165,14 +165,6 @@ public class VariantXCorDIA {
 				} else {
 					library=null;
 				}
-	
-				Logger.logLine("Parameters:");
-				Logger.logLine(" "+INPUT_DIA_TAG+" "+diaFile.getAbsolutePath());
-				Logger.logLine(" "+BACKGROUND_FASTA_TAG+" "+fastaFile.getAbsolutePath());
-				Logger.logLine(" "+TARGET_FASTA_TAG+" "+arguments.get(TARGET_FASTA_TAG));
-				Logger.logLine(" "+TARGET_LIBRARY_TAG+" "+arguments.get(TARGET_LIBRARY_TAG));
-				Logger.logLine(" "+OUTPUT_RESULT_TAG+" "+outputFile.getAbsolutePath());
-				Logger.logLine(parameters.toString());
 				
 				VariantXCorDIAJobData jobData=new VariantXCorDIAJobData(Optional.ofNullable(targets), Optional.ofNullable(library), diaFile, fastaFile, outputFile, factory);
 
@@ -226,6 +218,18 @@ public class VariantXCorDIA {
 		final PecanSearchParameters parameters=jobData.getTaskFactory().getPecanParameters();
 		
 		int cores=parameters.getNumberOfThreadsUsed();
+		
+		Logger.logLine("Using "+jobData.getTaskFactory().getName());
+		Logger.logLine("Input File: "+jobData.getDiaFileReader().getOriginalFileName());
+		if (jobData.getLibrary().isPresent()) {
+			Logger.logLine("Library File: "+jobData.getLibrary().get().getName());
+		} else {
+			Logger.logLine("Library File Missing.");
+		}
+		Logger.logLine("FASTA File: "+jobData.getFastaFile().getName());
+		Logger.logLine("Result File: "+jobData.getResultLibrary().getName());
+		Logger.logLine("Parameters:");
+		Logger.logLine(jobData.getParameters().toString());
 
 		Logger.logLine("Converting files...");
 		progress.update("Converting files...", Float.MIN_VALUE);
