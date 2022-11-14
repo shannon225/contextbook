@@ -126,8 +126,6 @@ public class ScribeParametersPanel extends JPanel implements ParametersPanelInte
 		options.add(new LabeledComponent("Fragment Mass Tolerance", fragmentTolerance));
 		options.add(new LabeledComponent("Library Mass Tolerance", libraryTolerance));
 		options.add(new LabeledComponent("Percolator Version", percolatorVersion));
-		options.add(new LabeledComponent("Number of Quantitative Ions", new JSpinner(numberOfQuantitativeIons)));
-		options.add(new LabeledComponent("Minimum Number of Quantitative Ions", new JSpinner(minNumOfQuantitativeIons)));
 		options.add(new LabeledComponent("Number of Cores", new JSpinner(numberOfJobs)));
 		options.add(new LabeledComponent("Additonal Command Line Options", additionalCommandLineOptions));
 
