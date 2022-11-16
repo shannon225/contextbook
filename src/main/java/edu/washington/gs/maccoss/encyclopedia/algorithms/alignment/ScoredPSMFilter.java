@@ -24,8 +24,12 @@ public class ScoredPSMFilter implements ScoredPSMFilterInterface {
 			float acquiredRT=psm.getMSMS().getScanStartTime()/60f;
 
 			rtPoints.add(psm.getRTData()); 
-			precursorPoints.add(new PeptideXYPoint(acquiredRT, psm.getDeltaPrecursorMass(), isDecoy, peptideModSeq));
-			fragmentPoints.add(new PeptideXYPoint(acquiredRT, psm.getDeltaFragmentMass(), isDecoy, peptideModSeq));
+			if (params.getPrecursorTolerance().getToleranceThreshold()!=psm.getDeltaPrecursorMass()) {
+				precursorPoints.add(new PeptideXYPoint(acquiredRT, psm.getDeltaPrecursorMass(), isDecoy, peptideModSeq));
+			}
+			if (params.getFragmentTolerance().getToleranceThreshold()!=psm.getDeltaFragmentMass()) {
+				fragmentPoints.add(new PeptideXYPoint(acquiredRT, psm.getDeltaFragmentMass(), isDecoy, peptideModSeq));
+			}
 		}
 		
 		rtFilter=RetentionTimeFilter.getFilter(rtPoints);
