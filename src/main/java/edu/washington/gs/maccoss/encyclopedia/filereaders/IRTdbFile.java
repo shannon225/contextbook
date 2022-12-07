@@ -89,7 +89,9 @@ public class IRTdbFile extends SQLFile {
 				}
 
 				int idCounter=0;
-				for (LibraryEntry entry : entries) {
+				for (ScoredObject<PeptidePrecursor> scored : bestEntriesList) {
+					LibraryEntry entry=(LibraryEntry)scored.y;
+					
 					// if any possible standards then use the standards, otherwise set everything to be a standard
 					boolean isStandard=true;
 					if (bestPeptideModSeqs.size()>0) {
@@ -97,7 +99,7 @@ public class IRTdbFile extends SQLFile {
 					}
 					idCounter++;
 					prepStatement.setInt(1, idCounter); // id
-					prepStatement.setString(2, entry.getPeptideSeq()); // pepSeq
+					prepStatement.setString(2, entry.getPeptideModSeq()); // pepSeq
 					prepStatement.setDouble(3, entry.getScanStartTime()/60f); // rt in min
 					prepStatement.setBoolean(4, isStandard);
 					prepStatement.setInt(5, isStandard?1:0);
