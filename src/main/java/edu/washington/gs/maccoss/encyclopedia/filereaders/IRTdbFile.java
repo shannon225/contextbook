@@ -11,6 +11,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.zip.DataFormatException;
 
@@ -47,8 +48,9 @@ public class IRTdbFile extends SQLFile {
 				
 				PreparedStatement prepStatement=c.prepareStatement("insert into IrtLibrary (Id, PeptideModSeq, Irt, Standard, TimeSource) VALUES (?,?,?,?,?)");
 				
-				// if ChromatogramLibraryEntry, keep the top 10 best entries (based on number of high quality fragment ions
-				ArrayList<ScoredObject<PeptidePrecursor>> bestEntries=new ArrayList<ScoredObject<PeptidePrecursor>>();
+				// if ChromatogramLibraryEntry, keep the top 10 best entries (based on number of high quality fragment ions)
+				// higher scores are better
+				HashMap<String, ScoredObject<PeptidePrecursor>> bestEntries=new HashMap<String, ScoredObject<PeptidePrecursor>>();
 				for (LibraryEntry entry : entries) {
 					if (entry instanceof ChromatogramLibraryEntry) {
 						float[] intensityArray = entry.getIntensityArray();
@@ -67,17 +69,23 @@ public class IRTdbFile extends SQLFile {
 						if (count<6) {
 							score=score/1000.0f;
 						}
-					
+						
 						ScoredObject<PeptidePrecursor> scored=new ScoredObject<PeptidePrecursor>(score, entry);
-						bestEntries.add(scored);
+						
+						ScoredObject<PeptidePrecursor> previous=bestEntries.get(entry.getPeptideModSeq());
+						if (previous==null||previous.getScore()<score) {
+							// add if new or replace if better
+							bestEntries.put(entry.getPeptideModSeq(), scored);
+						}
 					}
 				}
-				Collections.sort(bestEntries);
+				ArrayList<ScoredObject<PeptidePrecursor>> bestEntriesList=new ArrayList<>(bestEntries.values());
+				Collections.sort(bestEntriesList);
 				HashSet<String> bestPeptideModSeqs=new HashSet<>();
-				int start=Math.max(0, bestEntries.size()-10);
-				for (int i = start; i < bestEntries.size(); i++) {
-					bestPeptideModSeqs.add(bestEntries.get(i).y.getPeptideModSeq());
-					Logger.logLine("Adding "+bestEntries.get(i).y.getPeptideModSeq()+" to anchor iRT peptides");
+				int start=Math.max(0, bestEntriesList.size()-10);
+				for (int i = start; i < bestEntriesList.size(); i++) {
+					bestPeptideModSeqs.add(bestEntriesList.get(i).y.getPeptideModSeq());
+					Logger.logLine("Adding "+bestEntriesList.get(i).y.getPeptideModSeq()+" to anchor iRT peptides");
 				}
 
 				int idCounter=0;
