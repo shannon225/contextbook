@@ -374,13 +374,15 @@ public class SearchParameters implements XMLObject {
 		return getEffectivePercolatorThreshold(percolatorThreshold, numberOfExtraDecoyLibrariesSearched);
 	}
 
+	// removed for further testing, now extra shuffle peptides work as entrapment peptides 
 	public static float getEffectivePercolatorThreshold(float percolatorThreshold, float numberOfExtraDecoyLibrariesSearched) {
+		return percolatorThreshold;
 		// FDR'=FDR * (XD*(1-((XD-1)*FDR)))
 		// where XD is the numberOfDecoyLibrariesSearched
 		// e.g. if XD=1, then FDR'=FDR*(1*(1-((1-1)*FDR)))=FDR*(1*(1-0))=FDR
 		// e.g. if XD=2, then FDR'=FDR*(2*(1-((2-1)*FDR)))=FDR*(2*(1-FDR))=2*FDR-2*FDR*FDR
-		float numberOfDecoyLibrariesSearched=numberOfExtraDecoyLibrariesSearched+1.0f; // always search 1x decoy minimum
-		return percolatorThreshold*(numberOfDecoyLibrariesSearched*(1-((numberOfDecoyLibrariesSearched-1)*percolatorThreshold)));
+		//float numberOfDecoyLibrariesSearched=numberOfExtraDecoyLibrariesSearched+1.0f; // always search 1x decoy minimum
+		//return percolatorThreshold*(numberOfDecoyLibrariesSearched*(1-((numberOfDecoyLibrariesSearched-1)*percolatorThreshold)));
 	}
 	
 	public PercolatorVersion getPercolatorVersionNumber() {
