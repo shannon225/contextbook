@@ -141,6 +141,15 @@ public class LibraryEntry implements Comparable<PeptidePrecursor>, Spectrum, Pep
 	 * @param rtInSec
 	 * @return
 	 */
+	public LibraryEntry updatePrecursorMz(double newPrecursorMZ) {
+		return new LibraryEntry(source, accessions, spectrumIndex, newPrecursorMZ, precursorCharge, peptideModSeq, massCorrectedPeptideModSeq, copies, retentionTime, score, massArray, intensityArray, correlationArray, quantifiedIonsArray);
+	}
+	
+	/**
+	 * only use for testing
+	 * @param rtInSec
+	 * @return
+	 */
 	public LibraryEntry updateRetentionTime(float rtInSec) {
 		return new LibraryEntry(source, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, massCorrectedPeptideModSeq, copies, rtInSec, score, massArray, intensityArray, correlationArray, quantifiedIonsArray);
 	}

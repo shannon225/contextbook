@@ -8,6 +8,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
@@ -143,6 +144,22 @@ public class PercolatorExecutor extends ExternalExecutor {
 		commandData.setPercolatorExecutableVersion(percolatorExecutableVersion.orElse(null));
 
 		Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides=PercolatorReader.getPassingPeptidesFromTSV(commandData.getPeptideOutputFile(), threshold, aaConstants, false);
+		
+		if (commandData.getParameters().getNumberOfExtraDecoyLibrariesSearched()>0.0f) {
+			// entrapment search
+			int targets=0;
+			int traps=0;
+			for (PercolatorPeptide pep : passingPeptides.x) {
+				if (!pep.isPSMIDDecoy()) {
+					if (pep.isEntrapment()) {
+						traps++;
+					} else {
+						targets++;
+					}
+				}
+			}
+			Logger.logLine("Entrapment analysis found "+traps+" entrapment peptides and "+targets+" target peptides, ("+new DecimalFormat("#.#").format(100.0f*traps/(float)targets)+"%)");
+		}
 
 		return passingPeptides;
 	}

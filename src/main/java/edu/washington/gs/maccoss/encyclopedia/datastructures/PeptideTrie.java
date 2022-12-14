@@ -51,14 +51,14 @@ public abstract class PeptideTrie <T extends PeptidePrecursor> {
 				if (node==null) break;
 				
 				if (node.entries.size()>0) {
-					if (j==0||!enzyme.isPresent()||enzyme.get().isCutSite(sequence[j-1], sequence[j])) {
-						// either the beginning of the protein, the enzyme isn't used, or the enzyme indicates a cut site
+					if (j==0||!enzyme.isPresent()||enzyme.get().isCutSite(sequence[j-1], sequence[j])||(j==1&&sequence[0]=='M')) {
+						// either the beginning of the protein, the enzyme isn't used, the enzyme indicates a cut site, or the first M is removed (protein is processed) 
 						for (T entry : node.entries) {
 							// add fasta protein entry to each peptide entry
 							processMatch(fasta, entry, j);
 						}
-					} else if (enzyme.isPresent()) {
-						System.out.println(sequence[j-1]+","+sequence[j]+"="+node.entries.get(0).getPeptideSeq().charAt(0)+" "+fasta.getAccession());
+					//} else if (enzyme.isPresent()) {
+					//	System.out.println(sequence[j-1]+","+sequence[j]+"="+node.entries.get(0).getPeptideSeq().charAt(0)+" "+fasta.getAccession());
 					}
 				}
 			}

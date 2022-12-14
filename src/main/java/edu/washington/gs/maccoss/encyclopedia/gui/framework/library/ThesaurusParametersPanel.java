@@ -174,6 +174,11 @@ public class ThesaurusParametersPanel extends JPanel implements ParametersPanelI
 		return backgroundFasta.getFile();
 	}
 	
+	@Override
+	public boolean canCreateChromatogramLibraries() {
+		return true;
+	}
+	
 	/* (non-Javadoc)
 	 * @see edu.washington.gs.maccoss.encyclopedia.gui.pecan.ParametersPanelInterface#canLoadData()
 	 */
@@ -276,6 +281,7 @@ public class ThesaurusParametersPanel extends JPanel implements ParametersPanelI
 				considerRearrangement,
 				Optional.empty(),
 				Optional.empty(),
+				true,
 				false
 		);
 

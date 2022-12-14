@@ -8,8 +8,11 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideAccessionMatchingTrie;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.Quadruplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakChromatogram;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.IndexedObject;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
 import gnu.trove.list.array.TFloatArrayList;
@@ -251,5 +254,32 @@ public class LibraryEntryCleaner {
 			rts.add(entry.getScanStartTime());
 		}
 		return rtsByPeptideModSeq;
+	}
+	
+	public static ArrayList<LibraryEntry> filterIons(ArrayList<LibraryEntry> entries, float minimumIntensityFraction) {
+		ArrayList<LibraryEntry> processed=new ArrayList<>();
+		for (LibraryEntry entry : entries) {
+			double[] massArray=entry.getMassArray();
+			float[] intensityArray=entry.getIntensityArray();
+			float[] correlationArray=entry.getCorrelationArray();
+			boolean[] quantifiedIonsArray=entry.getQuantifiedIonsArray();
+			ArrayList<PeakChromatogram> peaks=new ArrayList<>();
+			int numPeaks=Math.min(massArray.length, correlationArray.length);
+			float minimumIntensity=minimumIntensityFraction*General.max(intensityArray);
+			for (int i=0; i<numPeaks; i++) {
+				if (intensityArray[i]>minimumIntensity) {
+					peaks.add(new PeakChromatogram(massArray[i], intensityArray[i], correlationArray[i], quantifiedIonsArray[i]));
+				}
+			}
+			Collections.sort(peaks);
+			Quadruplet<double[], float[], float[], boolean[]> arrays=PeakChromatogram.toChromatogramArrays(peaks);
+			
+			massArray=arrays.x;
+			intensityArray=arrays.y;
+			correlationArray=arrays.z;
+			quantifiedIonsArray=arrays.w;
+			processed.add(entry.updateMS2(massArray, intensityArray, correlationArray, quantifiedIonsArray));
+		}
+		return processed;
 	}
 }

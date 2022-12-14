@@ -10,11 +10,17 @@ import java.util.Optional;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.PivotTableGenerator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
+import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
@@ -116,6 +122,49 @@ public class LibraryUtilitiesTest {
 	}
 	
 	public static void main(String[] args) throws Exception {
+		File dirFile=new File("/Users/searleb/Documents/damien/dda_library_search/non-tryptics/");
+		File[] inFiles=new File[] {new File(dirFile, "uniprot_human-reference_reviewed_2022mar02.prosit_input.aspn_nce29.prosit_cid2020.dlib"),
+				new File(dirFile, "uniprot_human-reference_reviewed_2022mar02.prosit_input.aspn_nce29.prosit_hcd2020.dlib"),
+				new File(dirFile, "uniprot_human-reference_reviewed_2022mar02.prosit_input.gluc_nce29.prosit_cid2020.dlib"),
+				new File(dirFile, "uniprot_human-reference_reviewed_2022mar02.prosit_input.gluc_nce29.prosit_hcd2020.dlib"),
+				new File(dirFile, "uniprot_human-reference_reviewed_2022mar02.prosit_input.tryp_nce29.prosit_cid2020.dlib"),
+				new File(dirFile, "uniprot_human-reference_reviewed_2022mar02.prosit_input.tryp_nce29.prosit_hcd2020.dlib"),
+				new File(dirFile, "uniprot_human-reference_reviewed_2022mar02.prosit_input.tryp_nce34.prosit_hcd2020.dlib")};
+		for (File inFile : inFiles) {
+			File saveFile=new File(dirFile, "mzcorrected_"+inFile.getName());
+			//File inFile=new File("/Users/searleb/Documents/damien/dda_library_search/non-tryptics/scribe_regression/uniprot_human-reference_reviewed_2022mar02.prosit_input.tryp_nce29.prosit_hcd2020.dlib");	
+			//File saveFile=new File("/Users/searleb/Documents/damien/dda_library_search/non-tryptics/scribe_regression/mzcorrected_uniprot_human-reference_reviewed_2022mar02.prosit_input.tryp_nce29.prosit_hcd2020.dlib");
+			AminoAcidConstants constants=new AminoAcidConstants();
+			
+			LibraryFile library=new LibraryFile();
+			library.openFile(inFile);
+	
+			LibraryFile saveLibrary=new LibraryFile();
+			saveLibrary.openFile();
+			
+			ArrayList<LibraryEntry> toWrite=new ArrayList<>();
+			TDoubleArrayList deltamz=new TDoubleArrayList();
+			for (LibraryEntry entry : library.getAllEntries(false, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()))) {
+				double mz=constants.getChargedMass(entry.getPeptideModSeq(), entry.getPrecursorCharge());
+				deltamz.add(mz-entry.getPrecursorMZ());
+				toWrite.add(entry.updatePrecursorMz(mz));
+				
+			}
+			Logger.logLine("Found "+toWrite.size()+" peptides. Writing to ["+saveFile.getAbsolutePath()+"]...");
+			ArrayList<XYPoint> points=PivotTableGenerator.createPivotTable(General.toFloatArray(deltamz.toArray()));
+			//Charter.launchChart("delta mz", "count", true, new XYTrace(points, GraphType.line, "delta mz"));
+			
+			saveLibrary.dropIndices();
+			saveLibrary.addEntries(toWrite);
+			saveLibrary.addProteinsFromEntries(toWrite);
+			saveLibrary.createIndices();
+			saveLibrary.saveAsFile(saveFile);
+			
+			saveLibrary.close();
+		}
+	}
+	
+	public static void main5(String[] args) throws Exception {
 		File inFile=new File("/Volumes/bcsbluessd/TPAD/combined_library_quant.elib");
 		File saveFile=new File("/Volumes/bcsbluessd/TPAD/libs/");
 		LibraryFile library=new LibraryFile();

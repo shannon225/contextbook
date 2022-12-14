@@ -172,6 +172,17 @@ public class PercolatorPeptide implements PeptidePrecursorWithProteins {
 		return diaFileName+":"+rt+":"+(maybeVariant.isPresent()?maybeVariant.get().toString()+":":"")+(isDecoy ? "decoy" : "")+peptideModSeq+"+"+peptideCharge;
 	}
 	
+	// return true if at least one accession number and all accession numbers are entrapment proteins
+	public boolean isEntrapment() {
+		HashSet<String> accessions=getAccessions();
+		if (accessions.size()==0) return false;
+		for (String accession : accessions) {
+			if (accession.indexOf(LibraryEntry.SHUFFLE_STRING)==-1) {
+				return false;
+			}
+		}
+		return true;
+	}
 
 	public static boolean isPSMIDDecoy(String psmID) {
 		psmID=getPeptideData(psmID);

@@ -14,6 +14,7 @@ public class PivotTableGenerator {
 		
 		int binCount=(length/datas.length)/200;
 		binCount=Math.max(binCount, 50);
+		binCount=Math.min(binCount, 200);
 		return createPivotTables(datas, removeNonZero, binCount);
 	}
 	

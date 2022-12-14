@@ -144,9 +144,15 @@ public class TableConcatenator {
 		private final float irqDeltaRT;
 		private final float top20PercentPrimaryScore;
 		public DeltaRTData(TFloatArrayList deltaRTs, TFloatArrayList primaryScores) {
-			KDE distribution=new KDE(General.toDoubleArray(deltaRTs.toArray()), 1.0);
-			this.modeDeltaRT = (float)distribution.getMode();
-			this.irqDeltaRT = QuickMedian.iqr(deltaRTs.toArray());
+			float[] rtArray = deltaRTs.toArray();
+			KDE distribution=new KDE(General.toDoubleArray(rtArray), 1.0);
+			double mode = distribution.getMode();
+			if (Double.isNaN(mode)) {
+				this.modeDeltaRT = QuickMedian.median(rtArray);
+			} else {
+				this.modeDeltaRT = (float)mode;
+			}
+			this.irqDeltaRT = QuickMedian.iqr(rtArray);
 			
 			// need at least 3 samples to be "consistent"
 			float consistencyPercentage=Math.max(TARGET_CONSISTENCY_PERCENTAGE, 3.0f/primaryScores.size());

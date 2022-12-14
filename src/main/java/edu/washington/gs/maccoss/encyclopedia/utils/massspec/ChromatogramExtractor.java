@@ -44,8 +44,9 @@ public class ChromatogramExtractor {
 			} else {
 				name="Precursor";
 			}
-			XYTraceInterface trace=new XYTrace(traces[i], GraphType.line, name, isotopeColors[i], 3.0f);
+			XYTrace trace=new XYTrace(traces[i], GraphType.line, name, isotopeColors[i], 3.0f);
 			kept.add(SkylineSGFilter.paddedSavitzkyGolaySmooth(trace));
+			//kept.add(trace);
 		}
 		return kept.toArray(new XYTrace[kept.size()]);
 	}

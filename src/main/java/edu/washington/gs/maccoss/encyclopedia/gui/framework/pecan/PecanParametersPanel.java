@@ -174,6 +174,11 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 		return backgroundFasta.getFile();
 	}
 	
+	@Override
+	public boolean canCreateChromatogramLibraries() {
+		return true;
+	}
+	
 	public Optional<String> canLoadData() {
 		if (backgroundFasta.getFile()==null) {
 			return Optional.of("Please load a background FASTA file first!");
