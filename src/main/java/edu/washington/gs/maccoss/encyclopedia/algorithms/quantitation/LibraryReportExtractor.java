@@ -22,6 +22,25 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.zip.DataFormatException;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideReportData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroupInterface;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroupQuantifier;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
+import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
+import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
+import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.QuantitativeDIAData;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import gnu.trove.map.hash.TObjectFloatHashMap;
+import gnu.trove.map.hash.TObjectIntHashMap;
+import gnu.trove.procedure.TObjectFloatProcedure;
+
 public class LibraryReportExtractor {
 	public static final String UNORMALIZED_TAG = "_unormalized";
 
@@ -101,12 +120,16 @@ public class LibraryReportExtractor {
 		if (stubFile==null) {
 			throw new EncyclopediaException("Please save .ELIB before trying to read matrix data from it!");
 		}
+		File diffactoFile=new File(stubFile.getParentFile(), stubFile.getName()+tag+".diffacto.csv");
+		File diffactoSamplesFile=new File(stubFile.getParentFile(), stubFile.getName()+tag+".diffacto.samples.lst");
 		File peptideReportFile=new File(stubFile.getParentFile(), stubFile.getName()+tag+".peptides.txt");
 		File proteinReportFile=new File(stubFile.getParentFile(), stubFile.getName()+tag+".proteins.txt");
 		
 		Connection c=library.getConnection();
 		try {
 			Statement s=c.createStatement();
+			PrintWriter diffactoWriter=null;
+			PrintWriter diffactoSamplesWriter=null;
 			PrintWriter peptideWriter=null;
 			PrintWriter proteinWriter=null;
 			try {
@@ -120,17 +143,33 @@ public class LibraryReportExtractor {
 					proteinQuantifiers.add(new ProteinGroupQuantifier(proteins));
 				}
 				
+				diffactoSamplesWriter=new PrintWriter(diffactoSamplesFile, "UTF-8");
+
+				diffactoWriter=new PrintWriter(diffactoFile, "UTF-8");
+				diffactoWriter.print("sequences,Protein");
+
 				peptideWriter=new PrintWriter(peptideReportFile, "UTF-8");
 				peptideWriter.print("Peptide\tProtein\tnumFragments");
 				
 				proteinWriter=new PrintWriter(proteinReportFile, "UTF-8");
 				proteinWriter.print("Protein\tNumPeptides\tPeptideSequences");
 
+				int sampleGroup=0;
 				for (String sourceFile : sourceFiles) {
+					sampleGroup++;
+					if (normalizeByTIC) {
+						float tic=library.getTIC(sourceFile);
+						ticBySourceFileMap.put(sourceFile, tic);
+						averageTIC+=tic;
+					}
+					diffactoWriter.print(","+sourceFile);
 					peptideWriter.print("\t"+sourceFile);
 					proteinWriter.print("\t"+sourceFile);
+					diffactoSamplesWriter.print(sourceFile+"\tS"+sampleGroup);
+					diffactoSamplesWriter.println();
 				}
 
+				diffactoWriter.println();
 				peptideWriter.println();
 				proteinWriter.println();
 				Logger.logLine("Found "+sourceFiles.size()+" data files");
@@ -292,24 +331,26 @@ public class LibraryReportExtractor {
 					peptideWriter.print(maxNumFragments);
 					
 					float[] array=pair.y;
-					
-					/*if (array.length>1) {
-						float mean=General.mean(array);
-						float stdev=General.stdev(array);
-						for (int i=0; i<array.length; i++) {
-							if (stdev==0) {
-								array[i]=0.0f;
-							} else {
-								array[i]=(array[i]-mean)/stdev;
-							}
-						}
-					}*/
-					
+
 					for (float f : array) {
 						peptideWriter.print("\t");
 						peptideWriter.print(f);
 					}
 					peptideWriter.println();
+
+					// DIFFACTO
+					diffactoWriter.print("//");
+					diffactoWriter.print(peptideModSeq);
+					diffactoWriter.print(",");
+					ArrayList<String> accessions=new ArrayList<>(PSMData.stringToAccessions(pair.x));
+					Collections.sort(accessions);
+					diffactoWriter.print(General.toString(accessions.toArray(), ";"));
+
+					for (float f : array) {
+						diffactoWriter.print(",");
+						diffactoWriter.print(f);
+					}
+					diffactoWriter.println();
 				}
 				if (numberInconsistentFragments>0) {
 					Logger.errorLine("Inconsistent number of fragments in "+numberInconsistentFragments+" of "+intensitiesByPeptideModSeq.size()+" peptides");
@@ -359,6 +400,8 @@ public class LibraryReportExtractor {
 				rs.close();
 			} finally {
 				s.close();
+				if (diffactoSamplesWriter!=null) diffactoSamplesWriter.close();
+				if (diffactoWriter!=null) diffactoWriter.close();
 				if (peptideWriter!=null) peptideWriter.close();
 				if (proteinWriter!=null) proteinWriter.close();
 			}

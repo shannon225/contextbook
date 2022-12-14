@@ -62,6 +62,15 @@ public class PeakTrace <T> implements XYTraceInterface, HasRetentionTime {
 		this.intensity = intensity;
 	}
 	
+	public String toString() {
+		StringBuilder sb=new StringBuilder();
+		sb.append(ion.toString()+"\n");
+		for (int i=0; i<rt.length; i++) {
+			sb.append(rt[i]/60f+"\t"+intensity[i]+"\n");
+		}
+		return sb.toString();
+	}
+	
 	public PeakTrace<T> updateIntensity(float[] intensity) {
 		assert this.rt.length==this.intensity.length:"Number of intensity points does not match number of RT points!";
 		

@@ -2,7 +2,11 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.library;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map.Entry;
 import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeptideXYPoint;
@@ -21,6 +25,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Ion;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Correlation;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.PivotTableGenerator;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
 import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
@@ -262,12 +267,78 @@ public class LibraryComparisonTest {
 		}
 		file.close();
 	}
+	
+	public static void main6(String[] args) throws Exception {
+		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
+		File predictDir=new File("/Users/searleb/Documents/damien/dda_library_search/hela_nce_test/libraries");
+		HashMap<String, HashMap<String, LibraryEntry>> libraries=new HashMap<>();
+		for (File f : predictDir.listFiles()) {
+			if (f.getName().endsWith(LibraryFile.DLIB)) {
+				LibraryFile lib=new LibraryFile();
+				lib.openFile(f);
+				HashMap<String, LibraryEntry> entryMap=new HashMap<String, LibraryEntry>();
+				for (LibraryEntry entry : lib.getAllEntries(false, parameters.getAAConstants())) {
+					if (entry.getPrecursorCharge()==3) {
+						entryMap.put(entry.getPeptideModSeq(), entry);
+					}
+				}
+				libraries.put(f.getName(), entryMap);
+			}
+		}
+		ArrayList<String> libNames=new ArrayList<>(libraries.keySet());
+		Collections.sort(libNames);
+		System.out.print("Acquired");
+		for (String string : libNames) {
+			System.out.print("\t"+string);
+		}
+		System.out.println();
+
+		File acquiredDir=new File("/Users/searleb/Documents/damien/dda_library_search/hela_nce_test");
+		File[] listFiles = acquiredDir.listFiles();
+		Arrays.sort(listFiles);
+		for (int i = 0; i < listFiles.length; i++) {
+			File f=listFiles[i];
+			if (f.getName().endsWith(LibraryFile.DLIB)) {
+				LibraryFile lib=new LibraryFile();
+				lib.openFile(f);
+				ArrayList<LibraryEntry> acquiredEntries=lib.getAllEntries(false, parameters.getAAConstants());
+				System.out.print(f.getName());
+
+				float maxCorrelation=0.0f;
+				int maxIndex=0;
+
+				int index=0;
+				for (String libName : libNames) {
+					HashMap<String, LibraryEntry> predictedEntries=libraries.get(libName);
+					
+					TFloatArrayList correlations=new TFloatArrayList();
+					for (LibraryEntry acquired : acquiredEntries) {
+						LibraryEntry predicted=predictedEntries.get(acquired.getPeptideModSeq());
+						if (predicted!=null) {
+							AnnotatedLibraryEntry dda=AnnotatedLibraryEntry.getAnnotationsOnly(acquired, parameters);
+							float correlation=(float)Correlation.getPearsons(dda, predicted, parameters.getFragmentTolerance());
+							correlations.add(correlation);
+						}
+					}
+
+					float median = QuickMedian.median(correlations.toArray());
+					System.out.print("\t"+median);
+					if (median>maxCorrelation) {
+						maxCorrelation=median;
+						maxIndex=index;
+					}
+					index++;
+				}
+				System.out.println("\t"+f.getName()+"\t"+libNames.get(maxIndex));
+			}
+		}
+	}
 
 	public static void main(String[] args) throws Exception {
 		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
-		//File larger=new File("/Users/searleb/Downloads/prosit_uniprot_human_jan2021_yeastENO1.fasta.trypsin.abeta.encyclopedia1.12.31.z3_nce33.dlib"); 
-		File larger=new File("/Users/searleb/Downloads/prosit_uniprot_human_jan2021_yeastENO1.fasta.trypsin.abeta.encyclopedia1.4.10.z3_nce33.dlib");	
-		File smaller=new File("/Users/searleb/Downloads/prosit_uniprot_human_jan2021_yeastENO1.fasta.trypsin.abeta.encyclopedia2.z3_nce33.dlib");
+		File larger=new File("/Users/searleb/Documents/damien/dda_library_search/non-tryptics/scribe_regression/uniprot_human_25apr2019.fasta.trypsin.z1-4_nce33.dlib");	
+		File smaller=new File("/Users/searleb/Documents/damien/dda_library_search/non-tryptics/scribe_regression/uniprot_human-reference_reviewed_2022mar02.prosit_input.tryp_nce29.prosit_hcd2020.dlib");	
+		//File smaller=new File("/Users/searleb/Documents/damien/dda_library_search/non-tryptics/scribe_regression/uniprot_human-reference_reviewed_2022mar02_Cartographer220413_z234_nce28_trypsin_SHORTNAME.dlib");
 
 		LibraryFile largerLibrary=new LibraryFile();
 		largerLibrary.openFile(larger);

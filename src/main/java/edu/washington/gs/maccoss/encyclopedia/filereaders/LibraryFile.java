@@ -1,33 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.Types;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.StringTokenizer;
-import java.util.function.Predicate;
-import java.util.zip.DataFormatException;
-
 import com.google.common.collect.ImmutableList;
-
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrerInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface;
@@ -37,37 +10,27 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.AmbiguousPeptid
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefinementData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefiner;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Chromatogram;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.ChromatogramLibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.LocalizedLibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursor;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroupInterface;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SimplePeptidePrecursor;
-import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
-import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
-import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
-import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
-import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
+import edu.washington.gs.maccoss.encyclopedia.utils.*;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.Version;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Ion;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.IonType;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.QuantitativeDIAData;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.*;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.BenjaminiHochberg;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.sql.*;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.function.Predicate;
+import java.util.zip.DataFormatException;
 
 public class LibraryFile extends SQLFile implements LibraryInterface {
 	public static boolean OPEN_IN_PLACE=false;
@@ -1612,9 +1575,9 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 				Version version = doesTableExist(c, "metadata") ? getVersion() : null;
 
 				if (version!=null) {
-					if (userFile!=null) {
-						Logger.logLine("Opening library "+userFile.getName()+" (version: "+version+")");
-					}
+//					if (userFile!=null) {
+//						Logger.logLine("Opening library "+userFile.getName()+" (version: "+version+")");
+//					}
 
 					if (new Version(0, 1, 2).amIAbove(version) && version.amIAbove(new Version(0, 0, 9))) {
 						if (userFile!=null) {

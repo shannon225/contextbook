@@ -254,7 +254,10 @@ public class PrositCSVWriter {
 		return fileName;
 	}
 
-	protected static int writePrositFile(String fileName, int defaultNCE, byte defaultCharge, boolean addDecoys, HashSet<PeptidePrecursor> allPeptides) throws FileNotFoundException {
+	public static int writePrositFile(String fileName, int defaultNCE, byte defaultCharge, boolean addDecoys, HashSet<PeptidePrecursor> allPeptides) throws FileNotFoundException {
+		return writePrositFile(fileName, defaultNCE, defaultCharge, true, addDecoys, allPeptides);
+	}
+	public static int writePrositFile(String fileName, int defaultNCE, byte defaultCharge, boolean adjustNCEForDIA, boolean addDecoys, HashSet<PeptidePrecursor> allPeptides) throws FileNotFoundException {
 		AminoAcidConstants constants = new AminoAcidConstants(); // does not support PTMs
 		PrintWriter writer=new PrintWriter(fileName);
 		int total=0;
@@ -286,10 +289,11 @@ public class PrositCSVWriter {
 			
 			writtenPeptides.add(unmodified);
 			
-			writer.println(seq+","+convertNCE(defaultNCE, precursorCharge, defaultCharge)+","+precursorCharge);
+			float nce = adjustNCEForDIA?convertNCE(defaultNCE, precursorCharge, defaultCharge):defaultNCE;
+			writer.println(seq+","+nce+","+precursorCharge);
 			if (addDecoys) {
 				String reverse=PeptideUtils.reverse(seq, constants);
-				writer.println(reverse+","+convertNCE(defaultNCE, precursorCharge, defaultCharge)+","+precursorCharge);
+				writer.println(reverse+","+nce+","+precursorCharge);
 			}
 			total++;
 		}
