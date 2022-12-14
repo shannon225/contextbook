@@ -22,25 +22,6 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.zip.DataFormatException;
 
-import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideReportData;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroupInterface;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroupQuantifier;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
-import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
-import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
-import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
-import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
-import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.QuantitativeDIAData;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
-import gnu.trove.map.hash.TObjectFloatHashMap;
-import gnu.trove.map.hash.TObjectIntHashMap;
-import gnu.trove.procedure.TObjectFloatProcedure;
-
 public class LibraryReportExtractor {
 	public static final String UNORMALIZED_TAG = "_unormalized";
 
@@ -157,11 +138,6 @@ public class LibraryReportExtractor {
 				int sampleGroup=0;
 				for (String sourceFile : sourceFiles) {
 					sampleGroup++;
-					if (normalizeByTIC) {
-						float tic=library.getTIC(sourceFile);
-						ticBySourceFileMap.put(sourceFile, tic);
-						averageTIC+=tic;
-					}
 					diffactoWriter.print(","+sourceFile);
 					peptideWriter.print("\t"+sourceFile);
 					proteinWriter.print("\t"+sourceFile);
