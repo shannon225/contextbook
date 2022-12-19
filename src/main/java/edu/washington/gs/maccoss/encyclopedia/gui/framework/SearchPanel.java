@@ -169,7 +169,7 @@ public class SearchPanel extends JPanel {
 			}
 			optionsTabs.addTab(xcordia.getProgram().toString(), xcordia.getSmallImage(), xcordia, xcordia.getProgramShortDescription());
 		}
-		if ((ProgramType.Global==program)||ProgramType.Scribe==program) {
+		if ((ProgramType.Global==program)||ProgramType.Scribe==program||ProgramType.EncyclopeDIA==program) {
 			ScribeParametersPanel scribe=new ScribeParametersPanel(this);
 			try {
 				HashMap<String, String> map=ScribeSearchParameters.readPreferences();

@@ -203,6 +203,11 @@ public class AbstractRetentionTimeFilter implements RetentionTimeAlignmentInterf
 	public float getXValue(float yrt) {
 		return rtWarper.getXValue(yrt);
 	}
+	
+	@Override
+	public float getYRT(float xrt) {
+		return rtWarper.getYValue(xrt);
+	}
 
 	@Override
 	public float getProbabilityFitsModel(float actualRT, float modelRT) {

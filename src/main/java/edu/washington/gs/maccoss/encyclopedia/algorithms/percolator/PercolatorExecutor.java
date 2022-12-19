@@ -227,10 +227,18 @@ public class PercolatorExecutor extends ExternalExecutor {
 			} catch (IOException ioe) {
 				Logger.errorLine("Problem extracting Percolator weights from "+modelFile.getName()+". Continuing without using weights...");
 				Logger.errorException(ioe);
-				params.add("--maxiter"); params.add(Integer.toString(commandData.getParameters().getPercolatorTrainingIterations()));
+				if (commandData.getParameters().getScoringBreadthType().runRecalibration()&&round==1) {
+					params.add("--maxiter"); params.add(Integer.toString(Math.min(3, commandData.getParameters().getPercolatorTrainingIterations())));
+				} else {
+					params.add("--maxiter"); params.add(Integer.toString(commandData.getParameters().getPercolatorTrainingIterations()));
+				}
 			}
 		} else {
-			params.add("--maxiter"); params.add(Integer.toString(commandData.getParameters().getPercolatorTrainingIterations()));
+			if (commandData.getParameters().getScoringBreadthType().runRecalibration()&&round==1) {
+				params.add("--maxiter"); params.add(Integer.toString(Math.min(3, commandData.getParameters().getPercolatorTrainingIterations())));
+			} else {
+				params.add("--maxiter"); params.add(Integer.toString(commandData.getParameters().getPercolatorTrainingIterations()));
+			}
 		}
 		
 		if (percolatorVersion.getMajorVersion()>2) {

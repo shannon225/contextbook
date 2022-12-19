@@ -27,6 +27,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizatio
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.ScoredPSMFilterInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackground;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackgroundInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
@@ -359,7 +360,7 @@ public class Thesaurus {
 		if (totalTasks==0) {
 			throw new EncyclopediaException("No peptides found in library with the specified PTM ("+parameters.getLocalizingModification()+")!");
 		}
-		Pair<ArrayList<PercolatorPeptide>, RetentionTimeAlignmentInterface> percolatorResults=Encyclopedia.percolatePeptides(progress, job, stripefile, saveResultsConsumer);
+		Pair<ArrayList<PercolatorPeptide>, ScoredPSMFilterInterface> percolatorResults=Encyclopedia.percolatePeptides(progress, job, stripefile, saveResultsConsumer);
 		if (parameters.getScoringBreadthType().runRecalibration()) {
 			percolatorResults=Encyclopedia.repercolatePeptides(progress, job, stripefile, saveResultsConsumer, percolatorResults.y);
 		}

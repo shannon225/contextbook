@@ -9,6 +9,8 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.ScoredPSM;
 public interface ScoredPSMFilterInterface {
 
 	boolean passesFilter(ScoredPSM psm);
+	
+	float getYRT(float xrt);
 
 	float[] getAdditionalScores(ScoredPSM psm);
 
