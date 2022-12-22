@@ -895,10 +895,17 @@ public class DilutionCurveFitter {
 		}
 
 		public float getAlignedRTInSec(LibraryEntry entry) {
+			return getAlignedRTInSec(entry, false);
+		}
+		public boolean isKnown(LibraryEntry entry) {
+			return knownRTInSecs.contains(entry.getPeptideModSeq());
+		}
+		
+		public float getAlignedRTInSec(LibraryEntry entry, boolean quiet) {
 			if (knownRTInSecs.contains(entry.getPeptideModSeq())) {
 				return knownRTInSecs.get(entry.getPeptideModSeq());
 			}
-			Logger.errorLine("Potential problem: had to look up "+entry.getPeptideModSeq());
+			if (!quiet)	Logger.errorLine("Potential problem: had to look up "+entry.getPeptideModSeq());
 			return rtAlignment.getYValue(entry.getScanStartTime()/60f)*60f; // deal with sec to min interconversion
 		}
 	}
