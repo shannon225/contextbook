@@ -54,7 +54,7 @@ public class ConvertFastaToPrositCSV {
 			if (fastaFile.exists()) {
 				PrositCSVWriter.writeCSV(outputFile, fastaFile, params.getEnzyme(), params.getDefaultNCE(), params.getDefaultCharge(),
 						params.getMinCharge(), params.getMaxCharge(), params.getMaxMissedCleavage(),
-						new Range(params.getMinMz(), params.getMaxMz()), false);
+						new Range(params.getMinMz(), params.getMaxMz()), params.isAdjustNCEForDIA(), params.isAddDecoys());
 				Logger.logLine("Finished conversion from FASTA to Prosit CSV");
 			} else {
 				Logger.logLine("You must specify a FASTA file!");
