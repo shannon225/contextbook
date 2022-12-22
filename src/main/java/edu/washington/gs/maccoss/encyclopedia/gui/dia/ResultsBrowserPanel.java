@@ -66,6 +66,7 @@ import edu.washington.gs.maccoss.encyclopedia.gui.general.LabeledComponent;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingWorkerProgress;
 import edu.washington.gs.maccoss.encyclopedia.gui.massspec.FragmentationTable;
+import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
@@ -89,6 +90,7 @@ public class ResultsBrowserPanel extends JPanel {
 
 	private final FileChooserPanel elibFileChooser;
 	private final FileChooserPanel rawFileChooser;
+	private final FileChooserPanel libraryFileChooser;
 	private final JSplitPane dataSplit=new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 	private final JSplitPane rawSplit=new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 	private final JSplitPane peakPickingSplit=new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
@@ -102,6 +104,7 @@ public class ResultsBrowserPanel extends JPanel {
 	private final float minimumScore;
 	
 	private LibraryInterface library=null;
+	private LibraryInterface reference=null;
 	private StripeFileInterface dia=null;
 	private Optional<PhosphoLocalizer> nullableLocalizer=Optional.ofNullable(null);
 
@@ -139,6 +142,19 @@ public class ResultsBrowserPanel extends JPanel {
 			}
 		};
 		options.add(rawFileChooser);
+
+		libraryFileChooser=new FileChooserPanel(null, "Reference", new SimpleFilenameFilter(LibraryFile.DLIB, LibraryFile.ELIB), false) {
+			private static final long serialVersionUID=1L;
+
+			@Override
+			public void update(File... filenames) {
+				super.update(filenames);
+				if (filenames!=null&&filenames.length>0&&filenames[0]!=null) {
+					updateLibrary(filenames[0]);
+				}
+			}
+		};
+		options.add(libraryFileChooser);
 		
 		model=new LibraryEntryTableModel();
 		table=new JTable(model) {
@@ -170,7 +186,7 @@ public class ResultsBrowserPanel extends JPanel {
 					if (selection.length<=0) return;
 					
 					LibraryEntry entry=model.getSelectedRow(table.convertRowIndexToModel(selection[0]));
-					System.out.println(entry.toObjectCreatorString());
+					//System.out.println(entry.toObjectCreatorString());
 				}
 			}
 		});
@@ -244,6 +260,29 @@ public class ResultsBrowserPanel extends JPanel {
 	}
 	public void askForRaw() {
 		rawFileChooser.askForFiles();
+	}
+	
+	public void updateLibrary(final File f) {
+		SwingWorkerProgress<LibraryFile> worker=new SwingWorkerProgress<LibraryFile>((Frame)SwingUtilities.getWindowAncestor(this), "Please wait...", "Reading Library") {
+			@Override
+			protected LibraryFile doInBackgroundForReal() throws Exception {
+				LibraryFile.OPEN_IN_PLACE=true;
+				LibraryInterface ilib=BlibToLibraryConverter.getFile(f);
+				LibraryFile.OPEN_IN_PLACE=false;
+				if (!(ilib instanceof LibraryFile)) {
+					throw new EncyclopediaException("Sorry, can't load this type of library file "+ilib.getClass().getName());
+				}
+				LibraryFile library=(LibraryFile)ilib;
+				return library;
+			}
+			@Override
+			protected void doneForReal(LibraryFile t) {
+				Logger.logLine("Finished loading library, updating GUI");
+				reference=t;
+				updateToSelected();
+			}
+		};
+		worker.execute();
 	}
 	
 	public void updateTable(final File f) {
@@ -346,25 +385,47 @@ public class ResultsBrowserPanel extends JPanel {
 		if (locationData<=5) {
 			locationData=400;
 		}
+		
+		LibraryEntry referenceEntry=null;
 		if (entry!=null) {
-			AnnotatedLibraryEntry annotated=new AnnotatedLibraryEntry(entry, parameters);
-			double[] masses=annotated.getMassArray();
-			float[] intensities=annotated.getIntensityArray();
-			float[] correlations=annotated.getCorrelationArray();
-			boolean[] quantifiedIonsArray=annotated.getQuantifiedIonsArray();
-			FragmentIon[] ions=annotated.getIonAnnotations();
-			
-			System.out.println(annotated.getPeptideModSeq()+", "+annotated.getPrecursorCharge());
-			for (int i = 0; i < quantifiedIonsArray.length; i++) {
-				System.out.println(masses[i]+"\t"+intensities[i]+"\t"+correlations[i]+"\t"+quantifiedIonsArray[i]+"\t"+ions[i]);
+			if (reference!=null) {
+				try {
+					ArrayList<LibraryEntry> references=reference.getEntries(entry.getPeptideModSeq(), entry.getPrecursorCharge(), false);
+					Logger.logLine("Found "+references.size()+" references, choosing first one...");
+					if (references.size()>0) {
+						referenceEntry=references.get(0);
+					}
+				} catch (Exception e) {
+					JOptionPane.showMessageDialog(ResultsBrowserPanel.this, "Sorry, there was a problem reading the library reference that contains ["+entry.getPeptideModSeq()+"]: "+e.getMessage(), "Error Reading Reference File",
+							JOptionPane.ERROR_MESSAGE);
+					e.printStackTrace();
+				}
 			}
+			
+//			AnnotatedLibraryEntry annotated=new AnnotatedLibraryEntry(entry, parameters);
+//			double[] masses=annotated.getMassArray();
+//			float[] intensities=annotated.getIntensityArray();
+//			float[] correlations=annotated.getCorrelationArray();
+//			boolean[] quantifiedIonsArray=annotated.getQuantifiedIonsArray();
+//			FragmentIon[] ions=annotated.getIonAnnotations();
+//			
+//			System.out.println(annotated.getPeptideModSeq()+", "+annotated.getPrecursorCharge());
+//			for (int i = 0; i < quantifiedIonsArray.length; i++) {
+//				System.out.println(masses[i]+"\t"+intensities[i]+"\t"+correlations[i]+"\t"+quantifiedIonsArray[i]+"\t"+ions[i]);
+//			}
 		}
 		
 		if (entry==null) {
 			split.setLeftComponent(new JLabel("Select a peptide!"));
 			return;
 		} else if (dia==null) {
-			ChartPanel chart = Charter.getChart(new AnnotatedLibraryEntry(entry, parameters));
+			ChartPanel chart;
+			if (referenceEntry!=null) {
+				LibraryEntry butterfly=FragmentIonConsistencyCharter.getButterfly(entry, referenceEntry);
+				chart = Charter.getChart(new AnnotatedLibraryEntry(butterfly, parameters, true));
+			} else {
+				chart = Charter.getChart(new AnnotatedLibraryEntry(entry, parameters, true));
+			}
 			ChartPanel decoyChart = Charter.getChart(new AnnotatedLibraryEntry(entry.getDecoy(parameters), parameters));
 			JTabbedPane tabs=new JTabbedPane();
 			tabs.addTab("Target", chart);
@@ -557,9 +618,17 @@ public class ResultsBrowserPanel extends JPanel {
 						AnnotatedLibraryEntry annotatedEntry=new AnnotatedLibraryEntry(new SimplePeptidePrecursor(entry.getPeptideModSeq(), entry.getPrecursorCharge(), parameters.getAAConstants()), bestStripe, parameters);
 
 						JSplitPane specFragPane=new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-						ChartPanel spectrumPane=Charter.getChart(annotatedEntry);
+
+						ChartPanel chart;
+						if (referenceEntry!=null) {
+							LibraryEntry butterfly=FragmentIonConsistencyCharter.getButterfly(annotatedEntry, referenceEntry);
+							chart = Charter.getChart(new AnnotatedLibraryEntry(butterfly, parameters, true));
+						} else {
+							chart = Charter.getChart(annotatedEntry);
+						}
+						
 						FragmentationTable fragTable=new FragmentationTable(entry, entry.getPeptideModSeq(), parameters);
-						specFragPane.add(spectrumPane, JSplitPane.TOP);
+						specFragPane.add(chart, JSplitPane.TOP);
 						specFragPane.add(fragTable, JSplitPane.BOTTOM);
 
 						tabs.add("Detection", specFragPane);
@@ -580,7 +649,7 @@ public class ResultsBrowserPanel extends JPanel {
 				e.printStackTrace();
 			}
 			Logger.logLine("Finished reading peptide "+entry.getSpectrumName()+" (rt="+ targetRT+")");
-			System.out.println(General.toString(entry.getQuantifiedIonsArray()));
+			//System.out.println(General.toString(entry.getQuantifiedIonsArray()));
 		}
 		split.setDividerLocation(location);
 	}

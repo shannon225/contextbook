@@ -21,6 +21,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.gui.dia.FragmentIonConsistencyCharter;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
@@ -476,39 +477,10 @@ public class CharterTest {
 		Charter.launchChart(new AnnotatedLibraryEntry(actual.get(peptide), params, true),
 				actual.get(peptide).getPeptideSeq(), new Dimension(500, 350));
 		Charter.launchChart(
-				new AnnotatedLibraryEntry(getButterfly(actual.get(peptide), predicted.get(peptide)), params, true),
+				new AnnotatedLibraryEntry(FragmentIonConsistencyCharter.getButterfly(actual.get(peptide), predicted.get(peptide)), params, true),
 				actual.get(peptide).getPeptideSeq(), new Dimension(500, 350));
 		Charter.launchChart(
-				new AnnotatedLibraryEntry(getButterfly(actual.get(peptide), altpredicted.get(0)), params, true),
+				new AnnotatedLibraryEntry(FragmentIonConsistencyCharter.getButterfly(actual.get(peptide), altpredicted.get(0)), params, true),
 				actual.get(peptide).getPeptideSeq(), new Dimension(500, 350));
-	}
-
-	public static LibraryEntry getButterfly(LibraryEntry top, LibraryEntry bottom) {
-		double[] masses = new double[top.getMassArray().length + bottom.getMassArray().length];
-		System.arraycopy(top.getMassArray(), 0, masses, 0, top.getMassArray().length);
-		System.arraycopy(bottom.getMassArray(), 0, masses, top.getMassArray().length, bottom.getMassArray().length);
-		float[] intensities = new float[top.getIntensityArray().length + bottom.getIntensityArray().length];
-		System.arraycopy(normalize(top.getIntensityArray()), 0, intensities, 0, top.getIntensityArray().length);
-		System.arraycopy(General.multiply(normalize(bottom.getIntensityArray()), -1f), 0, intensities,
-				top.getIntensityArray().length, bottom.getIntensityArray().length);
-		float[] correlations = new float[top.getCorrelationArray().length + bottom.getCorrelationArray().length];
-		System.arraycopy(top.getCorrelationArray(), 0, correlations, 0, top.getCorrelationArray().length);
-		System.arraycopy(bottom.getCorrelationArray(), 0, correlations, top.getCorrelationArray().length,
-				bottom.getCorrelationArray().length);
-		boolean[] quantifiedIons = new boolean[top.getQuantifiedIonsArray().length
-				+ bottom.getQuantifiedIonsArray().length];
-		System.arraycopy(top.getQuantifiedIonsArray(), 0, quantifiedIons, 0, top.getQuantifiedIonsArray().length);
-		System.arraycopy(bottom.getQuantifiedIonsArray(), 0, quantifiedIons, top.getQuantifiedIonsArray().length,
-				bottom.getQuantifiedIonsArray().length);
-
-		LibraryEntry trace = new LibraryEntry(top.getSource(), top.getAccessions(), top.getSpectrumIndex(),
-				top.getPrecursorMZ(), top.getPrecursorCharge(), top.getLegacyPeptideModSeq(), top.getPeptideModSeq(),
-				top.getCopies(), top.getRetentionTime(), top.getScore(), masses, intensities, correlations,
-				quantifiedIons, true);
-		return trace;
-	}
-
-	private static float[] normalize(float[] intensities) {
-		return General.divide(intensities, General.max(intensities));
 	}
 }

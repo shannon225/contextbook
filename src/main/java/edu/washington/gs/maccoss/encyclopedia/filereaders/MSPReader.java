@@ -311,6 +311,12 @@ public class MSPReader {
 									// MassIVE-KB has bugs in reporting AAs as numbers(?!), so fall back on the index
 									aa=sequence.charAt(index);
 								}
+								
+								if (index==-1) {
+									// fix bug in Prosit-TMT where n-term index is assigned to -1 and AA is assigned to c-term AA
+									index=0;
+									aa='n';
+								}
 
 								double mass=0.0;
 								try {
@@ -525,7 +531,13 @@ public class MSPReader {
 			return 43.00582;
 		} else if ("Deamidated".equalsIgnoreCase(mod)||"Deamidation".equalsIgnoreCase(mod)) {
 			return 0.984016;
-		} else if ("TMT".equalsIgnoreCase(mod)) {
+		} else if ("iTRAQ4".equalsIgnoreCase(mod)) {
+			return 144.1024108;
+		} else if ("iTRAQ8".equalsIgnoreCase(mod)) {
+			return 304.205360;
+		} else if ("TMT_Pro".equalsIgnoreCase(mod)) {
+			return 	304.207146;
+		} else if ("TMT".equalsIgnoreCase(mod)||"TMT_6".equalsIgnoreCase(mod)) {
 			return 229.162932;
 		}
 		throw new EncyclopediaException("Unexpected modification ["+mod+"] on ["+aa+"]");

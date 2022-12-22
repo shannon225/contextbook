@@ -21,6 +21,9 @@ public class LibraryEntryTableModel extends AbstractTableModel {
 		entries.addAll(newEntries);
 		fireTableDataChanged();
 	}
+	public void updateEntries() {
+		fireTableDataChanged();
+	}
 	
 	public LibraryEntry getSelectedRow(int rowIndex) {
 		return entries.get(rowIndex);
