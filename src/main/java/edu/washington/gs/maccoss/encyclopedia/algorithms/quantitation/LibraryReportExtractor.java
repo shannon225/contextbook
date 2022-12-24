@@ -1,5 +1,16 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation;
 
+import com.google.common.collect.ImmutableList;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
+import edu.washington.gs.maccoss.encyclopedia.utils.*;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.QuantitativeDIAData;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import gnu.trove.map.TObjectFloatMap;
+import gnu.trove.map.hash.TObjectFloatHashMap;
+import gnu.trove.map.hash.TObjectIntHashMap;
+import gnu.trove.procedure.TObjectFloatProcedure;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -7,35 +18,12 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.TreeMap;
 import java.util.zip.DataFormatException;
 
-import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideReportData;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroupInterface;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroupQuantifier;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
-import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
-import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
-import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
-import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
-import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.QuantitativeDIAData;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
-import gnu.trove.map.hash.TObjectFloatHashMap;
-import gnu.trove.map.hash.TObjectIntHashMap;
-import gnu.trove.procedure.TObjectFloatProcedure;
-
 public class LibraryReportExtractor {
+	public static final String UNORMALIZED_TAG = "_unormalized";
 
 	public static void main(String[] args) throws IOException, SQLException, DataFormatException {
 		File file=new File("/Volumes/WorkingDisk/yeast_curve_wide.elib");
@@ -50,19 +38,68 @@ public class LibraryReportExtractor {
 		ArrayList<ProteinGroupInterface> proteins=library.getProteinGroups();
 		return extractMatrix(library, proteins, normalizeByTIC, Optional.ofNullable(null));
 	}
-	public static File extractMatrix(LibraryFile library, ArrayList<ProteinGroupInterface> proteins, boolean normalizeByTIC) throws IOException, SQLException, DataFormatException {
+	public static File extractMatrix(LibraryFile library, List<? extends ProteinGroupInterface> proteins, boolean normalizeByTIC) throws IOException, SQLException, DataFormatException {
 		return extractMatrix(library, proteins, normalizeByTIC, Optional.ofNullable(null));
 	}
-	public static File extractMatrix(LibraryFile library, ArrayList<ProteinGroupInterface> proteins, boolean normalizeByTIC, Optional<CoefficientOfVariationCalculator> cvCalculator) throws IOException, SQLException, DataFormatException {
-		File stubFile=library.getFile();
-		if (stubFile==null) {
-			throw new EncyclopediaException("Please save .ELIB before trying to read matrix data from it!");
-		}
+	public static File extractMatrix(LibraryFile library, List<? extends ProteinGroupInterface> proteins, boolean normalizeByTIC, Optional<CoefficientOfVariationCalculator> cvCalculator) throws IOException, SQLException, DataFormatException {
 		String tag;
 		if (normalizeByTIC) {
 			tag="";
 		} else {
-			tag="_unormalized";
+			tag = UNORMALIZED_TAG;
+		}
+
+		ArrayList<String> sourceFiles;
+		if (cvCalculator.isPresent()) {
+			Logger.logLine("Using pre-selected source files...");
+			sourceFiles=cvCalculator.get().getSortedSampleNames();
+		} else {
+			Logger.logLine("Getting source files...");
+
+			sourceFiles = new ArrayList<String>();
+			try (Connection c = library.getConnection()) {
+				try (Statement s = c.createStatement()) {
+					try (ResultSet rs = s.executeQuery("select distinct SourceFile from peptidequants")) {
+						while (rs.next()) {
+							sourceFiles.add(rs.getString(1));
+						}
+					}
+				}
+			}
+
+			Collections.sort(sourceFiles);
+		}
+
+		TObjectFloatHashMap<String> ticBySourceFileMap=new TObjectFloatHashMap<String>();
+		for (String sourceFile : sourceFiles) {
+			if (normalizeByTIC) {
+				float tic=library.getTIC(sourceFile);
+				ticBySourceFileMap.put(sourceFile, tic);
+			}
+		}
+
+		final IntensityNormalizer normalizer;
+		if (!normalizeByTIC) {
+			normalizer = IntensityNormalizer::identity;
+		} else if (cvCalculator.isPresent()) {
+			normalizer = cvCalculator.get().getNormalizer(ticBySourceFileMap);
+		} else {
+			normalizer = IntensityNormalizer.tic(ticBySourceFileMap);
+		}
+
+		return extractMatrix(library, ImmutableList.copyOf(sourceFiles), proteins, normalizer, cvCalculator, tag);
+	}
+
+	/**
+	 * @param normalizer must be nonnull; use {@link IntensityNormalizer#IDENTITY} to disable normalization.
+	 * @param cvCalculator Never used for normalization, instead compute the necessary {@code normalizer}, perhaps using
+	 *                     {@link CoefficientOfVariationCalculator#getNormalizer(TObjectFloatMap)}.
+	 * @param tag used to build result filename
+	 */
+	public static File extractMatrix(LibraryFile library, List<String> sourceFiles, List<? extends ProteinGroupInterface> proteins, IntensityNormalizer normalizer, Optional<CoefficientOfVariationCalculator> cvCalculator, String tag) throws IOException, SQLException, DataFormatException {
+		File stubFile=library.getFile();
+		if (stubFile==null) {
+			throw new EncyclopediaException("Please save .ELIB before trying to read matrix data from it!");
 		}
 		File diffactoFile=new File(stubFile.getParentFile(), stubFile.getName()+tag+".diffacto.csv");
 		File diffactoSamplesFile=new File(stubFile.getParentFile(), stubFile.getName()+tag+".diffacto.samples.lst");
@@ -77,20 +114,6 @@ public class LibraryReportExtractor {
 			PrintWriter peptideWriter=null;
 			PrintWriter proteinWriter=null;
 			try {
-				ArrayList<String> sourceFiles=new ArrayList<String>();
-				if (cvCalculator.isPresent()) {
-					Logger.logLine("Using pre-selected source files...");
-					sourceFiles=cvCalculator.get().getSortedSampleNames();
-				} else {
-					Logger.logLine("Getting source files...");
-					ResultSet rs=s.executeQuery("select distinct SourceFile from peptidequants");
-					while (rs.next()) {
-						sourceFiles.add(rs.getString(1));
-					}
-					rs.close();
-
-					Collections.sort(sourceFiles);
-				}
 				TObjectIntHashMap<String> indexByFile=new TObjectIntHashMap<>();
 				for (int i=0; i<sourceFiles.size(); i++) {
 					indexByFile.put(sourceFiles.get(i), i);
@@ -102,36 +125,26 @@ public class LibraryReportExtractor {
 				}
 				
 				diffactoSamplesWriter=new PrintWriter(diffactoSamplesFile, "UTF-8");
-				
+
 				diffactoWriter=new PrintWriter(diffactoFile, "UTF-8");
 				diffactoWriter.print("sequences,Protein");
-				
+
 				peptideWriter=new PrintWriter(peptideReportFile, "UTF-8");
 				peptideWriter.print("Peptide\tProtein\tnumFragments");
 				
 				proteinWriter=new PrintWriter(proteinReportFile, "UTF-8");
 				proteinWriter.print("Protein\tNumPeptides\tPeptideSequences");
-				
-				float averageTIC=0.0f;
-				TObjectFloatHashMap<String> ticBySourceFileMap=new TObjectFloatHashMap<String>();
+
 				int sampleGroup=0;
 				for (String sourceFile : sourceFiles) {
 					sampleGroup++;
-					if (normalizeByTIC) {
-						float tic=library.getTIC(sourceFile);
-						ticBySourceFileMap.put(sourceFile, tic);
-						averageTIC+=tic;
-					}
 					diffactoWriter.print(","+sourceFile);
 					peptideWriter.print("\t"+sourceFile);
 					proteinWriter.print("\t"+sourceFile);
 					diffactoSamplesWriter.print(sourceFile+"\tS"+sampleGroup);
 					diffactoSamplesWriter.println();
 				}
-				if (sourceFiles.size()>0) {
-					averageTIC=averageTIC/sourceFiles.size();
-				}
-				
+
 				diffactoWriter.println();
 				peptideWriter.println();
 				proteinWriter.println();
@@ -178,19 +191,8 @@ public class LibraryReportExtractor {
 						throw new EncyclopediaException("Unexpected sample: "+sourceFile);
 					}
 
-					// FIXME NEED TO NORMALIZE BY TIC
-					float normalizedIntensity;
-					if (cvCalculator.isPresent()) {
-						normalizedIntensity=totalIntensity*cvCalculator.get().getReplicateNormalizationFactor(sourceFile, ticBySourceFileMap);
-					} else {
-						float tic=ticBySourceFileMap.get(sourceFile);
-						if (tic>0.0f) {
-							normalizedIntensity=totalIntensity/tic*averageTIC;
-						} else {
-							normalizedIntensity=totalIntensity;
-						}
-					}
-					
+					final float normalizedIntensity = normalizer.normalize(totalIntensity, sourceFile);
+
 					Pair<String, float[]> pair=intensitiesByPeptideModSeq.get(peptideModSeq);
 					int[] numFragmentsArray=numFragmentsByPeptideModSeq.get(peptideModSeq);
 					float[] intensitiesArray;
@@ -305,13 +307,13 @@ public class LibraryReportExtractor {
 					peptideWriter.print(maxNumFragments);
 					
 					float[] array=pair.y;
-					
+
 					for (float f : array) {
 						peptideWriter.print("\t");
 						peptideWriter.print(f);
 					}
 					peptideWriter.println();
-					
+
 					// DIFFACTO
 					diffactoWriter.print("//");
 					diffactoWriter.print(peptideModSeq);

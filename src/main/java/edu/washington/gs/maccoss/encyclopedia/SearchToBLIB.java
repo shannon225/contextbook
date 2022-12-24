@@ -1,10 +1,14 @@
 package edu.washington.gs.maccoss.encyclopedia;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import com.google.common.primitives.Floats;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ParsimonyProteinGrouper;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.EncyclopediaTwoPeakLocationInferrer;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrerInterface;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.ScoredPSM;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.*;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface.AlignmentDataPoint;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
@@ -19,6 +23,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPr
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.LocalizationDataToTSVConsumer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ThesaurusJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.precursor.DDAPrecursorIntegrator;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.IntensityNormalizer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.LibraryReportExtractor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.PeptideQuantExtractor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAJobData;
@@ -27,14 +32,26 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.
 import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.*;
 import edu.washington.gs.maccoss.encyclopedia.utils.*;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableConcatenator;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.LinearInterpolatedFunction;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.RTProbabilityModel;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.SubProgressIndicator;
+import gnu.trove.iterator.TDoubleIterator;
+import gnu.trove.list.TDoubleList;
+import gnu.trove.list.array.TDoubleArrayList;
+import gnu.trove.map.TObjectFloatMap;
+import gnu.trove.map.hash.TObjectFloatHashMap;
+import gnu.trove.set.TDoubleSet;
+import gnu.trove.set.hash.TDoubleHashSet;
 
+import java.io.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -42,11 +59,17 @@ import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.DataFormatException;
+
+import static edu.washington.gs.maccoss.encyclopedia.Encyclopedia.QUIET_MODE_ARG;
 
 public class SearchToBLIB {
 	public static void main(String[] args) {
@@ -122,7 +145,9 @@ public class SearchToBLIB {
 		File outputFile=new File(arguments.get("-o"));
 		boolean alignBetweenFiles=ParsingUtils.getBoolean("-a", arguments, true);
 		boolean writeBlib=ParsingUtils.getBoolean("-blib", arguments, false);
-		
+
+		final OutputFormat outputFormat = writeBlib ? OutputFormat.BLIB : OutputFormat.ELIB;
+
 		PecanSearchParameters parameters=PecanParameterParser.parseParameters(arguments);
 		XCorDIAOneScoringFactory factory=new XCorDIAOneScoringFactory(parameters);
 		Logger.timelessLogLine("SearchToLIB XCorDIA version "+ProgramType.getGlobalVersion().toString());
@@ -170,7 +195,7 @@ public class SearchToBLIB {
 				}
 			}
 			Logger.logLine("Attempting to process "+pecanJobs.size()+" searches...");
-			convert(new EmptyProgressIndicator(), pecanJobs, outputFile, writeBlib, alignBetweenFiles);
+			convert(new EmptyProgressIndicator(), pecanJobs, outputFile, outputFormat, alignBetweenFiles, parameters);
 		} catch (Exception e) {
 			Logger.errorLine("Encountered Fatal Error!");
 			Logger.errorException(e);
@@ -187,7 +212,9 @@ public class SearchToBLIB {
 		File outputFile=new File(arguments.get("-o"));
 		boolean alignBetweenFiles=ParsingUtils.getBoolean("-a", arguments, true);
 		boolean writeBlib=ParsingUtils.getBoolean("-blib", arguments, false);
-		
+
+		final OutputFormat outputFormat = writeBlib ? OutputFormat.BLIB : OutputFormat.ELIB;
+
 		PecanSearchParameters parameters=PecanParameterParser.parseParameters(arguments);
 		PecanScoringFactory factory=new PecanOneScoringFactory(parameters, outputFile);
 		Logger.logLine("SearchToLIB Pecan version "+ProgramType.getGlobalVersion().toString());
@@ -229,7 +256,7 @@ public class SearchToBLIB {
 				}
 			}
 			Logger.logLine("Attempting to process "+pecanJobs.size()+" searches...");
-			convert(new EmptyProgressIndicator(), pecanJobs, outputFile, writeBlib, alignBetweenFiles);
+			convert(new EmptyProgressIndicator(), pecanJobs, outputFile, outputFormat, alignBetweenFiles, parameters);
 		} catch (Exception e) {
 			Logger.errorLine("Encountered Fatal Error!");
 			Logger.errorException(e);
@@ -245,10 +272,41 @@ public class SearchToBLIB {
 		File fastaFile=new File(arguments.get("-f"));
 		File libraryFile=new File(arguments.get("-l"));
 		File outputFile=new File(arguments.get("-o"));
-		boolean alignBetweenFiles=ParsingUtils.getBoolean("-a", arguments, true);
-		boolean writeBlib=ParsingUtils.getBoolean("-blib", arguments, false);
-		
-		SearchParameters parameters=SearchParameterParser.parseParameters(arguments);
+
+		final boolean alignBetweenFiles=ParsingUtils.getBoolean("-a", arguments, true);
+		final boolean writeBlib=ParsingUtils.getBoolean("-blib", arguments, false);
+		final boolean alignOnly = ParsingUtils.getBoolean("-alignOnly", arguments, false);
+
+		final SearchParameters parameters=SearchParameterParser.parseParameters(arguments);
+
+		final OutputFormat outputFormat;
+
+		if (!alignOnly) {
+			outputFormat = writeBlib ? OutputFormat.BLIB : OutputFormat.ELIB;
+		} else {
+			if (!alignBetweenFiles) {
+				Logger.errorLine("-alignOnly requires alignment to be enabled; try running with `-a true`");
+				System.exit(1);
+			}
+
+			if (!parameters.isQuantifySameFragmentsAcrossSamples()) {
+				Logger.errorLine("-alignOnly requires -quantifyAcrossSamples true");
+				System.exit(1);
+			}
+
+			if (writeBlib) {
+				Logger.errorLine("-alignOnly requires ELIB output; try running with `-blib false`");
+				System.exit(1);
+			}
+
+			if (arguments.containsKey("-alignmentFrom")) {
+				Logger.errorLine("Error: -alignOnly and -alignmentFrom are incompatible");
+				System.exit(1);
+			}
+
+			outputFormat = OutputFormat.ALIB;
+		}
+
 		LibraryScoringFactory factory=EncyclopediaScoringFactory.getScoringFactory(arguments, parameters);
 		Logger.timelessLogLine("SearchToLIB EncyclopeDIA version "+ProgramType.getGlobalVersion().toString());
 
@@ -261,7 +319,12 @@ public class SearchToBLIB {
 		Logger.timelessLogLine(" -o "+outputFile.getAbsolutePath());
 		Logger.timelessLogLine(" -a "+alignBetweenFiles);
 		Logger.timelessLogLine(" -blib "+writeBlib);
+		Logger.timelessLogLine(" -alignOnly " + alignOnly);
 		Logger.timelessLogLine(parameters.toString());
+
+		if (arguments.containsKey(QUIET_MODE_ARG)) {
+			Logger.PRINT_TO_SCREEN = false;
+		}
 
 		try {
 			LibraryInterface library=BlibToLibraryConverter.getFile(libraryFile);
@@ -283,24 +346,152 @@ public class SearchToBLIB {
 						EncyclopediaJobData job = new EncyclopediaJobData(file, fastaFile, library, factory);
 						pecanJobs.add(job);
 					}
+				} else if (alignOnly && !diaFile.exists()) {
+					// Special case -- when running alignment-only we may not have the .DIA available but want
+					// to handle the job using Percolator/ELIB results only.
+					pecanJobs.add(EncyclopediaJobData.getDummyFor(diaFile, fastaFile, library, factory));
 				} else {
 					EncyclopediaJobData job = new EncyclopediaJobData(diaFile, fastaFile, library, factory);
 					pecanJobs.add(job);
 				}
 			}
 			Logger.logLine("Attempting to process "+pecanJobs.size()+" searches...");
-			convert(new EmptyProgressIndicator(), pecanJobs, outputFile, writeBlib, alignBetweenFiles);
+
+			if (!arguments.containsKey("-alignmentFrom")) {
+				// Main program: convert to appropriate format
+				convert(new EmptyProgressIndicator(), pecanJobs, outputFile, outputFormat, alignBetweenFiles, parameters);
+			} else {
+				// Sub-program: quantify from previously-computed alignment/transition refinement
+
+				if (!alignBetweenFiles) {
+					Logger.errorLine("-alignmentFrom requires alignment to be enabled; try running with `-a true`");
+					System.exit(1);
+				}
+
+				if (!parameters.isQuantifySameFragmentsAcrossSamples()) {
+					Logger.errorLine("-alignmentFrom requires -quantifyAcrossSamples true");
+					System.exit(1);
+				}
+
+				if (writeBlib) {
+					Logger.errorLine("-alignmentFrom requires ELIB output; try running with `-blib false`");
+					System.exit(1);
+				}
+
+				if (alignOnly) {
+					Logger.errorLine("Error: -alignOnly and -alignmentFrom are incompatible");
+					System.exit(1);
+				}
+
+				convertElibQuantOnly(new EmptyProgressIndicator(), pecanJobs, outputFile, new File(arguments.get("-alignmentFrom")), parameters);
+			}
 		} catch (Exception e) {
 			Logger.errorLine("Encountered Fatal Error!");
 			Logger.errorException(e);
 		}
 	}
-	
+
+	public enum OutputFormat {
+		/**
+		 * Write to the ELIB format. If {@code inferrer} is present, the resulting file will be a "quantitative" ELIB,
+		 * using the precomputed top-N transitions for quantification and inferred (aligned) RTs when the peptide was
+		 * not detected in the initial single-file search. Additionally, quantitative matrices for peptides and proteins
+		 * will be written.
+		 *
+		 * All passing peptides will be included.
+		 *
+		 * {@code globalPercolatorPeptides} should be provided if converting more than a single search, but should otherwise be empty.
+		 */
+		ELIB {
+			@Override
+			void convert(ProgressIndicator progress, List<? extends SearchJobData> jobs, File outputFile, Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides, Optional<PercolatorExecutionData> globalPercolatorFiles, Optional<PeakLocationInferrerInterface> inferrer, SearchParameters parameters) {
+				convertElib(progress, jobs, outputFile, Optional.of(passingPeptides), globalPercolatorFiles, inferrer, parameters);
+			}
+		},
+
+		/**
+		 * Write results to the "alignment-only library" format, which records the passing peptides, RT alignment, and
+		 * refined transitions for the experiment to a library file without performing any additional work. The resulting
+		 * file can then be used to quantify the same targets in later separate runs of one (or more) sample(s).
+		 *
+		 * Note that {@code inferrer} must be present to support this export type.
+		 */
+		ALIB {
+			@Override
+			void convert(ProgressIndicator progress, List<? extends SearchJobData> jobs, File outputFile, Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides, Optional<PercolatorExecutionData> globalPercolatorFiles, Optional<PeakLocationInferrerInterface> inferrer, SearchParameters parameters) {
+				if (!inferrer.isPresent()) {
+					throw new IllegalArgumentException("Unable to export alignment-only library without RT alignment and transition refinement!");
+				}
+
+				convertAlib(progress, jobs, outputFile, passingPeptides, globalPercolatorFiles, inferrer.get(), parameters);
+			}
+		},
+
+		/**
+		 * Write to the BLIB format, suitable for use with Skyline. Only quantifiable peptides will be written from each
+		 * search. Additionally, a TSV "integration" file will be written with details of the peptides included in the library.
+		 */
+		BLIB {
+			@Override
+			void convert(ProgressIndicator progress, List<? extends SearchJobData> jobs, File outputFile, Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides, Optional<PercolatorExecutionData> globalPercolatorFiles, Optional<PeakLocationInferrerInterface> inferrer, SearchParameters parameters) {
+				convertBlib(progress, jobs, outputFile, Optional.of(passingPeptides.x), inferrer);
+			}
+		};
+
+		/**
+		 * Write results to the given location in this format. Typically this method should only be called from
+		 * {@link SearchToBLIB#convert(ProgressIndicator, List, File, OutputFormat, boolean, SearchParameters)}
+		 * which will handle either reading or computing the necessary information for a group of samples.
+		 *
+		 * Will also compute and output related information in some cases, depending on the format.
+		 *
+		 * @param progress A progress indicator that will be used during the conversion process
+		 * @param jobs The jobs whose results should be included in the output file
+		 * @param outputFile The location where the new library will be created (will be overwritten if it exists)
+		 * @param passingPeptides The results of running Percolator to determine the list of peptides that will be
+		 *                        included, as returned by {@link PercolatorReader#getPassingPeptidesFromTSV}
+		 * @param globalPercolatorFiles Used by some formats to get additional information when Percolator has been run on
+		 *                              results from multiple input files
+		 * @param inferrer If aligning between files, the inferrer which provides RT alignment and consistent, refined transitions
+		 * @param parameters The parameters that should be used during conversion and (in some cases) written to the output file
+		 */
+		abstract void convert(ProgressIndicator progress, List<? extends SearchJobData> jobs, File outputFile, Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides, Optional<PercolatorExecutionData> globalPercolatorFiles, Optional<PeakLocationInferrerInterface> inferrer, SearchParameters parameters);
+	}
+
+	/**
+	 * Legacy form of {@link #convert(ProgressIndicator, List, File, OutputFormat, boolean, SearchParameters)}
+	 * which supports only ELIB and BLIB formats.
+	 *
+	 * @see #convert(ProgressIndicator, List, File, OutputFormat, boolean, SearchParameters)
+	 *
+	 * @deprecated it's better to directly specify the desired output format with an enum constant
+	 */
+	@Deprecated
 	public static void convert(ProgressIndicator progress, List<? extends SearchJobData> pecanJobs, File libFile, boolean writeBlib, boolean alignBetweenFiles) {
-		convert(progress, pecanJobs, libFile, writeBlib, alignBetweenFiles, null);
+		convert(
+				progress,
+				pecanJobs,
+				libFile,
+				writeBlib ? OutputFormat.BLIB : OutputFormat.ELIB,
+				alignBetweenFiles,
+				null
+		);
 	}
 
-	public static void convert(ProgressIndicator progress, Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides, List<? extends SearchJobData> origPecanJobs, File libFile, boolean writeBlib, boolean alignBetweenFiles, SearchParameters parameters) {
+	/**
+	 * For the given previously-run single-file searches (jobs), gather or compute the necessary information to create
+	 * a combined output in the given format. This handles the core jobs of (if necessary) running Percolator, reading
+	 * Percolator results to determine the set of global passing peptides, performing retention time alignment and
+	 * transition refinement (if {@code alignBetweenFiles} is true), and writing results to the given output file, which
+	 * may involve additional work like quantifying peptides in each single file.
+	 *
+	 * @param progress A progress indicator that will be used during the conversion process
+	 * @param origPecanJobs The jobs whose results should be included in the output file
+	 * @param libFile The location where the new library will be created (will be overwritten if it exists)
+	 * @param outputFormat The format which should be written
+	 * @param alignBetweenFiles If RT alignment
+	 */
+	public static void convert(ProgressIndicator progress, List<? extends SearchJobData> origPecanJobs, File libFile, OutputFormat outputFormat, boolean alignBetweenFiles, SearchParameters parameters) {
 		List<? extends SearchJobData> pecanJobs = getProcessedJobs(origPecanJobs);
 		if (pecanJobs.size()==0) {
 			Logger.errorLine("Can't find any representative jobs! Failing...");
@@ -314,39 +505,17 @@ public class SearchToBLIB {
 			return;
 		}
 
-		SearchJobData representativeJob=pecanJobs.get(0);
-		Logger.logLine("Using "+representativeJob.getDiaFileReader().getOriginalFileName()+" to extract representative search parameters");
-		if (parameters==null) {
-			parameters=representativeJob.getParameters();
-		}
+		final SearchJobData representativeJob=pecanJobs.get(0);
 
-		quantifySamples(progress, pecanJobs, libFile, writeBlib, alignBetweenFiles, parameters, passingPeptides, Optional.ofNullable(null));
-	}
-
-	public static void convert(ProgressIndicator progress, List<? extends SearchJobData> origPecanJobs, File libFile, boolean writeBlib, boolean alignBetweenFiles, SearchParameters parameters) {
-		List<? extends SearchJobData> pecanJobs = getProcessedJobs(origPecanJobs);
-		if (pecanJobs.size()==0) {
-			Logger.errorLine("Can't find any representative jobs! Failing...");
-
-			for (int i=0; i<origPecanJobs.size(); i++) {
-				SearchJobData job=origPecanJobs.get(i);
-				Logger.errorLine(" Checking raw file "+(i+1)+": "+job.getDiaFileReader().getFile().exists());
-				Logger.errorLine(" Checking feature file "+(i+1)+": "+job.getPercolatorFiles().getInputTSV().exists());
-				Logger.errorLine(" Checking result file "+(i+1)+": "+job.getPercolatorFiles().getPeptideOutputFile().exists());
-			}
-			return;
-		}
-
-		SearchJobData representativeJob=pecanJobs.get(0);
-		
 		ArrayList<File> featureFiles=new ArrayList<File>();
 		for (int i=0; i<pecanJobs.size(); i++) {
 			SearchJobData job=pecanJobs.get(i);
 			featureFiles.add(job.getPercolatorFiles().getInputTSV());
 		}
-		
+
 		Logger.logLine("Using "+representativeJob.getDiaFileReader().getOriginalFileName()+" to extract representative search parameters");
 		if (parameters==null) {
+			Logger.logLine("Using "+representativeJob.getDiaFileReader().getOriginalFileName()+" to extract representative search parameters");
 			parameters=representativeJob.getParameters();
 		}
 
@@ -360,20 +529,21 @@ public class SearchToBLIB {
 		File bigPercolatorProteinFile=new File(representativeJob.getPercolatorFiles().getInputTSV().getParentFile(), filename+"_concatenated_protein_results.txt");
 		File bigPercolatorProteinDecoyFile=new File(representativeJob.getPercolatorFiles().getInputTSV().getParentFile(), filename+"_concatenated_protein_decoy.txt");
 		PercolatorExecutionData bigPercolatorFiles=new PercolatorExecutionData(bigFeatureFile, representativeJob.getPercolatorFiles().getFastaFile(), bigPercolatorFile, bigPercolatorDecoyFile, bigPercolatorProteinFile, bigPercolatorProteinDecoyFile, parameters);
-		
+
 		final float threshold=parameters.getEffectivePercolatorThreshold();
 		try {
 			Pair<Pair<ArrayList<PercolatorPeptide>, Float>, Boolean> percolatorDataPair = getPassingPercolatorPeptides(
 					parameters, pecanJobs, representativeJob, featureFiles, bigFeatureFile, bigPercolatorFile,
 					bigPercolatorDecoyFile, bigPercolatorFiles, threshold);
+			final Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides = percolatorDataPair.x;
+
+			Logger.logLine("Identified "+passingPeptides.x.size()+" peptides across all files at a "+(threshold*100.0f)+"% FDR threshold.");
 
 			boolean foundLibrary = checkLibraryForAvailability(libFile, percolatorDataPair.y);
-			
 			if (!foundLibrary) {
-				Optional<PercolatorExecutionData> globalPercolatorFiles = Optional.ofNullable(featureFiles.size()==1?null:bigPercolatorFiles);
-				
-				quantifySamples(progress, pecanJobs, libFile, writeBlib, alignBetweenFiles, parameters, percolatorDataPair.x,
-						globalPercolatorFiles);
+				Optional<PercolatorExecutionData> globalPercolatorFiles = Optional.ofNullable(featureFiles.size() == 1 ? null : bigPercolatorFiles);
+
+				quantifySamples(progress, pecanJobs, libFile, outputFormat, alignBetweenFiles, parameters, percolatorDataPair.x, globalPercolatorFiles);
 			}
 			progress.update(percolatorDataPair.x.x.size()+" peptides identified at "+(threshold*100.0f)+"% FDR", 1.0f);
 		} catch (IOException ioe) {
@@ -448,7 +618,7 @@ public class SearchToBLIB {
 		List<? extends SearchJobData> pecanJobsObj = Lists.newArrayList(origPecanJobs); // mutable copy
 		// Sort files in alphabetical order for deterministic Percolator sampling
 		Collections.sort(pecanJobsObj, (a, b) -> a.getDiaFileReader().getOriginalFileName().compareTo(b.getDiaFileReader().getOriginalFileName()));
-		
+
 		for (int i=0; i<pecanJobsObj.size(); i++) {
 			SearchJobData job=pecanJobsObj.get(i);
 			if (!job.hasBeenRun()) {
@@ -463,9 +633,9 @@ public class SearchToBLIB {
 	}
 
 	private static void quantifySamples(ProgressIndicator progress, List<? extends SearchJobData> pecanJobs,
-			File libFile, boolean writeBlib, boolean alignBetweenFiles, SearchParameters parameters,
-			Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides,
-			Optional<PercolatorExecutionData> globalPercolatorFiles) {
+										File libFile, OutputFormat outputFormat, boolean alignBetweenFiles, SearchParameters parameters,
+										Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides,
+										Optional<PercolatorExecutionData> globalPercolatorFiles) {
 		Optional<PeakLocationInferrerInterface> inferrer;
 		if (alignBetweenFiles) {
 			Logger.logLine("Inferring peak boundaries across files...");
@@ -481,12 +651,8 @@ public class SearchToBLIB {
 			Logger.logLine("No RT alignment between files necessary.");
 			inferrer=Optional.empty();
 		}
-		
-		if (writeBlib) {
-			convertBlib(progress, pecanJobs, libFile, Optional.of(passingPeptides.x), inferrer);
-		} else {
-			convertElib(progress, pecanJobs, libFile, Optional.of(passingPeptides), globalPercolatorFiles, inferrer, parameters);
-		}
+
+		outputFormat.convert(progress, pecanJobs, libFile, passingPeptides, globalPercolatorFiles, inferrer, parameters);
 	}
 
 	private static Pair<Pair<ArrayList<PercolatorPeptide>, Float>, Pair<ArrayList<PercolatorPeptide>, Float>> getPeptidesWithoutGlobalFDR(List<? extends SearchJobData> pecanJobs, SearchParameters parameters) {
@@ -669,68 +835,18 @@ public class SearchToBLIB {
 
 			ArrayList<PercolatorProteinGroup> proteins=null;
 			if (globalPercolatorFiles.isPresent()) {
-				final PercolatorExecutionData percolatorExecutionData = globalPercolatorFiles.get();
-				Pair<ArrayList<PercolatorPeptide>, Float> targets=null;
-				Pair<ArrayList<PercolatorPeptide>, Float> decoys=null;
-				if (percolatorExecutionData.getPeptideOutputFile().exists()) {
-					targets=PercolatorReader.getPassingPeptidesFromTSV(percolatorExecutionData.getPeptideOutputFile(), parameters, true);
-					decoys=PercolatorReader.getPassingPeptidesFromTSV(percolatorExecutionData.getPeptideDecoyFile(), parameters, true);
-				} else {
-					Pair<Pair<ArrayList<PercolatorPeptide>, Float>, Pair<ArrayList<PercolatorPeptide>, Float>> withoutFDR=getPeptidesWithoutGlobalFDR(pecanJobs, parameters);
-					targets=withoutFDR.x;
-					decoys=withoutFDR.y;
-				}
-				Logger.logLine("Writing global target/decoy peptides: "+targets.x.size()+"/"+decoys.x.size()+", pi0: "+targets.y);
-				elib.addTargetDecoyPeptides(targets.x, decoys.x);
-				elib.addMetadata("pi0", Float.toString(targets.y));
-				elib.addProteinsFromPercolator(targets.x);
-				elib.addProteinsFromPercolator(decoys.x);
-
-				Pair<ArrayList<PercolatorProteinGroup>, ArrayList<PercolatorProteinGroup>> targetDecoyProteins=ParsimonyProteinGrouper.groupProteins(targets.x, decoys.x, parameters.getPercolatorProteinThreshold(), parameters.getAAConstants());
-				Logger.logLine("Writing global target/decoy proteins: "+targetDecoyProteins.x.size()+"/"+targetDecoyProteins.y.size());
-				elib.addTargetDecoyProteins("global", targetDecoyProteins.x, targetDecoyProteins.y);
-				proteins=targetDecoyProteins.x;
-
-				percolatorExecutionData
-						.getPercolatorExecutableVersion()
-						.ifPresent((ThrowingConsumer<String>) version -> {
-							elib.addMetadata(LibraryFile.PERCOLATOR_VERSION, version);
-						});
+				proteins = writePercolatorToElib(elib, globalPercolatorFiles.get(), pecanJobs, parameters);
 			}
-			
-			HashMap<String, String> parameterMap=parameters.toParameterMap();
-			parameterMap.put("RT align between samples", Boolean.toString(inferrer.isPresent()));
-			for (int i=0; i<pecanJobs.size(); i++) {
-				SearchJobData job=pecanJobs.get(i);
-				parameterMap.put(job.getDiaFileReader().getOriginalFileName()+" search type", job.getSearchType());
-				if (job instanceof EncyclopediaJobData) {
-					parameterMap.put(job.getDiaFileReader().getOriginalFileName()+" library", ((EncyclopediaJobData)job).getLibrary().getName());
-				} else if (job instanceof PecanJobData) {
-					parameterMap.put(job.getDiaFileReader().getOriginalFileName()+" fasta", ((PecanJobData)job).getFastaFile().getName());
-					parameterMap.put(job.getDiaFileReader().getOriginalFileName()+" used narrow target list", Boolean.toString(((PecanJobData)job).getTargetList().isPresent()));
-				} else if (job instanceof XCorDIAJobData) {
-					Optional<LibraryInterface> maybeLibrary = ((XCorDIAJobData)job).getLibrary();
-					if (maybeLibrary.isPresent()) {
-						parameterMap.put(job.getDiaFileReader().getOriginalFileName()+" library", maybeLibrary.get().getName());
-					}
-					parameterMap.put(job.getDiaFileReader().getOriginalFileName()+" fasta", ((XCorDIAJobData)job).getFastaFile().getName());
-					parameterMap.put(job.getDiaFileReader().getOriginalFileName()+" used narrow target list", Boolean.toString(((XCorDIAJobData)job).getTargetList().isPresent()));
-				}
-			}
-			elib.addMetadata(parameterMap);
-			elib.setSources(pecanJobs);
+
+			writeElibMetadata(elib, pecanJobs, parameters, inferrer.isPresent());
 
 			elib.createIndices();
 			elib.saveAsFile(elibFile);
-			
+
 			if (proteins!=null) {
 				if (inferrer.isPresent()) {
 					try {
-						ArrayList<ProteinGroupInterface> proteinGroups=new ArrayList<>();
-						for (ProteinGroupInterface pg : proteins) {
-							proteinGroups.add(pg);
-						}
-						LibraryReportExtractor.extractMatrix(elib, proteinGroups, false);
+						LibraryReportExtractor.extractMatrix(elib, proteins, true);
 					} catch (DataFormatException e) {
 						Logger.errorException(e);
 					}
@@ -738,9 +854,8 @@ public class SearchToBLIB {
 					Logger.errorLine("Only exporting report for a single search, so skipping building quantitative tables.");
 				}
 			}
-			
+
 			elib.close();
-			
 		} catch (IOException ioe) {
 			Logger.errorLine("Error creating BLIB file");
 			Logger.errorException(ioe);
@@ -800,4 +915,814 @@ public class SearchToBLIB {
 		Logger.logLine("Finished writing to Encyclopedia ELIB at "+new Date().toString());
 		subProgress.update(diaFileName+": Finished writing to Encyclopedia ELIB at "+new Date().toString(), 1.0f);
 	}
+
+	/**
+	 * Read the set of passing peptides from Percolator and write them to the ELIB with associated metadata.
+	 * Perform protein inference and write protein scores/q-values/PEPs to the ELIB.
+	 *
+	 * @param elib The (open) ELIB where results will be written.
+	 * @param percolatorExecutionData Used to read the list of passing peptides and associated scores/metadata. If the
+	 *                                global results file doesn't exist this will be ignored and the calculation will
+	 *                                fall back to use {@code jobs}.
+	 * @param jobs Ignored, unless global Percolator results don't exist, in which case the passing peptides are read
+	 *             directly from these jobs, without global FDR control.
+	 * @return The inferred set of protein groups.
+	 */
+	private static ArrayList<PercolatorProteinGroup> writePercolatorToElib(LibraryFile elib, PercolatorExecutionData percolatorExecutionData, List<? extends SearchJobData> jobs, SearchParameters parameters) throws IOException, SQLException {
+		return writePercolatorToElib(elib, percolatorExecutionData, Optional.of(jobs), parameters);
+	}
+
+	/**
+	 * Read the set of passing peptides from Percolator and write them to the ELIB with associated metadata.
+	 * Perform protein inference and write protein scores/q-values/PEPs to the ELIB.
+	 *
+	 * @param elib The (open) ELIB where results will be written.
+	 * @param percolatorExecutionData Used to read the list of passing peptides and associated scores/metadata.
+	 * @return The inferred set of protein groups.
+	 */
+	private static ArrayList<PercolatorProteinGroup> writePercolatorToElib(LibraryFile elib, PercolatorExecutionData percolatorExecutionData, SearchParameters parameters) throws IOException, SQLException {
+		return writePercolatorToElib(elib, percolatorExecutionData, Optional.empty(), parameters);
+	}
+
+	/**
+	 * Read the set of passing peptides from Percolator and write them to the ELIB with associated metadata.
+	 * Perform protein inference and write protein scores/q-values/PEPs to the ELIB.
+	 *
+	 * @param elib The (open) ELIB where results will be written.
+	 * @param percolatorExecutionData Used to read the list of passing peptides and associated scores/metadata. If the
+	 *                                global results file doesn't exist this will be ignored and the calculation will
+	 *                                fall back to use {@code jobs}.
+	 * @param jobs Ignored, unless global Percolator results don't exist, in which case the passing peptides are read
+	 *             directly from these jobs, without global FDR control. An exception will be raised if this fallback
+	 *             is necessary but {@code jobs} is not present.
+	 * @return The inferred set of protein groups.
+	 */
+	private static ArrayList<PercolatorProteinGroup> writePercolatorToElib(LibraryFile elib, PercolatorExecutionData percolatorExecutionData, Optional<List<? extends SearchJobData>> jobs, SearchParameters parameters) throws IOException, SQLException {
+		Pair<ArrayList<PercolatorPeptide>, Float> targets=null;
+		Pair<ArrayList<PercolatorPeptide>, Float> decoys=null;
+		if (percolatorExecutionData.getPeptideOutputFile().exists()) {
+			targets=PercolatorReader.getPassingPeptidesFromTSV(percolatorExecutionData.getPeptideOutputFile(), parameters, true);
+			decoys=PercolatorReader.getPassingPeptidesFromTSV(percolatorExecutionData.getPeptideDecoyFile(), parameters, true);
+		} else if (jobs.isPresent()) {
+			Pair<Pair<ArrayList<PercolatorPeptide>, Float>, Pair<ArrayList<PercolatorPeptide>, Float>> withoutFDR=getPeptidesWithoutGlobalFDR(jobs.get(), parameters);
+			targets=withoutFDR.x;
+			decoys=withoutFDR.y;
+		} else {
+			throw new IllegalStateException("Unable to get passing peptides: no global Percolator results file or individual jobs!");
+		}
+
+		Logger.logLine("Writing global target/decoy peptides: "+targets.x.size()+"/"+decoys.x.size()+", pi0: "+targets.y);
+		elib.addTargetDecoyPeptides(targets.x, decoys.x);
+		elib.addMetadata("pi0", Float.toString(targets.y));
+		elib.addProteinsFromPercolator(targets.x);
+		elib.addProteinsFromPercolator(decoys.x);
+
+		Pair<ArrayList<PercolatorProteinGroup>, ArrayList<PercolatorProteinGroup>> targetDecoyProteins=ParsimonyProteinGrouper.groupProteins(targets.x, decoys.x, parameters.getPercolatorProteinThreshold(), parameters.getAAConstants());
+
+		Logger.logLine("Writing global target/decoy proteins: "+targetDecoyProteins.x.size()+"/"+targetDecoyProteins.y.size());
+		elib.addTargetDecoyProteins("global", targetDecoyProteins.x, targetDecoyProteins.y);
+
+		percolatorExecutionData
+				.getPercolatorExecutableVersion()
+				.ifPresent((ThrowingConsumer<String>) version -> {
+					elib.addMetadata(LibraryFile.PERCOLATOR_VERSION, version);
+				});
+
+		return targetDecoyProteins.x;
+	}
+
+	private static void writeElibMetadata(LibraryFile elib, List<? extends SearchJobData> jobs, SearchParameters parameters, boolean align) throws IOException, SQLException {
+		final HashMap<String, String> parameterMap = parameters.toParameterMap();
+		parameterMap.put("RT align between samples", Boolean.toString(align));
+		for (int i = 0; i < jobs.size(); i++) {
+			final SearchJobData job = jobs.get(i);
+			parameterMap.put(job.getDiaFileReader().getOriginalFileName() + " search type", job.getSearchType());
+			if (job instanceof EncyclopediaJobData) {
+				parameterMap.put(job.getDiaFileReader().getOriginalFileName() + " library", ((EncyclopediaJobData) job).getLibrary().getName());
+			} else if (job instanceof PecanJobData) {
+				parameterMap.put(job.getDiaFileReader().getOriginalFileName() + " fasta", ((PecanJobData) job).getFastaFile().getName());
+				parameterMap.put(job.getDiaFileReader().getOriginalFileName() + " used narrow target list", Boolean.toString(((PecanJobData) job).getTargetList().isPresent()));
+			} else if (job instanceof XCorDIAJobData) {
+				Optional<LibraryInterface> maybeLibrary = ((XCorDIAJobData) job).getLibrary();
+				if (maybeLibrary.isPresent()) {
+					parameterMap.put(job.getDiaFileReader().getOriginalFileName() + " library", maybeLibrary.get().getName());
+				}
+				parameterMap.put(job.getDiaFileReader().getOriginalFileName() + " fasta", ((XCorDIAJobData) job).getFastaFile().getName());
+				parameterMap.put(job.getDiaFileReader().getOriginalFileName() + " used narrow target list", Boolean.toString(((XCorDIAJobData) job).getTargetList().isPresent()));
+			}
+		}
+		elib.addMetadata(parameterMap);
+
+		elib.setSources(jobs);
+	}
+
+	private static void convertAlib(ProgressIndicator progress, List<? extends SearchJobData> jobs, File outputFile, Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides, Optional<PercolatorExecutionData> globalPercolatorFiles, PeakLocationInferrerInterface inferrer, SearchParameters parameters) {
+		if (Objects.requireNonNull(jobs, "No jobs provided").isEmpty()) {
+			throw new IllegalArgumentException("No jobs provided");
+		}
+
+		if (!parameters.isQuantifySameFragmentsAcrossSamples()) {
+			throw new IllegalArgumentException("Unable to export alignment-only library without -quantifyAcrossSamples!");
+		}
+
+		if (!globalPercolatorFiles.isPresent()) {
+			if (jobs.size() == 1) {
+				globalPercolatorFiles = Optional.of(jobs.iterator().next().getPercolatorFiles());
+			} else {
+				throw new IllegalArgumentException("Global percolator files must be provided for more than one job!");
+			}
+		}
+
+		try {
+			final LibraryFile elib = new LibraryFile();
+			try {
+				elib.openFile();
+				elib.dropIndices();
+
+				final PercolatorExecutionData percolatorExecutionData = globalPercolatorFiles.get();
+				if (!percolatorExecutionData.getPeptideOutputFile().exists()) {
+					throw new IllegalArgumentException("Could not read Percolator results!", new FileNotFoundException(percolatorExecutionData.getPeptideOutputFile().getAbsolutePath()));
+				}
+
+				// Perform protein inference and write peptide/protein scores, metadata to ELIB
+				writePercolatorToElib(elib, percolatorExecutionData, parameters);
+
+				// Now compute and write the set of entries that to capture the alignment/transition refinement
+				elib.addEntries(getAlignmentEntries(passingPeptides.x, jobs, inferrer, parameters));
+
+				// Write information about each job to the ELIB
+				float increment = 1.0f / jobs.size();
+				for (int i = 0; i < jobs.size(); i++) {
+					final SearchJobData job = jobs.get(i);
+
+					final ProgressIndicator subProgress = new SubProgressIndicator(progress, increment);
+
+					if (!job.hasBeenRun()) {
+						final String msg = "Skipping incomplete job: " + job.getDiaFileReader().getOriginalFileName();
+						subProgress.update(msg, 1f);
+						Logger.errorLine(msg);
+						continue;
+					}
+
+					elib.addRtAlignment(job, getRawAlignmentPoints(job, inferrer));
+
+					elib.addTIC(job.getDiaFileReader());
+
+					subProgress.update("Done writing job " + job.getDiaFileReader().getOriginalFileName(), 1f);
+				}
+
+				writeElibMetadata(elib, jobs, parameters, true); // align is required for ALIB
+
+				elib.createIndices();
+				elib.saveAsFile(outputFile);
+			} finally {
+				elib.close();
+			}
+		} catch (IOException | SQLException ioe) {
+			Logger.errorLine("Error creating ELIB file");
+			Logger.errorException(ioe);
+			throw new EncyclopediaException("Error creating ELIB file", ioe);
+		}
+	}
+
+	/**
+	 * Create a special set of alignment points meant for writing to an ALIB, in order to capture the precise
+	 * RT alignment mapping in each file. This is only possible in specific circumstances, but these should be
+	 * satisfied for any run producing an ALIB (the inferrer, alignment, and warper all must be of the expected
+	 * types, or this method falls back to match the normal set of points written to an ELIB).
+	 *
+	 * @see #readInferrer(LibraryFile, List, SearchParameters)
+	 */
+	private static List<AlignmentDataPoint> getRawAlignmentPoints(SearchJobData job, PeakLocationInferrerInterface inferrer) {
+		if (inferrer instanceof SimplePeakLocationInferrer) {
+			final SimplePeakLocationInferrer spli = (SimplePeakLocationInferrer) inferrer;
+			final RetentionTimeAlignmentInterface alignment = spli.getAlignment(job);
+
+			if (alignment instanceof AbstractRetentionTimeFilter) {
+				AbstractRetentionTimeFilter artf = (AbstractRetentionTimeFilter) alignment;
+				final edu.washington.gs.maccoss.encyclopedia.utils.math.Function rtWarper = artf.getRtWarper();
+
+				if (rtWarper instanceof LinearInterpolatedFunction) {
+					// Concatenate the peptides' points with the full set of knots from the function.
+					// This should provide all required information while keeping all segment slopes the same.
+					return Stream.concat(
+							inferrer.getAlignmentData(job).stream(),
+							rtWarper.getKnots().stream()
+									.map(xy -> AlignmentDataPoint.of(
+											(float) xy.x,
+											Float.NEGATIVE_INFINITY, // work around NOT NULL constraint
+											(float) xy.y,
+											Float.NEGATIVE_INFINITY, // work around NOT NULL constraint
+											Float.NEGATIVE_INFINITY, // work around NOT NULL constraint
+											false,
+											null
+									))
+					).collect(Collectors.toList());
+				}
+			}
+		}
+
+		// fallback -- not ideal because it only uses the input points (along with their predictions though)
+
+		Logger.errorLine("Unable to get exact RT alignment mapping! Falling back to peptide retentiontimes only.");
+		return inferrer.getAlignmentData(job);
+	}
+
+	/**
+	 * Compute the set of entries to be written to an alignment-only ELIB (ALIB).
+	 *
+	 * This consists of one entry per item of {@code passingPeptides}, with the corresponding aligned RT.
+	 * Each entry's set of peaks will be determined by the quantitative peaks returned from {@code inferrer}
+	 * for that peptide.
+	 *
+	 * @see OutputFormat#ALIB
+	 *
+	 * @param passingPeptides The set of passing peptide IDs from Percolator
+	 * @param jobs
+	 * @param inferrer The retention time alignment and transition refinement results for the experiment. Importantly,
+	 *                 all entries will include only the quantitative ions from this inferrer.
+	 *
+	 * @return A set of entries suitable for insertion in the ELIB (ALIB) file.
+	 */
+	private static ArrayList<LibraryEntry> getAlignmentEntries(List<? extends PercolatorPeptide> passingPeptides, List<? extends SearchJobData> jobs, PeakLocationInferrerInterface inferrer, SearchParameters parameters) {
+		return passingPeptides.stream()
+				.map(p -> toAlignmentEntry(p, jobs, inferrer, parameters))
+				.collect(Collectors.toCollection(ArrayList::new));
+	}
+
+	private static LibraryEntry toAlignmentEntry(PercolatorPeptide peptide, List<? extends SearchJobData> jobs, PeakLocationInferrerInterface inferrer, SearchParameters parameters) {
+		float warpedRTInSec;
+		try {
+			// We want the aligned ("seed") RT, not the time in any specific sample, so we pass a "bogus" job. TODO: BIG RISK (NPE, interface abuse)
+			warpedRTInSec = inferrer.getWarpedRTInSec(null, peptide.getPeptideModSeq());
+		} catch (NullPointerException e) {
+			warpedRTInSec = -1f;
+		}
+
+		final double[] quantIons = inferrer.getTopNBestIons(peptide.getPeptideModSeq(), peptide.getPrecursorCharge());
+
+		// Look up the original entry from the search library.
+		// Be sure we get it from the correct job's library, as they aren't guaranteed to be the same!
+		final String file = peptide.getFile();
+
+		LibraryEntry entry = null;
+
+		final Set<String> checkedLibraries = Sets.newHashSet();
+		for (SearchJobData job : jobs) {
+			if (!Objects.equals(file, job.getDiaFileReader().getOriginalFileName())) {
+				// Skip jobs that don't match this peptide ID
+				continue;
+			}
+
+			if (!(job instanceof EncyclopediaJobData)) {
+				// Skip jobs without a library
+				continue;
+			}
+
+			final LibraryInterface library = ((EncyclopediaJobData) job).getLibrary();
+			if (!checkedLibraries.add(library.getName())) {
+				// Already checked this library; skip it
+				continue;
+			}
+
+			final ArrayList<LibraryEntry> entries;
+			try {
+				entries = library.getEntries(peptide.getPeptideModSeq(), peptide.getPrecursorCharge(), false);
+			} catch (IOException | SQLException | DataFormatException e) {
+				// Unable to read entries from library! We don't want to excessively log, so just move on.
+				continue;
+			}
+
+			// Take the highest-scoring peptide (assumes higher scores are better)
+			final Optional<LibraryEntry> bestEntry = entries.stream().max(Comparator.comparing(LibraryEntry::getScore));
+
+			if (!bestEntry.isPresent()) {
+				// Try a different job's library
+				continue;
+			}
+
+			entry = bestEntry.get();
+			break;
+		}
+
+		if (null == entry) {
+			throw new IllegalStateException("Unable to find entry in original search library for " + peptide.getPsmID());
+		}
+
+		final double[] entryMasses = entry.getMassArray();
+		final float[] entryIntensities = entry.getIntensityArray();
+		final float[] entryCorrelations = entry.getCorrelationArray();
+
+		final MassTolerance tol = parameters.getLibraryFragmentTolerance();
+
+		// will initialize to all false
+		final boolean[] entryQuantifiedIons = new boolean[entryMasses.length];
+
+		// Final arrays may differ from the entry (if we have to insert additional quant ions)
+		final double[] masses;
+		final float[] intensities, correlations;
+		final boolean[] quantifiedIons;
+
+		// Quant ions array is sometimes null; treat as though it's empty
+		if (null != quantIons) {
+			// Could be faster if we avoid quadratic search but we can't be certain
+			// that either array is sorted, and the # of quant ions should be small.
+
+			final TDoubleSet quantIonSet = new TDoubleHashSet(quantIons);
+
+			for (int i = 0; i < entryMasses.length; i++) {
+				for(TDoubleIterator iterator = quantIonSet.iterator(); iterator.hasNext();) {
+					final double quantIon = iterator.next();
+
+					if (tol.equals(entryMasses[i], quantIon)) {
+						entryQuantifiedIons[i] = true;
+						iterator.remove(); // don't use this quant ion again, we already found it
+
+						break;
+					}
+				}
+			}
+
+			if (quantIonSet.isEmpty()) {
+				masses = entryMasses;
+				intensities = entryIntensities;
+				correlations = entryCorrelations;
+				quantifiedIons = entryQuantifiedIons;
+			} else {
+				// Any quant ions not found in the entry must be inserted.
+
+				final int len = entryMasses.length + quantIonSet.size();
+				masses = new double[len];
+				intensities = new float[len];
+				correlations = new float[len];
+				quantifiedIons = new boolean[len];
+
+				final double[] toInsert = quantIonSet.toArray();
+				Arrays.sort(toInsert);
+
+				// Just assume masses are sorted -- will do weird stuff if not but _should_ work.
+				// i -- index in entry
+				// j -- index in toInsert
+				// k -- index in final arrays
+				int j = 0, k = 0;
+				for (int i = 0; i < entryMasses.length; i++) {
+					for (; j < toInsert.length && toInsert[j] < entryMasses[i]; j++) {
+						// Time to insert a mass
+						masses[k] = toInsert[j];
+						intensities[k] = 0f;
+						correlations[k] = 0f;
+						quantifiedIons[k] = true;
+
+						k += 1; // move to next insertion location
+					}
+
+					// Now the next mass to insert is greater than the current entry mass
+					masses[k] = entryMasses[i];
+					intensities[k] = entryIntensities[i];
+					correlations[k] = entryCorrelations[i];
+					quantifiedIons[k] = entryQuantifiedIons[i];
+
+					k += 1; // move to next insertion location
+				}
+
+				// Insert remaining masses at end
+				for (; j < toInsert.length; j++) {
+					masses[k] = toInsert[j];
+					intensities[k] = 0f;
+					correlations[k] = 0f;
+					quantifiedIons[k] = true;
+
+					k += 1; // move to next insertion location
+				}
+			}
+
+			// Sanity checks for quant ions
+			if (quantIons.length != General.sum(quantifiedIons)) {
+				throw new IllegalStateException(
+						"Unable to locate all quantitative ions for "
+								+ peptide.getPeptideModSeq()
+								+ ": expected "
+								+ quantIons.length
+								+ " found "
+								+ General.sum(quantifiedIons)
+				);
+			}
+		} else {
+			masses = entryMasses;
+			intensities = entryIntensities;
+			correlations = entryCorrelations;
+			quantifiedIons = entryQuantifiedIons;
+		}
+
+		return new LibraryEntry(
+				"global",
+				peptide.getAccessions(),
+				-1,
+				parameters.getAAConstants().getChargedMass(peptide.getPeptideModSeq(), peptide.getPrecursorCharge()),
+				peptide.getPrecursorCharge(),
+				peptide.getPeptideModSeq(),
+				0,
+				warpedRTInSec,
+				peptide.getScore(),
+				masses,
+				intensities,
+				correlations,
+				quantifiedIons,
+				parameters.getAAConstants(),
+				true // force preserving peaks with non-positive intensity (like any we had to add)
+		);
+	}
+
+	/**
+	 * Quantify peptides for one or more files, based on previously-computed alignment and transition refinement.
+	 *
+	 * @param jobs one or more jobs that should be quantified
+	 * @param elibFile the location where the results should be written in ELIB format (quantitative)
+	 * @param alignmentElib the location from which previously-computed "alignment-only" results should be read
+	 * @param parameters the parameters to use for quant (should match those used for the initial alignment exactly!)
+	 */
+	static void convertElibQuantOnly(ProgressIndicator progress, List<? extends SearchJobData> jobs, File elibFile, File alignmentElib, SearchParameters parameters) {
+		final Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides;
+		final PeakLocationInferrerInterface inferrer;
+		final ArrayList<? extends ProteinGroupInterface> proteins;
+		final TObjectFloatMap<String> ticMap = new TObjectFloatHashMap<>();
+
+		try {
+			try {
+				FileLogRecorder logRecorder = new FileLogRecorder(new File(elibFile.getAbsolutePath() + EncyclopediaJobData.LOG_FILE_SUFFIX));
+				Logger.addRecorder(logRecorder);
+			} catch (FileNotFoundException | UnsupportedEncodingException e) {
+				Logger.errorLine("Error recording logs to results folder!");
+				Logger.errorException(e);
+			}
+
+			try {
+				final LibraryFile alignmentFile = new LibraryFile();
+				try {
+					alignmentFile.openFile(alignmentElib);
+
+					passingPeptides = readPassingPeptides(alignmentFile, parameters);
+					proteins = alignmentFile.getProteinGroups();
+
+					inferrer = readInferrer(alignmentFile, jobs, parameters);
+
+					// Read TICs from alignment ELIB; we can't just read the provided set of jobs, we want
+					// all the jobs used for creation of the alignment results, so we match the normalization
+					// as if they were all quantified together.
+					try (
+							Connection c = alignmentFile.getConnection();
+							PreparedStatement ps = c.prepareStatement("SELECT Key, Value FROM Metadata WHERE Key LIKE (? || '%');")
+					) {
+						ps.setString(1, LibraryFile.SOURCEFILE_TIC_PREFIX);
+
+						try (ResultSet rs = ps.executeQuery()) {
+							while (rs.next()) {
+								ticMap.put(
+										rs.getString(1).substring(LibraryFile.SOURCEFILE_TIC_PREFIX.length()),
+										Float.parseFloat(rs.getString(2))
+								);
+							}
+						}
+					}
+					Logger.logLine("Found TIC values to normalize across " + ticMap.size() + " files");
+
+				} finally {
+					alignmentFile.close();
+				}
+			} catch (IOException | SQLException e) {
+				throw new EncyclopediaException("Unable to read alignment results", e);
+			}
+
+			convertElibQuantOnly(progress, jobs, elibFile, passingPeptides, inferrer, proteins, ticMap, parameters);
+		} finally {
+			Logger.close();
+		}
+	}
+
+	/**
+	 * Read the set of passing peptides from an "alignment-only" ELIB (ALIB).
+	 *
+	 * @param alignmentFile an open ALIB library
+	 */
+	static Pair<ArrayList<PercolatorPeptide>, Float> readPassingPeptides(LibraryFile alignmentFile, SearchParameters parameters) throws IOException, SQLException {
+		final ArrayList<PercolatorPeptide> passingPeptides = Lists.newArrayList();
+		float pi0 = Float.parseFloat(alignmentFile.getMetadata().get("pi0"));
+
+		final String query = "SELECT" +
+				" e.sourcefile, e.rtinseconds, max(p.isdecoy), e.peptidemodseq, e.precursorcharge," +
+				" group_concat(p.proteinaccession, ';')," +
+				" s.qvalue, s.posteriorerrorprobability" +
+				" FROM entries e" +
+				" JOIN peptidescores s USING (peptidemodseq, precursorcharge)" + // assume single rows per (modseq, z)
+				" JOIN peptidetoprotein p USING (peptideseq)" +
+				" GROUP BY peptidemodseq, precursorcharge;";
+
+		try (Connection c = alignmentFile.getConnection()) {
+			try (PreparedStatement ps = c.prepareStatement(query)) {
+				try (ResultSet rs = ps.executeQuery()) {
+					while (rs.next()) {
+						passingPeptides.add(new PercolatorPeptide(
+								PercolatorPeptide.getPSMID(
+										rs.getString(1), // sourcefile
+										rs.getFloat(2), // rt
+										Optional.empty(),
+										rs.getBoolean(3), // decoy
+										rs.getString(4), // peptidemodseq
+										rs.getByte(5) // charge
+								),
+								rs.getString(6), // proteinids
+								rs.getFloat(7),  // qvalue
+								rs.getFloat(8),  // PEP
+								parameters.getAAConstants()
+						));
+					}
+				}
+			}
+		}
+
+		return new Pair<>(passingPeptides, pi0);
+	}
+
+	/**
+	 * Read the RT alignment and transition refinement results from an "alignment-only" ELIB (ALIB).
+	 *
+	 * @param alignmentFile an open ALIB library
+	 * @param jobs the set of files to which the RT alignment results shoudl be limited. May be null or empty to indicate "all".
+	 *
+	 * @return an appropriate {@code PeakLocationInferrerInterface} that can be used for quantification of some or all
+	 *         jobs recorded in the ALIB.
+	 *
+	 * @see #getRawAlignmentPoints(SearchJobData, PeakLocationInferrerInterface) used in creating the data read by this method
+	 */
+	static PeakLocationInferrerInterface readInferrer(LibraryFile alignmentFile, List<? extends SearchJobData> jobs, SearchParameters parameters) throws IOException, SQLException {
+		final HashMap<SearchJobData, RetentionTimeAlignmentInterface> alignmentMap = Maps.newHashMap();
+		final HashMap<SearchJobData, List<AlignmentDataPoint>> alignmentDataMap = Maps.newHashMap();
+		final HashMap<String, Float> alignedRTInMinBySequenceMap = Maps.newHashMap();
+		final HashMap<String, double[]> bestIons = Maps.newHashMap();
+
+		try (Connection c = alignmentFile.getConnection()) {
+			try (PreparedStatement ps = c.prepareStatement(
+					"SELECT Library, Actual, Predicted, Delta, Probability, Decoy, PeptideModSeq" +
+							" FROM retentiontimes WHERE sourcefile = ?;"
+			)) {
+				// Read alignment for each job
+				for (SearchJobData job : jobs) {
+					final List<AlignmentDataPoint> alignmentData = Lists.newArrayList();
+
+					ps.setString(1, job.getDiaFileReader().getOriginalFileName());
+					try (ResultSet rs = ps.executeQuery()) {
+						while (rs.next()) {
+							// Must be in _minutes_ to match AlternatePeakLocationInferrer; the values have
+							// been converted to seconds when written to the `retentiontimes` table.
+							alignmentData.add(AlignmentDataPoint.of(
+									rs.getFloat(1) / 60f, // lib
+									rs.getFloat(2) / 60f, // actual
+									rs.getFloat(3) / 60f, // predicted
+									rs.getFloat(4) / 60f, // delta
+									rs.getFloat(5), // prob
+									rs.getBoolean(6), // decoy
+									rs.getString(7) // modseq
+							));
+						}
+					}
+
+					Logger.logLine(job.getDiaFileReader().getOriginalFileName() + " alignment points: read " + alignmentData.size() );
+
+					if (alignmentData.stream().noneMatch(p -> Objects.nonNull(p.getPeptideModSeq()))) {
+						// "Seed" experiment won't have alignment points and shouldn't be populated in the map.
+						Logger.logLine("Assuming job " + job.getDiaFileReader().getOriginalFileName() + " is the seed; using 1-1 RT mapping.");
+						continue;
+					}
+
+					alignmentDataMap.put(job, alignmentData);
+
+					// Generate the necessary linear interpolation for prediction -- MUST use ALL points
+					final ArrayList<XYPoint> alignmentPoints = alignmentData.stream()
+							// RTs must be in _minutes_ to match AlternatePeakLocationInferrer, but these values are
+							// already in minutes when we read them from `retentiontimes`.
+							.map(p -> new XYPoint(p.getLibrary(), p.getPredictedActual()))
+							// We sort by increasing X, but then by increasing Y, to avoid causing issues
+							// with the monotonicity check below when the same X value is repeated (which
+							// we see happen sometimes).
+							.sorted(Comparator.comparingDouble(XYPoint::getX)
+									          .thenComparing(XYPoint::getY)
+							)
+							.collect(Collectors.toCollection(ArrayList::new));
+
+					// Check for monotonic function (don't require strict monotonicity though, as we see this sometimes).
+					// This non-strictness means the function may not be correctly invertible! This isn't our problem
+					// though, we're just handling the behavior that's in place elsewhere. We do check however to be sure
+					// that the provided data isn't entirely nonsensible.
+					for (int i = 1; i < alignmentPoints.size(); i++) {
+						final double y = alignmentPoints.get(i).getY();
+						final double prev = alignmentPoints.get(i - 1).getY();
+
+						if (y < prev){
+							throw new IllegalStateException(String.format(
+									"Alignment warp is not monotonic! (%.02f, %.02f) -> (%.02f, %.02f)",
+									alignmentPoints.get(i - 1).getX(),
+									prev,
+									alignmentPoints.get(i).getX(),
+									y
+							));
+						}
+					}
+
+					final LinearInterpolatedFunction rtWarper = new LinearInterpolatedFunction(alignmentPoints);
+
+					/**
+					 * Points are sorted by delta (x), but function is not monotonic. NOT INVERTIBLE!
+					 */
+					final LinearInterpolatedFunction probFn = new LinearInterpolatedFunction(alignmentData.stream()
+							// Filter out raw knots without delta/probability fields
+							.filter(p -> Float.isFinite(p.getDelta()) && Floats.isFinite(p.getProbability()))
+							.map(p -> new XYPoint(p.getDelta(), p.getProbability()))
+							.sorted(Comparator.comparingDouble(XYPoint::getX))
+							.collect(Collectors.toCollection(ArrayList::new))
+					);
+
+
+					Optional<RTProbabilityModel> probModel = Optional.of(new RTProbabilityModel() {
+						@Override
+						public float getProbability(float retentionTime, float delta) {
+							return probFn.getYValue(delta);
+						}
+					});
+
+					final RetentionTimeAlignmentInterface alignment = new AbstractRetentionTimeFilter(rtWarper, probModel, null, null) {
+						static final double MATCH_TOLERANCE = 1e-3;
+
+						@Override
+						public List<AlignmentDataPoint> plot(List<XYPoint> rts, Optional<File> saveFileSeed) {
+							return alignmentData.stream()
+									.filter(p -> Objects.nonNull(p.getPeptideModSeq()))
+									.collect(Collectors.toList());
+						}
+
+						@Override
+						public float getYValue(float xrt) {
+							return rtWarper.getYValue(xrt);
+						}
+
+						@Override
+						public float getXValue(float yrt) {
+							return rtWarper.getXValue(yrt);
+						}
+
+						@Override
+						public float getDelta(float actualRT, float modelRT) {
+							// quick-n-dirty -- require exact match
+							for (AlignmentDataPoint p : alignmentData) {
+								if (
+										Floats.isFinite(p.getActual())
+												&& Math.abs(actualRT - p.getActual()) < MATCH_TOLERANCE
+												&& Math.abs(modelRT - p.getPredictedActual()) < MATCH_TOLERANCE
+								) {
+									return p.getDelta();
+								}
+							}
+
+							throw new IllegalStateException("No such alignment point with actual/model RT " + actualRT + " / " + modelRT);
+						}
+					};
+
+					alignmentMap.put(job, alignment);
+				}
+			}
+
+			// Read RT, ions from entries table
+			try (PreparedStatement ps = c.prepareStatement(
+					"SELECT" +
+					" e.PeptideModSeq," +
+					" e.RTInSeconds," +
+					" e.MassArray," +
+					" e.MassEncodedLength," +
+					" e.QuantifiedIonsArray" +
+					" FROM entries e;"
+			)) {
+				try (ResultSet rs = ps.executeQuery()) {
+					while (rs.next()) {
+						final String modSeq = rs.getString(1);
+
+						final double[] masses = ByteConverter.toDoubleArray(CompressionUtils.decompress(rs.getBytes(3), rs.getInt(4)));
+
+						final boolean[] quantifiedIons;
+						final byte[] compressedQuantIons = rs.getBytes(5);
+						if (null == compressedQuantIons || 0 == compressedQuantIons.length) {
+							quantifiedIons = new boolean[masses.length];
+							Arrays.fill(quantifiedIons, true); // old results shouldn't be used as alignments, but OK
+						} else {
+							quantifiedIons = ByteConverter.toBooleanArray(CompressionUtils.decompress(compressedQuantIons));
+						}
+
+						final TDoubleList quantIonMasses = new TDoubleArrayList();
+						for (int i = 0; i < masses.length; i++) {
+							if (i < quantifiedIons.length) { // clamp in bounds; should be unnecessary
+								if (quantifiedIons[i]) {
+									quantIonMasses.add(masses[i]);
+								}
+							}
+						}
+
+						bestIons.put(modSeq, quantIonMasses.toArray());
+
+						final float rtInSec = rs.getFloat(2);
+						if (rs.wasNull() || !Float.isFinite(rtInSec) || rtInSec < 0) { // null/nan, infinite, or negative values should not be recorded in the alignment
+							continue;
+						}
+
+						alignedRTInMinBySequenceMap.put(modSeq, rtInSec / 60f); // must be converted to minutes for use by the inferrer
+					}
+				} catch (DataFormatException e) {
+					throw new EncyclopediaException("Invalid mass encoding!", e);
+				}
+			}
+		}
+
+		return new SimplePeakLocationInferrer(
+				alignmentMap,
+				alignmentDataMap,
+				alignedRTInMinBySequenceMap,
+				bestIons,
+				parameters
+		);
+	}
+
+	/**
+	 * Quantify peptides for one or more files, based on previously-computed alignment and transition refinement.
+	 *
+	 * TODO: eventually this method should be combined with {@link #convertElib(ProgressIndicator, List, File, Optional, Optional, Optional, SearchParameters)},
+	 *       likely by modifying that method to call this one
+	 *
+	 * @param jobs one or more jobs that should be quantified
+	 * @param elibFile the location where the results should be written in ELIB format (quantitative)
+	 * @param passingPeptides the previously-computed set of passing peptides
+	 * @param inferrer the previously-computed RT alignment and transition refinement
+	 * @param proteins the previously-computed set of scored and grouped proteins
+	 * @param parameters the parameters to use for quant (should match those used for the initial alignment exactly!)
+	 */
+	static void convertElibQuantOnly(ProgressIndicator progress, List<? extends SearchJobData> jobs, File elibFile, Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides, PeakLocationInferrerInterface inferrer, ArrayList<? extends ProteinGroupInterface> proteins, TObjectFloatMap<? super String> ticMap, SearchParameters parameters) {
+		if (null == passingPeptides || null == passingPeptides.x || passingPeptides.x.size() < 1) {
+			throw new IllegalArgumentException("Can't extract quantities for zero peptides!");
+		}
+
+		Objects.requireNonNull(proteins, "Unable to proceed without previously-computed protein groups!");
+
+		try {
+			LibraryFile elib=new LibraryFile();
+			elib.openFile();
+			elib.dropIndices();
+
+			float increment=1.0f/jobs.size();
+			for (int i=0; i<jobs.size(); i++) {
+				SearchJobData job = jobs.get(i);
+				if (!job.hasBeenRun()) {
+					Logger.errorLine("Unable to process " + job.getDiaFileReader().getOriginalFileName() + " because its results are missing. Continuing.");
+					continue;
+				}
+				ProgressIndicator subProgress = new SubProgressIndicator(progress, increment);
+
+				ArrayList<PercolatorPeptide> globalPassingPeptides = passingPeptides.x;
+				Pair<ArrayList<PercolatorPeptide>, Float> localPassingPeptides = PercolatorReader.getPassingPeptidesFromTSV(job.getPercolatorFiles().getPeptideOutputFile(), jobs.get(i).getParameters(), false);
+
+				Logger.logLine(job.getDiaFileReader().getOriginalFileName() + ": Number of global peptides: " + globalPassingPeptides.size() + " vs local peptides: " + localPassingPeptides.x.size());
+
+				convertFileElib(subProgress, job, globalPassingPeptides, localPassingPeptides.x, Optional.of(inferrer), elib, jobs.size() > 1);
+			}
+
+			writeElibMetadata(elib, jobs, parameters, true);
+
+			// Write _all_ passing peptide scores to results ELIB, as they're used downstream (quant reports)
+			// without caring which sample each peptide was scored in. Don't bother with decoys (should be fine).
+			elib.addTargetDecoyPeptides(passingPeptides.x, Lists.newArrayList());
+
+			// We must also take the protein connections from the entries so they're available to quant reporting.
+			elib.addProteinsFromPercolator(passingPeptides.x);
+
+			elib.createIndices();
+			elib.saveAsFile(elibFile);
+
+			try {
+				LibraryReportExtractor.extractMatrix(
+						elib,
+						jobs.stream().map(j -> j.getDiaFileReader().getOriginalFileName()).collect(Collectors.toList()),
+						proteins,
+						IntensityNormalizer.tic(ticMap),
+						Optional.empty(),
+						""
+				);
+			} catch (DataFormatException e) {
+				Logger.errorException(e);
+			}
+
+			elib.close();
+		} catch (IOException ioe) {
+			Logger.errorLine("Error creating BLIB file");
+			Logger.errorException(ioe);
+		} catch (SQLException sqle) {
+			Logger.errorLine("Error creating BLIB file");
+			Logger.errorException(sqle);
+		}
+	}
+
 }

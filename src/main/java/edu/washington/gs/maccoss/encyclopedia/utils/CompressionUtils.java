@@ -10,6 +10,8 @@ import java.util.zip.Inflater;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
+import javax.xml.bind.DatatypeConverter;
+
 public class CompressionUtils {
 	public static byte[] compress(byte[] decompressedData) throws IOException {
 		Deflater deflater=new Deflater();
@@ -42,7 +44,7 @@ public class CompressionUtils {
 				int count=decompressor.inflate(buf);
 				outputStream.write(buf, 0, count);
 			} catch (DataFormatException e) {
-				throw new IllegalStateException("Formatting error when decompressing data["+General.toString(compressedData)+"]!", e);
+				throw new IllegalStateException("Formatting error when decompressing data [" + DatatypeConverter.printHexBinary(compressedData) + "]!", e);
 			}
 		}
 		outputStream.close();

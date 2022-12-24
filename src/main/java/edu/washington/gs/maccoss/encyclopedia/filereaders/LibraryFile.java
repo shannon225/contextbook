@@ -1,33 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.Types;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.StringTokenizer;
-import java.util.function.Predicate;
-import java.util.zip.DataFormatException;
-
 import com.google.common.collect.ImmutableList;
-
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrerInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface;
@@ -37,42 +10,32 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.AmbiguousPeptid
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefinementData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefiner;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Chromatogram;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.ChromatogramLibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.LocalizedLibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursor;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroupInterface;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SimplePeptidePrecursor;
-import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
-import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
-import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
-import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
-import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
+import edu.washington.gs.maccoss.encyclopedia.utils.*;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.Version;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Ion;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.IonType;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.QuantitativeDIAData;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.*;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.BenjaminiHochberg;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.sql.*;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.function.Predicate;
+import java.util.zip.DataFormatException;
+
 public class LibraryFile extends SQLFile implements LibraryInterface {
 	public static boolean OPEN_IN_PLACE=false;
 
-	private static final String SOURCEFILE_TIC_PREFIX="TIC_";
+	public static final String SOURCEFILE_TIC_PREFIX="TIC_";
 	private static final String SOURCEFILE_STRING="sourcefile";
 	private static final String SOURCE_FILE_SPLIT="|";
 	public static final String DLIB=".dlib";
@@ -196,6 +159,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		try (Connection c = getConnection()) {
 			c.setAutoCommit(false);
 
+			int total = 0;
 			try (PreparedStatement s = c.prepareStatement(
 					"INSERT INTO retentiontimes (SourceFile, Library, Actual, Predicted, Delta, Probability, Decoy, PeptideModSeq) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
 			)) {
@@ -217,18 +181,23 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					s.addBatch();
 
 					if (i % 8192 == 0) {
-						s.executeBatch();
-						s.clearBatch();
+						total += General.sum(s.executeBatch());
 					}
 				}
-				s.executeBatch();
+				total += General.sum(s.executeBatch());
 			} catch (SQLException e) {
+				Logger.errorLine("Error writing RT alignment to ELIB; skipping.");
+				Logger.errorException(e);
+
 				c.rollback();
+				return;
 			} finally {
+				Logger.logLine(String.format("Wrote %d RT alignment points for %s", total, sourceFile));
 				c.commit();
 			}
 		} catch (SQLException | IOException e) {
-			e.printStackTrace();
+			Logger.errorLine("Unable to write RT alignment to ELIB; skipping.");
+			Logger.errorException(e);
 		}
 	}
 

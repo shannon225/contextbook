@@ -1,18 +1,18 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-
 import gnu.trove.map.hash.TObjectFloatHashMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
+
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
 
 public class ProteinGroupQuantifier {
 	private final HashMap<String, ProteinGroupInterface> groups=new HashMap<String, ProteinGroupInterface>();
 	private final TObjectFloatHashMap<ProteinGroupInterface> intensities=new TObjectFloatHashMap<ProteinGroupInterface>();
 	private final TObjectIntHashMap<ProteinGroupInterface> numQuantPeptides=new TObjectIntHashMap<ProteinGroupInterface>();
 
-	public ProteinGroupQuantifier(ArrayList<ProteinGroupInterface> groupList) {
+	public ProteinGroupQuantifier(List<? extends ProteinGroupInterface> groupList) {
 		for (ProteinGroupInterface group : groupList) {
 			for (String accession : group.getEquivalentAccessions()) {
 				groups.put(accession, group);
