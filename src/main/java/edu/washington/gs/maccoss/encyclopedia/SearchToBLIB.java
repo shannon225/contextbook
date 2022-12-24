@@ -1341,7 +1341,7 @@ public class SearchToBLIB {
 	 * @param alignmentElib the location from which previously-computed "alignment-only" results should be read
 	 * @param parameters the parameters to use for quant (should match those used for the initial alignment exactly!)
 	 */
-	static void convertElibQuantOnly(ProgressIndicator progress, List<? extends SearchJobData> jobs, File elibFile, File alignmentElib, SearchParameters parameters) {
+	public static void convertElibQuantOnly(ProgressIndicator progress, List<? extends SearchJobData> jobs, File elibFile, File alignmentElib, SearchParameters parameters) {
 		final Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides;
 		final PeakLocationInferrerInterface inferrer;
 		final ArrayList<? extends ProteinGroupInterface> proteins;
