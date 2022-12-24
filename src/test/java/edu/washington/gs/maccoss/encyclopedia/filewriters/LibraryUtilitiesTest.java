@@ -10,9 +10,9 @@ import java.util.Optional;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
@@ -122,11 +122,13 @@ public class LibraryUtilitiesTest {
 	}
 	
 	public static void main(String[] args) throws Exception {
-		File dirFile=new File("/Users/searleb/Documents/damien/dda_library_search/non-tryptics/");
-		File[] inFiles=new File[] {new File(dirFile, "uniprot_human-reference_reviewed_2022mar02.prosit_input.aspn_nce29.prosit_cid2020.dlib"),
-				new File(dirFile, "uniprot_human-reference_reviewed_2022mar02.prosit_input.aspn_nce29.prosit_hcd2020.dlib"),
-				new File(dirFile, "uniprot_human-reference_reviewed_2022mar02.prosit_input.gluc_nce29.prosit_cid2020.dlib"),
-				new File(dirFile, "uniprot_human-reference_reviewed_2022mar02.prosit_input.gluc_nce29.prosit_hcd2020.dlib"),
+		//File dirFile=new File("/Users/searleb/Documents/damien/dda_library_search/non-tryptics/");
+		File dirFile=new File("/Users/searle.30/Downloads/");
+		File[] inFiles=new File[] {
+				//new File(dirFile, "uniprot_human-reference_reviewed_2022mar02.prosit_input.aspn_nce29.prosit_cid2020.dlib"),
+				//new File(dirFile, "uniprot_human-reference_reviewed_2022mar02.prosit_input.aspn_nce29.prosit_hcd2020.dlib"),
+				//new File(dirFile, "uniprot_human-reference_reviewed_2022mar02.prosit_input.gluc_nce29.prosit_cid2020.dlib"),
+				//new File(dirFile, "uniprot_human-reference_reviewed_2022mar02.prosit_input.gluc_nce29.prosit_hcd2020.dlib"),
 				new File(dirFile, "uniprot_human-reference_reviewed_2022mar02.prosit_input.tryp_nce29.prosit_cid2020.dlib"),
 				new File(dirFile, "uniprot_human-reference_reviewed_2022mar02.prosit_input.tryp_nce29.prosit_hcd2020.dlib"),
 				new File(dirFile, "uniprot_human-reference_reviewed_2022mar02.prosit_input.tryp_nce34.prosit_hcd2020.dlib")};
@@ -141,22 +143,59 @@ public class LibraryUtilitiesTest {
 	
 			LibraryFile saveLibrary=new LibraryFile();
 			saveLibrary.openFile();
+			saveLibrary.dropIndices();
+			
+			HashMap<String, HashSet<String>> targetAccessionsByPeptide=new HashMap<>();
+			HashMap<String, HashSet<String>> decoyAccessionsByPeptide=new HashMap<>();
 			
 			ArrayList<LibraryEntry> toWrite=new ArrayList<>();
 			TDoubleArrayList deltamz=new TDoubleArrayList();
-			for (LibraryEntry entry : library.getAllEntries(false, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()))) {
-				double mz=constants.getChargedMass(entry.getPeptideModSeq(), entry.getPrecursorCharge());
-				deltamz.add(mz-entry.getPrecursorMZ());
-				toWrite.add(entry.updatePrecursorMz(mz));
-				
+			for (int i = 0; i <= 10; i++) {
+				float min=i*100;
+				float max=i==10?10000.0f:((i+1)*100);
+				Range range=new Range(min, max);
+				System.out.print("batch "+range.toString());
+			
+				for (LibraryEntry entry : library.getEntries(range, false, constants)) {
+					double mz=constants.getChargedMass(entry.getPeptideModSeq(), entry.getPrecursorCharge());
+					deltamz.add(mz-entry.getPrecursorMZ());
+					toWrite.add(entry.updatePrecursorMz(mz));
+	
+					HashMap<String, HashSet<String>> map;
+					if (entry.isDecoy()) {
+						map=decoyAccessionsByPeptide;
+					} else {
+						map=targetAccessionsByPeptide;
+					}
+					HashSet<String> accessions=map.get(entry.getPeptideSeq());
+					if (accessions==null) {
+						accessions=new HashSet<>();
+						map.put(entry.getPeptideSeq(), accessions);
+					}
+					accessions.addAll(entry.getAccessions());
+					
+					if (toWrite.size()>10000) {
+						saveLibrary.addEntries(toWrite);
+						toWrite.clear();
+						System.out.print('.');
+					}
+					
+				}
+	
+				if (toWrite.size()>0) {
+					saveLibrary.addEntries(toWrite);
+					toWrite.clear();
+					System.out.println("Finished batch.");
+				}
 			}
 			Logger.logLine("Found "+toWrite.size()+" peptides. Writing to ["+saveFile.getAbsolutePath()+"]...");
 			ArrayList<XYPoint> points=PivotTableGenerator.createPivotTable(General.toFloatArray(deltamz.toArray()));
-			//Charter.launchChart("delta mz", "count", true, new XYTrace(points, GraphType.line, "delta mz"));
 			
-			saveLibrary.dropIndices();
-			saveLibrary.addEntries(toWrite);
-			saveLibrary.addProteinsFromEntries(toWrite);
+			XYTrace xyTrace = new XYTrace(points, GraphType.line, "delta mz");
+			System.out.println("Most common mass error: "+xyTrace.getMaxXY().x+" m/z");
+			//Charter.launchChart("delta mz", "count", true, xyTrace);
+			
+			saveLibrary.addProteinsFromEntries(targetAccessionsByPeptide, decoyAccessionsByPeptide);
 			saveLibrary.createIndices();
 			saveLibrary.saveAsFile(saveFile);
 			

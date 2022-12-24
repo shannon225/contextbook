@@ -889,28 +889,34 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	}
 
 	public void addProteinsFromEntries(ArrayList<LibraryEntry> entries) throws IOException, SQLException {
+		HashMap<String, HashSet<String>> targetAccessionsByPeptide=new HashMap<>();
+		HashMap<String, HashSet<String>> decoyAccessionsByPeptide=new HashMap<>();
+
+		for (LibraryEntry entry : entries) {
+			HashMap<String, HashSet<String>> map;
+			if (entry.isDecoy()) {
+				map=decoyAccessionsByPeptide;
+			} else {
+				map=targetAccessionsByPeptide;
+			}
+			
+			HashSet<String> accessions=map.get(entry.getPeptideSeq());
+			if (accessions==null) {
+				accessions=new HashSet<>();
+				map.put(entry.getPeptideSeq(), accessions);
+			}
+			accessions.addAll(entry.getAccessions());
+		}
+		
+		addProteinsFromEntries(targetAccessionsByPeptide, decoyAccessionsByPeptide);
+	}
+
+	public void addProteinsFromEntries(HashMap<String, HashSet<String>> targetAccessionsByPeptide,
+			HashMap<String, HashSet<String>> decoyAccessionsByPeptide) throws IOException, SQLException {
 		Connection c=getConnection();
 		try {
 			PreparedStatement proteinPrep=c.prepareStatement("INSERT OR IGNORE INTO peptidetoprotein (PeptideSeq, IsDecoy, ProteinAccession) VALUES (?,?,?)");
 			try {
-				HashMap<String, HashSet<String>> targetAccessionsByPeptide=new HashMap<>();
-				HashMap<String, HashSet<String>> decoyAccessionsByPeptide=new HashMap<>();
-
-				for (LibraryEntry entry : entries) {
-					HashMap<String, HashSet<String>> map;
-					if (entry.isDecoy()) {
-						map=decoyAccessionsByPeptide;
-					} else {
-						map=targetAccessionsByPeptide;
-					}
-					
-					HashSet<String> accessions=map.get(entry.getPeptideSeq());
-					if (accessions==null) {
-						accessions=new HashSet<>();
-						map.put(entry.getPeptideSeq(), accessions);
-					}
-					accessions.addAll(entry.getAccessions());
-				}
 				
 				for (Entry<String, HashSet<String>> entry : targetAccessionsByPeptide.entrySet()) {
 					proteinPrep.setString(1, entry.getKey());

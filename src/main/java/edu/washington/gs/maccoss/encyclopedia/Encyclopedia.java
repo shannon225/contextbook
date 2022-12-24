@@ -167,14 +167,6 @@ public class Encyclopedia {
 				
 				SearchParameters parameters=SearchParameterParser.parseParameters(arguments);
 				LibraryScoringFactory factory=EncyclopediaScoringFactory.getScoringFactory(arguments, parameters);
-				Logger.logLine("Using "+factory.getName());
-				
-	
-				Logger.logLine("Parameters:");
-				Logger.logLine(" "+INPUT_DIA_TAG+" "+diaFile.getAbsolutePath());
-				Logger.logLine(" "+TARGET_LIBRARY_TAG+" "+libraryFile.getAbsolutePath());
-				Logger.logLine(" "+OUTPUT_RESULT_TAG+" "+outputFile.getAbsolutePath());
-				Logger.logLine(parameters.toString());
 
 				LibraryInterface library=BlibToLibraryConverter.getFile(libraryFile, fastaFile, parameters);
 				EncyclopediaJobData job=new EncyclopediaJobData(diaFile, fastaFile, library, outputFile, factory);
@@ -235,6 +227,13 @@ public class Encyclopedia {
 				Logger.logLine("Just going to go ahead and reprocess this file!");
 			}
 		}
+		
+		Logger.logLine("Using "+job.getTaskFactory().getName());
+		Logger.logLine("Input File: "+job.getDiaFileReader().getOriginalFileName());
+		Logger.logLine("Library File: "+job.getLibrary().getName());
+		Logger.logLine("Result File: "+job.getResultLibrary().getName());
+		Logger.logLine("Parameters:");
+		Logger.logLine(job.getParameters().toString());
 		
 		Logger.logLine("Converting files...");
 		progress.update("Converting files...", Float.MIN_VALUE);

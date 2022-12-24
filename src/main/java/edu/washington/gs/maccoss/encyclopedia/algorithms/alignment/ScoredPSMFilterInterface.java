@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ScoredPSM;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 
 public interface ScoredPSMFilterInterface {
 
@@ -14,5 +15,5 @@ public interface ScoredPSMFilterInterface {
 
 	float[] getAdditionalScores(ScoredPSM psm);
 
-	void makePlots(ArrayList<ScoredPSM> psms, Optional<File> saveFileSeed);
+	void makePlots(SearchParameters params, ArrayList<ScoredPSM> psms, Optional<File> saveFileSeed);
 }

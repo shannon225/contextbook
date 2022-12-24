@@ -138,14 +138,6 @@ public class Thesaurus {
 				StripeFileInterface stripefile=StripeFileGenerator.getFile(diaFile, parameters);
 				PhosphoLocalizer localizer=new PhosphoLocalizer(stripefile, parameters.getLocalizingModification().get(), parameters);
 				LibraryScoringFactory factory=new ThesaurusOneScoringFactory(parameters, localizer, new LinkedBlockingQueue<ModificationLocalizationData>());
-				
-				Logger.logLine("Thesaurus version "+ProgramType.getGlobalVersion().toString());
-	
-				Logger.logLine("Parameters:");
-				Logger.logLine(" "+Encyclopedia.INPUT_DIA_TAG+" "+diaFile.getAbsolutePath());
-				Logger.logLine(" "+Encyclopedia.TARGET_LIBRARY_TAG+" "+libraryFile.getAbsolutePath());
-				Logger.logLine(" "+Encyclopedia.OUTPUT_RESULT_TAG+" "+outputFile.getAbsolutePath());
-				Logger.logLine(parameters.toString());
 
 				LibraryInterface library=BlibToLibraryConverter.getFile(libraryFile, fastaFile, parameters);
 				ThesaurusJobData job=new ThesaurusJobData(diaFile, library, outputFile, fastaFile, factory);
@@ -186,6 +178,13 @@ public class Thesaurus {
 				Logger.logLine("Just going to go ahead and reprocess this file!");
 			}
 		}
+		
+		Logger.logLine("Using "+job.getTaskFactory().getName());
+		Logger.logLine("Input File: "+job.getDiaFileReader().getOriginalFileName());
+		Logger.logLine("Library File: "+job.getLibrary().getName());
+		Logger.logLine("Result File: "+job.getResultLibrary().getName());
+		Logger.logLine("Parameters:");
+		Logger.logLine(job.getParameters().toString());
 		
 		Logger.logLine("Converting files...");
 		progress.update("Converting files...", Float.MIN_VALUE);

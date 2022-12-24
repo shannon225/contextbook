@@ -24,4 +24,6 @@ public interface PecanScoringFactory {
 	public String getPrimaryScoreName();
 	public AbstractPecanScoringTask getScoringTask(PSMPeakScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<FragmentScan> stripes, TDoubleObjectHashMap<XYPoint>[] background, PrecursorScanMap precursors, int scanAveragingMargin, BlockingQueue<AbstractScoringResult> resultsQueue);
 	public PeptideScoringResultsConsumer getResultsConsumer(BlockingQueue<AbstractScoringResult> resultsQueue, StripeFileInterface diaFile);
+
+	public String getName();
 }

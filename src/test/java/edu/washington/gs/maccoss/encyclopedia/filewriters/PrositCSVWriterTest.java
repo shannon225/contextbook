@@ -44,6 +44,7 @@ public final class PrositCSVWriterTest extends AbstractFileConverterTest {
 				(byte) 2, (byte) 2,
 				1,
 				new Range(400f, 1000f),
+				true,
 				true
 		);
 	}
@@ -107,6 +108,7 @@ public final class PrositCSVWriterTest extends AbstractFileConverterTest {
 				libraryFile,
 				50,
 				(byte) 2,
+				true,
 				true
 		);
 	}

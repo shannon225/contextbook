@@ -121,7 +121,7 @@ public class PrositCSVWriter {
 		double maximumMz = 1002.70;
 		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
 		
-		writeCSV(fasta, enzyme, defaultNCE, defaultCharge, minCharge, maxCharge, maxMissedCleavages, new Range(minimumMz, maximumMz), false);
+		writeCSV(fasta, enzyme, defaultNCE, defaultCharge, minCharge, maxCharge, maxMissedCleavages, new Range(minimumMz, maximumMz), true, false);
 	}
 	
 	public static void main(String[] args) throws Exception {
@@ -146,7 +146,7 @@ public class PrositCSVWriter {
 		System.out.println("FOUND previous: "+entries.size()+", new: "+totalPeptides+", after removal: "+peptides.size());
 		
 		String fileName = checkCSVName(null, fastaFile, enzyme, defaultNCE, defaultCharge);
-		int total = writePrositFile(fileName, defaultNCE, defaultCharge, false, peptides);
+		int total = writePrositFile(fileName, defaultNCE, defaultCharge, true, false, peptides);
 		Logger.logLine("Finished writing "+total+" peptides to Prosit CSV!");
 	}
 	
@@ -159,18 +159,18 @@ public class PrositCSVWriter {
 		double minimumMz = 396.43;
 		double maximumMz = 1002.70;
 		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
-		writeCSV(fasta, enzyme, defaultNCE, defaultCharge, minCharge, maxCharge, maxMissedCleavages, new Range(minimumMz, maximumMz), false);
+		writeCSV(fasta, enzyme, defaultNCE, defaultCharge, minCharge, maxCharge, maxMissedCleavages, new Range(minimumMz, maximumMz), true, false);
 	}
 
-	public static void writeCSV(File fasta, DigestionEnzyme enzyme, int defaultNCE, byte defaultCharge, byte minCharge, byte maxCharge, int maxMissedCleavages, Range mzRange, boolean addDecoys) throws FileNotFoundException {
-		writeCSV(null, fasta, enzyme, defaultNCE, defaultCharge, minCharge, maxCharge, maxMissedCleavages, mzRange, addDecoys);
+	public static void writeCSV(File fasta, DigestionEnzyme enzyme, int defaultNCE, byte defaultCharge, byte minCharge, byte maxCharge, int maxMissedCleavages, Range mzRange, boolean adjustNCEForDIA, boolean addDecoys) throws FileNotFoundException {
+		writeCSV(null, fasta, enzyme, defaultNCE, defaultCharge, minCharge, maxCharge, maxMissedCleavages, mzRange, adjustNCEForDIA, addDecoys);
 	}
 
-	public static void writeCSV(String csvFileName, File fasta, DigestionEnzyme enzyme, int defaultNCE, byte defaultCharge, byte minCharge, byte maxCharge, int maxMissedCleavages, Range mzRange, boolean addDecoys) throws FileNotFoundException {
-		writeCSV(csvFileName, fasta, enzyme, defaultNCE, defaultCharge, minCharge, maxCharge, maxMissedCleavages, mzRange, addDecoys, new HashSet<>());
+	public static void writeCSV(String csvFileName, File fasta, DigestionEnzyme enzyme, int defaultNCE, byte defaultCharge, byte minCharge, byte maxCharge, int maxMissedCleavages, Range mzRange, boolean adjustNCEForDIA, boolean addDecoys) throws FileNotFoundException {
+		writeCSV(csvFileName, fasta, enzyme, defaultNCE, defaultCharge, minCharge, maxCharge, maxMissedCleavages, mzRange, adjustNCEForDIA, addDecoys, new HashSet<>());
 	}
 	
-	public static void writeCSV(String csvFileName, File fasta, DigestionEnzyme enzyme, int defaultNCE, byte defaultCharge, byte minCharge, byte maxCharge, int maxMissedCleavages, Range mzRange, boolean addDecoys, HashSet<PeptidePrecursor> peptidesToIgnore) throws FileNotFoundException {
+	public static void writeCSV(String csvFileName, File fasta, DigestionEnzyme enzyme, int defaultNCE, byte defaultCharge, byte minCharge, byte maxCharge, int maxMissedCleavages, Range mzRange, boolean adjustNCEForDIA, boolean addDecoys, HashSet<PeptidePrecursor> peptidesToIgnore) throws FileNotFoundException {
 		String fileName = checkCSVName(csvFileName, fasta, enzyme, defaultNCE, defaultCharge);
 		Logger.logLine("Starting to build Prosit CSV: "+fileName);
 
@@ -178,7 +178,7 @@ public class PrositCSVWriter {
 		
 		allPeptides.removeAll(peptidesToIgnore);
 
-		int total = writePrositFile(fileName, defaultNCE, defaultCharge, addDecoys, allPeptides);
+		int total = writePrositFile(fileName, defaultNCE, defaultCharge, adjustNCEForDIA, addDecoys, allPeptides);
 		Logger.logLine("Finished writing "+total+" peptides to Prosit CSV!");
 	}
 
@@ -210,10 +210,10 @@ public class PrositCSVWriter {
 		return allPeptides;
 	}
 
-	public static void writeCSV(LibraryFile library, int defaultNCE, byte defaultCharge, boolean addDecoys) throws FileNotFoundException {
-		writeCSV(null, library, defaultNCE, defaultCharge, addDecoys);
+	public static void writeCSV(LibraryFile library, int defaultNCE, byte defaultCharge, boolean adjustNCEForDIA, boolean addDecoys) throws FileNotFoundException {
+		writeCSV(null, library, defaultNCE, defaultCharge, adjustNCEForDIA, addDecoys);
 	}
-	public static void writeCSV(String csvFileName, LibraryFile library, int defaultNCE, byte defaultCharge, boolean addDecoys) throws FileNotFoundException {
+	public static void writeCSV(String csvFileName, LibraryFile library, int defaultNCE, byte defaultCharge, boolean adjustNCEForDIA, boolean addDecoys) throws FileNotFoundException {
 		String fileName = checkCSVName(csvFileName, library.getFile(), null, defaultNCE, defaultCharge);
 		Logger.logLine("Starting to build Prosit CSV: "+fileName);
 		AminoAcidConstants aminoAcidConstants = new AminoAcidConstants();
@@ -230,7 +230,7 @@ public class PrositCSVWriter {
 			throw new EncyclopediaException("Error parsing library", e);
 		}
 		
-		int total = writePrositFile(fileName, defaultNCE, defaultCharge, addDecoys, allPeptides);
+		int total = writePrositFile(fileName, defaultNCE, defaultCharge, adjustNCEForDIA, addDecoys, allPeptides);
 		Logger.logLine("Finished writing "+total+" peptides to Prosit CSV!");
 	}
 
@@ -253,10 +253,7 @@ public class PrositCSVWriter {
 		}
 		return fileName;
 	}
-
-	public static int writePrositFile(String fileName, int defaultNCE, byte defaultCharge, boolean addDecoys, HashSet<PeptidePrecursor> allPeptides) throws FileNotFoundException {
-		return writePrositFile(fileName, defaultNCE, defaultCharge, true, addDecoys, allPeptides);
-	}
+	
 	public static int writePrositFile(String fileName, int defaultNCE, byte defaultCharge, boolean adjustNCEForDIA, boolean addDecoys, HashSet<PeptidePrecursor> allPeptides) throws FileNotFoundException {
 		AminoAcidConstants constants = new AminoAcidConstants(); // does not support PTMs
 		PrintWriter writer=new PrintWriter(fileName);

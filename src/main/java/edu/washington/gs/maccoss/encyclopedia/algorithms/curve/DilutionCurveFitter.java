@@ -267,7 +267,7 @@ public class DilutionCurveFitter {
 		return data;
 	}
 
-	private static ArrayList<FitPeptide> fitCurves(final File outputDirectory, File dataFile, final ArrayList<ScoredObject<String>> expectedConcentrations,
+	protected static ArrayList<FitPeptide> fitCurves(final File outputDirectory, File dataFile, final ArrayList<ScoredObject<String>> expectedConcentrations,
 			final float[] expected, String requiredAccessionText, boolean useLineNoise) throws FileNotFoundException, UnsupportedEncodingException {
 		final PrintWriter reportWriter=new PrintWriter(new File(outputDirectory, "report.csv"), "UTF-8");
 		reportWriter.println("peptide,protein,lod,loq,r2,m,b,noiseStdev,linearStdev,max");
@@ -275,10 +275,8 @@ public class DilutionCurveFitter {
 		final ArrayList<FitPeptide> fitPeptides=new ArrayList<FitPeptide>();
 		TableParserMuscle muscle = new TableParserMuscle() {
 			public void processRow(Map<String, String> row) {
-				String peptide=row.get("Peptide"); // from EncyclopeDIA
-				if (peptide==null) peptide=row.get("Peptide Modified Sequence"); // from Skyline
-				String protein=row.get("Protein"); // from EncyclopeDIA
-				if (protein==null) protein=row.get("Protein Name"); // from Skyline
+				String peptide = getPeptide(row);
+				String protein = getProtein(row);
 				
 				if (requiredAccessionText!=null&&protein.indexOf(requiredAccessionText)==-1) {
 					return;
@@ -331,16 +329,14 @@ public class DilutionCurveFitter {
 		return fitPeptides;
 	}
 
-	private static HashMap<String, Map<String, TObjectFloatHashMap<String>>> extractUnknowns(File dataFile, final Map<String, TObjectFloatHashMap<String>> unknownSamples, final String requiredAccessionText) throws FileNotFoundException, UnsupportedEncodingException {
+	protected static HashMap<String, Map<String, TObjectFloatHashMap<String>>> extractUnknowns(File dataFile, final Map<String, TObjectFloatHashMap<String>> unknownSamples, final String requiredAccessionText) throws FileNotFoundException, UnsupportedEncodingException {
 		final HashMap<String, Map<String, TObjectFloatHashMap<String>>> unknowns=new HashMap<>();
 		if (unknownSamples==null||unknownSamples.size()==0) return unknowns;
 		
 		TableParserMuscle muscle = new TableParserMuscle() {
 			public void processRow(Map<String, String> row) {
-				String peptide=row.get("Peptide"); // from EncyclopeDIA
-				if (peptide==null) peptide=row.get("Peptide Modified Sequence"); // from Skyline
-				String protein=row.get("Protein"); // from EncyclopeDIA
-				if (protein==null) protein=row.get("Protein Name"); // from Skyline
+				String peptide = getPeptide(row);
+				String protein = getProtein(row);
 				
 				if (requiredAccessionText!=null&&protein.indexOf(requiredAccessionText)==-1) {
 					return;
@@ -360,7 +356,11 @@ public class DilutionCurveFitter {
 							float concentration;
 							try {
 								concentration=Float.parseFloat(row.get(column));
+							} catch (NullPointerException npe) {
+								Logger.errorLine("Failure to parse number from ["+row.get(column)+"] for column ["+column+"]");
+								concentration=0.0f;
 							} catch (NumberFormatException nfe) {
+								Logger.errorLine("Failure to parse number from ["+row.get(column)+"] for column ["+column+"]");
 								concentration=0.0f;
 							}
 							groupUnknowns.put(column, concentration*normalization);
@@ -542,7 +542,7 @@ public class DilutionCurveFitter {
 		return rtInSecByPeptideModSeq;
 	}
 
-	private static float[] adjustForZeroConcentrations(final ArrayList<ScoredObject<String>> expectedConcentrations) {
+	protected static float[] adjustForZeroConcentrations(final ArrayList<ScoredObject<String>> expectedConcentrations) {
 		float minNonZero=Float.MAX_VALUE;
 		for (ScoredObject<String> scoredObject : expectedConcentrations) {
 			if (scoredObject.getScore()>0&&scoredObject.getScore()<minNonZero) {
@@ -561,7 +561,7 @@ public class DilutionCurveFitter {
 		return expected;
 	}
 
-	private static Pair<ArrayList<ScoredObject<String>>, Map<String, TObjectFloatHashMap<String>>> getExpectedConcentrationsFromCSV(File sampleOrganizationFile) {
+	protected static Pair<ArrayList<ScoredObject<String>>, Map<String, TObjectFloatHashMap<String>>> getExpectedConcentrationsFromCSV(File sampleOrganizationFile) {
 		final ArrayList<ScoredObject<String>> expectedConcentrations=new ArrayList<ScoredObject<String>>();
 		final TreeMap<String, TObjectFloatHashMap<String>> unknowns=new TreeMap<>();
 		
@@ -757,9 +757,9 @@ public class DilutionCurveFitter {
 		float minExpected = General.min(expected);
 		float minExpectedWithMargin=minExpected/10;
 
-		float adjustmentForUnknowns=0.0f;
+		float adjustmentForUnknowns=General.max(expected);
 		if (unknowns.isPresent()) {
-			adjustmentForUnknowns=10000f;
+			adjustmentForUnknowns=(float)Math.pow(10, unknowns.get().size());
 		}
 		
 		XYTrace lodTrace=new XYTrace(new float[] {lod}, new float[] {bestFit.getUnloggedPredicted(lod)}, GraphType.bighollowpoint, "LOD="+lod, Color.gray, 10f);
@@ -870,6 +870,20 @@ public class DilutionCurveFitter {
 		return panel;
 	}
 	
+	private static String getPeptide(Map<String, String> row) {
+		String peptide=row.get("Peptide"); // from EncyclopeDIA
+		if (peptide==null) peptide=row.get("Peptide Modified Sequence"); // from Skyline
+		if (peptide==null) peptide=row.get("Peptide Modified Sequence Monoisotopic Masses"); // from Skyline
+		return peptide;
+	}
+
+	private static String getProtein(Map<String, String> row) {
+		String protein=row.get("Protein"); // from EncyclopeDIA
+		if (protein==null) protein=row.get("Protein Name"); // from Skyline
+		if (protein==null) protein="Unknown Protein";
+		return protein;
+	}
+
 	public static Color[] colors=new Color[] {new Color(95,158,160), new Color(240,230,140), new Color(255, 215, 0), new Color(205,173,0), new Color(139,117,0), new Color(139,76,57), new Color(139,0,0)};
 
 	public static class AlignmentWithAnchors {
@@ -881,10 +895,17 @@ public class DilutionCurveFitter {
 		}
 
 		public float getAlignedRTInSec(LibraryEntry entry) {
+			return getAlignedRTInSec(entry, false);
+		}
+		public boolean isKnown(LibraryEntry entry) {
+			return knownRTInSecs.contains(entry.getPeptideModSeq());
+		}
+		
+		public float getAlignedRTInSec(LibraryEntry entry, boolean quiet) {
 			if (knownRTInSecs.contains(entry.getPeptideModSeq())) {
 				return knownRTInSecs.get(entry.getPeptideModSeq());
 			}
-			Logger.errorLine("Potential problem: had to look up "+entry.getPeptideModSeq());
+			if (!quiet)	Logger.errorLine("Potential problem: had to look up "+entry.getPeptideModSeq());
 			return rtAlignment.getYValue(entry.getScanStartTime()/60f)*60f; // deal with sec to min interconversion
 		}
 	}
@@ -913,6 +934,35 @@ public class DilutionCurveFitter {
 			if (c!=0) return c;
 			return peptideModSeq.compareTo(o.peptideModSeq);
 		}
+
+		public float[] getExpectedRelativeIntensities() {
+			return expectedRelativeIntensities;
+		}
+
+		public void setExpectedRelativeIntensities(float[] expectedRelativeIntensities) {
+			this.expectedRelativeIntensities = expectedRelativeIntensities;
+		}
+
+		public float[] getActualRelativeIntensities() {
+			return actualRelativeIntensities;
+		}
+
+		public void setActualRelativeIntensities(float[] actualRelativeIntensities) {
+			this.actualRelativeIntensities = actualRelativeIntensities;
+		}
+
+		public String getPeptideModSeq() {
+			return peptideModSeq;
+		}
+
+		public String getProteinKey() {
+			return proteinKey;
+		}
+
+		public DilutionFit getBestFit() {
+			return bestFit;
+		}
+		
 	}
 	
 	private static final float NUM_STDEVS_FOR_LOQ=3.0f;

@@ -32,6 +32,11 @@ public class PecanOneScoringFactory implements PecanScoringFactory {
 	}
 	
 	@Override
+	public String getName() {
+		return "Pecan 1.X Scoring System";
+	}
+	
+	@Override
 	public AbstractPecanFragmentationModel getFragmentationModel(FastaPeptideEntry peptide, AminoAcidConstants aaConstants) {
 		return new PecanOneFragmentationModel(peptide, aaConstants);
 	}

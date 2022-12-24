@@ -12,8 +12,11 @@ public class ScoredPSMFilter implements ScoredPSMFilterInterface {
 	private final RetentionTimeFilter rtFilter;
 	private final MassErrorFilter precursorFilter;
 	private final MassErrorFilter fragmentFilter;
+	private final SearchParameters params;
 
 	public ScoredPSMFilter(SearchParameters params, ArrayList<ScoredPSM> passingPSMs) {
+		this.params=params;
+		
 		ArrayList<XYPoint> rtPoints=new ArrayList<XYPoint>();
 		ArrayList<XYPoint> precursorPoints=new ArrayList<XYPoint>();
 		ArrayList<XYPoint> fragmentPoints=new ArrayList<XYPoint>();
@@ -24,11 +27,10 @@ public class ScoredPSMFilter implements ScoredPSMFilterInterface {
 			float acquiredRT=psm.getMSMS().getScanStartTime()/60f;
 
 			rtPoints.add(psm.getRTData()); 
-
-			if (psm.getDeltaPrecursorMass()!=params.getPrecursorTolerance().getToleranceThreshold()) {
+			if (params.getPrecursorTolerance().getToleranceThreshold()!=psm.getDeltaPrecursorMass()) {
 				precursorPoints.add(new PeptideXYPoint(acquiredRT, psm.getDeltaPrecursorMass(), isDecoy, peptideModSeq));
 			}
-			if (psm.getDeltaPrecursorMass()!=params.getFragmentTolerance().getToleranceThreshold()) {
+			if (params.getFragmentTolerance().getToleranceThreshold()!=psm.getDeltaFragmentMass()) {
 				fragmentPoints.add(new PeptideXYPoint(acquiredRT, psm.getDeltaFragmentMass(), isDecoy, peptideModSeq));
 			}
 		}
@@ -44,16 +46,20 @@ public class ScoredPSMFilter implements ScoredPSMFilterInterface {
 	}
 	
 	@Override
-	public void makePlots(ArrayList<ScoredPSM> psms, Optional<File> saveFileSeed) {
+	public void makePlots(SearchParameters params, ArrayList<ScoredPSM> psms, Optional<File> saveFileSeed) {
 		ArrayList<XYPoint> ms1Errors=new ArrayList<>();
 		for (ScoredPSM psm : psms) {
-			ms1Errors.add(new XYPoint(psm.getMSMS().getScanStartTime()/60f, psm.getDeltaPrecursorMass()));
+			if (params.getPrecursorTolerance().getToleranceThreshold()!=psm.getDeltaPrecursorMass()) {
+				ms1Errors.add(new XYPoint(psm.getMSMS().getScanStartTime()/60f, psm.getDeltaPrecursorMass()));
+			}
 		}
 		precursorFilter.plot(ms1Errors, saveFileSeed);	
 		
 		ArrayList<XYPoint> ms2Errors=new ArrayList<>();
 		for (ScoredPSM psm : psms) {
-			ms2Errors.add(new XYPoint(psm.getMSMS().getScanStartTime()/60f, psm.getDeltaFragmentMass()));
+			if (params.getFragmentTolerance().getToleranceThreshold()!=psm.getDeltaFragmentMass()) {
+				ms2Errors.add(new XYPoint(psm.getMSMS().getScanStartTime()/60f, psm.getDeltaFragmentMass()));
+			}
 		}
 		fragmentFilter.plot(ms2Errors, saveFileSeed);	
 		
@@ -77,10 +83,21 @@ public class ScoredPSMFilter implements ScoredPSMFilterInterface {
 	public float[] getAdditionalScores(ScoredPSM psm) {
 		float modelRT=psm.getLibraryEntry().getScanStartTime()/60f;
 		float actualRT=psm.getMSMS().getScanStartTime()/60f;
-
+		
 		float deltaRT=Math.abs(rtFilter.getDelta(actualRT, modelRT));
-		float deltaPrecursor=precursorFilter.getCorrectedMassError(actualRT, psm.getDeltaPrecursorMass());
-		float deltaFragment=fragmentFilter.getCorrectedMassError(actualRT, psm.getDeltaFragmentMass());
+		float deltaPrecursor;
+		if (params.getPrecursorTolerance().getToleranceThreshold()!=psm.getDeltaPrecursorMass()) {
+			deltaPrecursor=precursorFilter.getCorrectedMassError(actualRT, psm.getDeltaPrecursorMass());
+		} else {
+			deltaPrecursor=psm.getDeltaPrecursorMass();
+		}
+		float deltaFragment;
+		if (params.getFragmentTolerance().getToleranceThreshold()!=psm.getDeltaFragmentMass()) {
+			deltaFragment=fragmentFilter.getCorrectedMassError(actualRT, psm.getDeltaFragmentMass());
+		} else {
+			deltaFragment=psm.getDeltaFragmentMass();
+		}
+		
 		return new float[] {deltaRT, deltaPrecursor, deltaFragment};
 	}
 
