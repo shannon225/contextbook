@@ -537,7 +537,7 @@ public class Encyclopedia {
 		ScoredPSMFilter filter=new ScoredPSMFilter(job.getParameters(), passingPSMs);
 		
 		final String passTag=finalPass?".final":".first";
-		filter.makePlots(passingPSMs, Optional.ofNullable(new File(job.getPercolatorFiles().getPeptideOutputFile().getAbsolutePath()+passTag)));
+		filter.makePlots(job.getParameters(), passingPSMs, Optional.ofNullable(new File(job.getPercolatorFiles().getPeptideOutputFile().getAbsolutePath()+passTag)));
 		return filter;
 	}
 }

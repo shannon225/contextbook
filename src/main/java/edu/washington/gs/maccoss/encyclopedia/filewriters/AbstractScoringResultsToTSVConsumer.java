@@ -39,6 +39,9 @@ public abstract class AbstractScoringResultsToTSVConsumer implements PeptideScor
 		this.resultsQueue = resultsQueue;
 
 		try {
+			if (!this.tmpFile.getParentFile().exists()) {
+				this.tmpFile.getParentFile().mkdirs();
+			}
 			writer = new PrintWriter(this.tmpFile, "UTF-8");
 			Logger.logLine("Constructing writer for " + this.tmpFile.getAbsolutePath());
 		} catch (FileNotFoundException e) {
