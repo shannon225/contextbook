@@ -78,7 +78,7 @@ public class CombineELIBsAndExtractGroupSpecificLibrariesJob implements WorkerJo
 		}
 		
 		// grab jobs from the current queue and downsample DIA data
-		
+
 		ArrayList<SearchJobData> jobData=new ArrayList<SearchJobData>();
 		ArrayList<WorkerJob> queue = processor.getQueue();
 		for (WorkerJob job : queue) {
@@ -112,7 +112,7 @@ public class CombineELIBsAndExtractGroupSpecificLibrariesJob implements WorkerJo
 		progress.update("Calculating global FDR across batch-specific libraries");
 		Logger.logLine("Calculating global FDR across batch-specific libraries");
 		File intermediateQuantLibraryFile=new File(saveDirectory, "batch_combined_quant_report.elib");
-		SearchToBLIB.convert(new SubProgressIndicator(progress, 0.25f), jobData, intermediateQuantLibraryFile, false, true, quantParameters);
+		SearchToBLIB.convert(new SubProgressIndicator(progress, 0.25f), jobData, intermediateQuantLibraryFile, SearchToBLIB.OutputFormat.ELIB, true, quantParameters);
 
 		// identify bestQuant ions
 		progress.update("Calculating global transitions for quantification");

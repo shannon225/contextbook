@@ -34,7 +34,7 @@ public class ThesaurusJobData extends EncyclopediaJobData {
 		super(diaFile, percolatorFiles, parameters, version, library, taskFactory);
 	}
 
-	protected static PercolatorExecutionData getPercolatorExecutionData(File referenceFileLocation, File fasta, SearchParameters parameters) {
+	public static PercolatorExecutionData getPercolatorExecutionData(File referenceFileLocation, File fasta, SearchParameters parameters) {
 		String prefix = getPrefix(parameters);
 		return new PercolatorExecutionData(new File(getPrefixFromOutput(referenceFileLocation, parameters) + prefix+FEATURE_FILE_SUFFIX), fasta,
 				new File(getPrefixFromOutput(referenceFileLocation, parameters) + prefix+OUTPUT_FILE_SUFFIX), new File(getPrefixFromOutput(referenceFileLocation, parameters) + DECOY_FILE_SUFFIX), 
@@ -51,12 +51,12 @@ public class ThesaurusJobData extends EncyclopediaJobData {
 		if (getLibrary() instanceof LibraryFile) {
 			XMLUtils.writeTag(doc, rootElement, "library", ((LibraryFile) getLibrary()).getFile().getAbsolutePath());
 		}
-		
+
 		getPercolatorFiles().writeToXML(doc, rootElement);
 		getParameters().writeToXML(doc, rootElement);
 	}
 
-	
+
 	public static ThesaurusJobData readFromXML(Document doc, Element rootElement) {
 		if (!rootElement.getTagName().equals(ThesaurusJobData.class.getSimpleName())) {
 			throw new EncyclopediaException("Unexpected XML parsing element, found ["+rootElement.getTagName()+"] when expecting ["+ThesaurusJobData.class.getSimpleName()+"]");
@@ -66,7 +66,7 @@ public class ThesaurusJobData extends EncyclopediaJobData {
 		String version=null;
 		PercolatorExecutionData percolatorData=null;
 		ThesaurusSearchParameters readParams=null;
-		
+
 		NodeList nodes=rootElement.getChildNodes();
 
 		// read params first
@@ -80,7 +80,7 @@ public class ThesaurusJobData extends EncyclopediaJobData {
             }
 		}
 		if (readParams==null) throw new EncyclopediaException("Found null readParams in "+rootElement.getTagName());
-		
+
 		for (int i = 0; i < nodes.getLength(); i++) {
 			Node node = nodes.item(i);
             if (node.getNodeType() == Node.ELEMENT_NODE) {
@@ -96,18 +96,18 @@ public class ThesaurusJobData extends EncyclopediaJobData {
                 }
             }
 		}
-		
+
 		if (diaFile==null) throw new EncyclopediaException("Found null diaFile in "+rootElement.getTagName());
 		if (library==null) throw new EncyclopediaException("Found null library in "+rootElement.getTagName());
 		if (version==null) throw new EncyclopediaException("Found null version in "+rootElement.getTagName());
 		if (percolatorData==null) throw new EncyclopediaException("Found null percolatorData in "+rootElement.getTagName());
-		
+
 		LibraryInterface libraryObject=BlibToLibraryConverter.getFile(library, percolatorData.getFastaFile(), readParams);
 
 		LibraryScoringFactory factory=EncyclopediaScoringFactory.getDefaultScoringFactory(readParams);
 		return new ThesaurusJobData(diaFile,  percolatorData, readParams,  version, libraryObject, factory);
 	}
-	
+
 	@Override
 	public SearchJobData updateQuantFile(File f) {
 		return new ThesaurusJobData(f, getPercolatorFiles(), getParameters(), getVersion(), getLibrary(), getTaskFactory());

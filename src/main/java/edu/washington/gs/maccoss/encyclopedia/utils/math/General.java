@@ -551,7 +551,19 @@ public class General {
 		}
 		return sum;
 	}
-	
+
+	public static int sum(boolean[] arr) {
+		int sum = 0;
+		if (null != arr) {
+			for (boolean b : arr) {
+				if (b) {
+					sum += 1;
+				}
+			}
+		}
+		return sum;
+	}
+
 	public static float variance(float[] v) {
 		if (v.length==0) return 0.0f;
 		

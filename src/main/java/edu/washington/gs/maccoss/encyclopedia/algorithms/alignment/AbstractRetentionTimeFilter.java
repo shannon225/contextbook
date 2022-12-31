@@ -41,7 +41,7 @@ public class AbstractRetentionTimeFilter implements RetentionTimeAlignmentInterf
 	protected final String xAxis;
 	protected final String yAxis;
 	
-	AbstractRetentionTimeFilter(Function rtWarper, Optional<RTProbabilityModel> model, String xAxis, String yAxis) {
+	public AbstractRetentionTimeFilter(Function rtWarper, Optional<RTProbabilityModel> model, String xAxis, String yAxis) {
 		this.rtWarper=rtWarper;
 		this.model=model;
 		this.xAxis=xAxis;
@@ -52,7 +52,7 @@ public class AbstractRetentionTimeFilter implements RetentionTimeAlignmentInterf
 		return rtWarper;
 	}
 	@Override
-	public List<AlignmentDataPoint> plot(ArrayList<XYPoint> rts, Optional<File> saveFileSeed) {
+	public List<AlignmentDataPoint> plot(List<XYPoint> rts, Optional<File> saveFileSeed) {
 		return plot(rts, saveFileSeed, "library", "actual");
 	}
 
@@ -65,7 +65,7 @@ public class AbstractRetentionTimeFilter implements RetentionTimeAlignmentInterf
 		plot(rts, saveFileSeed);
 	}
 
-	public List<AlignmentDataPoint> plot(ArrayList<XYPoint> rts, Optional<File> saveFileSeed, String xAxis, String yAxis) {
+	public List<AlignmentDataPoint> plot(List<XYPoint> rts, Optional<File> saveFileSeed, String xAxis, String yAxis) {
 		TFloatArrayList rtValues=new TFloatArrayList();
 		TFloatArrayList deltas=new TFloatArrayList();
 		ArrayList<XYPoint> removedRTs=new ArrayList<XYPoint>();
@@ -235,7 +235,7 @@ public class AbstractRetentionTimeFilter implements RetentionTimeAlignmentInterf
 			return 1f;
 		}
 	}
-	
+
 
 	
 	@Override
@@ -243,10 +243,10 @@ public class AbstractRetentionTimeFilter implements RetentionTimeAlignmentInterf
 		float modelRT=psm.getLibraryEntry().getScanStartTime()/60f;
 		float actualRT=psm.getMSMS().getScanStartTime()/60f;
 		boolean passes=this.getProbabilityFitsModel(actualRT, modelRT)>=AbstractRetentionTimeFilter.rejectionPValue;
-		
+
 		return passes;
 	}
-	
+
 	@Override
 	public float[] getAdditionalScores(ScoredPSM psm) {
 		float modelRT=psm.getLibraryEntry().getScanStartTime()/60f;

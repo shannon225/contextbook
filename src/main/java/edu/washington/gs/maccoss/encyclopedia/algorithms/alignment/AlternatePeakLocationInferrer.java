@@ -66,10 +66,11 @@ public class AlternatePeakLocationInferrer {
 		Logger.logLine("Setting "+bestJob.getDiaFileReader().getOriginalFileName()+" as the seed experiment.");
 		TObjectFloatHashMap<String> bestRTInSec=peptideMappings.get(bestJob);
 
-		// construct alignments
+		// construct maps to hold alignments
 		HashMap<SearchJobData, RetentionTimeAlignmentInterface> alignmentMap=new HashMap<SearchJobData, RetentionTimeAlignmentInterface>();
 		HashMap<SearchJobData, List<RetentionTimeAlignmentInterface.AlignmentDataPoint>> alignmentDataMap = new HashMap<>();
 		HashMap<String, Float> alignedRTInMinBySequenceMap=new HashMap<String, Float>();
+
 		// add all bestJob archetypals
 		TObjectFloatHashMap<String> archetypals=peptideMappings.get(bestJob);
 		archetypals.forEachEntry(new TObjectFloatProcedure<String>() {
@@ -79,7 +80,7 @@ public class AlternatePeakLocationInferrer {
 				return true;
 			}
 		});
-		
+
 		ProgressIndicator subProgress2=new SubProgressIndicator(progress, 0.5f);
 		int count=0;
 		for (SearchJobData job : pecanJobs) {
@@ -92,10 +93,11 @@ public class AlternatePeakLocationInferrer {
 				
 				bestRTInSec.forEachEntry(new TObjectFloatProcedure<String>() {
 					@Override
-					public boolean execute(String a, float b) {
-						float alt=rtInSec.get(a);
+					public boolean execute(String modSeq, float b) {
+						float alt=rtInSec.get(modSeq);
 						if (rtInSec.getNoEntryValue()!=alt) {
-							points.add(new XYPoint(b/60f, alt/60f)); // both in minutes
+							points.add(new PeptideXYPoint(b / 60f, alt / 60f, // both in minutes
+							                         false, modSeq));
 						}
 						return true;
 					}
@@ -119,7 +121,7 @@ public class AlternatePeakLocationInferrer {
 					@Override
 					public boolean execute(String a, float b) {
 						float alignedRT=alignment.getXValue(b/60f);
-						alignedRTInMinBySequenceMap.put(a, alignedRT);
+						alignedRTInMinBySequenceMap.putIfAbsent(a, alignedRT);
 						return true;
 					}
 				});
@@ -156,6 +158,19 @@ public class AlternatePeakLocationInferrer {
 		return new SimplePeakLocationInferrer(alignmentMap, alignmentDataMap, alignedRTInMinBySequenceMap, bestIons, params);
 	}
 
+	/**
+	 * Requires only the {@code jobs}' {@link QuantitativeSearchJobData#getResultLibrary()}
+	 *
+	 * TODO: calculate alignments in parallel
+	 *
+	 * @param progress TODO: tick progress
+	 *
+	 * @return a pair of:
+	 *         - A table giving the rt in seconds for peptides in each file, with job and modseq as keys.
+	 *           Only passing peptides will be included, and only from jobs with an entry for the peptide.
+	 *         - A map from modseq to the best (quantitative) ions for the peptide (across all files),
+	 *           as decided by {@link CorrelationPeakFrequencyCalculator}.
+	 */
 	static Pair<HashMap<SearchJobData, TObjectFloatHashMap<String>>, HashMap<String, double[]>> getArchetypals(ProgressIndicator progress, List<? extends SearchJobData> jobs, ArrayList<PercolatorPeptide> passingPeptides, SearchParameters params) {
 		int numberOfQuantitativePeaks=params.getEffectiveNumberOfQuantitativePeaks();
 		MassTolerance fragmentTolerance=params.getFragmentTolerance();

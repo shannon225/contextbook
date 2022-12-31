@@ -1,37 +1,59 @@
 package edu.washington.gs.maccoss.encyclopedia;
 
 import com.google.common.collect.ImmutableList;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.AlternatePeakLocationInferrer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrerInterface;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutionData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.QuantitativeSearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.io.TableConcatenator;
+import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParser;
+import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
+import junit.framework.AssertionFailedError;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.List;
+import java.sql.*;
+import java.util.*;
+import java.util.function.IntConsumer;
+import java.util.stream.Collectors;
 import java.util.zip.DataFormatException;
 
 import static edu.washington.gs.maccoss.encyclopedia.tests.EncyclopediaTestUtils.getResourceAsTempFile;
 import static org.junit.Assert.*;
 
+/**
+ * This class exercises {@code SearchToBlib} by converting already-computed single-search results in various ways.
+ * Associated assertions are generally fairly light, and focus more on ensuring that the various modes of
+ * conversion {@code SearchToBlib} function without error and give sensible output. For more detailed testing of the
+ * exact results of this conversion, see {@link AbstractEndToEndIT} which carefully runs the entire search pipeline
+ * including the conversion tested here, and makes more careful assertions that the results are as expected.
+ */
 public class SearchToBLIBIT {
 	private static final String MOCK_PERCOLATOR_VERSION = "percolator_test_version";
+	static final double DELTA = 0.0001;
 
 	private final ProgressIndicator progress = new EmptyProgressIndicator();
 
@@ -42,11 +64,13 @@ public class SearchToBLIBIT {
 	private Path fasta;
 
 	private Path diaA;
+	private Path elibA;
 	private Path featuresTxtA;
 	private Path peptideOutputA;
 	private Path decoyOutputA;
 
 	private Path diaB;
+	private Path elibB;
 	private Path featuresTxtB;
 	private Path peptideOutputB;
 	private Path decoyOutputB;
@@ -62,11 +86,13 @@ public class SearchToBLIBIT {
 		fasta = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/uniprot_human_2018.subset.fasta", tempDir, name, ".fasta");
 
 		diaA = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_1_600.dia", tempDir, name, ".dia");
+		elibA = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_1_600.dia.elib", tempDir, name, ".elib");
 		featuresTxtA = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_1_600.dia.features.txt", tempDir, name, ".txt");
 		peptideOutputA = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_1_600.dia.encyclopedia.txt", tempDir, name, ".txt");
 		decoyOutputA = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_1_600.dia.encyclopedia.decoy.txt", tempDir, name, ".txt");
 
 		diaB = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_2_600.dia", tempDir, name, ".dia");
+		elibB = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_2_600.dia.elib", tempDir, name, ".elib");
 		featuresTxtB = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_2_600.dia.features.txt", tempDir, name, ".txt");
 		peptideOutputB = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_2_600.dia.encyclopedia.txt", tempDir, name, ".txt");
 		decoyOutputB = getResourceAsTempFile(getClass(), "/edu/washington/gs/maccoss/encyclopedia/testdata/121115_bcs_hela_24mz_400_1000_0D_2_600.dia.encyclopedia.decoy.txt", tempDir, name, ".txt");
@@ -191,6 +217,274 @@ public class SearchToBLIBIT {
 		);
 
 		assertValidElib(libFile);
+		assertHasQuantReports(libFile);
+	}
+
+	@Test
+	public void testConvertMultiSampleAlignOnly() throws Exception {
+		// create quant parameters
+		final HashMap<String, String> parameterMap = searchParameters.toParameterMap();
+		parameterMap.put("-quantifyAcrossSamples", "true");
+		searchParameters = SearchParameterParser.parseParameters(parameterMap);
+
+		final Path libFile = Files.createTempFile(tempDir, "SearchToBLIBIT_", ".elib");
+		Files.delete(libFile); // can't exist (we're trying to create it)
+		FileUtils.forceDeleteOnExit(libFile.toFile());
+
+		final List<EncyclopediaJobData> jobData = ImmutableList.of(
+				getSearchJobDataA(),
+				getSearchJobDataB()
+		);
+
+		SearchToBLIB.convert(progress,
+				jobData,
+				libFile.toFile(),
+				SearchToBLIB.OutputFormat.ALIB,
+				true,
+				searchParameters
+		);
+
+		final LibraryFile file = new LibraryFile();
+		try {
+			file.openFile(libFile.toFile());
+
+			final int numEntries = file.getAllEntries(false, searchParameters.getAAConstants()).size();
+			assertTrue("Result file had no entries", 0 < numEntries);
+
+			assertValidAlib(file, jobData);
+
+			// Check entries match the original library
+			LibraryInterface searchLibrary = jobData.iterator().next().getLibrary();
+			file.getAllEntries(false, searchParameters.getAAConstants())
+					.forEach(e -> {
+						final ArrayList<LibraryEntry> entries;
+						try {
+							entries = searchLibrary.getEntries(e.getPeptideModSeq(), e.getPrecursorCharge(), false);
+						} catch (IOException | SQLException | DataFormatException ex) {
+							Logger.errorException(ex);
+							throw new AssertionFailedError(ex.getMessage());
+						}
+
+						assertFalse("No entries for " + e.getPeptideModSeq() + "+" + e.getPrecursorCharge() + " in library", entries.isEmpty());
+
+						// There should only be one?
+						assertArrayEquals(entries.iterator().next().getMassArray(), e.getMassArray(), 0.00001);
+						assertArrayEquals(entries.iterator().next().getIntensityArray(), e.getIntensityArray(), 0.00001f);
+					});
+		} finally {
+			file.close();
+		}
+	}
+
+	/**
+	 * Same as above, but at a lower level to enable direct comparison of the inferrer.
+	 */
+	@Test
+	public void testConvertMultiSampleAlignOnlyAlignment() throws Exception {
+		// create quant parameters
+		final HashMap<String, String> parameterMap = searchParameters.toParameterMap();
+		parameterMap.put("-quantifyAcrossSamples", "true");
+		searchParameters = SearchParameterParser.parseParameters(parameterMap);
+
+		final Path libFile = Files.createTempFile(tempDir, "SearchToBLIBIT_", ".elib");
+		Files.delete(libFile); // can't exist (we're trying to create it)
+		FileUtils.forceDeleteOnExit(libFile.toFile());
+
+		final List<SearchJobData> jobData = ImmutableList.of(
+				getSearchJobDataA(),
+				getSearchJobDataB()
+		);
+
+		// We reproduce the behavior of this method to get access to lower-level info, i.e. `inferrer`
+//		SearchToBLIB.convert(progress,
+//				jobData,
+//				libFile.toFile(),
+//				SearchToBLIB.OutputFormat.ALIB,
+//				true
+//		);
+		final SearchJobData representativeJob = jobData.iterator().next();
+		String filename=libFile.toFile().getName();
+		if (filename.lastIndexOf('.')>0) {
+			filename=filename.substring(0, filename.lastIndexOf('.'));
+		}
+		File bigFeatureFile=new File(representativeJob.getPercolatorFiles().getInputTSV().getParentFile(), filename+"_concatenated_features.txt");
+		File bigPercolatorFile=new File(representativeJob.getPercolatorFiles().getInputTSV().getParentFile(), filename+"_concatenated_results.txt");
+		File bigPercolatorDecoyFile=new File(representativeJob.getPercolatorFiles().getInputTSV().getParentFile(), filename+"_concatenated_decoy.txt");
+		File bigPercolatorProteinFile=new File(representativeJob.getPercolatorFiles().getInputTSV().getParentFile(), filename+"_concatenated_protein_results.txt");
+		File bigPercolatorProteinDecoyFile=new File(representativeJob.getPercolatorFiles().getInputTSV().getParentFile(), filename+"_concatenated_protein_decoy.txt");
+		PercolatorExecutionData bigPercolatorFiles=new PercolatorExecutionData(bigFeatureFile, representativeJob.getPercolatorFiles().getFastaFile(), bigPercolatorFile, bigPercolatorDecoyFile, bigPercolatorProteinFile, bigPercolatorProteinDecoyFile, searchParameters);
+
+		Logger.logLine("Running global Percolator analysis.");
+		TableConcatenator.concatenateTables(
+				jobData.stream()
+						.map(SearchJobData::getPercolatorFiles)
+						.map(PercolatorExecutionData::getInputTSV)
+						.collect(Collectors.toCollection(ArrayList::new)),
+				bigFeatureFile
+		);
+
+		int modelNumber = Integer.MAX_VALUE; // always use the last model (if reusing a model)
+		final Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides = PercolatorExecutor.executePercolatorTSV(searchParameters.getPercolatorVersionNumber(), bigPercolatorFiles, searchParameters.getEffectivePercolatorThreshold(), searchParameters.getAAConstants(), modelNumber);
+
+		final PeakLocationInferrerInterface inferrer = AlternatePeakLocationInferrer.getAlignmentData(new EmptyProgressIndicator(), jobData, passingPeptides.x, searchParameters);
+
+		SearchToBLIB.OutputFormat.ALIB.convert(
+				new EmptyProgressIndicator(),
+				jobData,
+				libFile.toFile(),
+				passingPeptides,
+				Optional.of(bigPercolatorFiles),
+				Optional.of(inferrer),
+				searchParameters
+		);
+
+		final LibraryFile file = new LibraryFile();
+		try {
+			file.openFile(libFile.toFile());
+
+			final int numEntries = file.getAllEntries(false, searchParameters.getAAConstants()).size();
+			assertTrue("Result file had no entries", 0 < numEntries);
+
+			assertValidAlib(file, jobData);
+
+			assertSameInferrer(inferrer, SearchToBLIB.readInferrer(file, jobData, searchParameters), passingPeptides.x, jobData);
+		} finally {
+			file.close();
+		}
+	}
+
+	/**
+	 * Test what happens running the quant-only conversion ({@code -alignmentFrom}).
+	 * This is essentially an extension of the method above, as we generate the alignment-only
+	 * file, then separately quantify a single file.
+	 */
+	@Test
+	public void testConvertMultiSampleQuantOnly() throws Exception {
+		// create quant parameters
+		final HashMap<String, String> parameterMap = searchParameters.toParameterMap();
+		parameterMap.put("-quantifyAcrossSamples", "true");
+		searchParameters = SearchParameterParser.parseParameters(parameterMap);
+
+		final Path alignmentFile = Files.createTempFile(tempDir, "SearchToBLIBIT_", ".elib");
+		Files.delete(alignmentFile); // can't exist (we're trying to create it)
+		FileUtils.forceDeleteOnExit(alignmentFile.toFile());
+
+		final Path quantFile = Files.createTempFile(tempDir, "SearchToBLIBIT_", ".elib");
+		Files.delete(quantFile); // can't exist (we're trying to create it)
+		FileUtils.forceDeleteOnExit(quantFile.toFile());
+
+		final List<SearchJobData> jobData = ImmutableList.of(
+				getSearchJobDataA(),
+				getSearchJobDataB()
+		);
+
+		SearchToBLIB.convert(progress,
+				jobData,
+				alignmentFile.toFile(),
+				SearchToBLIB.OutputFormat.ALIB,
+				true,
+				searchParameters
+		);
+
+		final LibraryFile alignmentLib = new LibraryFile();
+		try {
+			alignmentLib.openFile(alignmentFile.toFile());
+
+			final int numEntries = alignmentLib.getAllEntries(false, searchParameters.getAAConstants()).size();
+			assertTrue("Result file had no entries", 0 < numEntries);
+
+			assertValidAlib(alignmentLib, jobData);
+		} catch (AssertionError e) {
+			Assume.assumeNoException("Test setup failed: unable to produce valid alignment-only results", e);
+		} finally {
+			alignmentLib.close();
+		}
+
+		SearchToBLIB.convertElibQuantOnly(progress,
+//				jobData.subList(0, 1), // only the first job -- SUCCEEDS (this is the "seed" file)
+				jobData.subList(1, 2), // only the second job -- more difficult b/c RT alignment is involved
+				quantFile.toFile(),
+				alignmentFile.toFile(),
+				searchParameters
+		);
+
+		final LibraryFile quantLib = new LibraryFile();
+		try {
+			quantLib.openFile(quantFile.toFile());
+
+			try (Connection c = quantLib.getConnection()) {
+				try (Statement s = c.createStatement()) {
+					try (ResultSet rs = s.executeQuery("SELECT count() FROM peptidequants;")) {
+						assertTrue(rs.next());
+						assertTrue("Result file had no quants", rs.getInt(1) > 0);
+					}
+				}
+			}
+
+			final int numEntries = quantLib.getAllEntries(false, searchParameters.getAAConstants()).size();
+			assertTrue("Result file had no entries", 0 < numEntries);
+
+			// Not written to quant file
+//			assertHasPercolatorMetadata(quantLib);
+		} finally {
+			quantLib.close();
+		}
+
+		assertHasQuantReports(quantFile);
+	}
+
+	/**
+	 * Test what happens running the quant-only conversion ({@code -alignmentFrom})
+	 * with a "normal" search library rather than an alignment-only results file.
+	 *
+	 * We expect that this will succeed and at least be reasonable.
+	 */
+	@Test
+	public void testConvertMultiSampleQuantOnlyWithNormalElib() throws Exception {
+		// create quant parameters
+		final HashMap<String, String> parameterMap = searchParameters.toParameterMap();
+		parameterMap.put("-quantifyAcrossSamples", "true");
+		searchParameters = SearchParameterParser.parseParameters(parameterMap);
+
+		final Path quantFile = Files.createTempFile(tempDir, "SearchToBLIBIT_", ".elib");
+		Files.delete(quantFile); // can't exist (we're trying to create it)
+		FileUtils.forceDeleteOnExit(quantFile.toFile());
+
+		final List<SearchJobData> jobData = ImmutableList.of(
+				getSearchJobDataA()
+		);
+
+		SearchToBLIB.convertElibQuantOnly(progress,
+				jobData,
+				quantFile.toFile(),
+				// Read alignment from the job's existing results
+				((QuantitativeSearchJobData) jobData.iterator().next()).getResultLibrary(),
+				searchParameters
+		);
+
+		final LibraryFile quantLib = new LibraryFile();
+		try {
+			quantLib.openFile(quantFile.toFile());
+
+			try (Connection c = quantLib.getConnection()) {
+				try (Statement s = c.createStatement()) {
+					try (ResultSet rs = s.executeQuery("SELECT count() FROM peptidequants;")) {
+						assertTrue(rs.next());
+						assertTrue("Result file had no quants", rs.getInt(1) > 0);
+					}
+				}
+			}
+
+			final int numEntries = quantLib.getAllEntries(false, searchParameters.getAAConstants()).size();
+			assertTrue("Result file had no entries", 0 < numEntries);
+
+			// Not written to quant file
+//			assertHasPercolatorMetadata(quantLib);
+		} finally {
+			quantLib.close();
+		}
+
+		assertHasQuantReports(quantFile);
 	}
 
 	@Test
@@ -268,6 +562,8 @@ public class SearchToBLIBIT {
 		} finally {
 			file.close();
 		}
+
+		// does NOT have quant reports (single file)
 	}
 
 	private static void assertValidBlib(Path blib) throws IOException {
@@ -320,15 +616,261 @@ public class SearchToBLIBIT {
 		assertArrayEquals(entry.getQuantifiedIonsArray(), match.getQuantifiedIonsArray());
 	}
 
-	private SearchJobData getSearchJobDataA() throws IOException, SQLException {
-		return makeJobData(library, diaA, featuresTxtA, fasta, peptideOutputA, decoyOutputA);
+	/**
+	 * Assert that tabular peptide/protein quant files exist for the given ELIB path and appear "normal".
+	 */
+	public static void assertHasQuantReports(Path libFile) {
+		final Path peps = libFile.getParent().resolve(libFile.getFileName() + ".peptides.txt");
+		final Path prots = libFile.getParent().resolve(libFile.getFileName() + ".proteins.txt");
+
+		assertTrue(Files.exists(peps));
+		assertTrue(Files.exists(prots));
+
+		// Check that column counts match expected
+		checkTabularFile(peps, cols -> assertTrue(cols > 3), rows -> assertTrue(rows > 1));
 	}
 
-	private SearchJobData getSearchJobDataB() throws IOException, SQLException {
-		return makeJobData(library, diaB, featuresTxtB, fasta, peptideOutputB, decoyOutputB);
+	private static void checkTabularFile(Path f, IntConsumer colCheck, IntConsumer rowCheck) {
+		final CountingTableMuscle muscle = new CountingTableMuscle();
+		TableParser.parseTSV(f.toFile(), muscle);
+
+		colCheck.accept(muscle.columns);
+		rowCheck.accept(muscle.rows);
 	}
 
-	private QuantitativeSearchJobData makeJobData(Path library, Path dia, Path featuresTxt, Path fasta, Path peptideOutput, Path decoyOutput) throws IOException, SQLException {
+	private static class CountingTableMuscle implements TableParserMuscle {
+		int columns = -1;
+		int rows = -1;
+
+		@Override
+		public void processRow(Map<String, String> row) {
+			if (columns < 0) {
+				columns = row.size();
+			} else {
+				assertEquals("Wrong number of columns in row " + rows, columns, row.size());
+			}
+
+			rows += 1;
+		}
+
+		@Override
+		public void cleanup() {
+			assertFalse("Never encountered any rows!", columns == -1);
+			assertFalse("Never encountered any rows!", rows == -1);
+
+			assertTrue("Didn't find any columns!", columns > 0);
+			assertTrue("Didn't find any rows!", rows > 0);
+		}
+	}
+
+	/**
+	 * Check that the file appears to be a valid and correctly-written ALIB.
+	 *
+	 * @param jobData jobs to check for in the output
+	 *
+	 * @see SearchToBLIB.OutputFormat#ALIB
+	 */
+	private void assertValidAlib(LibraryFile file, List<? extends SearchJobData> jobData) throws SQLException, IOException, DataFormatException {
+		try (Connection c = file.getConnection()) {
+			try (Statement s = c.createStatement()) {
+				try (ResultSet rs = s.executeQuery("SELECT count() FROM entries;")) {
+					assertTrue(rs.next());
+					assertTrue("ALIB had no peptide entries!", 10 < rs.getInt(1));
+				}
+
+				try (ResultSet rs = s.executeQuery("SELECT count() FROM peptidescores;")) {
+					assertTrue(rs.next());
+					assertTrue("ALIB had no scored peptides!", 10 < rs.getInt(1));
+				}
+
+				try (ResultSet rs = s.executeQuery("SELECT count() FROM peptidetoprotein;")) {
+					assertTrue(rs.next());
+					assertTrue("ALIB had no peptide-protein connections!", 10 < rs.getInt(1));
+				}
+
+				final Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides = SearchToBLIB.readPassingPeptides(file, searchParameters);
+				assertTrue("Unable to fetch passing peptides from ALIB!", 0 < passingPeptides.x.size());
+
+				try (ResultSet rs = s.executeQuery("SELECT PeptideModSeq, count(), massencodedlength/8 FROM entries GROUP BY PeptideModSeq;")) {
+					while (rs.next()) {
+						final String pep = rs.getString(1);
+						final int nEntries = rs.getInt(2);
+						final int nIons = rs.getInt(3);
+
+						assertEquals(pep + " had wrong number of entries: " + nEntries, 1, nEntries);
+
+						// Note that these entries aren't filtered  for the min number of quant ions;
+						// that filter happens during quantification.
+						assertTrue(pep + " had unexpected number of quant fragments: " + nIons,
+								nIons >= 0 || nIons <= searchParameters.getNumberOfQuantitativePeaks()
+						);
+					}
+				}
+			}
+
+			try (PreparedStatement ps = c.prepareStatement(
+					"SELECT count() FROM retentiontimes WHERE sourcefile = ?;"
+			)) {
+				boolean foundSeed = false;
+				for (SearchJobData job : jobData) {
+					ps.setString(1, job.getDiaFileReader().getOriginalFileName());
+
+					try (ResultSet rs = ps.executeQuery()) {
+						assertTrue(rs.next());
+
+						final int nRtPoints = rs.getInt(1);
+
+						if (nRtPoints < 10) {
+							assertFalse("Already found seed job! Not enough RT points (" + nRtPoints + ") for " + job.getDiaFileReader().getOriginalFileName(), foundSeed);
+							foundSeed = true;
+						}
+					}
+				}
+			}
+
+			// Note that we only check peptides that were both passing in the global context, and were used
+			// for alignment. There will be mismatches both directions (passing peptides not used for alignment
+			// as well as non-passing peptides that _are_ used for alignment).
+			try (PreparedStatement ps = c.prepareStatement(
+					"SELECT count(), e.peptidemodseq, e.rtinseconds, rt.library" +
+					" FROM entries e" +
+					" JOIN retentiontimes rt USING (peptidemodseq)" +
+					" WHERE rt.rowid IS NULL OR abs(e.rtinseconds - rt.library) > 0.001;"
+			)) {
+				try (ResultSet rs = ps.executeQuery()) {
+					assertTrue(rs.next());
+
+					final int nEntries = rs.getInt(1);
+
+					assertEquals(
+							"Too many mismatched RTs! All recorded \"library\" RT should match entry!"
+							+ String.format(" E.g. (%s; expected: %.02f got: %.02f)", rs.getString(2), rs.getObject(3), rs.getObject(4)),
+							0,
+							nEntries
+					);
+				}
+			}
+
+			final Set<String> passingPeptides = SearchToBLIB.readPassingPeptides(file, searchParameters).x.stream()
+					.map(PercolatorPeptide::getPeptideModSeq)
+					.collect(Collectors.toSet());
+
+			// Same check as above, but with the decoded `inferrer`.
+			final PeakLocationInferrerInterface inferrer = SearchToBLIB.readInferrer(file, jobData, searchParameters);
+			for (SearchJobData job : jobData) {
+				final List<RetentionTimeAlignmentInterface.AlignmentDataPoint> alignmentData = inferrer.getAlignmentData(job);
+				// Just ensure the inferred RTs match the corresponding saved points.
+				boolean hadPeptidePoint = false;
+				for (RetentionTimeAlignmentInterface.AlignmentDataPoint p : alignmentData) {
+					if (null == p.getPeptideModSeq()) {
+						// In an ALIB not all RT points will be for a peptide, some may just be alignment "knots"
+						continue;
+					} else if (!passingPeptides.contains(p.getPeptideModSeq())) {
+						// Also skip points for peptides that were used for alignment but weren't in the
+						// list of global passing peptides, which seems to happen.
+						continue;
+					} else if (!hadPeptidePoint) {
+						hadPeptidePoint = true;
+					}
+
+					assertEquals(
+							String.format("%s in %s",
+									p.getPeptideModSeq(),
+									job.getDiaFileReader().getOriginalFileName()
+							),
+							p.getPredictedActual(), // in mins
+							inferrer.getWarpedRTInSec(job, p.getPeptideModSeq()) / 60f, // convert to mins
+							DELTA
+					);
+				}
+
+				if (!hadPeptidePoint) {
+					// This is the "seed" job, so we need different assertions -- check that inferrer's
+					// warped RT matches the saved alignment RT (derived from this job).
+					for (LibraryEntry e : file.getAllEntries(false, searchParameters.getAAConstants())) {
+						assertEquals(
+								String.format("%s in %s",
+										e.getPeptideModSeq(),
+										job.getDiaFileReader().getOriginalFileName()
+								),
+								e.getRetentionTime(), // in sec
+								inferrer.getWarpedRTInSec(job, e.getPeptideModSeq()),
+								DELTA
+						);
+					}
+				}
+			}
+		}
+
+		assertHasPercolatorMetadata(file);
+	}
+
+	private void assertSameInferrer(PeakLocationInferrerInterface expected, PeakLocationInferrerInterface actual, ArrayList<PercolatorPeptide> passingPeptides, List<SearchJobData> jobs) {
+		// Check that quant ions match for every peptide
+		for (PercolatorPeptide peptide : passingPeptides) {
+			final String modSeq = peptide.getPeptideModSeq();
+			final byte charge = peptide.getPrecursorCharge();
+
+			final double[] expectedIons = expected.getTopNBestIons(modSeq, charge);
+			final double[] actualIons = actual.getTopNBestIons(modSeq, charge);
+
+			if (null == expectedIons) {
+				assertTrue(null == actualIons || actualIons.length == 0);
+			} else {
+				Arrays.sort(expectedIons);
+				Arrays.sort(actualIons);
+
+				for (int i = 0; i < expectedIons.length; i++) {
+					// We can only assert as tightly as the quant-ion-to-entry-ion matching is.
+					final double tol = searchParameters.getLibraryFragmentTolerance().getTolerance(expectedIons[i]);
+					assertEquals(
+							String.format(
+									"Wrong quant ions for %s (differed at index %d). Expected: %f Actual: %f",
+									modSeq,
+									i,
+									expectedIons[i],
+									actualIons[i]
+							),
+							expectedIons[i],
+							actualIons[i],
+							tol + DELTA // dilate tolerance by numerical precision of assertions in this test
+					);
+				}
+			}
+		}
+
+		// Check each peptide's predicted RT in each job. Only check for peptides
+		// recorded in the alignment, as there may be some additional passing peptides
+		// that won't match precisely!?
+
+		final Set<String> allPeptides = jobs.stream()
+				.flatMap(j -> expected.getAlignmentData(j).stream())
+				.map(RetentionTimeAlignmentInterface.AlignmentDataPoint::getPeptideModSeq)
+				.collect(Collectors.toSet());
+		for (SearchJobData job : jobs) {
+			for (String modSeq : allPeptides) {
+				assertEquals(
+						String.format("wrong warped RT: %s in %s",
+								modSeq,
+								job.getDiaFileReader().getOriginalFileName()
+						),
+						expected.getWarpedRTInSec(job, modSeq),
+						actual.getWarpedRTInSec(job, modSeq),
+						DELTA
+				);
+			}
+		}
+	}
+
+	private EncyclopediaJobData getSearchJobDataA() throws IOException, SQLException {
+		return makeJobData(library, diaA, featuresTxtA, fasta, peptideOutputA, decoyOutputA, elibA);
+	}
+
+	private EncyclopediaJobData getSearchJobDataB() throws IOException, SQLException {
+		return makeJobData(library, diaB, featuresTxtB, fasta, peptideOutputB, decoyOutputB, elibB);
+	}
+
+	private EncyclopediaJobData makeJobData(Path library, Path dia, Path featuresTxt, Path fasta, Path peptideOutput, Path decoyOutput, Path resultsElib) throws IOException, SQLException {
 		Assume.assumeTrue(Files.exists(dia));
 
 		final StripeFile diaReader = new StripeFile(true) ;
@@ -347,7 +889,13 @@ public class SearchToBLIBIT {
 				"TEST",
 				new LibraryFile() {{ openFile(library.toFile()); }},
 				new EncyclopediaOneScoringFactory(searchParameters)
-		);
+		) {
+			@Override
+			public File getResultLibrary() {
+				// Must ensure we grab the right temp file instead of using path munging
+				return resultsElib.toFile();
+			}
+		};
 	}
 
 	/**
