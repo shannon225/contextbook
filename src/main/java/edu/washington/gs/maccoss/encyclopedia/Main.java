@@ -31,7 +31,6 @@ public class Main {
 	
 	public static void main(String[] args) throws IOException {
 		int javaVersion=getJavaVersion();
-		Logger.logLine("Found Java version: "+javaVersion);
 		if (!isJavaVersionOK()) {
 			String text=javaVersion<8?"lower":"higher";
 			Logger.errorLine("Java version is "+text+" than expected (8-16), execution may be unstable!");

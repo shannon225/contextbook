@@ -129,7 +129,9 @@ public class SearchGUIMain {
 		if (mbOfMemory<1000) {
 			JOptionPane.showMessageDialog(f, "Warning, you only have "+mbOfMemory+" MB of memory allocated.\nPlease make sure you are running 64-bit Java!", "Warning, Low Memory!", JOptionPane.WARNING_MESSAGE, image);
 		}
-		
+
+	    Logger.logLine("Java version: "+System.getProperty("java.version"));
+	    Logger.logLine("Memory allocated: "+mbOfMemory+" MB");
 
 		if (!Main.isJavaVersionOK()) {
 			int javaVersion=Main.getJavaVersion();
