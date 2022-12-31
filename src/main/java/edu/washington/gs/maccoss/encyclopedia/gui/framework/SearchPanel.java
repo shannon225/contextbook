@@ -680,7 +680,7 @@ public class SearchPanel extends JPanel {
 	}
 	
 	public void launchFeatureBrowser() {
-		File[] featureFiles=FileChooserPanel.getFiles(null, "Feature text files", new SimpleFilenameFilter("features.txt", ".pin"), (JFrame)null, true);
+		File[] featureFiles=FileChooserPanel.getFiles(null, "Feature text files", new SimpleFilenameFilter("features.txt", "features.txt.unsorted", ".pin"), (JFrame)null, true);
 
 		if (featureFiles!=null&&featureFiles.length>0&&featureFiles[0].exists()) {
 			final JFrame dialog=new JFrame("Global Feature Browser");

@@ -185,10 +185,18 @@ public class TableConcatenator {
 				return;
 			}
 			String[] data=row.split(DELIM, -1);
-			
-			String sequence=data[sequenceIndex];
-			String primaryScoreValue=data[primaryScoreIndex];
-			String deltaRTString=data[deltaRTIndex];
+
+			String sequence;
+			String primaryScoreValue;
+			String deltaRTString;
+			try {
+				sequence=data[sequenceIndex];
+				primaryScoreValue=data[primaryScoreIndex];
+				deltaRTString=data[deltaRTIndex];
+			} catch (ArrayIndexOutOfBoundsException aioobe) {
+				error=new EncyclopediaException("Problem indexing file! Total indicies: "+data.length+", Row: "+row);
+				throw error; 
+			}
 			
 			if (sequence==null) {
 				error=new EncyclopediaException("Couldn't find sequence in PIN file!");

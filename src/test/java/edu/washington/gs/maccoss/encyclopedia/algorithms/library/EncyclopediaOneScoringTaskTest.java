@@ -2,12 +2,15 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.library;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractScoringResult;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.SearchTestSupport;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
@@ -16,11 +19,16 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.WindowData;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
+import gnu.trove.list.array.TFloatArrayList;
+import gnu.trove.map.hash.TObjectFloatHashMap;
+import junit.framework.TestCase;
 
-public class EncyclopediaOneScoringTaskTest {//extends TestCase {
+public class EncyclopediaOneScoringTaskTest extends TestCase {
 	public static void main(String[] args) throws Exception {
 		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
 		File f=new File("/Users/searleb/Documents/encyclopedia/bugs/sangtae/EXP20124_20201210XRC5_AbDIL2.wiff.dia");
@@ -76,5 +84,61 @@ public class EncyclopediaOneScoringTaskTest {//extends TestCase {
 		
 		System.out.println(trace+" --> "+(poll.getScoredMSMS().getLibraryEntry().getScanStartTime()/60)+" --> scan: "+(poll.getScoredMSMS().getMSMS().getScanStartTime()/60));
 		Charter.launchChart("time", "score", true, trace);
+	}
+
+	public static final String[] expected = new String[] { "AEYTEASGPC[+57.021464]ILTPHR",
+			"EVIIMATNC[+57.021464]ENC[+57.021464]GHR", "DGENVSMKDPPDLLDR", "C[+57.021464]VYTIPAHQNLVTGVK",
+			"YLMDEGAHLHIYDPK", "ALQASALNAWR", "VKGDMDISLPK", "VLC[+57.021464]GGDIYVPEDPKLK",
+			"LILIAC[+57.021464]GTSYHAGVATR", "EVFQIASNDHDAAINR", "EVFGSGTAC[+57.021464]QVC[+57.021464]PVHR",
+			"ALQAAYGASAPSVTSAALR", "GREEWESAALQNANTK", "KYPSIIVNC[+57.021464]VEEKPK", "SAGFHPSGSVLAVGTVTGR",
+			"KLVIIEGDLERTEER", "IFC[+57.021464]C[+57.021464]HGGLSPDLQSMEQIRR", "NVIGLQMGTNR", "NRPSSGSLIQVVTTEGR",
+			"VVDLMAHMASK", "VM[+15.994915]LGETNPADSKPGTIR", "LHLGTTQNSLTEADFR", "HVSIQEAESYAESVGAK",
+			"SSEHINEGETAMLVC[+57.021464]K", "FAAATGATPIAGR", "AAGFKDPLLASGTDGVGTK", "RNFILDQTNVSAAAQR",
+			"HGEVC[+57.021464]PAGWKPGSETIIPDPAGK", "LNEAKEEFTSGGPLGQK", "HGEVC[+57.021464]PAGWKPGSDTIKPDVQK" };
+	
+	/**
+	 * Smoke Test
+	 * Only a single spectrum but search the whole library
+	 */
+	public void testEncyclopediaTask() {
+		try {
+			HashMap<String, String> paramsMap=SearchParameterParser.getDefaultParameters();
+			SearchParameters parameters=SearchParameterParser.parseParameters(paramsMap);
+			
+			PSMScorer scorer=new EncyclopediaTwoScorer(parameters);
+			ArrayList<LibraryEntry> entries=SearchTestSupport.getLibrary().getAllEntries(true, parameters.getAAConstants());
+	
+			StripeFileInterface singleWindowStripeFile = SearchTestSupport.getSingleWindowStripeFile();
+			
+			ArrayList<FragmentScan> stripes=singleWindowStripeFile.getStripes(new Range(-Float.MAX_VALUE, Float.MAX_VALUE), -Float.MAX_VALUE, Float.MAX_VALUE, true);
+			Collections.sort(stripes);
+			
+			Range precursorIsolationRange=new Range(600.523681640625, 602.523742675781);
+			float dutyCycle=1.88462436199188f;
+			
+			PrecursorScanMap precursors=new PrecursorScanMap(singleWindowStripeFile.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE));
+			BlockingQueue<AbstractScoringResult> resultsQueue=new LinkedBlockingQueue<AbstractScoringResult>();
+			
+			EncyclopediaTwoScoringTask task=new EncyclopediaTwoScoringTask(scorer, entries, stripes, precursorIsolationRange, dutyCycle, precursors,
+					resultsQueue, parameters);
+
+			task.call();
+
+			TFloatArrayList scoreList=new TFloatArrayList();
+			TObjectFloatHashMap<String> scoresByPeptideModSeq=new TObjectFloatHashMap<>();
+			for (AbstractScoringResult result : resultsQueue) {
+				LibraryEntry entry = result.getEntry();
+				scoreList.add(result.getBestScore());
+				scoresByPeptideModSeq.put(entry.getPeptideModSeq(), result.getBestScore());
+			}
+			float[] scoreArray=scoreList.toArray();
+			float top5Percent=QuickMedian.select(scoreArray, 0.95f);
+			
+			for (String peptideModSeq : expected) {
+				assertTrue(scoresByPeptideModSeq.get(peptideModSeq)>top5Percent);
+			}
+		} catch (Exception e) {
+			fail(e.getMessage());
+		}
 	}
 }

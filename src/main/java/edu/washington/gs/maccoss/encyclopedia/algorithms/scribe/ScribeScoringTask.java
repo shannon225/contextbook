@@ -265,12 +265,19 @@ public class ScribeScoringTask extends AbstractLibraryScoringTask {
 		}
 		
 		float xTandem;
-		if (numberOfMatchingPeaks==0) {
+		if (numberOfMatchingPeaks==0||dotProduct<=0) {
 			xTandem=0.0f;
 		} else {
 			xTandem=((float)Log.protectedLog10(dotProduct))+Log.logFactorial(numberOfMatchingPeaks); // really log10(X!Tandem score)
 		}
 		
-		return new float[] {xTandem, Log.protectedLn(1.0f/sumOfSquaredErrors), dotProduct, contrastAngle, logit};
+		float scribe;
+		if (sumOfSquaredErrors==0.0f) {
+			scribe=0.0f;
+		} else {
+			scribe=Log.protectedLn(1.0f/sumOfSquaredErrors);
+		}
+		
+		return new float[] {xTandem, scribe, dotProduct, contrastAngle, logit};
 	}
 }

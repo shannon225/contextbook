@@ -463,7 +463,9 @@ public class General {
 	}
 	
 	public static float[] normalizeToL2(float[] y) {
-		return divide(y, (float)Math.sqrt(sum(multiply(y, y))));
+		float sqrt = (float)Math.sqrt(sum(multiply(y, y)));
+		if (sqrt==0) return new float[y.length];
+		return divide(y, sqrt);
 	}
 	public static float[] normalizeToSum(float[] y) {
 		return divide(y, sum(y));
