@@ -31,6 +31,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAOneScori
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.VariantXCorDIAJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.*;
+import edu.washington.gs.maccoss.encyclopedia.jobs.ScribeJob;
 import edu.washington.gs.maccoss.encyclopedia.utils.*;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableConcatenator;
@@ -507,10 +508,14 @@ public class SearchToBLIB {
 
 		final SearchJobData representativeJob=pecanJobs.get(0);
 
+		boolean anyDDA=false;
 		ArrayList<File> featureFiles=new ArrayList<File>();
 		for (int i=0; i<pecanJobs.size(); i++) {
 			SearchJobData job=pecanJobs.get(i);
 			featureFiles.add(job.getPercolatorFiles().getInputTSV());
+			if (job instanceof ScribeJob) {
+				anyDDA=true;
+			}
 		}
 
 		Logger.logLine("Using "+representativeJob.getDiaFileReader().getOriginalFileName()+" to extract representative search parameters");
@@ -528,7 +533,7 @@ public class SearchToBLIB {
 		File bigPercolatorDecoyFile=new File(representativeJob.getPercolatorFiles().getInputTSV().getParentFile(), filename+"_concatenated_decoy.txt");
 		File bigPercolatorProteinFile=new File(representativeJob.getPercolatorFiles().getInputTSV().getParentFile(), filename+"_concatenated_protein_results.txt");
 		File bigPercolatorProteinDecoyFile=new File(representativeJob.getPercolatorFiles().getInputTSV().getParentFile(), filename+"_concatenated_protein_decoy.txt");
-		PercolatorExecutionData bigPercolatorFiles=new PercolatorExecutionData(bigFeatureFile, representativeJob.getPercolatorFiles().getFastaFile(), bigPercolatorFile, bigPercolatorDecoyFile, bigPercolatorProteinFile, bigPercolatorProteinDecoyFile, parameters);
+		PercolatorExecutionData bigPercolatorFiles=new PercolatorExecutionData(bigFeatureFile, representativeJob.getPercolatorFiles().getFastaFile(), bigPercolatorFile, bigPercolatorDecoyFile, bigPercolatorProteinFile, bigPercolatorProteinDecoyFile, parameters, !anyDDA);
 
 		final float threshold=parameters.getEffectivePercolatorThreshold();
 		try {
