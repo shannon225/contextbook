@@ -1,6 +1,8 @@
 EncyclopeDIA changelog for user-facing changes:
 
-encyclopedia-2.0.0-SNAPSHOT
+encyclopedia-3.0.0-SNAPSHOT
+ - Bugfix: check if any DDA data was searched with Scribe before using min/max with Percolator for Quant Reports
+
 encyclopedia-2.12.30
  - Feature: added Scribe searching and precursor quant for DDA
  - Feature: updated scoring system to EncyclopeDIA 2.0, default is still 1.0

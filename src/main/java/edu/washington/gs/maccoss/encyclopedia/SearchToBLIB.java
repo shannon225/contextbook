@@ -1,14 +1,47 @@
 package edu.washington.gs.maccoss.encyclopedia;
 
+import static edu.washington.gs.maccoss.encyclopedia.Encyclopedia.QUIET_MODE_ARG;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.zip.DataFormatException;
+
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.primitives.Floats;
+
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ParsimonyProteinGrouper;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.ScoredPSM;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.*;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.AbstractRetentionTimeFilter;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.EncyclopediaTwoPeakLocationInferrer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrerInterface;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface.AlignmentDataPoint;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.SimplePeakLocationInferrer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
@@ -29,10 +62,36 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.PeptideQua
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.VariantXCorDIAJobData;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.*;
-import edu.washington.gs.maccoss.encyclopedia.jobs.ScribeJob;
-import edu.washington.gs.maccoss.encyclopedia.utils.*;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.DDASearchJobData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursor;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroupInterface;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.QuantitativeSearchJobData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibFile;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.ParsingUtils;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
+import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
+import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
+import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
+import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
+import edu.washington.gs.maccoss.encyclopedia.utils.FileLogRecorder;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.ThrowingConsumer;
+import edu.washington.gs.maccoss.encyclopedia.utils.VersioningDetector;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableConcatenator;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
@@ -51,26 +110,6 @@ import gnu.trove.map.TObjectFloatMap;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 import gnu.trove.set.TDoubleSet;
 import gnu.trove.set.hash.TDoubleHashSet;
-
-import java.io.*;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import java.util.zip.DataFormatException;
-
-import static edu.washington.gs.maccoss.encyclopedia.Encyclopedia.QUIET_MODE_ARG;
 
 public class SearchToBLIB {
 	public static void main(String[] args) {
@@ -509,13 +548,23 @@ public class SearchToBLIB {
 		final SearchJobData representativeJob=pecanJobs.get(0);
 
 		boolean anyDDA=false;
+		for (int i=0; i<pecanJobs.size(); i++) {
+			SearchJobData job=pecanJobs.get(i);
+			if (job instanceof DDASearchJobData) {
+				anyDDA=true;
+				break;
+			}
+		}
+		if (anyDDA) {
+			Logger.logLine("Found DDA data, running Percolator in target-decoy completition mode");
+		} else {
+			Logger.logLine("Found DIA data only, running Percolator in min-max mode");
+		}
+		
 		ArrayList<File> featureFiles=new ArrayList<File>();
 		for (int i=0; i<pecanJobs.size(); i++) {
 			SearchJobData job=pecanJobs.get(i);
 			featureFiles.add(job.getPercolatorFiles().getInputTSV());
-			if (job instanceof ScribeJob) {
-				anyDDA=true;
-			}
 		}
 
 		Logger.logLine("Using "+representativeJob.getDiaFileReader().getOriginalFileName()+" to extract representative search parameters");
