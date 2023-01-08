@@ -588,7 +588,7 @@ public class SearchToBLIB {
 		try {
 			Pair<Pair<ArrayList<PercolatorPeptide>, Float>, Boolean> percolatorDataPair = getPassingPercolatorPeptides(
 					parameters, pecanJobs, representativeJob, featureFiles, bigFeatureFile, bigPercolatorFile,
-					bigPercolatorDecoyFile, bigPercolatorFiles, threshold);
+					bigPercolatorDecoyFile, bigPercolatorFiles, threshold, anyDDA);
 			final Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides = percolatorDataPair.x;
 
 			Logger.logLine("Identified "+passingPeptides.x.size()+" peptides across all files at a "+(threshold*100.0f)+"% FDR threshold.");
@@ -612,7 +612,7 @@ public class SearchToBLIB {
 	private static Pair<Pair<ArrayList<PercolatorPeptide>, Float>, Boolean> getPassingPercolatorPeptides(
 			SearchParameters parameters, List<? extends SearchJobData> pecanJobs, SearchJobData representativeJob,
 			ArrayList<File> featureFiles, File bigFeatureFile, File bigPercolatorFile, File bigPercolatorDecoyFile,
-			PercolatorExecutionData bigPercolatorFiles, final float threshold)
+			PercolatorExecutionData bigPercolatorFiles, final float threshold, boolean anyDDA)
 			throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
 		Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides;
 		boolean runningPercolator=true;
@@ -634,7 +634,7 @@ public class SearchToBLIB {
 			runningPercolator=false;
 		} else {
 			Logger.logLine("Running global Percolator analysis.");
-			TableConcatenator.concatenatePINTables(featureFiles, bigFeatureFile, representativeJob.getPrimaryScoreName());
+			TableConcatenator.concatenatePINTables(featureFiles, bigFeatureFile, representativeJob.getPrimaryScoreName(), anyDDA);
 			
 			// delete if exists
 			if (bigPercolatorFiles.getModelFile().exists()) {

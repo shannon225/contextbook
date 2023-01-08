@@ -315,7 +315,7 @@ public class SearchToBLIBIT {
 		PercolatorExecutionData bigPercolatorFiles=new PercolatorExecutionData(bigFeatureFile, representativeJob.getPercolatorFiles().getFastaFile(), bigPercolatorFile, bigPercolatorDecoyFile, bigPercolatorProteinFile, bigPercolatorProteinDecoyFile, searchParameters);
 
 		Logger.logLine("Running global Percolator analysis.");
-		TableConcatenator.concatenateTables(
+		TableConcatenator.concatenateSpectrumCentricTables(
 				jobData.stream()
 						.map(SearchJobData::getPercolatorFiles)
 						.map(PercolatorExecutionData::getInputTSV)
