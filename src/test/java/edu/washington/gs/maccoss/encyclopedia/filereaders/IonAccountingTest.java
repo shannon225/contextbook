@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -81,14 +82,21 @@ public class IonAccountingTest {
 
 	public static void main(String[] args) throws Exception {
 		File rawFile = new File("/Users/searleb/Documents/OSU/projects/maggi_encyclopedia_results/191231_DIA_500to1100_metzyme_st5_120m_d.dia");
-		//File[] files=new File("/Users/searleb/Documents/OSU/projects/maggi_encyclopedia_results/all").listFiles();
-		//File[] files=new File("/Users/searleb/Documents/OSU/projects/maggi_encyclopedia_results/FK160115").listFiles();
-		//File[] files=new File("/Users/searleb/Documents/OSU/projects/maggi_encyclopedia_results/AE1913").listFiles();
-		File[] files=new File("/Users/searleb/Documents/OSU/projects/maggi_encyclopedia_results/KN210").listFiles();
+		File[] files1=new File("/Users/searleb/Documents/OSU/projects/maggi_encyclopedia_results/all").listFiles();
+		File[] files2=new File("/Users/searleb/Documents/OSU/projects/maggi_encyclopedia_results/FK160115").listFiles();
+		File[] files3=new File("/Users/searleb/Documents/OSU/projects/maggi_encyclopedia_results/AE1913").listFiles();
+		File[] files4=new File("/Users/searleb/Documents/OSU/projects/maggi_encyclopedia_results/KN210").listFiles();
+		File[][] allFiles=new File[][] {files1, files2, files3, files4};
+		
+		System.out.println("db\tsample\tNumWithUniqueQuantIons\tNumWithQuantIons\tTotalNum\tUniqueQuantVsQuant\tQuantVsTotal");
+		for (int n = 0; n < allFiles.length; n++) {
+			File[] files = allFiles[n];
+			Arrays.sort(files);
 
-		for (int i = 0; i < files.length; i++) {
-			if (files[i].getName().toLowerCase().endsWith(".elib")) {
-				processForUniqueness(rawFile, files[i]);
+			for (int i = 0; i < files.length; i++) {
+				if (files[i].getName().toLowerCase().endsWith(".elib")) {
+					processForUniqueness(rawFile, files[i]);
+				}
 			}
 		}
 	}
@@ -221,7 +229,7 @@ public class IonAccountingTest {
 				}
 			}
 		}
-		System.out.println("num peptides with three unique ions: "+resultFile.getName()+" / "+totalNumberOfPeptidesWithAUniqueIon+" / "+totalNumberOfPeptidesWithAnIon+" / "+totalDIAEntries+" / "+(totalNumberOfPeptidesWithAUniqueIon/(float)totalNumberOfPeptidesWithAnIon)+" / "+(totalNumberOfPeptidesWithAnIon/(float)totalDIAEntries));
+		System.out.println(resultFile.getParentFile().getName()+"\t"+resultFile.getName()+"\t"+totalNumberOfPeptidesWithAUniqueIon+"\t"+totalNumberOfPeptidesWithAnIon+"\t"+totalDIAEntries+"\t"+(totalNumberOfPeptidesWithAUniqueIon/(float)totalNumberOfPeptidesWithAnIon)+"\t"+(totalNumberOfPeptidesWithAnIon/(float)totalDIAEntries));
 	}
 	
 	public static class IonAccounter {

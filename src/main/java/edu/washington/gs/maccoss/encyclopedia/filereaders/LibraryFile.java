@@ -33,6 +33,7 @@ import java.util.function.Predicate;
 import java.util.zip.DataFormatException;
 
 public class LibraryFile extends SQLFile implements LibraryInterface {
+	private static final boolean KEEP_QUIET=false;
 	public static boolean OPEN_IN_PLACE=false;
 
 	public static final String SOURCEFILE_TIC_PREFIX="TIC_";
@@ -1587,7 +1588,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 
 					if (new Version(0, 1, 2).amIAbove(version) && version.amIAbove(new Version(0, 0, 9))) {
 						if (userFile!=null) {
-							Logger.logLine("Updating library to "+new Version(0, 1, 2));
+							if (!KEEP_QUIET) Logger.logLine("Updating library to "+new Version(0, 1, 2));
 						}
 						s.execute("ALTER TABLE entries ADD COLUMN CorrelationEncodedLength int");
 						s.execute("ALTER TABLE entries ADD COLUMN CorrelationArray blob");
@@ -1599,7 +1600,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					}
 					if (new Version(0, 1, 4).amIAbove(version)&&version.amIAbove(new Version(0, 1, 2))) {
 						if (userFile!=null) {
-							Logger.logLine("Updating library to "+new Version(0, 1, 4));
+							if (!KEEP_QUIET) Logger.logLine("Updating library to "+new Version(0, 1, 4));
 						}
 						s.execute("ALTER TABLE fragmentquants ADD COLUMN Background double");
 						s.execute("ALTER TABLE fragmentquants ADD COLUMN PeptideSeq string");
@@ -1609,7 +1610,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 
 					if (new Version(0, 1, 5).amIAbove(version)&&version.amIAbove(new Version(0, 1, 2))) {
 						if (userFile!=null) {
-							Logger.logLine("Updating library to "+new Version(0, 1, 5));
+							if (!KEEP_QUIET) Logger.logLine("Updating library to "+new Version(0, 1, 5));
 						}
 						s.execute("ALTER TABLE peptidequants ADD COLUMN RTInSecondsCenter double");
 						updated=true;
@@ -1617,7 +1618,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 
 					if (new Version(0, 1, 6).amIAbove(version)&&version.amIAbove(new Version(0, 1, 2))) {
 						if (userFile!=null) {
-							Logger.logLine("Updating library to "+new Version(0, 1, 6));
+							if (!KEEP_QUIET) Logger.logLine("Updating library to "+new Version(0, 1, 6));
 						}
 						s.execute("ALTER TABLE peptidequants ADD COLUMN IdentifiedTICRatio double");
 						updated=true;
@@ -1625,7 +1626,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 
 					if (new Version(0, 1, 7).amIAbove(version)&&version.amIAbove(new Version(0, 1, 2))) {
 						if (userFile!=null) {
-							Logger.logLine("Updating library to "+new Version(0, 1, 7));
+							if (!KEEP_QUIET) Logger.logLine("Updating library to "+new Version(0, 1, 7));
 						}
 						s.execute("ALTER TABLE fragmentquants ADD COLUMN IonIndex int");
 						updated=true;
@@ -1633,7 +1634,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 
 					if (new Version(0, 1, 8).amIAbove(version)&&version.amIAbove(new Version(0, 1, 2))) {
 						if (userFile!=null) {
-							Logger.logLine("Updating library to "+new Version(0, 1, 8));
+							if (!KEEP_QUIET) Logger.logLine("Updating library to "+new Version(0, 1, 8));
 						}
 						s.execute("ALTER TABLE peptidequants ADD COLUMN QuantIonMassLength int");
 						s.execute("ALTER TABLE peptidequants ADD COLUMN QuantIonMassArray blob");
@@ -1642,7 +1643,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 
 					if (new Version(0, 1, 10).amIAbove(version)&&version.amIAbove(new Version(0, 1, 2))) {
 						if (userFile!=null) {
-							Logger.logLine("Updating library to "+new Version(0, 1, 10));
+							if (!KEEP_QUIET) Logger.logLine("Updating library to "+new Version(0, 1, 10));
 						}
 						s.execute("CREATE TABLE IF NOT EXISTS peptidetoprotein ("+"PeptideSeq string not null,"+"ProteinAccession string not null"+");");
 						s.execute("ALTER TABLE peptidetoprotein ADD COLUMN isDecoy boolean");
@@ -1654,7 +1655,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 
 					if (new Version(0, 1, 11).amIAbove(version)&&version.amIAbove(new Version(0, 1, 2))) {
 						if (userFile!=null) {
-							Logger.logLine("Updating library to "+new Version(0, 1, 11));
+							if (!KEEP_QUIET) Logger.logLine("Updating library to "+new Version(0, 1, 11));
 						}
 						s.execute("ALTER TABLE peptidequants ADD COLUMN QuantIonIntensityLength int");
 						s.execute("ALTER TABLE peptidequants ADD COLUMN QuantIonIntensityArray blob");
@@ -1665,7 +1666,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 
 					if (new Version(0, 1, 12).amIAbove(version)&&version.amIAbove(new Version(0, 1, 9))) {
 						if (userFile!=null) {
-							Logger.logLine("Updating library to "+new Version(0, 1, 12));
+							if (!KEEP_QUIET) Logger.logLine("Updating library to "+new Version(0, 1, 12));
 						}
 						s.execute("ALTER TABLE peptidetoprotein ADD COLUMN isDecoy boolean");
 						updated=true;
@@ -1673,7 +1674,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 
 					if (new Version(0, 1, 15).amIAbove(version)&&version.amIAbove(new Version(0, 0, 9))) {
 						if (userFile!=null) {
-							Logger.logLine("Updating library to "+new Version(0, 1, 15));
+							if (!KEEP_QUIET) Logger.logLine("Updating library to "+new Version(0, 1, 15));
 						}
 						s.execute("ALTER TABLE entries ADD COLUMN QuantifiedIonsArray blob");
 						updated=true;

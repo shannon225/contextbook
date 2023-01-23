@@ -21,13 +21,13 @@ public class DilutionCurveFitterExample {
 
 	
 	public static void main(String[] args) throws Exception {
-		final File outputDirectory=new File("/Users/searle.30/Downloads/ariana/Babies_first_BSA_curvefitting/");
+		final File outputDirectory=new File("/Users/searleb/Downloads/drive-download-20230110T003145Z-001/LOD_LOQ_yi_sampleprep_titration/curve_fitting");
 		final File targetDirectory=new File(outputDirectory, "target");
 		outputDirectory.mkdirs();
 		targetDirectory.mkdirs();
 		
-		File dataFile=new File("/Users/searle.30/Downloads/ariana/Babies_first_BSA_quant.csv");
-		File sampleOrganizationFile=new File("/Users/searle.30/Downloads/ariana/prm_sample_organization_BSA.csv");
+		File dataFile=new File("/Users/searleb/Downloads/drive-download-20230110T003145Z-001/LOD_LOQ_yi_sampleprep_titration/2022_09_26_cell_titration_exp_quant.elib.peptides.txt");
+		File sampleOrganizationFile=new File("/Users/searleb/Downloads/drive-download-20230110T003145Z-001/LOD_LOQ_yi_sampleprep_titration/sample_organization_yi.tsv");
 
 		
 		Pair<ArrayList<ScoredObject<String>>, Map<String, TObjectFloatHashMap<String>>> concentrationPair=DilutionCurveFitter.getExpectedConcentrationsFromCSV(sampleOrganizationFile);
