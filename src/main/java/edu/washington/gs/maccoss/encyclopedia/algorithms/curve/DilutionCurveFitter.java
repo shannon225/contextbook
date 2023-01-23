@@ -285,8 +285,14 @@ public class DilutionCurveFitter {
 				TFloatArrayList actual=new TFloatArrayList();
 				for (ScoredObject<String> scoredObject : expectedConcentrations) {
 					String column=scoredObject.y;
-					float concentration=Float.parseFloat(row.get(column));
-					actual.add(concentration);
+					try {
+						float concentration=Float.parseFloat(row.get(column));
+						actual.add(concentration);
+					} catch (NullPointerException npe) {
+						Logger.errorLine("Error parsing column ["+column+"], no column found!");
+					} catch (NumberFormatException nfe) {
+						Logger.errorLine("Error parsing column ["+column+"], value ["+row.get(column)+"] is not a number!");
+					}
 				}
 				
 				float[] actualArray = actual.toArray();
@@ -566,7 +572,7 @@ public class DilutionCurveFitter {
 		final TreeMap<String, TObjectFloatHashMap<String>> unknowns=new TreeMap<>();
 		
 		System.out.println("Reading "+sampleOrganizationFile.getName()+"...");
-		TableParser.parseCSV(sampleOrganizationFile, new TableParserMuscle() {
+		TableParserMuscle muscle = new TableParserMuscle() {
 			public void processRow(Map<String, String> row) {
 				String name=row.get("filename");
 				String concentrationString = row.get("concentration");
@@ -596,7 +602,13 @@ public class DilutionCurveFitter {
 			
 			public void cleanup() {
 			}
-		});
+		};
+		
+		if (sampleOrganizationFile.getName().toLowerCase().endsWith(".csv")) {
+			TableParser.parseCSV(sampleOrganizationFile, muscle);
+		} else {
+			TableParser.parseTSV(sampleOrganizationFile, muscle);
+		}
 		return new Pair<>(expectedConcentrations, unknowns);
 	}
 	
