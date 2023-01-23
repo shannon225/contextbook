@@ -25,14 +25,16 @@ import junit.framework.TestCase;
 
 public class EncyclopediaTwoScoringTaskTest extends TestCase {
 
-	private LibraryFile LIBRARY;
-	private StripeFileInterface SINGLE_WINDOW_STRIPE_FILE;
+	private LibraryFile LIBRARY=null;
+	private StripeFileInterface SINGLE_WINDOW_STRIPE_FILE=null;
 
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
-		SINGLE_WINDOW_STRIPE_FILE = SearchTestSupport.getSingleWindowStripeFile();
-		LIBRARY = SearchTestSupport.getLibrary();
+		if (SINGLE_WINDOW_STRIPE_FILE==null||LIBRARY==null) {
+			SINGLE_WINDOW_STRIPE_FILE = SearchTestSupport.getSingleWindowStripeFile();
+			LIBRARY = SearchTestSupport.getLibrary();
+		}
 	}
 	
 	private AbstractScoringResult processPeptide(String peptideModSeq, byte precursorCharge) throws Exception {

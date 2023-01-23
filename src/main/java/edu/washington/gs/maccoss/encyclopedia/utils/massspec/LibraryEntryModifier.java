@@ -14,12 +14,12 @@ import gnu.trove.map.hash.TCharDoubleHashMap;
 
 public class LibraryEntryModifier {
 	public static void main(String[] args) throws Exception {
-		//File inputFile=new File("/Users/searleb/Downloads/older_downloads/subset_yeast_dda_library.dlib");
-		//File outputFile=new File("/Users/searleb/Downloads/older_downloads/cys_subset_yeast_dda_library.dlib");
+		File inputFile=new File("/Users/searle.30/Documents/CCIC/yi/mus_musculus_prosit_generated_library.dlib");
+		File outputFile=new File("/Users/searle.30/Downloads/mus_musculus_prosit_generated_library_silac.dlib");
 
 		TCharDoubleHashMap ptms=new TCharDoubleHashMap();
-		//ptms.put('K',8.014199);
-		//ptms.put('R',10.008269);
+		ptms.put('K',8.014199);
+		ptms.put('R',10.008269);
 		
 		//ptms.put('C',4.02);
 		
@@ -34,12 +34,12 @@ public class LibraryEntryModifier {
 //		File outputFile=new File("/Users/searleb/Downloads/pan_human_library_p12.dlib");
 //		ptms.put('n', 12.0);
 		
-		File inputFile=new File("/Users/searleb/Documents/iarpa/IARPA_bone/10p/temp_bone_refs_vars.dlib");
-		File outputFile=new File("/Users/searleb/Documents/iarpa/IARPA_bone/10p/temp_bone_refs_vars_hydroxyproline.dlib");
-		ptms.put('P', 15.9949);
+//		File inputFile=new File("/Users/searleb/Documents/iarpa/IARPA_bone/10p/temp_bone_refs_vars.dlib");
+//		File outputFile=new File("/Users/searleb/Documents/iarpa/IARPA_bone/10p/temp_bone_refs_vars_hydroxyproline.dlib");
+//		ptms.put('P', 15.9949);
 		
 		LibraryInterface library=BlibToLibraryConverter.getFile(inputFile);
-		LibraryUtilities.modifyLibrary(outputFile, ptms, false, library);
+		LibraryUtilities.modifyLibrary(outputFile, ptms, true, library);
 	}
 	
 	public static LibraryEntry modifyModelAtEverySite(LibraryEntry entry, TCharDoubleHashMap fixedMods, boolean changePTMs, SearchParameters parameters) {

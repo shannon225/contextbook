@@ -48,26 +48,42 @@ public class SearchTestSupport {
 	
 	public static File getTestSingleWindowFile() throws Exception {
 		if (SINGLE_WINDOW_FILE!=null) return SINGLE_WINDOW_FILE;
-		SINGLE_WINDOW_FILE = writeTempFile("/small_regression/bcs_2020jan16_600to603_hela_48to63.dia", StripeFile.DIA_EXTENSION);
+		SINGLE_WINDOW_FILE = getNewTestSingleWindowFile();
 		return SINGLE_WINDOW_FILE;
+	}
+
+	public static File getNewTestSingleWindowFile() throws Exception {
+		return writeTempFile("/small_regression/bcs_2020jan16_600to603_hela_48to63.dia", StripeFile.DIA_EXTENSION);
 	}
 	
 	public static File getTestFullWindowFile() throws Exception {
 		if (FULL_WINDOW_FILE!=null) return FULL_WINDOW_FILE;
-		FULL_WINDOW_FILE = writeTempFile("/small_regression/bcs_2020jan16_hela_48p0_48p1.dia", StripeFile.DIA_EXTENSION);
+		FULL_WINDOW_FILE = getNewTestFullWindowFile();
 		return FULL_WINDOW_FILE;
+	}
+
+	public static File getNewTestFullWindowFile() throws Exception {
+		return writeTempFile("/small_regression/bcs_2020jan16_hela_48p0_48p1.dia", StripeFile.DIA_EXTENSION);
 	}
 	
 	public static File getTestLibraryFile() throws Exception {
 		if (LIBRARY_FILE!=null) return LIBRARY_FILE;
-		LIBRARY_FILE = writeTempFile("/small_regression/pan_human_library_600to603.dlib", LibraryFile.DLIB);
+		LIBRARY_FILE = getNewTestLibraryFile();
 		return LIBRARY_FILE;
+	}
+
+	public static File getNewTestLibraryFile() throws Exception {
+		return writeTempFile("/small_regression/pan_human_library_600to603.dlib", LibraryFile.DLIB);
 	}
 	
 	public static File getTestFastaFile() throws Exception {
 		if (FASTA_FILE!=null) return FASTA_FILE;
-		FASTA_FILE = writeTempFile("/small_regression/pan_human_library_600to603.fasta", ".fasta");
+		FASTA_FILE = getNewTestFastaFile();
 		return FASTA_FILE;
+	}
+
+	public static File getNewTestFastaFile() throws Exception {
+		return writeTempFile("/small_regression/pan_human_library_600to603.fasta", ".fasta");
 	}
 	
 	public static File writeTempFile(String fileResourceName, String extension) throws Exception {
