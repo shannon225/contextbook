@@ -2,6 +2,7 @@ EncyclopeDIA changelog for user-facing changes:
 
 encyclopedia-3.0.0-SNAPSHOT
  - Bugfix: check if any DDA data was searched with Scribe before using min/max with Percolator for Quant Reports
+ - Bugfix: fixed error parsing Pecan/Walnut primary score when making chromatogram libraries or Quant Reports
 
 encyclopedia-2.12.30
  - Feature: added Scribe searching and precursor quant for DDA

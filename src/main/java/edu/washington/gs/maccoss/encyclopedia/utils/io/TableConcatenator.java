@@ -73,7 +73,7 @@ public class TableConcatenator {
 	public static void concatenatePeptideCentricTables(ArrayList<File> tables, File output, String primaryScore) throws IOException {
 		String[] columnNames=null;
 		int sequenceIndex=0;
-		int primaryScoreIndex=0;
+		int primaryScoreIndex=-1;
 		int deltaRTIndex=-1;
 		int midTimeIndex=-1;
 		
@@ -99,6 +99,9 @@ public class TableConcatenator {
 			deltaRTName="midTime";
 		}
 		Logger.logLine("Found indicies for sequence: "+sequenceIndex+", "+primaryScore+": "+primaryScoreIndex+", and "+deltaRTName+": "+deltaRTIndex);
+		if (primaryScoreIndex==-1) {
+			throw new EncyclopediaException("Failure to find primaryScore index when looking for ["+primaryScore+"]");
+		}
 
 		// calculate deltaRT distributions
 		HashMap<String, TFloatArrayList> scoresBySequence=new HashMap<>();
