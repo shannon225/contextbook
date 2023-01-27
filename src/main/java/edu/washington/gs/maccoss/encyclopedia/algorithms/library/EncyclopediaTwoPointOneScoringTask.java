@@ -164,6 +164,7 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 			float[][] transposeChromatograms=General.transposeMatrix(allSqrtIntensities);
 			for (int i = 0; i < transposeChromatograms.length; i++) {
 				transposeChromatograms[i]=SkylineSGFilter.paddedSavitzkyGolaySmooth(transposeChromatograms[i]);
+				transposeChromatograms[i]=backgroundSubtractMovingMedian(transposeChromatograms[i], movingAverageLength*10);
 			}
 			allSqrtIntensities=General.transposeMatrix(transposeChromatograms);
 
@@ -182,7 +183,7 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 					Pair<double[], float[]> modSpecificResults=extract(stripe, modIons);
 					FloatPair modSpecificScores=score(modSpecificResults.x, modSpecificResults.y, modPredictedIntensities, modCorrelation);
 					
-					float scoreFromModIons=eScorer.score(entry, stripe, modificationSpecificIons.get());
+					float scoreFromModIons=modSpecificScores.getOne();
 					if (scoreFromModIons/primary[i]<0.25f) {
 						primary[i]=0.0f;
 					}
@@ -222,7 +223,7 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 					System.arraycopy(retentionTimes, lowerWindow, localRetentionTimes, 0, range);
 					System.arraycopy(allSqrtIntensities, lowerWindow, localRawIntensities, 0, range);
 					for (int j = 0; j < localRawIntensities.length; j++) {
-						localRawIntensities[i]=General.multiply(localRawIntensities[i], localRawIntensities[i]); // undo the sqrt
+						localRawIntensities[j]=General.multiply(localRawIntensities[j], localRawIntensities[j]); // undo the sqrt
 					}
 					
 					float[][] chromatograms=General.transposeMatrix(localRawIntensities);
@@ -434,7 +435,6 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 		
 		return new FloatPair(xTandem, scribe);
 	}
-
 
 	static Spectrum getSpectrum(final double[] masses, final float[] intensities, final float scanStartTime, final double mz) {
 		return new Spectrum() {

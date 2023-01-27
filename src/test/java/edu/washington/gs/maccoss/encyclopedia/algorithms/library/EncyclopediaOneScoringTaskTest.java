@@ -119,7 +119,7 @@ public class EncyclopediaOneScoringTaskTest extends TestCase {
 			PrecursorScanMap precursors=new PrecursorScanMap(singleWindowStripeFile.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE));
 			BlockingQueue<AbstractScoringResult> resultsQueue=new LinkedBlockingQueue<AbstractScoringResult>();
 			
-			EncyclopediaTwoScoringTask task=new EncyclopediaTwoScoringTask(scorer, entries, stripes, precursorIsolationRange, dutyCycle, precursors,
+			EncyclopediaOneScoringTask task=new EncyclopediaOneScoringTask(scorer, entries, stripes, precursorIsolationRange, dutyCycle, precursors,
 					resultsQueue, parameters);
 
 			task.call();

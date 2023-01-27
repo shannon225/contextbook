@@ -940,7 +940,7 @@ public class Charter {
 		return chartPanel;
 	}
 
-	private static void addCopyDataMenu(final String xAxis, final ExtendedChartPanel chartPanel,
+	public static void addCopyDataMenu(final String xAxis, final ExtendedChartPanel chartPanel,
 			final XYTraceInterface... traces) {
 		JMenuItem copyItem=new JMenuItem("Copy data values");
 		chartPanel.getPopupMenu().add(copyItem, 2);

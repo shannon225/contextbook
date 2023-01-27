@@ -786,4 +786,8 @@ public class General {
 		}
 		return min;
 	}
+	
+	public static boolean isEven(int x) {
+		return (x&1)==0; // check first bit
+	}
 }
