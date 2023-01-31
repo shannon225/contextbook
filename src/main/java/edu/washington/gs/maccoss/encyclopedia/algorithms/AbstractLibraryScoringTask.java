@@ -136,7 +136,7 @@ public abstract class AbstractLibraryScoringTask extends ThreadableTask<Nothing>
 	/**
 	 * algorithm maintains a sorted window loosly following ideas in Mohanty 2003 (https://dcc-backup.ligo.org/public/0027/T030168/000/T030168-00.pdf)
 	 */
-	public static float[] fastMovingQuickMedian(float[] scores, int scanAveragingWindow) {
+	public static float[] fastMovingMedian(float[] scores, int scanAveragingWindow) {
 		// bad params cases
 		if (scanAveragingWindow<=1) {
 			return scores;
@@ -165,16 +165,34 @@ public abstract class AbstractLibraryScoringTask extends ThreadableTask<Nothing>
 		}
 		
 		// then add from the new value / subtract from the first value in the window
+		int windowLengthMinusOne = window.length-1;
 		for (int i = scanAveragingWindow; i < scores.length; i++) {
 			float first=scores[i-scanAveragingWindow];
 			float newValueToAdd=scores[i];
 			
-			//System.out.println((i-scanAveragingWindow)+"\tSwap "+first+" for "+newValueToAdd+" --> "+General.toString(window));
-			
+			// find the location of the old value and swap with the new value
 			int index=Arrays.binarySearch(window, first);
 			if (index<0) throw new EncyclopediaException("Median calculation error with missing value "+first+"("+i+","+(i-scanAveragingWindow)+"), index="+index+", ");
 			window[index]=newValueToAdd;
-			Arrays.sort(window);
+			
+			// twiddle up or down to maintain the sort order
+			if (newValueToAdd>first) {
+				// move up
+				while (index<windowLengthMinusOne&&window[index]>window[index+1]) {
+					float temp=window[index+1];
+					window[index+1]=window[index];
+					window[index]=temp;
+					index=index+1;
+				}
+			} else if (newValueToAdd<first) {
+				// move down
+				while (index>0&&window[index]<window[index-1]) {
+					float temp=window[index-1];
+					window[index-1]=window[index];
+					window[index]=temp;
+					index=index-1;
+				}
+			}
 
 			median=getMedianOfSortedArray(window);
 			medianScores[i-scanAveragingMargin+1]=median;
@@ -208,7 +226,7 @@ public abstract class AbstractLibraryScoringTask extends ThreadableTask<Nothing>
 	}
 	
 	public static float[] backgroundSubtractMovingMedian(float[] scores, int scanAveragingWindow) {
-		float[] movingAverage=fastMovingQuickMedian(scores, scanAveragingWindow);
+		float[] movingAverage=fastMovingMedian(scores, scanAveragingWindow);
 		float[] subtract=General.subtract(scores, movingAverage);
 		for (int i = 0; i < subtract.length; i++) {
 			if (subtract[i]<0.0f) subtract[i]=0.0f;

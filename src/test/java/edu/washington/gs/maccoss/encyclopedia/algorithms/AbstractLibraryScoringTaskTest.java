@@ -23,7 +23,7 @@ public class AbstractLibraryScoringTaskTest extends TestCase {
 	public static void main(String[] args) {
 		int bandwidth = retentionTimeInSec.length/5;
 		System.out.println(bandwidth);
-		float[] bgprecursorMono=AbstractLibraryScoringTask.fastMovingQuickMedian(precursorMono, bandwidth);
+		float[] bgprecursorMono=AbstractLibraryScoringTask.fastMovingMedian(precursorMono, bandwidth);
 		float[] bgSubtractprecursorMono=AbstractLibraryScoringTask.backgroundSubtractMovingMedian(precursorMono, bandwidth);
 		
 		XYTraceInterface[] traces=new XYTraceInterface[] {
