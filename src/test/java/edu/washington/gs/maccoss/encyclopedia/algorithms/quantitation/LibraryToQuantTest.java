@@ -3,7 +3,6 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.SearchTestSupport;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
@@ -54,9 +53,12 @@ public class LibraryToQuantTest extends TestCase {
 			peptideModSeqs.put(entry.getPeptideModSeq(), entry);
 		}
 		for (IntegratedLibraryEntry entry : pair2.y) {
-			float frag = peptideModSeqs.get(entry.getPeptideModSeq()).getRefinementData().getQuantitativeValue();
-			float prec = entry.getRefinementData().getQuantitativeValue();
-			System.out.println(frag+","+prec);			
+			IntegratedLibraryEntry integratedLibraryEntry = peptideModSeqs.get(entry.getPeptideModSeq());
+			if (integratedLibraryEntry!=null) {
+				float frag = integratedLibraryEntry.getRefinementData().getQuantitativeValue();
+				float prec = entry.getRefinementData().getQuantitativeValue();
+				System.out.println(frag+","+prec);
+			}
 		}
 		
 		assertEquals(139, pair.y.size()); // 139 of 140
