@@ -128,10 +128,16 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	}
 
 	public void addTIC(StripeFileInterface diaFile) throws IOException, SQLException {
-		String key=SOURCEFILE_TIC_PREFIX+ diaFile.getOriginalFileName();
+		String originalFileName = diaFile.getOriginalFileName();
+		float tic = diaFile.getTIC();
+		addTIC(originalFileName, tic);
+	}
+
+	public void addTIC(String originalFileName, float tic) throws IOException, SQLException {
+		String key=SOURCEFILE_TIC_PREFIX+ originalFileName;
 
 		HashMap<String, String> map=new HashMap<String, String>();
-		map.put(key, Float.toString(diaFile.getTIC()));
+		map.put(key, Float.toString(tic));
 
 		addMetadata(map);
 	}

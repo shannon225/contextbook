@@ -20,6 +20,8 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Ion;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.QuantitativeDIAData;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
 
@@ -293,5 +295,12 @@ public class TransitionRefinementData implements PeptidePrecursor {
 	}
 	public Optional<Float> getIdentifiedTICRatio() {
 		return identifiedTICRatio;
+	}
+	
+	public float getQuantitativeValue() {
+		ArrayList<Peak> peaks=getTopNPeaks(TransitionRefiner.quantitativeCorrelationThreshold, Integer.MAX_VALUE);
+		Pair<double[], float[]> pair=Peak.toArrays(peaks);
+		float[] topNIntensities=pair.y;
+		return General.sum(topNIntensities);
 	}
 }

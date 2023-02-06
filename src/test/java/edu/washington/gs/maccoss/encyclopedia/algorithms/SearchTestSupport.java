@@ -22,11 +22,17 @@ public class SearchTestSupport {
 	private static File SINGLE_WINDOW_FILE=null;
 	private static File FULL_WINDOW_FILE=null;
 	private static File LIBRARY_FILE=null;
+	private static File RESULT_LIBRARY_FILE=null;
 	private static File FASTA_FILE=null;
 	
 	public static ArrayList<FastaEntryInterface> getFastaEntries() throws Exception {
 		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(getTestFastaFile(), PARAMETERS);
 		return entries;
+	}
+	
+	public static LibraryFile getResultLibrary() throws Exception {
+		LibraryFile library=(LibraryFile)BlibToLibraryConverter.getFile(getResultLibraryFile());
+		return library;
 	}
 	
 	public static LibraryFile getLibrary() throws Exception {
@@ -53,7 +59,7 @@ public class SearchTestSupport {
 	}
 
 	public static File getNewTestSingleWindowFile() throws Exception {
-		return writeTempFile("/small_regression/bcs_2020jan16_600to603_hela_48to63.dia", StripeFile.DIA_EXTENSION);
+		return writeTempFile("/small_regression/bcs_2020jan16_600to603_hela_48to63.dia");
 	}
 	
 	public static File getTestFullWindowFile() throws Exception {
@@ -63,7 +69,13 @@ public class SearchTestSupport {
 	}
 
 	public static File getNewTestFullWindowFile() throws Exception {
-		return writeTempFile("/small_regression/bcs_2020jan16_hela_48p0_48p1.dia", StripeFile.DIA_EXTENSION);
+		return writeTempFile("/small_regression/bcs_2020jan16_hela_48p0_48p1.dia");
+	}
+	
+	public static File getResultLibraryFile() throws Exception {
+		if (RESULT_LIBRARY_FILE!=null) return RESULT_LIBRARY_FILE;
+		RESULT_LIBRARY_FILE = getNewResultLibraryFile();
+		return RESULT_LIBRARY_FILE;
 	}
 	
 	public static File getTestLibraryFile() throws Exception {
@@ -72,8 +84,12 @@ public class SearchTestSupport {
 		return LIBRARY_FILE;
 	}
 
+	public static File getNewResultLibraryFile() throws Exception {
+		return writeTempFile("/small_regression/bcs_2020jan16_600to603_hela_48to63.dia.elib");
+	}
+
 	public static File getNewTestLibraryFile() throws Exception {
-		return writeTempFile("/small_regression/pan_human_library_600to603.dlib", LibraryFile.DLIB);
+		return writeTempFile("/small_regression/pan_human_library_600to603.dlib");
 	}
 	
 	public static File getTestFastaFile() throws Exception {
@@ -83,12 +99,14 @@ public class SearchTestSupport {
 	}
 
 	public static File getNewTestFastaFile() throws Exception {
-		return writeTempFile("/small_regression/pan_human_library_600to603.fasta", ".fasta");
+		return writeTempFile("/small_regression/pan_human_library_600to603.fasta");
 	}
 	
-	public static File writeTempFile(String fileResourceName, String extension) throws Exception {
+	public static File writeTempFile(String fileResourceName) throws Exception {
+		File f=new File(fileResourceName);
+		
 		InputStream is=MedianInterpolatorTest.class.getResourceAsStream(fileResourceName);
-		return writeTempFile(is, extension);
+		return writeTempFile(is, f.getName());
 	}
 
 	/**
@@ -96,8 +114,11 @@ public class SearchTestSupport {
 	 * @return
 	 * @throws Exception
 	 */
-	public static File writeTempFile(InputStream is, String extension) throws Exception {
-		File output = File.createTempFile("output_", extension);
+	public static File writeTempFile(InputStream is, String filename) throws Exception {
+		String tDir = System.getProperty("java.io.tmpdir");
+
+		File output = new File(tDir, filename);
+		
 		output.deleteOnExit();
 		Files.copy(is, output.toPath(), StandardCopyOption.REPLACE_EXISTING);
 		

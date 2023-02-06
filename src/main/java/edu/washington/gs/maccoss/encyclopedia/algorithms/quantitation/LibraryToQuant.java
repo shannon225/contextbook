@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.zip.DataFormatException;
@@ -19,13 +20,51 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.SubProgressIndicator;
+import gnu.trove.map.hash.TObjectFloatHashMap;
+import gnu.trove.procedure.TObjectFloatProcedure;
 
 public class LibraryToQuant {
 
-	public ArrayList<IntegratedLibraryEntry> extractQuantData(LibraryFile library, File resultFile, File rawDirectory, boolean integratePrecursors, SearchParameters params, ProgressIndicator progress) {
+	public static void saveQuantData(LibraryFile library, File resultFile, File rawDirectory, boolean integratePrecursors, SearchParameters params, ProgressIndicator progress) {
+		Pair<TObjectFloatHashMap<String>, ArrayList<IntegratedLibraryEntry>> pair=extractQuantData(library, rawDirectory, integratePrecursors, params, progress);
+
 		try {
+			LibraryFile elib=new LibraryFile();
+			elib.openFile();
+			elib.dropIndices();
+			
+			pair.x.forEachEntry(new TObjectFloatProcedure<String>() {
+				@Override
+				public boolean execute(String a, float b) {
+					try {
+						elib.addTIC(a, b);
+					} catch (Exception e) {
+						throw new EncyclopediaException(e);
+					}
+					return true;
+				}
+			});
+			elib.addIntegratedEntries(!integratePrecursors, pair.y, Optional.empty(), Optional.empty(), params.getAAConstants(), params.getPercolatorThreshold());
+
+			elib.createIndices();
+			elib.saveAsFile(resultFile);
+			elib.close();
+
+		} catch (IOException ioe) {
+			Logger.errorLine("Error processing "+library.getFile().getName());
+			throw new EncyclopediaException("Error parsing Stripe file", ioe);
+		} catch (SQLException ioe) {
+			Logger.errorLine("Error processing "+library.getFile().getName());
+			throw new EncyclopediaException("Error parsing Stripe file", ioe);
+		}
+		
+	}
+	public static Pair<TObjectFloatHashMap<String>, ArrayList<IntegratedLibraryEntry>> extractQuantData(LibraryFile library, File rawDirectory, boolean integratePrecursors, SearchParameters params, ProgressIndicator progress) {
+		try {
+			TObjectFloatHashMap<String> ticMap=new TObjectFloatHashMap<>();
 			ArrayList<LibraryEntry> entries=library.getAllEntries(false, params.getAAConstants());
 			HashMap<String, ArrayList<LibraryEntry>> sourceSpecificEntries=new HashMap<>();
 			for (LibraryEntry entry : entries) {
@@ -51,7 +90,7 @@ public class LibraryToQuant {
 					}
 				}
 				if (match==null) {
-					Logger.errorLine("Cannot find file associated with ["+source+"]. Skipping integrating these peptides!");
+					Logger.errorLine("Cannot find file associated with ["+source+"] in ["+rawDirectory.getAbsolutePath()+"]. Skipping integrating these peptides!");
 				} else {
 					sourceToRawFile.put(source, match);
 				}
@@ -74,6 +113,7 @@ public class LibraryToQuant {
 				if (rawFile==null) continue;
 				
 				StripeFileInterface diaFile=StripeFileGenerator.getFile(rawFile, params);
+				ticMap.put(diaFile.getOriginalFileName(), diaFile.getTIC());
 
 				ArrayList<IntegratedLibraryEntry> extractPeptides;
 				SubProgressIndicator subProgress=new SubProgressIndicator(progress, 1.0f/sourceToRawFile.size());
@@ -85,9 +125,21 @@ public class LibraryToQuant {
 				}
 
 				Logger.logLine("Attempted extraction for: "+entryList.size()+", found "+extractPeptides.size());
+				
+				if (entryList.size()!=extractPeptides.size()) {
+					HashSet<String> peptideModSeqs=new HashSet<String>();
+					for (LibraryEntry entry : extractPeptides) {
+						peptideModSeqs.add(entry.getPeptideModSeq());
+					}
+					for (LibraryEntry entry : entryList) {
+						if (!peptideModSeqs.contains(entry.getPeptideModSeq())) {
+							Logger.logLine("Failed to extract "+entry.getPeptideModSeq());
+						}
+					}
+				}
 				allExtractPeptides.addAll(extractPeptides);
 			}
-			return allExtractPeptides;
+			return new Pair<>(ticMap, allExtractPeptides);
 
 		} catch (InterruptedException ie) {
 			Logger.errorLine("Interruption processing "+library.getFile().getName());
