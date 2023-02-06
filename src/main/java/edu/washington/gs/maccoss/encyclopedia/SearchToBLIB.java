@@ -945,7 +945,7 @@ public class SearchToBLIB {
 			libraryEntries=PeptideQuantExtractor.parseSearchFeatures(subProgress, job, false, globalPassingPeptides, localPassingPeptides, inferrer, stripeFile, library, job.getParameters());
 		} else {
 			HashMap<String, PSMData> targetPSMs=PeptideQuantExtractor.findTargetPSMData(job, globalPassingPeptides, localPassingPeptides, inferrer, job.getParameters());
-			libraryEntries=DDAPrecursorIntegrator.integrateSearch(subProgress, targetPSMs, stripeFile, job.getParameters());
+			libraryEntries=DDAPrecursorIntegrator.integrateSearch(subProgress, new ArrayList<PSMData>(targetPSMs.values()), stripeFile, job.getParameters());
 		}
 		stripeFile.close();
 		

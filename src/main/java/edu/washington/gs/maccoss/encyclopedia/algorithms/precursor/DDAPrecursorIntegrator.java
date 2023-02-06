@@ -24,12 +24,11 @@ import edu.washington.gs.maccoss.encyclopedia.utils.threading.SubProgressIndicat
 
 public class DDAPrecursorIntegrator {
 	private static final Range targetMzRange=new Range(-Float.MAX_VALUE, Float.MAX_VALUE);
-	public static ArrayList<IntegratedLibraryEntry> integrateSearch(ProgressIndicator progress, HashMap<String, PSMData> targetPSMs, StripeFileInterface stripeFile, final SearchParameters parameters) {
+	public static ArrayList<IntegratedLibraryEntry> integrateSearch(ProgressIndicator progress, ArrayList<PSMData> psms, StripeFileInterface stripeFile, final SearchParameters parameters) {
 		
 		HashMap<String, ArrayList<PSMScoredSpectrum>> psmsBySequence=new HashMap<>();
 		
 		float rtTotalWindowSize = parameters.getExpectedPeakWidth()*8; // pretty wide, better to consider more in case we're at a shoulder 
-		ArrayList<PSMData> psms=new ArrayList<PSMData>(targetPSMs.values());
 		Collections.sort(psms, RetentionTimeComparator.comparator);
 		float minRT=psms.get(0).getRetentionTimeInSec()-rtTotalWindowSize/2f;
 		float maxRT=psms.get(psms.size()-1).getRetentionTimeInSec()+rtTotalWindowSize/2;
