@@ -52,15 +52,16 @@ public class LibraryToQuantTest extends TestCase {
 		for (IntegratedLibraryEntry entry : pair.y) {
 			peptideModSeqs.put(entry.getPeptideModSeq(), entry);
 		}
-		for (IntegratedLibraryEntry entry : pair2.y) {
-			IntegratedLibraryEntry integratedLibraryEntry = peptideModSeqs.get(entry.getPeptideModSeq());
-			if (integratedLibraryEntry!=null) {
-				float frag = integratedLibraryEntry.getRefinementData().getQuantitativeValue();
-				float prec = entry.getRefinementData().getQuantitativeValue();
-				System.out.println(frag+","+prec);
-			}
-		}
-		
+//		for (IntegratedLibraryEntry entry : pair2.y) {
+//			IntegratedLibraryEntry integratedLibraryEntry = peptideModSeqs.get(entry.getPeptideModSeq());
+//			if (integratedLibraryEntry!=null) {
+//				float frag = integratedLibraryEntry.getRefinementData().getQuantitativeValue();
+//				float prec = entry.getRefinementData().getQuantitativeValue();
+//				System.out.println(frag+","+prec);
+//			}
+//		}
+
+		assertEquals(140, pair2.y.size()); // 140 of 140
 		assertEquals(139, pair.y.size()); // 139 of 140
 		assertTrue(peptideModSeqs.containsKey("IPWTAASSQLK")); // a correct integration
 		assertFalse(peptideModSeqs.containsKey("NLENTQNQIK")); // missing because no peaks
