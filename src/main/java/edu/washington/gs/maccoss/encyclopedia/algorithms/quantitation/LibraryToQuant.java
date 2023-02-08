@@ -2,7 +2,10 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -29,7 +32,23 @@ import gnu.trove.procedure.TObjectFloatProcedure;
 public class LibraryToQuant {
 
 	public static void saveQuantData(LibraryFile library, File resultFile, File rawDirectory, boolean integratePrecursors, SearchParameters params, ProgressIndicator progress) {
-		Pair<TObjectFloatHashMap<String>, ArrayList<IntegratedLibraryEntry>> pair=extractQuantData(library, rawDirectory, integratePrecursors, params, progress);
+		try {
+			HashMap<String, File> sourceToRawFile = getRawFileMapping(rawDirectory, library);
+			saveQuantData(library, resultFile, sourceToRawFile, integratePrecursors, params, progress);
+			
+		} catch (DataFormatException ioe) {
+			Logger.errorLine("Error processing "+library.getFile().getName());
+			throw new EncyclopediaException("Error parsing Stripe file", ioe);
+		} catch (IOException ioe) {
+			Logger.errorLine("Error processing "+library.getFile().getName());
+			throw new EncyclopediaException("Error parsing Stripe file", ioe);
+		} catch (SQLException ioe) {
+			Logger.errorLine("Error processing "+library.getFile().getName());
+			throw new EncyclopediaException("Error parsing Stripe file", ioe);
+		}
+	}
+	public static void saveQuantData(LibraryFile library, File resultFile, HashMap<String, File> sourceToRawFile, boolean integratePrecursors, SearchParameters params, ProgressIndicator progress) {
+		Pair<TObjectFloatHashMap<String>, ArrayList<IntegratedLibraryEntry>> pair=extractQuantData(library, sourceToRawFile, integratePrecursors, params, progress);
 
 		try {
 			LibraryFile elib=new LibraryFile();
@@ -64,6 +83,22 @@ public class LibraryToQuant {
 	}
 	public static Pair<TObjectFloatHashMap<String>, ArrayList<IntegratedLibraryEntry>> extractQuantData(LibraryFile library, File rawDirectory, boolean integratePrecursors, SearchParameters params, ProgressIndicator progress) {
 		try {
+			HashMap<String, File> sourceToRawFile = getRawFileMapping(rawDirectory, library);
+			return extractQuantData(library, sourceToRawFile, integratePrecursors, params, progress);
+			
+		} catch (DataFormatException ioe) {
+			Logger.errorLine("Error processing "+library.getFile().getName());
+			throw new EncyclopediaException("Error parsing Stripe file", ioe);
+		} catch (IOException ioe) {
+			Logger.errorLine("Error processing "+library.getFile().getName());
+			throw new EncyclopediaException("Error parsing Stripe file", ioe);
+		} catch (SQLException ioe) {
+			Logger.errorLine("Error processing "+library.getFile().getName());
+			throw new EncyclopediaException("Error parsing Stripe file", ioe);
+		}
+	}
+	public static Pair<TObjectFloatHashMap<String>, ArrayList<IntegratedLibraryEntry>> extractQuantData(LibraryFile library, HashMap<String, File> sourceToRawFile, boolean integratePrecursors, SearchParameters params, ProgressIndicator progress) {
+		try {
 			TObjectFloatHashMap<String> ticMap=new TObjectFloatHashMap<>();
 			ArrayList<LibraryEntry> entries=library.getAllEntries(false, params.getAAConstants());
 			HashMap<String, ArrayList<LibraryEntry>> sourceSpecificEntries=new HashMap<>();
@@ -75,25 +110,6 @@ public class LibraryToQuant {
 					sourceSpecificEntries.put(source, thisList);
 				}
 				thisList.add(entry);
-			}
-			
-			File[] possibleFiles=rawDirectory.listFiles();
-			HashMap<String, File> sourceToRawFile=new HashMap<>();
-			
-			// warn about missing source files
-			for (String source : sourceSpecificEntries.keySet()) {
-				File match=null;
-				for (File file : possibleFiles) {
-					if (file.getName().equalsIgnoreCase(source)) {
-						match=file;
-						break;
-					}
-				}
-				if (match==null) {
-					Logger.errorLine("Cannot find file associated with ["+source+"] in ["+rawDirectory.getAbsolutePath()+"]. Skipping integrating these peptides!");
-				} else {
-					sourceToRawFile.put(source, match);
-				}
 			}
 
 			ArrayList<IntegratedLibraryEntry> allExtractPeptides=new ArrayList<>();
@@ -153,6 +169,47 @@ public class LibraryToQuant {
 		} catch (SQLException ioe) {
 			Logger.errorLine("Error processing "+library.getFile().getName());
 			throw new EncyclopediaException("Error parsing Stripe file", ioe);
+		}
+	}
+	
+	private static HashMap<String, File> getRawFileMapping(File rawDirectory, LibraryFile library) throws IOException, SQLException, DataFormatException {
+		Connection c=library.getConnection();
+		try {
+			Statement s=c.createStatement();
+			try {
+				ArrayList<String> sourceFiles=new ArrayList<String>();
+				
+				Logger.logLine("Getting source files...");
+				ResultSet rs=s.executeQuery("select distinct SourceFile from entries");
+				while (rs.next()) {
+					sourceFiles.add(rs.getString(1));
+				}
+				rs.close();
+				
+				File[] possibleFiles=rawDirectory.listFiles();
+				HashMap<String, File> sourceToRawFile=new HashMap<>();
+				
+				// warn about missing source files
+				for (String source : sourceFiles) {
+					File match=null;
+					for (File file : possibleFiles) {
+						if (file.getName().equalsIgnoreCase(source)) {
+							match=file;
+							break;
+						}
+					}
+					if (match==null) {
+						Logger.errorLine("Cannot find file associated with ["+source+"] in ["+rawDirectory.getAbsolutePath()+"]. Skipping integrating these peptides!");
+					} else {
+						sourceToRawFile.put(source, match);
+					}
+				}
+				return sourceToRawFile;
+			} finally {
+				s.close();
+			}
+		} finally {
+			c.close();
 		}
 	}
 
