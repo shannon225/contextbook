@@ -164,7 +164,9 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 			float[][] transposeChromatograms=General.transposeMatrix(allSqrtIntensities);
 			for (int i = 0; i < transposeChromatograms.length; i++) {
 				//transposeChromatograms[i]=SkylineSGFilter.paddedSavitzkyGolaySmooth(transposeChromatograms[i]);
-				transposeChromatograms[i]=backgroundSubtractMovingMedian(transposeChromatograms[i], movingAverageLength*10);
+				if (parameters.isSubtractBackground()) {
+					transposeChromatograms[i]=backgroundSubtractMovingMedian(transposeChromatograms[i], movingAverageLength*10);
+				}
 			}
 			allSqrtIntensities=General.transposeMatrix(transposeChromatograms);
 
@@ -231,6 +233,9 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 					for (int j = 0; j < chromatograms.length; j++) {
 						if (General.sum(chromatograms[j])>0.0f) {
 							chromatograms[j]=SkylineSGFilter.paddedSavitzkyGolaySmooth(chromatograms[j]);
+							if (parameters.isSubtractBackground()) {
+								chromatograms[j]=backgroundSubtractMovingMedian(chromatograms[j], movingAverageLength*10);
+							}
 							chromatogramList.add(chromatograms[j]);
 						}
 					}

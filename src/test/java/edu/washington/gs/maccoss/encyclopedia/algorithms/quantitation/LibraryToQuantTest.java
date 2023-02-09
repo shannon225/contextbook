@@ -62,7 +62,7 @@ public class LibraryToQuantTest extends TestCase {
 //		}
 
 		assertEquals(140, pair2.y.size()); // 140 of 140
-		assertEquals(139, pair.y.size()); // 139 of 140
+		assertEquals(133, pair.y.size()); // 139 of 140
 		assertTrue(peptideModSeqs.containsKey("IPWTAASSQLK")); // a correct integration
 		assertFalse(peptideModSeqs.containsKey("NLENTQNQIK")); // missing because no peaks
 		

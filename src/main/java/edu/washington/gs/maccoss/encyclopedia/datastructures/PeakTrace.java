@@ -7,6 +7,7 @@ import java.util.Optional;
 import org.apache.commons.math3.analysis.interpolation.SplineInterpolator;
 import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractLibraryScoringTask;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
@@ -83,6 +84,8 @@ public class PeakTrace <T> implements XYTraceInterface, HasRetentionTime {
 	
 	public PeakTrace<T> smooth() {
 		float[] smoothed=SkylineSGFilter.paddedSavitzkyGolaySmooth(intensity);
+		
+		//FIXME smoothed=AbstractLibraryScoringTask.backgroundSubtractMovingMedian(smoothed, expectedCyclesPerPeak*10);
 		return new PeakTrace<T>(ion, retentionTimeInSec, type, color, thickness, rt, smoothed);
 	}
 	

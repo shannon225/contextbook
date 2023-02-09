@@ -186,6 +186,9 @@ public class EncyclopediaTwoScoringTask extends AbstractLibraryScoringTask {
 					for (int j = 0; j < chromatograms.length; j++) {
 						if (General.sum(chromatograms[j])>0.0f) {
 							chromatograms[j]=SkylineSGFilter.paddedSavitzkyGolaySmooth(chromatograms[j]);
+							if (parameters.isSubtractBackground()) {
+								chromatograms[j]=backgroundSubtractMovingMedian(chromatograms[j], movingAverageLength*10);
+							}
 							chromatogramList.add(chromatograms[j]);
 						}
 					}

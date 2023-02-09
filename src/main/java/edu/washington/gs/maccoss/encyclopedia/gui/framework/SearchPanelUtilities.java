@@ -813,7 +813,7 @@ public class SearchPanelUtilities {
 		options.add(new LabeledComponent("Precursor Range (m/z)", mzRange));
 		options.add(new LabeledComponent("Rention Time Range (min)", rtRange));
 		
-		options.add(new JLabel("Subset peptides/accessions (requires exact matches):", JLabel.LEFT));
+		options.add(new JLabel("Subset peptides/accessions/sources (requires exact matches):", JLabel.LEFT));
 		options.add(scrollPane);
 		
 		JPanel buttons=new JPanel();

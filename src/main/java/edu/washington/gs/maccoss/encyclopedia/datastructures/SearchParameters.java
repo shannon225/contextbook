@@ -32,6 +32,7 @@ public class SearchParameters implements XMLObject {
 	public static final String OPT_PERC_TRAINING_THRESH = "-percolatorTrainingFDR";
 	public static final String ENABLE_ADVANCED_OPTIONS="-enableAdvancedOptions";
 	public static final String NUMBER_OF_QUANTITATIVE_PEAKS = "-numberOfQuantitativePeaks";
+	public static final String SUBTRACT_BACKGROUND = "-subtractBackground";
 
 	protected final AminoAcidConstants aaConstants;
 	protected final FragmentationType fragType;
@@ -71,6 +72,7 @@ public class SearchParameters implements XMLObject {
     protected final Optional<File> precursorIsolationRangeFile;
     protected final Optional<File> percolatorModelFile;
     protected final boolean normalizeByTIC;
+    protected final boolean subtractBackground;
     
     public Optional<ArrayList<Range>> getPrecursorIsolationRanges() {
 		return precursorIsolationRanges;
@@ -81,7 +83,7 @@ public class SearchParameters implements XMLObject {
 			int percolatorTrainingIterations, DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, 
 			int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, int topNTargetsUsed, float minIntensity, Optional<PeptideModification> localizingModification, ScoringBreadthType CASiLBreadthType, 
 			float getNumberOfExtraDecoyLibrariesSearched, boolean quantifyAcrossSamples, boolean verifyModificationIons, float rtWindowInMin, boolean filterPeaklists, boolean doNotUseGlobalFDR, 
-			Optional<File> precursorIsolationRangeFile, Optional<File> percolatorModelFile, boolean normalizeByTIC, boolean enableAdvancedOptions) {
+			Optional<File> precursorIsolationRangeFile, Optional<File> percolatorModelFile, boolean normalizeByTIC, boolean subtractBackground, boolean enableAdvancedOptions) {
 		this.aaConstants=aaConstants;
 		this.fragType=fragType;
 		this.precursorTolerance=precursorTolerance;
@@ -117,6 +119,7 @@ public class SearchParameters implements XMLObject {
         this.precursorIsolationRangeFile=precursorIsolationRangeFile;
         this.percolatorModelFile=percolatorModelFile;
         this.normalizeByTIC=normalizeByTIC;
+        this.subtractBackground=subtractBackground;
         this.enableAdvancedOptions=enableAdvancedOptions;
         
         ArrayList<Range> ranges=null;
@@ -207,6 +210,8 @@ public class SearchParameters implements XMLObject {
 		sb.append(" -numberOfExtraDecoyLibrariesSearched "+numberOfExtraDecoyLibrariesSearched+"\n");
 		sb.append(" -verifyModificationIons "+verifyModificationIons+"\n");
 		sb.append(" -minIntensity "+minIntensity+"\n");
+		sb.append(" -normalizeByTIC "+normalizeByTIC+"\n");
+		sb.append(" "+SUBTRACT_BACKGROUND+" "+subtractBackground+"\n");
 		if (useTargetWindowCenter()) {
 			sb.append(" -targetWindowCenter "+targetWindowCenter+"\n");
 		}
@@ -255,6 +260,8 @@ public class SearchParameters implements XMLObject {
 		map.put("-scoringBreadthType", getScoringBreadthType().toShortname());
 		map.put("-verifyModificationIons", verifyModificationIons+"");
 		map.put("-minIntensity", minIntensity+"");
+		map.put("-normalizeByTIC", normalizeByTIC+"");
+		map.put(SUBTRACT_BACKGROUND, subtractBackground+"");
 		if (localizingModification.isPresent()) {
 			map.put("-localizationModification", localizingModification.get().getShortname());
 		} else {
@@ -521,5 +528,9 @@ public class SearchParameters implements XMLObject {
 	}
     public boolean isNormalizeByTIC() {
 		return normalizeByTIC;
+	}
+    
+    public boolean isSubtractBackground() {
+		return subtractBackground;
 	}
 }

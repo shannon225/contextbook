@@ -1,6 +1,9 @@
 package edu.washington.gs.maccoss.encyclopedia.filewriters;
 
 import java.io.File;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -75,6 +78,43 @@ public class LibraryUtilitiesTest {
 		saveLibrary.close();
 	}
 	
+	public static void main(String[] args) throws Exception {
+		File lib=new File("/Users/searleb/Downloads/lit_dilution_ms2.dlib");
+
+		LibraryFile library=new LibraryFile();
+		library.openFile(lib);
+
+		ArrayList<String> sourceFiles=new ArrayList<String>();
+		Connection c=library.getConnection();
+		try {
+			Statement s=c.createStatement();
+			try {
+				
+				Logger.logLine("Getting source files...");
+				ResultSet rs=s.executeQuery("select distinct SourceFile from entries");
+				while (rs.next()) {
+					sourceFiles.add(rs.getString(1));
+				}
+				rs.close();
+			} finally {
+				s.close();
+			}
+		} finally {
+			c.close();
+		}
+		
+		for (String source : sourceFiles) {
+			String sub=source.substring("20221222_HB_TP_Evo_Whisper100_40SPD_Hefe_".length(), source.length()-".raw".length());
+			System.out.println(source+"\t"+sub);
+			File saveFile=new File(lib.getParentFile(), sub+".dlib");
+			HashSet<String> targets=new HashSet<String>();
+			targets.add(source);
+			LibraryUtilities.subsetLibrary(saveFile, 0, 1000*60, 0, 10000, targets, library);
+		}
+
+		library.close();
+	}
+	
 	public static void main2(String[] args) throws Exception {
 
 		File twoDLC=new File("/Users/searleb/Downloads/msms.dlib");
@@ -121,7 +161,7 @@ public class LibraryUtilitiesTest {
 		saveLibrary.close();
 	}
 	
-	public static void main(String[] args) throws Exception {
+	public static void main6(String[] args) throws Exception {
 		//File dirFile=new File("/Users/searleb/Documents/damien/dda_library_search/non-tryptics/");
 		File dirFile=new File("/Users/searle.30/Downloads/");
 		File[] inFiles=new File[] {

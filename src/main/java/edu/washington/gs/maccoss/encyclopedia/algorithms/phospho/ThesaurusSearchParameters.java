@@ -171,6 +171,7 @@ public class ThesaurusSearchParameters extends SearchParameters {
 			Optional<File> precursorIsolationRangeFile, 
 			Optional<File> percolatorModelFile,
 			boolean normalizeByTIC,
+			boolean subtractBackground,
 			boolean enableAdvancedOptions
 	) {
 		super(
@@ -209,6 +210,7 @@ public class ThesaurusSearchParameters extends SearchParameters {
 				precursorIsolationRangeFile,
 				percolatorModelFile,
 				normalizeByTIC,
+				subtractBackground,
 				enableAdvancedOptions
 		);
 		this.considerRearrangement=considerRearrangement;
@@ -258,6 +260,7 @@ public class ThesaurusSearchParameters extends SearchParameters {
 				params.getPrecursorIsolationRangeFile(),
 				params.getPercolatorModelFile(),
 				params.isNormalizeByTIC(),
+				params.isSubtractBackground(),
 				params.isEnableAdvancedOptions()
 		);
 	}

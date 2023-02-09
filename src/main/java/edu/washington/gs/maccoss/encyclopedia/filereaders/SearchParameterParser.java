@@ -61,6 +61,7 @@ public class SearchParameterParser {
         map.put("-filterPeaklists", "false");
         map.put("-numberOfThreadsUsed", Integer.toString(Runtime.getRuntime().availableProcessors()));
 		map.put("-normalizeByTIC", "true");
+		map.put(SearchParameters.SUBTRACT_BACKGROUND, "true");
 		return map;
 	}
 	
@@ -82,6 +83,7 @@ public class SearchParameterParser {
 		map.put(SearchParameters.NUMBER_OF_QUANTITATIVE_PEAKS, "5");
 		map.put("-minNumOfQuantitativePeaks", "3");
 		map.put("-normalizeByTIC", "true");
+		map.put(SearchParameters.SUBTRACT_BACKGROUND, "true");
 		return map;
 	}
 	
@@ -133,6 +135,7 @@ public class SearchParameterParser {
         final boolean filterPeaklists;
         final boolean doNotUseGlobalFDR;
         final boolean normalizeByTIC;
+        final boolean subtractBackground;
         final boolean enableAdvancedOptions;
         final Optional<File> percolatorModelFile;
         final Optional<File> precursorIsolationRangeFile;
@@ -353,6 +356,7 @@ public class SearchParameterParser {
         filterPeaklists=ParsingUtils.getBoolean("-filterPeaklists", parameters, false);
         doNotUseGlobalFDR=ParsingUtils.getBoolean("-doNotUseGlobalFDR", parameters, false);
 		normalizeByTIC = ParsingUtils.getBoolean("-normalizeByTIC", parameters, true);
+        subtractBackground=ParsingUtils.getBoolean(SearchParameters.SUBTRACT_BACKGROUND, parameters, true);
         enableAdvancedOptions=ParsingUtils.getBoolean(SearchParameters.ENABLE_ADVANCED_OPTIONS, parameters, false);
 
 		return new SearchParameters(
@@ -391,6 +395,7 @@ public class SearchParameterParser {
 				precursorIsolationRangeFile,
 				percolatorModelFile,
 				normalizeByTIC,
+				subtractBackground,
 				enableAdvancedOptions
 		);
 	}
