@@ -430,6 +430,7 @@ public class LibraryReportExtractor {
 						"group_concat(p.ProteinAccession, '" + PSMData.ACCESSION_TOKEN + "') as ProteinAccessions, " +
 						"pep.QuantIonMassLength, pep.QuantIonMassArray, "+
 						"pep.QuantIonIntensityLength, pep.QuantIonIntensityArray "+
+						"pep.QuantIonCorrelationLength, pep.QuantIonCorrelationArray "+
 						"from " +
 						"peptidequants pep " +
 						"join peptidescores s using (peptidemodseq, precursorcharge) " + // outer join to scores table means we'll skip quant rows from unscored charge states
@@ -477,7 +478,14 @@ public class LibraryReportExtractor {
 					} else {
 						quantIonIntensities=new float[] {};
 					}
-					QuantitativeDIAData quantData=new QuantitativeDIAData(peptideModSeq, precursorCharge, scanStartTime, rtScanRange, quantIonMasses, quantIonIntensities, aaConstants);
+					int quantIonCorrelationLength=rs.getInt(11);
+					float[] quantIonCorrelation;
+					if (quantIonCorrelationLength>0) {
+						quantIonCorrelation=ByteConverter.toFloatArray(CompressionUtils.decompress(rs.getBytes(12), quantIonCorrelationLength));
+					} else {
+						quantIonCorrelation=new float[] {};
+					}
+					QuantitativeDIAData quantData=new QuantitativeDIAData(peptideModSeq, precursorCharge, scanStartTime, rtScanRange, quantIonMasses, quantIonIntensities, quantIonCorrelation, aaConstants);
 					data.addQuantitativeDIAData(sourceFile, quantData);
 				}
 				Logger.logLine("Finished processing "+count+" records, found "+intensitiesByPeptideModSeq.size()+" quantitative unique peptides. Writing reports...");

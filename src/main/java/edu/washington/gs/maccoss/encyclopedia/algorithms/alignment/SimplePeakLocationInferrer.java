@@ -6,8 +6,10 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.Quadruplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakChromatogram;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.QuantitativeDIAData;
 
 import java.util.*;
@@ -42,6 +44,7 @@ public class SimplePeakLocationInferrer implements PeakLocationInferrerInterface
 		double[] topNMasses=getTopNBestIons(peptideModSeq, data.getPrecursorCharge());
 		double[] masses=FragmentIon.getMasses(data.getFragmentMassArray());
 		float[] intensities=data.getIntegrationArray();
+		float[] correlations=data.getCorrelationArray();
 
 		if (params.getMinNumOfQuantitativePeaks()>0) {
 			if (topNMasses==null||topNMasses.length<params.getMinNumOfQuantitativePeaks()) {
@@ -50,23 +53,28 @@ public class SimplePeakLocationInferrer implements PeakLocationInferrerInterface
 		}
 		
 		if (topNMasses==null||topNMasses.length==0) {
-			ArrayList<Peak> topN=data.getTopNPeaks(TransitionRefiner.quantitativeCorrelationThreshold, params.getEffectiveNumberOfQuantitativePeaks());
-			Pair<double[], float[]> pair=Peak.toArrays(topN);
+			ArrayList<PeakChromatogram> topN=data.getTopNPeaks(TransitionRefiner.quantitativeCorrelationThreshold, params.getEffectiveNumberOfQuantitativePeaks());
+			Quadruplet<double[], float[], float[], boolean[]> pair=PeakChromatogram.toChromatogramArrays(topN);
 			topNMasses=pair.x;
 			float[] topNIntensities=pair.y;
-			return Optional.of(new QuantitativeDIAData(data.getPeptideModSeq(), data.getPrecursorCharge(), data.getApexRT(), data.getRange(), topNMasses, topNIntensities, params.getAAConstants()));
+			float[] topNCorrelations=pair.z;
+			return Optional.of(new QuantitativeDIAData(data.getPeptideModSeq(), data.getPrecursorCharge(), data.getApexRT(), data.getRange(), topNMasses, topNIntensities, topNCorrelations, params.getAAConstants()));
 		}
 		
 		float[] topNIntensities=new float[topNMasses.length];
+		float[] topNCorrelations=new float[topNMasses.length];
 		for (int i=0; i<topNMasses.length; i++) {
 			float sum=0.0f;
+			float maxCorr=0.0f;
 			int[] optionalIndex=params.getFragmentTolerance().getIndicies(masses, topNMasses[i]);
 			for (int index : optionalIndex) {
 				sum+=intensities[index];
+				maxCorr=Math.max(maxCorr, correlations[index]);
 			}
 			topNIntensities[i]=sum;
+			topNCorrelations[i]=maxCorr;
 		}
-		return Optional.of(new QuantitativeDIAData(data.getPeptideModSeq(), data.getPrecursorCharge(), data.getApexRT(), data.getRange(), topNMasses, topNIntensities, params.getAAConstants()));
+		return Optional.of(new QuantitativeDIAData(data.getPeptideModSeq(), data.getPrecursorCharge(), data.getApexRT(), data.getRange(), topNMasses, topNIntensities, topNCorrelations, params.getAAConstants()));
 	}
 
 	/* (non-Javadoc)

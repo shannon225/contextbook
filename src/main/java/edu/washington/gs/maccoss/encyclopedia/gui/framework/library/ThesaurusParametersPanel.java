@@ -283,6 +283,7 @@ public class ThesaurusParametersPanel extends JPanel implements ParametersPanelI
 				Optional.empty(),
 				true,
 				true,
+				false,
 				false
 		);
 

@@ -172,6 +172,7 @@ public class ThesaurusSearchParameters extends SearchParameters {
 			Optional<File> percolatorModelFile,
 			boolean normalizeByTIC,
 			boolean subtractBackground,
+			boolean maskBadIntegrations,
 			boolean enableAdvancedOptions
 	) {
 		super(
@@ -211,6 +212,7 @@ public class ThesaurusSearchParameters extends SearchParameters {
 				percolatorModelFile,
 				normalizeByTIC,
 				subtractBackground,
+				maskBadIntegrations,
 				enableAdvancedOptions
 		);
 		this.considerRearrangement=considerRearrangement;
@@ -261,6 +263,7 @@ public class ThesaurusSearchParameters extends SearchParameters {
 				params.getPercolatorModelFile(),
 				params.isNormalizeByTIC(),
 				params.isSubtractBackground(),
+				params.isMaskBadIntegrations(),
 				params.isEnableAdvancedOptions()
 		);
 	}

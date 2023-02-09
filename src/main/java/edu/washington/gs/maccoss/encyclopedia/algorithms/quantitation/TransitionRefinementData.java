@@ -15,10 +15,12 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.Quadruplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Ion;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakChromatogram;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.QuantitativeDIAData;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
@@ -163,28 +165,18 @@ public class TransitionRefinementData implements PeptidePrecursor {
 	public Optional<HashMap<String, TransitionRefinementData>> getModificationQuantData() {
 		return modificationQuantData;
 	}
-	
-	public Pair<Float, Integer> getTopNIntensity(float minimumCorrelation, int n) {
-		ArrayList<Peak> topN=getTopNPeaks(minimumCorrelation, n);
-		
-		float total=0.0f;
-		for (Peak peak : topN) {
-			total+=peak.intensity;
-		}
-		return new Pair<Float, Integer>(total, topN.size());
-	}
 
-	public ArrayList<Peak> getTopNPeaks(float minimumCorrelation, int n) {
-		ArrayList<Peak> intensities=new ArrayList<Peak>();
+	public ArrayList<PeakChromatogram> getTopNPeaks(float minimumCorrelation, int n) {
+		ArrayList<PeakChromatogram> intensities=new ArrayList<PeakChromatogram>();
 		for (int i=0; i<correlationArray.length; i++) {
 			if (correlationArray[i]>=minimumCorrelation) {
-				intensities.add(new Peak(fragmentMassArray[i].getMass(), integrationArray[i]));
+				intensities.add(new PeakChromatogram(fragmentMassArray[i].getMass(), integrationArray[i], correlationArray[i], true));
 			}
 		}
 		Collections.sort(intensities);
 		
 		int count=1;
-		ArrayList<Peak> topN=new ArrayList<Peak>();
+		ArrayList<PeakChromatogram> topN=new ArrayList<PeakChromatogram>();
 		for (int i=intensities.size()-1; i>=0; i--) {
 			topN.add(intensities.get(i));
 			if (count>=n) break;
@@ -298,8 +290,8 @@ public class TransitionRefinementData implements PeptidePrecursor {
 	}
 	
 	public float getQuantitativeValue() {
-		ArrayList<Peak> peaks=getTopNPeaks(TransitionRefiner.quantitativeCorrelationThreshold, Integer.MAX_VALUE);
-		Pair<double[], float[]> pair=Peak.toArrays(peaks);
+		ArrayList<PeakChromatogram> peaks=getTopNPeaks(TransitionRefiner.quantitativeCorrelationThreshold, Integer.MAX_VALUE);
+		Quadruplet<double[], float[], float[], boolean[]> pair=PeakChromatogram.toChromatogramArrays(peaks);
 		float[] topNIntensities=pair.y;
 		return General.sum(topNIntensities);
 	}

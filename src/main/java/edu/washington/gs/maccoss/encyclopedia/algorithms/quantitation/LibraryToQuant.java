@@ -66,7 +66,7 @@ public class LibraryToQuant {
 					return true;
 				}
 			});
-			elib.addIntegratedEntries(!integratePrecursors, pair.y, Optional.empty(), Optional.empty(), params.getAAConstants(), params.getPercolatorThreshold());
+			elib.addIntegratedEntries(!integratePrecursors, pair.y, Optional.empty(), Optional.empty(), params);
 
 			elib.createIndices();
 			elib.saveAsFile(resultFile);
