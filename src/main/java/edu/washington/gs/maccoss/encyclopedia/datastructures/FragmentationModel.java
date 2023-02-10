@@ -218,6 +218,18 @@ public class FragmentationModel {
 						return yIonsHCD;
 					}
 				}
+			case SILAC:
+				FragmentIon[] yIonsSILAC=getYIons(useNeutralLosses);
+				// always only y-ions
+				if (precursorCharge>4) {
+					return concatAndSort(yIonsSILAC, getPlus2s(yIonsSILAC), getPlus3s(yIonsSILAC), getPlus4s(yIonsSILAC));
+				} else if (precursorCharge>3) {
+					return concatAndSort(yIonsSILAC, getPlus2s(yIonsSILAC), getPlus3s(yIonsSILAC));
+				} else if (precursorCharge>2) {
+					return concatAndSort(yIonsSILAC, getPlus2s(yIonsSILAC));
+				} else {
+					return yIonsSILAC;
+				}
 			case CID:
 				FragmentIon[] yIonsCID=getYIons(useNeutralLosses);
 				FragmentIon[] bIonsCID=getBIons(useNeutralLosses);

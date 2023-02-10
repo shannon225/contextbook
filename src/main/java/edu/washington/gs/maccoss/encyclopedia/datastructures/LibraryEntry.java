@@ -415,6 +415,7 @@ public class LibraryEntry implements Comparable<PeptidePrecursor>, Spectrum, Pep
 		ArrayList<FragmentIon> reverseIons=new ArrayList<FragmentIon>();
 		switch (parameters.getFragType()) {
 		case HCD:
+		case SILAC:
 			Collections.addAll(forwardIons, forwardModel.getYIons());
 			Collections.addAll(reverseIons, reverseModel.getYIons());
 			break;

@@ -12,10 +12,8 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.MedianInterpolatorTest;
 
 public class SearchTestSupport {
 	private static SearchParameters PARAMETERS=SearchParameterParser.getDefaultParametersObject();
@@ -105,7 +103,7 @@ public class SearchTestSupport {
 	public static File writeTempFile(String fileResourceName) throws Exception {
 		File f=new File(fileResourceName);
 		
-		InputStream is=MedianInterpolatorTest.class.getResourceAsStream(fileResourceName);
+		InputStream is=SearchTestSupport.class.getResourceAsStream(fileResourceName);
 		return writeTempFile(is, f.getName());
 	}
 

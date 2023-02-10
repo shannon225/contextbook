@@ -379,7 +379,7 @@ public class MultiResultsBrowserPanel extends JPanel {
 		JPanel right=new JPanel(new GridLayout(0, simplify?1:cols));
 		right.setBackground(Color.WHITE);
 		FragmentationModel model=PeptideUtils.getPeptideModel(entry.getPeptideModSeq(), parameters.getAAConstants());
-		FragmentIon[] primaryIonObjects=model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge(), true);
+		FragmentIon[] primaryIonObjects=model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge(), false);
 		Logger.logLine("Graphing "+entry.getPeptideModSeq()+" ("+primaryIonObjects.length+")"+"...");
 		
 		try {

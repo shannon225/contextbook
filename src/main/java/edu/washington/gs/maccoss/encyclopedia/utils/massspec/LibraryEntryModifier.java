@@ -14,8 +14,8 @@ import gnu.trove.map.hash.TCharDoubleHashMap;
 
 public class LibraryEntryModifier {
 	public static void main(String[] args) throws Exception {
-		File inputFile=new File("/Users/searle.30/Documents/CCIC/yi/mus_musculus_prosit_generated_library.dlib");
-		File outputFile=new File("/Users/searle.30/Downloads/mus_musculus_prosit_generated_library_silac.dlib");
+		File inputFile=new File("/Volumes/RedSSD/billur/2023_01_29_SILAC_TESTS/DC_R10_clib.elib");
+		File outputFile=new File("/Volumes/RedSSD/billur/2023_01_29_SILAC_TESTS/DC_R10_clib_silac.dlib");
 
 		TCharDoubleHashMap ptms=new TCharDoubleHashMap();
 		ptms.put('K',8.014199);
