@@ -114,6 +114,7 @@ public class PecanParameterParser {
         final boolean normalizeByTIC;
         final boolean subtractBackground;
         final boolean maskBadIntegrations;
+        final boolean integratePrecursors;
         final boolean enableAdvancedOptions;
 
 		ModificationMassMap variableMods=new ModificationMassMap(parameters.get("-variable"));
@@ -295,6 +296,7 @@ public class PecanParameterParser {
 		doNotUseGlobalFDR = ParsingUtils.getBoolean("-doNotUseGlobalFDR", parameters, false);
 		subtractBackground = ParsingUtils.getBoolean(SearchParameters.SUBTRACT_BACKGROUND, parameters, true);
         maskBadIntegrations=ParsingUtils.getBoolean(SearchParameters.MASK_BAD_INTEGRATIONS, parameters, false);
+        integratePrecursors=ParsingUtils.getBoolean(SearchParameters.INTEGRATE_PRECURSORS, parameters, false);
 		normalizeByTIC = ParsingUtils.getBoolean("-normalizeByTIC", parameters, true);
 		enableAdvancedOptions = ParsingUtils.getBoolean(SearchParameters.ENABLE_ADVANCED_OPTIONS, parameters, false);
 
@@ -342,6 +344,7 @@ public class PecanParameterParser {
 				normalizeByTIC,
 				subtractBackground,
 				maskBadIntegrations,
+				integratePrecursors,
 				enableAdvancedOptions
 		);
 	}

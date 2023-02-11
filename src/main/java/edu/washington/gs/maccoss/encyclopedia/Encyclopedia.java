@@ -273,7 +273,7 @@ public class Encyclopedia {
 		ArrayList<SearchJobData> jobs=new ArrayList<SearchJobData>();
 		jobs.add(job);
 		
-		SearchToBLIB.convertElib(progress, job, elibFile, parameters);
+		SearchToBLIB.convertElib(progress, job, elibFile, parameters, parameters.isIntegratePrecursors());
 		
 		progress.update("Found "+passingPeptides.size()+" peptides identified at "+(job.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 		Logger.logLine("Finished analysis! "+passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100f)+"% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");
@@ -305,7 +305,7 @@ public class Encyclopedia {
 		ArrayList<SearchJobData> jobs=new ArrayList<SearchJobData>();
 		jobs.add(job);
 		
-		SearchToBLIB.convertElib(progress, job, elibFile, parameters);
+		SearchToBLIB.convertElib(progress, job, elibFile, parameters, parameters.isIntegratePrecursors());
 		
 		progress.update("Found "+passingPeptides.size()+" peptides identified at "+(job.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 		Logger.logLine("Finished analysis! "+passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100f)+"% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");

@@ -500,7 +500,7 @@ public class Pecanpie {
 		stripefile.close();
 		
 		Logger.logLine("Writing elib result library...");
-		SearchToBLIB.convertElib(progress, jobData, jobData.getResultLibrary(), parameters);
+		SearchToBLIB.convertElib(progress, jobData, jobData.getResultLibrary(), parameters, parameters.isIntegratePrecursors());
 		
 		Logger.logLine("Finished analysis! "+resultsConsumer.getNumberProcessed()+" total peaks processed, "+passingPeptides.size()+" peptides identified at 1% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");
 		Logger.logLine(""); 

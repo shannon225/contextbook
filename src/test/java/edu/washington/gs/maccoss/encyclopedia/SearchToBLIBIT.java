@@ -335,7 +335,8 @@ public class SearchToBLIBIT {
 				passingPeptides,
 				Optional.of(bigPercolatorFiles),
 				Optional.of(inferrer),
-				searchParameters
+				searchParameters,
+				searchParameters.isIntegratePrecursors()
 		);
 
 		final LibraryFile file = new LibraryFile();

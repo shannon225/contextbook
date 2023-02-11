@@ -271,6 +271,7 @@ public class ScribeParametersPanel extends JPanel implements ParametersPanelInte
 				true,
 				true,
 				false,
+				false,
 				false
 		);
 

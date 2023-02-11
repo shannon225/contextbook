@@ -173,6 +173,7 @@ public class ThesaurusSearchParameters extends SearchParameters {
 			boolean normalizeByTIC,
 			boolean subtractBackground,
 			boolean maskBadIntegrations,
+			boolean integratePrecursors,
 			boolean enableAdvancedOptions
 	) {
 		super(
@@ -213,6 +214,7 @@ public class ThesaurusSearchParameters extends SearchParameters {
 				normalizeByTIC,
 				subtractBackground,
 				maskBadIntegrations,
+				integratePrecursors,
 				enableAdvancedOptions
 		);
 		this.considerRearrangement=considerRearrangement;
@@ -264,6 +266,7 @@ public class ThesaurusSearchParameters extends SearchParameters {
 				params.isNormalizeByTIC(),
 				params.isSubtractBackground(),
 				params.isMaskBadIntegrations(),
+				params.isIntegratePrecursors(),
 				params.isEnableAdvancedOptions()
 		);
 	}
