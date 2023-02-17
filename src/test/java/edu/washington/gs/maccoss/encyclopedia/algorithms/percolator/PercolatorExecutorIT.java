@@ -10,10 +10,8 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import gnu.trove.map.hash.TCharDoubleHashMap;
-
 import org.junit.Assume;
 import org.junit.AssumptionViolatedException;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -25,7 +23,6 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 
 import static edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutorTest.getPercolatorFiles;
-import static junit.framework.Assert.assertNotNull;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -125,6 +122,68 @@ public class PercolatorExecutorIT {
 						SearchParameters.OPT_PERC_TRAINING_THRESH, Float.toString(defaultParams.getPercolatorTestThreshold())
 				))
 		);
+
+		final PercolatorExecutionData explicitResult = doPercolatorTest(PercolatorVersion.v3p05, explicitParams);
+
+		final int explicitPassing = PercolatorReader.getPassingPeptidesFromTSV(explicitResult.getPeptideOutputFile(), explicitParams, false).x.size();
+
+		// The results should be identical (within 0.5%)
+		assertEquals((float) explicitPassing, (float)defaultPassing, 0.005f * defaultPassing);
+	}
+
+	@Test
+	public void testPercolatorTrainingFDRDefaultTestFDRRelaxedV3_05() throws Exception {
+		// Similar to above, but use a non-default test FDR threshold alongside the
+		// training FDR default. IMPORTANT: check the Percolator log output to
+		// ensure the same test AND training FDRs are used by BOTH executions!
+
+		final class ForceNonstandardTestFDRParams extends SearchParameters {
+			private final float testFdr;
+
+			public ForceNonstandardTestFDRParams(SearchParameters params, float testFdr) {
+				super(
+						params.getAAConstants(), params.getFragType(), params.getPrecursorTolerance(), params.getPrecursorOffsetPPM(),
+						params.getPrecursorIsolationMargin(), params.getFragmentTolerance(), params.getFragmentOffsetPPM(),
+						params.getLibraryFragmentTolerance(), params.getEnzyme(), params.getPercolatorThreshold(), params.getPercolatorProteinThreshold(),
+						params.getPercolatorVersionNumber(), params.getPercolatorTrainingSetSize(), params.getPercolatorTrainingSetThreshold(),
+						params.getPercolatorTrainingIterations(), params.getDataAcquisitionType(), params.getNumberOfThreadsUsed(),
+						params.getExpectedPeakWidth(), params.getTargetWindowCenter(), params.getPrecursorWindowSize(),
+						params.getNumberOfQuantitativePeaks(), params.getMinNumOfQuantitativePeaks(), params.getTopNTargetsUsed(),
+						params.getMinIntensity(), params.getLocalizingModification(), params.getScoringBreadthType(),
+						params.getNumberOfExtraDecoyLibrariesSearched(), params.isQuantifySameFragmentsAcrossSamples(),
+						params.isVerifyModificationIons(), params.getRtWindowInMin(), params.isFilterPeaklists(), params.isDoNotUseGlobalFDR(),
+						params.getPrecursorIsolationRangeFile(), params.getPercolatorModelFile(), params.isNormalizeByTIC(),
+						params.isSubtractBackground(), params.isMaskBadIntegrations(), params.isEnableAdvancedOptions()
+				);
+				this.testFdr = testFdr;
+			}
+
+			@Override
+			public float getPercolatorTestThreshold() {
+				return testFdr;
+			}
+		}
+
+		// Explicitly specify the default (zero) to force buggy initial-round training in percolator v3.05
+		final SearchParameters defaultParams = new ForceNonstandardTestFDRParams(SearchParameterParser.parseParameters(
+				Maps.newHashMap(ImmutableMap.of(
+						SearchParameters.OPT_PERC_TRAINING_THRESH, Float.toString(0f)
+				))
+		), 0.10f);
+
+		final PercolatorExecutionData defaultResult = doPercolatorTest(PercolatorVersion.v3p05, defaultParams);
+
+		final int defaultPassing = PercolatorReader.getPassingPeptidesFromTSV(defaultResult.getPeptideOutputFile(), defaultParams, false).x.size();
+
+		// Now specify the same value as the TEST threshold
+		final SearchParameters explicitParams = new ForceNonstandardTestFDRParams(SearchParameterParser.parseParameters(
+				Maps.newHashMap(ImmutableMap.of(
+						"-percolatorThreshold", Float.toString(defaultParams.getPercolatorThreshold()),
+
+						// IMPORTANT: use the same TEST threshold as the previous run
+						SearchParameters.OPT_PERC_TRAINING_THRESH, Float.toString(defaultParams.getPercolatorTestThreshold())
+				))
+		), defaultParams.getPercolatorTestThreshold());
 
 		final PercolatorExecutionData explicitResult = doPercolatorTest(PercolatorVersion.v3p05, explicitParams);
 
