@@ -1,7 +1,10 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.percolator;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
@@ -64,7 +67,40 @@ public class PercolatorExecutorIT {
 		doPercolatorTest(new RemotePercolator(new URI(uri)));
 	}
 
+	@Test
+	public void testPercolatorTrainingFDRDefaultV3_05() throws Exception {
+		// Explicitly specify the default (zero) to force buggy initial-round training in percolator v3.05
+		final SearchParameters defaultParams = SearchParameterParser.parseParameters(
+				Maps.newHashMap(ImmutableMap.of(
+						SearchParameters.OPT_PERC_TRAINING_THRESH, Float.toString(0f)
+				))
+		);
+
+		final PercolatorExecutionData defaultResult = doPercolatorTest(PercolatorVersion.v3p05, defaultParams);
+
+		final int defaultPassing = PercolatorReader.getPassingPeptidesFromTSV(defaultResult.getPeptideOutputFile(), defaultParams, false).x.size();
+
+		// Now specify the same value as the threshold
+		final SearchParameters explicitParams = SearchParameterParser.parseParameters(
+				Maps.newHashMap(ImmutableMap.of(
+						"-percolatorThreshold", Float.toString(defaultParams.getPercolatorThreshold()),
+						SearchParameters.OPT_PERC_TRAINING_THRESH, Float.toString(defaultParams.getPercolatorThreshold())
+				))
+		);
+
+		final PercolatorExecutionData explicitResult = doPercolatorTest(PercolatorVersion.v3p05, explicitParams);
+
+		final int explicitPassing = PercolatorReader.getPassingPeptidesFromTSV(explicitResult.getPeptideOutputFile(), explicitParams, false).x.size();
+
+		// The results should be identical (within 0.5%)
+		assertEquals((float) explicitPassing, (float)defaultPassing, 0.005f * defaultPassing);
+	}
+
 	protected void doPercolatorTest(PercolatorVersion percolatorVersion) throws IOException, InterruptedException {
+		doPercolatorTest(percolatorVersion, SearchParameterParser.getDefaultParametersObject());
+	}
+
+	protected PercolatorExecutionData doPercolatorTest(PercolatorVersion percolatorVersion, SearchParameters parameters) throws IOException, InterruptedException {
 		InputStream is=getClass().getResourceAsStream("/pecan.feature.txt");
 		File featureFile=File.createTempFile("pecan", ".feature");
 		featureFile.deleteOnExit();
@@ -75,7 +111,7 @@ public class PercolatorExecutorIT {
 		fastaFile.deleteOnExit();
 		Files.copy(is, fastaFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
-		PercolatorExecutionData percolatorFiles=getPercolatorFiles(featureFile, fastaFile, SearchParameterParser.getDefaultParametersObject());
+		PercolatorExecutionData percolatorFiles=getPercolatorFiles(featureFile, fastaFile, parameters);
 
 		final AminoAcidConstants aaConstants = new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
 		final float threshold = 0.01f;
@@ -111,5 +147,7 @@ public class PercolatorExecutorIT {
 				),
 				fdr < threshold + 0.001f
 		);
+
+		return percolatorFiles;
 	}
 }
