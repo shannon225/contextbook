@@ -80,11 +80,49 @@ public class PercolatorExecutorIT {
 
 		final int defaultPassing = PercolatorReader.getPassingPeptidesFromTSV(defaultResult.getPeptideOutputFile(), defaultParams, false).x.size();
 
-		// Now specify the same value as the threshold
+		// Now specify the same value as the TEST threshold
 		final SearchParameters explicitParams = SearchParameterParser.parseParameters(
 				Maps.newHashMap(ImmutableMap.of(
 						"-percolatorThreshold", Float.toString(defaultParams.getPercolatorThreshold()),
-						SearchParameters.OPT_PERC_TRAINING_THRESH, Float.toString(defaultParams.getPercolatorThreshold())
+
+						// IMPORTANT: use the same TEST threshold as the previous run
+						SearchParameters.OPT_PERC_TRAINING_THRESH, Float.toString(defaultParams.getPercolatorTestThreshold())
+				))
+		);
+
+		final PercolatorExecutionData explicitResult = doPercolatorTest(PercolatorVersion.v3p05, explicitParams);
+
+		final int explicitPassing = PercolatorReader.getPassingPeptidesFromTSV(explicitResult.getPeptideOutputFile(), explicitParams, false).x.size();
+
+		// The results should be identical (within 0.5%)
+		assertEquals((float) explicitPassing, (float)defaultPassing, 0.005f * defaultPassing);
+	}
+
+	@Test
+	public void testPercolatorTrainingFDRDefaultThresholdRelaxedV3_05() throws Exception {
+		// Similar to above, but use a non-default FDR threshold alongside the
+		// training FDR default. IMPORTANT: check the Percolator log output to
+		// ensure the same test AND training FDRs are used by BOTH executions!
+
+		// Explicitly specify the default (zero) to force buggy initial-round training in percolator v3.05
+		final SearchParameters defaultParams = SearchParameterParser.parseParameters(
+				Maps.newHashMap(ImmutableMap.of(
+						"-percolatorThreshold", Float.toString(0.10f),
+						SearchParameters.OPT_PERC_TRAINING_THRESH, Float.toString(0f)
+				))
+		);
+
+		final PercolatorExecutionData defaultResult = doPercolatorTest(PercolatorVersion.v3p05, defaultParams);
+
+		final int defaultPassing = PercolatorReader.getPassingPeptidesFromTSV(defaultResult.getPeptideOutputFile(), defaultParams, false).x.size();
+
+		// Now specify the same value as the TEST threshold
+		final SearchParameters explicitParams = SearchParameterParser.parseParameters(
+				Maps.newHashMap(ImmutableMap.of(
+						"-percolatorThreshold", Float.toString(defaultParams.getPercolatorThreshold()),
+
+						// IMPORTANT: use the same TEST threshold as the previous run
+						SearchParameters.OPT_PERC_TRAINING_THRESH, Float.toString(defaultParams.getPercolatorTestThreshold())
 				))
 		);
 
