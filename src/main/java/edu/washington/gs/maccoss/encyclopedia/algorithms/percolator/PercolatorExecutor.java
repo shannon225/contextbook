@@ -245,7 +245,15 @@ public class PercolatorExecutor extends ExternalExecutor {
 			params.add("--no-terminate");
 			params.add("-N"); params.add(Integer.toString(commandData.getParameters().getPercolatorTrainingSetSize()));
 			params.add("--testFDR"); params.add(Float.toString(commandData.getParameters().getPercolatorTestThreshold()));
-			params.add("--trainFDR"); params.add(Float.toString(commandData.getParameters().getPercolatorTrainingSetThreshold()));
+			final float percolatorTrainingSetThreshold = commandData.getParameters().getPercolatorTrainingSetThreshold();
+			if (percolatorTrainingSetThreshold > 0.0) {
+				// Value of zero means "use the test FDR threshold", but a bug in Percolator 3.05
+				// means that zero threshold will be used for the initial round of training, leading
+				// to very poor performance! Thus we avoid specifying this parameter when it's set
+				// to zero.
+				params.add("--trainFDR");
+				params.add(Float.toString(percolatorTrainingSetThreshold));
+			}
 		}
 		params.add(commandData.getInputTSV().getAbsolutePath());
 		
