@@ -6,11 +6,11 @@ import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractLibraryScoringTask;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.EValueCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.IsotopicDistributionCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.AmbiguousPeptideModSeq;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.BackgroundFrequencyInterface;
@@ -33,6 +33,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.BackgroundSubtractionFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredIndex;
@@ -99,7 +100,7 @@ public class VariantXcorDIAOneScoringTask extends AbstractLibraryScoringTask {
 			for (int i=0; i<primary.length; i++) {
 				map.put(i, primary[i]); // rt=index
 			}
-			float[] averagePrimary=gaussianCenteredAverage(primary, movingAverageLength);
+			float[] averagePrimary=BackgroundSubtractionFilter.gaussianCenteredAverage(primary, movingAverageLength);
 			
 			EValueCalculator calculator=new EValueCalculator(map, 0.1f, 0.1f);
 			int index=Math.round(calculator.getMaxRT()); // rt=index
@@ -125,7 +126,7 @@ public class VariantXcorDIAOneScoringTask extends AbstractLibraryScoringTask {
 					bestLocalizationIndex=i;
 				}
 			}
-			negLogProbsSiteSpecific=AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsSiteSpecific, Math.round(parameters.getExpectedPeakWidth()/(dutyCycle)));//AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsSiteSpecific, movingAverageLength);
+			negLogProbsSiteSpecific=BackgroundSubtractionFilter.gaussianCenteredAverage(negLogProbsSiteSpecific, Math.round(parameters.getExpectedPeakWidth()/(dutyCycle)));//AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsSiteSpecific, movingAverageLength);
 			
 			// calculate final scoring on best localization index 
 			ScoredIndex scanIndex=new ScoredIndex(primary[bestLocalizationIndex], bestLocalizationIndex);

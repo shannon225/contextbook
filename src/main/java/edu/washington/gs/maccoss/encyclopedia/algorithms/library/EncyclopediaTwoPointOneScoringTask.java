@@ -35,6 +35,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.BackgroundSubtractionFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Correlation;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.FloatPair;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
@@ -165,7 +166,7 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 			for (int i = 0; i < transposeChromatograms.length; i++) {
 				//transposeChromatograms[i]=SkylineSGFilter.paddedSavitzkyGolaySmooth(transposeChromatograms[i]);
 				if (parameters.isSubtractBackground()) {
-					transposeChromatograms[i]=backgroundSubtractMovingMedian(transposeChromatograms[i], movingAverageLength*10);
+					transposeChromatograms[i]=BackgroundSubtractionFilter.backgroundSubtractMovingMedian(transposeChromatograms[i], movingAverageLength*10);
 				}
 			}
 			allSqrtIntensities=General.transposeMatrix(transposeChromatograms);
@@ -234,7 +235,7 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 						if (General.sum(chromatograms[j])>0.0f) {
 							chromatograms[j]=SkylineSGFilter.paddedSavitzkyGolaySmooth(chromatograms[j]);
 							if (parameters.isSubtractBackground()) {
-								chromatograms[j]=backgroundSubtractMovingMedian(chromatograms[j], movingAverageLength*10);
+								chromatograms[j]=BackgroundSubtractionFilter.backgroundSubtractMovingMedian(chromatograms[j], movingAverageLength*10);
 							}
 							chromatogramList.add(chromatograms[j]);
 						}

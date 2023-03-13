@@ -106,8 +106,8 @@ public class ThesaurusTest {
 			for (FragmentIon ion : ionAnnotations) {
 				if (ion!=null) namedIons.add(ion);
 			}
-			HashMap<FragmentIon, XYTrace> chromatograms=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), namedIons.toArray(new FragmentIon[namedIons.size()]), spectra, libentry.getRetentionTime(), GraphType.dashedline);
-			chromatograms.putAll(ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), localizingIons, spectra, null, GraphType.boldline));
+			HashMap<FragmentIon, XYTrace> chromatograms=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), namedIons.toArray(new FragmentIon[namedIons.size()]), spectra, libentry.getRetentionTime(), GraphType.dashedline, true, false);
+			chromatograms.putAll(ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), localizingIons, spectra, null, GraphType.boldline, true, false));
 			Charter.launchChart(entry.getPeptideModSeq()+" Retention Time (min)", "Intensity ("+localizingIons.length+")", false, new Dimension(500, 300), chromatograms.values().toArray(new XYTraceInterface[chromatograms.size()]));
 			
 			System.out.println(entry.getPeptideModSeq()+" ("+localizingIons.length+") vs "+bestAlt.getPeptideModSeq());
@@ -120,7 +120,7 @@ public class ThesaurusTest {
 		for (PrecursorScan stripe : stripefile.getPrecursors(libentry.getRetentionTime()-600, libentry.getRetentionTime()+600)) {
 			limitedPrecursors.add(stripe);
 		}
-		Charter.launchChart("Retention Time (min)", "Intensity", false, new Dimension(500, 300), ChromatogramExtractor.extractPrecursorChromatograms(parameters.getPrecursorTolerance(), libentry.getPrecursorMZ(), libentry.getPrecursorCharge(), limitedPrecursors));
+		Charter.launchChart("Retention Time (min)", "Intensity", false, new Dimension(500, 300), ChromatogramExtractor.extractPrecursorChromatograms(parameters.getPrecursorTolerance(), libentry.getPrecursorMZ(), libentry.getPrecursorCharge(), limitedPrecursors, true, false));
 		
 		
 		BlockingQueue<AbstractScoringResult> resultsQueue=new LinkedBlockingQueue<AbstractScoringResult>();

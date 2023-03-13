@@ -185,8 +185,8 @@ public class VariantXcorDIAOneScoringTaskTest {
 							FragmentIon[] allIons=PeptideUtils.getPeptideModel(peptideModSeq, parameters.getAAConstants()).getPrimaryIonObjects(parameters.getFragType(), charge, true);
 		
 							ArrayList<Spectrum> wideStripeSubset=PhosphoLocalizer.getScanSubsetFromStripes(minRT-60, maxRT+60, stripes);
-							HashMap<FragmentIon, XYTrace> uniqueFragmentIons=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), targetIons, wideStripeSubset, (Float)null, GraphType.boldline);
-							HashMap<FragmentIon, XYTrace> allFragmentIons=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), allIons, wideStripeSubset, rtInSeconds, GraphType.dashedline);
+							HashMap<FragmentIon, XYTrace> uniqueFragmentIons=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), targetIons, wideStripeSubset, (Float)null, GraphType.boldline, true, false);
+							HashMap<FragmentIon, XYTrace> allFragmentIons=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), allIons, wideStripeSubset, rtInSeconds, GraphType.dashedline, true, false);
 			
 							HashMap<FragmentIon, XYTrace> allFragments=new HashMap<FragmentIon, XYTrace>();
 							allFragments.putAll(allFragmentIons);

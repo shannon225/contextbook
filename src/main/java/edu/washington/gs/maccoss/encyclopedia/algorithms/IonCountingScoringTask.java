@@ -12,6 +12,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.BackgroundSubtractionFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredIndex;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 
@@ -46,7 +47,7 @@ public class IonCountingScoringTask extends AbstractLibraryScoringTask {
 				scoreMap.put(stripe.getScanStartTime(), primary[i]);
 			}
 			
-			float[] averagePrimary=gaussianCenteredAverage(primary, movingAverageLength);
+			float[] averagePrimary=BackgroundSubtractionFilter.gaussianCenteredAverage(primary, movingAverageLength);
 
 			TFloatFloatHashMap map=new TFloatFloatHashMap();
 			ArrayList<ScoredIndex> goodStripes=new ArrayList<ScoredIndex>();

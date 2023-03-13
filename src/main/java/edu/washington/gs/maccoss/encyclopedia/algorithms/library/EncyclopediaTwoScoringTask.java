@@ -34,6 +34,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.BackgroundSubtractionFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Correlation;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
@@ -187,7 +188,7 @@ public class EncyclopediaTwoScoringTask extends AbstractLibraryScoringTask {
 						if (General.sum(chromatograms[j])>0.0f) {
 							chromatograms[j]=SkylineSGFilter.paddedSavitzkyGolaySmooth(chromatograms[j]);
 							if (parameters.isSubtractBackground()) {
-								chromatograms[j]=backgroundSubtractMovingMedian(chromatograms[j], movingAverageLength*10);
+								chromatograms[j]=BackgroundSubtractionFilter.backgroundSubtractMovingMedian(chromatograms[j], movingAverageLength*10);
 							}
 							chromatogramList.add(chromatograms[j]);
 						}

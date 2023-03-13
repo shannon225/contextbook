@@ -10,11 +10,11 @@ import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractLibraryScoringTask;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.EValueCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.IsotopicDistributionCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefinementData;
@@ -33,6 +33,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Ion;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.BackgroundSubtractionFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredIndex;
@@ -683,7 +684,7 @@ public class ThesaurusOneScoringTask extends AbstractLibraryScoringTask {
 		}
 		float bestScore=-Float.MAX_VALUE;
 		FragmentScan apexStripe=null;
-		negLogProbsSiteSpecific=AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsSiteSpecific, Math.round(parameters.getExpectedPeakWidth()/dutyCycle));//AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsSiteSpecific, movingAverageLength);
+		negLogProbsSiteSpecific=BackgroundSubtractionFilter.gaussianCenteredAverage(negLogProbsSiteSpecific, Math.round(parameters.getExpectedPeakWidth()/dutyCycle));//AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsSiteSpecific, movingAverageLength);
 		for (int k=0; k<stripeSubset.size(); k++) {
 			if (bestScore<negLogProbsSiteSpecific[k]) {
 				bestScore=negLogProbsSiteSpecific[k];

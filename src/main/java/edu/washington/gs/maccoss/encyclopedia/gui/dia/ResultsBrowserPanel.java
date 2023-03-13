@@ -454,7 +454,7 @@ public class ResultsBrowserPanel extends JPanel {
 
 				Float targetRTFloat=targetRT;
 				ArrayList<Spectrum> downcastedSpectra=FragmentScan.downcastStripeToSpectrum(stripes);
-				HashMap<FragmentIon, XYTrace> fragmentTraceMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), model.getPrimaryIonObjects(parameters.getFragType(), (byte)entry.getPrecursorCharge(), true), downcastedSpectra, targetRTFloat, GraphType.line);
+				HashMap<FragmentIon, XYTrace> fragmentTraceMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), model.getPrimaryIonObjects(parameters.getFragType(), (byte)entry.getPrecursorCharge(), true), downcastedSpectra, targetRTFloat, GraphType.line, true, false);
 				ArrayList<XYTrace> traces=new ArrayList<XYTrace>();
 				for (Entry<FragmentIon, XYTrace> pair : fragmentTraceMap.entrySet()) {
 					if (pair.getKey().getIndex()>1) {
@@ -486,7 +486,7 @@ public class ResultsBrowserPanel extends JPanel {
 				}
 				precursors=trimmedPrecursors;
 				
-				ChartPanel precursorChart=Charter.getChart("Retention Time", "Intensity", true, ChromatogramExtractor.extractPrecursorChromatograms(parameters.getPrecursorTolerance(), entry.getPrecursorMZ(), entry.getPrecursorCharge(), precursors));
+				ChartPanel precursorChart=Charter.getChart("Retention Time", "Intensity", true, ChromatogramExtractor.extractPrecursorChromatograms(parameters.getPrecursorTolerance(), entry.getPrecursorMZ(), entry.getPrecursorCharge(), precursors, true, false));
 				ChartPanel fragmentChart=Charter.getChart("Retention Time (min)", "Intensity", true, traces.toArray(new XYTrace[traces.size()]));
 				
 

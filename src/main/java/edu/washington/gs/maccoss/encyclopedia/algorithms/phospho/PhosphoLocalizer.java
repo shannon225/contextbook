@@ -10,7 +10,6 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.zip.DataFormatException;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractLibraryScoringTask;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.EValueCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefinementData;
@@ -34,6 +33,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Ion;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.BackgroundSubtractionFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
 import gnu.trove.list.array.TDoubleArrayList;
@@ -312,7 +312,7 @@ public class PhosphoLocalizer {
 			}
 			//negLogProbsAll=AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsAll, Math.round(params.getExpectedPeakWidth()/dutyCycle));//AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsAll, movingAverageLength);
 			//negLogProbsAll=General.subtract(negLogProbsAll, Log.log10(movingAverageLength)+Log.log10(stripes.size())+Log.log10(peptideModSeqs.size()));
-			negLogProbsSiteSpecific=AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsSiteSpecific, Math.round(params.getExpectedPeakWidth()/(dutyCycle)));//AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsSiteSpecific, movingAverageLength);
+			negLogProbsSiteSpecific=BackgroundSubtractionFilter.gaussianCenteredAverage(negLogProbsSiteSpecific, Math.round(params.getExpectedPeakWidth()/(dutyCycle)));//AbstractLibraryScoringTask.gaussianCenteredAverage(negLogProbsSiteSpecific, movingAverageLength);
 			
 			//negLogProbsSiteSpecific=General.subtract(negLogProbsSiteSpecific, QuickMedian.median(negLogProbsSiteSpecific.clone()));
 			
@@ -355,8 +355,8 @@ public class PhosphoLocalizer {
 			}
 
 			if (buildOutGUIData) {
-				HashMap<FragmentIon, XYTrace> otherTraces=ChromatogramExtractor.extractFragmentChromatograms(params.getFragmentTolerance(), allIonsTypes, stripes, null, GraphType.dashedline);
-				HashMap<FragmentIon, XYTrace> uniqueTraces=ChromatogramExtractor.extractFragmentChromatograms(params.getFragmentTolerance(), targets, stripes, null, GraphType.boldline);
+				HashMap<FragmentIon, XYTrace> otherTraces=ChromatogramExtractor.extractFragmentChromatograms(params.getFragmentTolerance(), allIonsTypes, stripes, null, GraphType.dashedline, true, false);
+				HashMap<FragmentIon, XYTrace> uniqueTraces=ChromatogramExtractor.extractFragmentChromatograms(params.getFragmentTolerance(), targets, stripes, null, GraphType.boldline, true, false);
 
 				for (Ion ion : uniqueTraces.keySet()) {
 					otherTraces.remove(ion);

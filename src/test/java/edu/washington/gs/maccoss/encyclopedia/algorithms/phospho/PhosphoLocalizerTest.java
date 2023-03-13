@@ -66,7 +66,7 @@ public class PhosphoLocalizerTest extends TestCase {
 		for (PrecursorScan stripe : stripefile.getPrecursors(psmdata.getRetentionTime()-duration, psmdata.getRetentionTime()+duration)) {
 			precursors.add(stripe);
 		}
-		Charter.launchChart("Retention Time", "Intensity", false, new Dimension(800, 250), ChromatogramExtractor.extractPrecursorChromatograms(parameters.getPrecursorTolerance(), psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), precursors));
+		Charter.launchChart("Retention Time", "Intensity", false, new Dimension(800, 250), ChromatogramExtractor.extractPrecursorChromatograms(parameters.getPrecursorTolerance(), psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), precursors, true, false));
 		//ArrayList<String> permutations=new ArrayList<String>();
 		//permutations.add("DKRPLS[+79.966331]GPDVGTPQPAGLASGAK");
 		//permutations.add("DKRPLSGPDVGTPQPAGLAS[+79.966331]GAK");
