@@ -3,6 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 import java.awt.Dimension;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
@@ -28,7 +29,7 @@ import junit.framework.TestCase;
 public class XCorrCalculatorTest extends TestCase {
 	private static final SearchParameters MAIN_PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.HCD, new MassTolerance(100, MassErrorUnitType.PPM), new MassTolerance(100, MassErrorUnitType.PPM), DigestionEnzyme.getEnzyme("trypsin"), false, true, false);
 	//private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(0.05, MassErrorUnitType.AMU), new MassTolerance(10, MassErrorUnitType.PPM), DigestionEnzyme.getEnzyme("trypsin"));
-	private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.HCD, new MassTolerance(0.5, MassErrorUnitType.AMU), new MassTolerance(0.5, MassErrorUnitType.AMU), DigestionEnzyme.getEnzyme("trypsin"), false, true, false);
+	private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(0.5, MassErrorUnitType.AMU), new MassTolerance(0.5, MassErrorUnitType.AMU), DigestionEnzyme.getEnzyme("trypsin"), false, true, false);
 	//private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.YONLY, new MassTolerance(10, MassErrorUnitType.PPM), new MassTolerance(10, MassErrorUnitType.PPM), DigestionEnzyme.getEnzyme("trypsin"));
 	
 	public static void main3(String[] args) {
@@ -79,8 +80,32 @@ public class XCorrCalculatorTest extends TestCase {
 		final float chargedMz=(float)((1329.6335+(charge-1)*MassConstants.protonMass)/charge);
 		System.out.println(chargedMz);
 
-		Spectrum s=getSDFHLFGPPGKK();
+		Spectrum s=getDLTSVNILLK_prosit(false);
 
+		LibraryEntry entry = getEntry(charge, s);
+
+		int height = 275;
+		Charter.launchChart(entry, "Spectrum", new Dimension(600, height));
+		AnnotatedLibraryEntry annotatedEntry=new AnnotatedLibraryEntry(entry, PARAMETERS);
+		Charter.launchChart(annotatedEntry, "Library", new Dimension(600, height));
+
+		SparseXCorrSpectrum f=SparseXCorrCalculator.normalize(s, new Range(chargedMz-10.0f, chargedMz+10.0f), false, PARAMETERS);
+		SparseXCorrSpectrum t=SparseXCorrCalculator.getTheoreticalSpectrum("DLTSVNILLK", charge, PARAMETERS);
+		//Charter.launchChart(s, "Spectrum", new Dimension(600, height));
+
+		s=getDLTSVNILLK(true);
+		Spectrum normalizedSpectrumF = getNormalizedSpectrum(s, SparseXCorrCalculator.biggestFragmentMass, charge, f, PARAMETERS);
+		Charter.launchChart(normalizedSpectrumF, "Normalized Spectrum", new Dimension(600, height));
+		Spectrum normalizedSpectrumT = getNormalizedSpectrum(s, SparseXCorrCalculator.biggestFragmentMass, charge, t, PARAMETERS);
+		Charter.launchChart(normalizedSpectrumT, "Model", new Dimension(600, height));
+		f=SparseXCorrCalculator.preprocessSpectrum(f);
+		//Charter.launchChart(getNormalizedSpectrum(s, SparseXCorrCalculator.biggestFragmentMass, charge, f, PARAMETERS), "PP Spectrum", new Dimension(600, 250));
+		t=SparseXCorrCalculator.preprocessSpectrum(t);
+		//Charter.launchChart(getNormalizedSpectrum(s, SparseXCorrCalculator.biggestFragmentMass, charge, t, PARAMETERS), "PP Model", new Dimension(600, 250));
+		
+	}
+
+	private static LibraryEntry getEntry(final byte charge, Spectrum s) {
 		MassTolerance fragmentTolerance=new MassTolerance(MAIN_PARAMETERS.getFragmentTolerance().getPpmTolerance()*2);
 		TDoubleArrayList masses=new TDoubleArrayList();
 		TFloatArrayList intens=new TFloatArrayList();
@@ -103,21 +128,8 @@ public class XCorrCalculatorTest extends TestCase {
 			System.out.println(Math.round(masses.get(i))+"\t"+intens.get(i));
 		}
 		
-		LibraryEntry entry=new LibraryEntry("", new HashSet<>(), s.getPrecursorMZ(), charge, "SDFHLFGPPGKK", 1, 0, 0, masses.toArray(), intens.toArray(), MAIN_PARAMETERS.getAAConstants());
-
-		Charter.launchChart(entry, "Initial", new Dimension(600, 400));
-		AnnotatedLibraryEntry annotatedEntry=new AnnotatedLibraryEntry(entry, PARAMETERS);
-		Charter.launchChart(annotatedEntry, "Annotated", new Dimension(600, 400));
-
-		SparseXCorrSpectrum f=SparseXCorrCalculator.normalize(s, new Range(chargedMz-10.0f, chargedMz+10.0f), false, PARAMETERS);
-		SparseXCorrSpectrum t=SparseXCorrCalculator.getTheoreticalSpectrum("SDFHLFGPPGKK", charge, PARAMETERS);
-		Charter.launchChart(getNormalizedSpectrum(s, SparseXCorrCalculator.biggestFragmentMass, charge, f, PARAMETERS), "Spectrum", new Dimension(600, 250));
-		Charter.launchChart(getNormalizedSpectrum(s, SparseXCorrCalculator.biggestFragmentMass, charge, t, PARAMETERS), "Model", new Dimension(600, 250));
-		f=SparseXCorrCalculator.preprocessSpectrum(f);
-		Charter.launchChart(getNormalizedSpectrum(s, SparseXCorrCalculator.biggestFragmentMass, charge, f, PARAMETERS), "PP Spectrum", new Dimension(600, 250));
-		t=SparseXCorrCalculator.preprocessSpectrum(t);
-		Charter.launchChart(getNormalizedSpectrum(s, SparseXCorrCalculator.biggestFragmentMass, charge, t, PARAMETERS), "PP Model", new Dimension(600, 250));
-		
+		LibraryEntry entry=new LibraryEntry("", new HashSet<>(), s.getPrecursorMZ(), charge, "DLTSVNILLK", 1, 0, 0, masses.toArray(), intens.toArray(), MAIN_PARAMETERS.getAAConstants());
+		return entry;
 	}
 	
 	public void testIndexing() {
@@ -194,6 +206,28 @@ public class XCorrCalculatorTest extends TestCase {
 		
 		//s=getNormalizedSpectrum(s, chargedMz, charge, f, PARAMETERS);
 		//Charter.launchChart(s, "model orig:"+originalCalculation2+" spec orig:"+originalCalculation+" model:"+modelFirst+" spec:"+spectrumFirst);
+	}
+
+	public static Spectrum getDLTSVNILLK(boolean sqrt) { 
+		final byte charge=2;
+		final double chargedMz=(1329.6335+(charge-1)*MassConstants.protonMass)/charge;
+		
+		InputStream is=XCorrCalculatorTest.class.getResourceAsStream("/DLTSVNILLK.dta.txt");
+		ArrayList<Peak> peaks=getData(is);
+		Pair<double[], float[]> peakArrays=Peak.toArrays(peaks);
+		float[] intensities = sqrt?General.protectedSqrt(peakArrays.y):peakArrays.y;
+		return getSpectrum(peakArrays.x, intensities, General.sum(peakArrays.y), 0.0f, "DLTSVNILLK", chargedMz); 
+	}
+
+	public static Spectrum getDLTSVNILLK_prosit(boolean sqrt) { 
+		final byte charge=2;
+		final double chargedMz=(1329.6335+(charge-1)*MassConstants.protonMass)/charge;
+		
+		InputStream is=XCorrCalculatorTest.class.getResourceAsStream("/DLTSVNILLK_prosit.dta.txt");
+		ArrayList<Peak> peaks=getData(is);
+		Pair<double[], float[]> peakArrays=Peak.toArrays(peaks);
+		float[] intensities = sqrt?General.protectedSqrt(peakArrays.y):peakArrays.y;
+		return getSpectrum(peakArrays.x, intensities, General.sum(peakArrays.y), 0.0f, "DLTSVNILLK", chargedMz); 
 	}
 
 	public static Spectrum getSDFHLFGPPGKK() { 
