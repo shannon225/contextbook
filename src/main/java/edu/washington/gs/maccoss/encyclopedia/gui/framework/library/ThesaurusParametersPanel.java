@@ -90,7 +90,8 @@ public class ThesaurusParametersPanel extends JPanel implements ParametersPanelI
 	private final FileChooserPanel backgroundFasta=new FileChooserPanel(null, "Background", new SimpleFilenameFilter(".fas", ".fasta"), true);
 	private final FileChooserPanel libraryFileChooser;
 	private final JComboBox<String> enzyme=new JComboBox<String>(new String[] {"Trypsin", "Lys-C", "Lys-N", "Arg-C", "CNBr", "Chymotrypsin", "Pepsin A"});
-	private final JComboBox<String> fragType=new JComboBox<String>(new String[] {FragmentationType.toName(FragmentationType.CID), FragmentationType.toName(FragmentationType.HCD), FragmentationType.toName(FragmentationType.ETD)});
+	private final JComboBox<String> fragType=new JComboBox<String>(new String[] {FragmentationType.toName(FragmentationType.CID), FragmentationType.toName(FragmentationType.HCD), //FragmentationType.toName(FragmentationType.SILAC), 
+			FragmentationType.toName(FragmentationType.ETD)});
 	private final JComboBox<PercolatorVersion> percolatorVersion=new JComboBox<PercolatorVersion>(PercolatorVersion.VALID_VERSIONS);
 	
 	private final JFormattedTextField precursorWindowWidth=new JFormattedTextField(NumberFormat.getNumberInstance()); // not displayed anymore
@@ -282,6 +283,8 @@ public class ThesaurusParametersPanel extends JPanel implements ParametersPanelI
 				Optional.empty(),
 				Optional.empty(),
 				true,
+				true,
+				false,
 				false
 		);
 

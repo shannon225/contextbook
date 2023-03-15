@@ -463,7 +463,9 @@ public class General {
 	}
 	
 	public static float[] normalizeToL2(float[] y) {
-		return divide(y, (float)Math.sqrt(sum(multiply(y, y))));
+		float sqrt = (float)Math.sqrt(sum(multiply(y, y)));
+		if (sqrt==0) return new float[y.length];
+		return divide(y, sqrt);
 	}
 	public static float[] normalizeToSum(float[] y) {
 		return divide(y, sum(y));
@@ -549,7 +551,19 @@ public class General {
 		}
 		return sum;
 	}
-	
+
+	public static int sum(boolean[] arr) {
+		int sum = 0;
+		if (null != arr) {
+			for (boolean b : arr) {
+				if (b) {
+					sum += 1;
+				}
+			}
+		}
+		return sum;
+	}
+
 	public static float variance(float[] v) {
 		if (v.length==0) return 0.0f;
 		
@@ -771,5 +785,9 @@ public class General {
 			}
 		}
 		return min;
+	}
+	
+	public static boolean isEven(int x) {
+		return (x&1)==0; // check first bit
 	}
 }

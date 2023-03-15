@@ -17,6 +17,7 @@ import java.util.Optional;
 import com.google.common.collect.ImmutableList;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ScoredPSM;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
@@ -40,7 +41,7 @@ public class AbstractRetentionTimeFilter implements RetentionTimeAlignmentInterf
 	protected final String xAxis;
 	protected final String yAxis;
 	
-	AbstractRetentionTimeFilter(Function rtWarper, Optional<RTProbabilityModel> model, String xAxis, String yAxis) {
+	public AbstractRetentionTimeFilter(Function rtWarper, Optional<RTProbabilityModel> model, String xAxis, String yAxis) {
 		this.rtWarper=rtWarper;
 		this.model=model;
 		this.xAxis=xAxis;
@@ -51,12 +52,12 @@ public class AbstractRetentionTimeFilter implements RetentionTimeAlignmentInterf
 		return rtWarper;
 	}
 	@Override
-	public List<AlignmentDataPoint> plot(ArrayList<XYPoint> rts, Optional<File> saveFileSeed) {
+	public List<AlignmentDataPoint> plot(List<XYPoint> rts, Optional<File> saveFileSeed) {
 		return plot(rts, saveFileSeed, "library", "actual");
 	}
 
 	@Override
-	public void makePlots(ArrayList<ScoredPSM> psms, Optional<File> saveFileSeed) {
+	public void makePlots(SearchParameters params, ArrayList<ScoredPSM> psms, Optional<File> saveFileSeed) {
 		ArrayList<XYPoint> rts=new ArrayList<>();
 		for (ScoredPSM psm : psms) {
 			rts.add(psm.getRTData());
@@ -64,7 +65,7 @@ public class AbstractRetentionTimeFilter implements RetentionTimeAlignmentInterf
 		plot(rts, saveFileSeed);
 	}
 
-	public List<AlignmentDataPoint> plot(ArrayList<XYPoint> rts, Optional<File> saveFileSeed, String xAxis, String yAxis) {
+	public List<AlignmentDataPoint> plot(List<XYPoint> rts, Optional<File> saveFileSeed, String xAxis, String yAxis) {
 		TFloatArrayList rtValues=new TFloatArrayList();
 		TFloatArrayList deltas=new TFloatArrayList();
 		ArrayList<XYPoint> removedRTs=new ArrayList<XYPoint>();
@@ -203,6 +204,11 @@ public class AbstractRetentionTimeFilter implements RetentionTimeAlignmentInterf
 	public float getXValue(float yrt) {
 		return rtWarper.getXValue(yrt);
 	}
+	
+	@Override
+	public float getYRT(float xrt) {
+		return rtWarper.getYValue(xrt);
+	}
 
 	@Override
 	public float getProbabilityFitsModel(float actualRT, float modelRT) {
@@ -229,7 +235,7 @@ public class AbstractRetentionTimeFilter implements RetentionTimeAlignmentInterf
 			return 1f;
 		}
 	}
-	
+
 
 	
 	@Override
@@ -237,10 +243,10 @@ public class AbstractRetentionTimeFilter implements RetentionTimeAlignmentInterf
 		float modelRT=psm.getLibraryEntry().getScanStartTime()/60f;
 		float actualRT=psm.getMSMS().getScanStartTime()/60f;
 		boolean passes=this.getProbabilityFitsModel(actualRT, modelRT)>=AbstractRetentionTimeFilter.rejectionPValue;
-		
+
 		return passes;
 	}
-	
+
 	@Override
 	public float[] getAdditionalScores(ScoredPSM psm) {
 		float modelRT=psm.getLibraryEntry().getScanStartTime()/60f;

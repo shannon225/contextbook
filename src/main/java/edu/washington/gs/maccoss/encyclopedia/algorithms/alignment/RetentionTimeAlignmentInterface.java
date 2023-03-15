@@ -1,15 +1,12 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.alignment;
 
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
+
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface.AlignmentDataPoint;
-import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
-
 public interface RetentionTimeAlignmentInterface extends ScoredPSMFilterInterface {
-
 	float getYValue(float xrt);
 
 	float getXValue(float yrt);
@@ -18,7 +15,7 @@ public interface RetentionTimeAlignmentInterface extends ScoredPSMFilterInterfac
 	
 	float getDelta(float actualRT, float modelRT);
 
-	List<AlignmentDataPoint> plot(ArrayList<XYPoint> rts, Optional<File> saveFileSeed);
+	List<AlignmentDataPoint> plot(List<XYPoint> rts, Optional<File> saveFileSeed);
 
 	interface AlignmentDataPoint {
 		/**
@@ -95,6 +92,17 @@ public interface RetentionTimeAlignmentInterface extends ScoredPSMFilterInterfac
 				@Override
 				public String getPeptideModSeq() {
 					return peptideModSeq;
+				}
+
+				@Override
+				public String toString() {
+					return String.format("(%.02f, %.02f, %.02f, %.02f, %s)",
+							getLibrary(),
+							getActual(),
+							getPredictedActual(),
+							getProbability(),
+							getPeptideModSeq()
+					);
 				}
 			};
 		}

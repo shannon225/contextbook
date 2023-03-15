@@ -146,6 +146,8 @@ public class ScribeSearchParameters extends SearchParameters {
 			Optional<File> precursorIsolationRangeFile, 
 			Optional<File> percolatorModelFile,
 			boolean normalizeByTIC,
+			boolean subtractBackground,
+			boolean maskBadIntegrations,
 			boolean enableAdvancedOptions
 	) {
 		super(
@@ -184,6 +186,8 @@ public class ScribeSearchParameters extends SearchParameters {
 				precursorIsolationRangeFile,
 				percolatorModelFile,
 				normalizeByTIC,
+				subtractBackground,
+				maskBadIntegrations,
 				enableAdvancedOptions
 		);
 	}
@@ -224,6 +228,8 @@ public class ScribeSearchParameters extends SearchParameters {
 				params.getPrecursorIsolationRangeFile(),
 				params.getPercolatorModelFile(),
 				params.isNormalizeByTIC(),
+				params.isSubtractBackground(),
+				params.isMaskBadIntegrations(),
 				params.isEnableAdvancedOptions()
 		);
 	}

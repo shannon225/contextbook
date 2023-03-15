@@ -14,12 +14,14 @@ import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 
 public class StripeFileGenerator {
+
 	private static final HashMap<File, WeakReference<StripeFileInterface>> loadedFiles=new HashMap<>();
 	
 	private static final DIAFileReader DIA_FILE_READER=new DIAFileReader();
+	private static final MzmlToDIAConverter MZML_TO_DIA_CONVERTER = new MzmlToDIAConverter();
 	private static final StripeFileReaderInterface[] readers=new StripeFileReaderInterface[] {
 			DIA_FILE_READER,
-			new MzmlToDIAConverter(),
+			MZML_TO_DIA_CONVERTER,
 			new MGFToDIAConverter()
 	};
 
@@ -49,6 +51,32 @@ public class StripeFileGenerator {
 		if (diaFile.exists()&&diaFile.canRead()) {
 			try {
 				return DIA_FILE_READER.readStripeFile(diaFile, parameters, isOpenFileInPlace);
+			} catch (EncyclopediaException ee) {
+				// continue on
+			}
+		}
+		
+		// try to change name to .mzML and read
+		File foundMZMLFile=null;
+		File mzMLFile=new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))+".mzml");
+		if (mzMLFile.exists()&&mzMLFile.canRead()) {
+			foundMZMLFile=mzMLFile;
+		}
+		if (foundMZMLFile==null) {
+			mzMLFile=new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))+".mzML");
+			if (mzMLFile.exists()&&mzMLFile.canRead()) {
+				foundMZMLFile=mzMLFile;
+			}
+		}
+		if (foundMZMLFile==null) {
+			mzMLFile=new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))+".MZML");
+			if (mzMLFile.exists()&&mzMLFile.canRead()) {
+				foundMZMLFile=mzMLFile;
+			}
+		}
+		if (foundMZMLFile!=null&&foundMZMLFile.exists()&&foundMZMLFile.canRead()) {
+			try {
+				return MZML_TO_DIA_CONVERTER.readStripeFile(foundMZMLFile, parameters, isOpenFileInPlace);
 			} catch (EncyclopediaException ee) {
 				// continue on
 			}

@@ -1,10 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.graphing;
 
 import java.awt.Color;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Optional;
+import java.util.*;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
@@ -281,7 +278,7 @@ public class XYTrace implements XYTraceInterface, Comparable<XYTraceInterface> {
 		return sb.toString();
 	}
 
-	public static Pair<double[], double[]> toArrays(ArrayList<XYPoint> points) {
+	public static Pair<double[], double[]> toArrays(List<XYPoint> points) {
 		TDoubleArrayList xs=new TDoubleArrayList();
 		TDoubleArrayList ys=new TDoubleArrayList();
 		for (PointInterface point : points) {
@@ -291,7 +288,7 @@ public class XYTrace implements XYTraceInterface, Comparable<XYTraceInterface> {
 		return new Pair<double[], double[]>(xs.toArray(), ys.toArray());
 	}
 
-	public static Pair<float[], float[]> toFloatArrays(ArrayList<XYPoint> points) {
+	public static Pair<float[], float[]> toFloatArrays(List<XYPoint> points) {
 		TFloatArrayList xs=new TFloatArrayList();
 		TFloatArrayList ys=new TFloatArrayList();
 		for (PointInterface point : points) {

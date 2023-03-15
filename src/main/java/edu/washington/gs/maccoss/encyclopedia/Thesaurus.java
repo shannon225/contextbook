@@ -27,6 +27,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizatio
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.ScoredPSMFilterInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackground;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackgroundInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
@@ -137,14 +138,6 @@ public class Thesaurus {
 				StripeFileInterface stripefile=StripeFileGenerator.getFile(diaFile, parameters);
 				PhosphoLocalizer localizer=new PhosphoLocalizer(stripefile, parameters.getLocalizingModification().get(), parameters);
 				LibraryScoringFactory factory=new ThesaurusOneScoringFactory(parameters, localizer, new LinkedBlockingQueue<ModificationLocalizationData>());
-				
-				Logger.logLine("Thesaurus version "+ProgramType.getGlobalVersion().toString());
-	
-				Logger.logLine("Parameters:");
-				Logger.logLine(" "+Encyclopedia.INPUT_DIA_TAG+" "+diaFile.getAbsolutePath());
-				Logger.logLine(" "+Encyclopedia.TARGET_LIBRARY_TAG+" "+libraryFile.getAbsolutePath());
-				Logger.logLine(" "+Encyclopedia.OUTPUT_RESULT_TAG+" "+outputFile.getAbsolutePath());
-				Logger.logLine(parameters.toString());
 
 				LibraryInterface library=BlibToLibraryConverter.getFile(libraryFile, fastaFile, parameters);
 				ThesaurusJobData job=new ThesaurusJobData(diaFile, library, outputFile, fastaFile, factory);
@@ -185,6 +178,13 @@ public class Thesaurus {
 				Logger.logLine("Just going to go ahead and reprocess this file!");
 			}
 		}
+		
+		Logger.logLine("Using "+job.getTaskFactory().getName());
+		Logger.logLine("Input File: "+job.getDiaFileReader().getOriginalFileName());
+		Logger.logLine("Library File: "+job.getLibrary().getName());
+		Logger.logLine("Result File: "+job.getResultLibrary().getName());
+		Logger.logLine("Parameters:");
+		Logger.logLine(job.getParameters().toString());
 		
 		Logger.logLine("Converting files...");
 		progress.update("Converting files...", Float.MIN_VALUE);
@@ -359,7 +359,7 @@ public class Thesaurus {
 		if (totalTasks==0) {
 			throw new EncyclopediaException("No peptides found in library with the specified PTM ("+parameters.getLocalizingModification()+")!");
 		}
-		Pair<ArrayList<PercolatorPeptide>, RetentionTimeAlignmentInterface> percolatorResults=Encyclopedia.percolatePeptides(progress, job, stripefile, saveResultsConsumer);
+		Pair<ArrayList<PercolatorPeptide>, ScoredPSMFilterInterface> percolatorResults=Encyclopedia.percolatePeptides(progress, job, stripefile, saveResultsConsumer);
 		if (parameters.getScoringBreadthType().runRecalibration()) {
 			percolatorResults=Encyclopedia.repercolatePeptides(progress, job, stripefile, saveResultsConsumer, percolatorResults.y);
 		}

@@ -813,7 +813,7 @@ public class SearchPanelUtilities {
 		options.add(new LabeledComponent("Precursor Range (m/z)", mzRange));
 		options.add(new LabeledComponent("Rention Time Range (min)", rtRange));
 		
-		options.add(new JLabel("Subset peptides/accessions (requires exact matches):", JLabel.LEFT));
+		options.add(new JLabel("Subset peptides/accessions/sources (requires exact matches):", JLabel.LEFT));
 		options.add(scrollPane);
 		
 		JPanel buttons=new JPanel();
@@ -992,6 +992,8 @@ public class SearchPanelUtilities {
 		final SpinnerModel minMzSpinner=new SpinnerNumberModel(FastaToPrositCSVParameters.DEFAULT_MIN_MZ, FastaToPrositCSVParameters.MIN_MZ, FastaToPrositCSVParameters.MAX_MZ, 0.1);
 		final SpinnerModel maxMzSpinner=new SpinnerNumberModel(FastaToPrositCSVParameters.DEFAULT_MAX_MZ, FastaToPrositCSVParameters.MIN_MZ, FastaToPrositCSVParameters.MAX_MZ, 0.1);
 		final JComboBox<String> enzymeBox=new JComboBox<String>(new String[] {"Trypsin", "Glu-C", "Lys-C", "Arg-C", "Asp-N", "Lys-N", "CNBr", "Chymotrypsin", "Pepsin A", "No Enzyme"});
+		final JCheckBox isAdjustNCEForDIACheckbox=new JCheckBox("", FastaToPrositCSVParameters.DEFAULT_ADJUST_NCE_FOR_DIA);
+		final JCheckBox isAddDecoysCheckbox=new JCheckBox("", FastaToPrositCSVParameters.DEFAULT_ADD_DECOYS);
 		
 		JPanel chargeRange=new JPanel(new FlowLayout());
 		chargeRange.setOpaque(true);
@@ -999,7 +1001,7 @@ public class SearchPanelUtilities {
 		chargeRange.add(new JSpinner(minChargeSpinner));
 		chargeRange.add(new JLabel("<html><p style=\"font-size:10px; font-family: Helvetica, sans-serif\"> to "));
 		chargeRange.add(new JSpinner(maxChargeSpinner));
-		//options.add(new LabeledComponent("Enzyme", enzymeBox)); // FIXME add prosit enzymes
+		options.add(new LabeledComponent("Enzyme", enzymeBox));
 		options.add(new LabeledComponent("Charge range", chargeRange));
 		options.add(new LabeledComponent("Maximum Missed Cleavage", new JSpinner(maxMissedCleavageSpinner)));
 
@@ -1012,7 +1014,9 @@ public class SearchPanelUtilities {
 		options.add(new LabeledComponent("m/z range", mzRange));
 
 		options.add(new LabeledComponent("Default NCE", "NCE is the Normalized Collision Energy for Thermo Fusion-class instruments. If you use QEs, add 6 to your NCE. If you use ToFs, use NCE=33.", new JSpinner(defaultNCESpinner)));
-		options.add(new LabeledComponent("Default Charge", new JSpinner(defaultChargeSpinner)));
+		options.add(new LabeledComponent("Default Charge", "DIA requires specifying a single charge for calculating NCE. This can be ignored if Adjust NCE for DIA is turned off.", new JSpinner(defaultChargeSpinner)));
+		options.add(new LabeledComponent("Adjust NCE for DIA", "With DDA, collision energy (CE) is adjusted by the instrument based on charge and m/z, but DIA cannot make this adjustment on a peptide-by-peptide basis. This option corrects NCE for DIA acquisition to correct for the lack of CE adjustment.", isAdjustNCEForDIACheckbox));
+		//options.add(new LabeledComponent("Add Decoys To CSV", "This option allows you to predict reverse sequence decoys in addition to your standard target peptides. Note, these reverse sequence peptides are not marked as decoys, so they are incompatible with downstream tools.", isAddDecoysCheckbox));
 		
 		JPanel buttons=new JPanel();
 		buttons.setLayout(new FlowLayout(FlowLayout.CENTER));
@@ -1029,6 +1033,8 @@ public class SearchPanelUtilities {
 				double minimumMz=((Number)minMzSpinner.getValue()).doubleValue();
 				double maximumMz=((Number)maxMzSpinner.getValue()).doubleValue();
 				DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme((String)enzymeBox.getSelectedItem());
+				final boolean isAdjustNCEForDIA=isAdjustNCEForDIACheckbox.isSelected();
+				final boolean isAddDecoys=isAddDecoysCheckbox.isSelected();
 				
 				if (fastaFile!=null&&fastaFile.exists()) {
 					dialog.setVisible(false);
@@ -1037,7 +1043,7 @@ public class SearchPanelUtilities {
 					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame) SwingUtilities.getWindowAncestor(root), "Please wait...", "Creating Prosit CSV File") {
 						@Override
 						protected Nothing doInBackgroundForReal() throws Exception {
-							PrositCSVWriter.writeCSV(fastaFile, enzyme, defaultNCE, defaultCharge, minCharge, maxCharge, maxMissedCleavages, new Range(minimumMz, maximumMz), false);
+							PrositCSVWriter.writeCSV(fastaFile, enzyme, defaultNCE, defaultCharge, minCharge, maxCharge, maxMissedCleavages, new Range(minimumMz, maximumMz), isAdjustNCEForDIA, isAddDecoys);
 							return Nothing.NOTHING;
 						}
 
@@ -1102,7 +1108,7 @@ public class SearchPanelUtilities {
 		dialog.getContentPane().add(mainpane, BorderLayout.CENTER);
 		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 		dialog.pack(); 
-		dialog.setSize(500, 350);
+		dialog.setSize(500, 400);
 		dialog.setVisible(true);
 	}
 	
@@ -1245,9 +1251,12 @@ public class SearchPanelUtilities {
 
 		final SpinnerModel defaultNCESpinner=new SpinnerNumberModel(FastaToPrositCSVParameters.DEFAULT_DEFAULT_NCE, FastaToPrositCSVParameters.MIN_DEFAULT_NCE, FastaToPrositCSVParameters.MAX_DEFAULT_NCE, 1);
 		final SpinnerModel defaultChargeSpinner=new SpinnerNumberModel(FastaToPrositCSVParameters.DEFAULT_DEFAULT_CHARGE, FastaToPrositCSVParameters.MIN_DEFAULT_CHARGE, FastaToPrositCSVParameters.MAX_DEFAULT_CHARGE, 1);
+		final JCheckBox isAdjustNCEForDIACheckbox=new JCheckBox("", FastaToPrositCSVParameters.DEFAULT_ADJUST_NCE_FOR_DIA);
+		final JCheckBox isAddDecoysCheckbox=new JCheckBox("", FastaToPrositCSVParameters.DEFAULT_ADD_DECOYS);
 		
 		options.add(new LabeledComponent("Default NCE", "NCE is the Normalized Collision Energy for Thermo Fusion-class instruments. If you use QEs, add 6 to your NCE. If you use ToFs, use NCE=33.", new JSpinner(defaultNCESpinner)));
-		options.add(new LabeledComponent("Default Charge", new JSpinner(defaultChargeSpinner)));
+		options.add(new LabeledComponent("Adjust NCE for DIA", "With DDA, collision energy (CE) is adjusted by the instrument based on charge and m/z, but DIA cannot make this adjustment on a peptide-by-peptide basis. This option corrects NCE for DIA acquisition to correct for the lack of CE adjustment.", isAdjustNCEForDIACheckbox));
+		//options.add(new LabeledComponent("Add Decoys To CSV", "This option allows you to predict reverse sequence decoys in addition to your standard target peptides. Note, these reverse sequence peptides are not marked as decoys, so they are incompatible with downstream tools.", isAddDecoysCheckbox));
 		
 		JPanel buttons=new JPanel();
 		buttons.setLayout(new FlowLayout(FlowLayout.CENTER));
@@ -1256,8 +1265,10 @@ public class SearchPanelUtilities {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				final File libraryFile=libraryFileChooser.getFile();
-				byte defaultNCE=((Number)defaultNCESpinner.getValue()).byteValue();
-				byte defaultCharge=((Number)defaultChargeSpinner.getValue()).byteValue();
+				final byte defaultNCE=((Number)defaultNCESpinner.getValue()).byteValue();
+				final byte defaultCharge=((Number)defaultChargeSpinner.getValue()).byteValue();
+				final boolean isAdjustNCEForDIA=isAdjustNCEForDIACheckbox.isSelected();
+				final boolean isAddDecoys=isAddDecoysCheckbox.isSelected();
 				
 				if (libraryFile!=null&&libraryFile.exists()) {
 					dialog.setVisible(false);
@@ -1268,7 +1279,7 @@ public class SearchPanelUtilities {
 						protected Nothing doInBackgroundForReal() throws Exception {
 							LibraryFile library=new LibraryFile();
 							library.openFile(libraryFile);
-							PrositCSVWriter.writeCSV(library, defaultNCE, defaultCharge, false);
+							PrositCSVWriter.writeCSV(library, defaultNCE, defaultCharge, isAdjustNCEForDIA, isAddDecoys);
 							return Nothing.NOTHING;
 						}
 

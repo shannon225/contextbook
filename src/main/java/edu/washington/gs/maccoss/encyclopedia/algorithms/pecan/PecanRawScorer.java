@@ -13,6 +13,8 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 
 //@Immutable
 public class PecanRawScorer implements PSMPeakScorer {
+	public static final String PRIMARY_SCORE_NAME="peakCalibratedScore";
+	
 	private final MassTolerance fragmentTolerance;
 	private final AuxillaryPSMScorer auxScorer;
 
@@ -22,7 +24,7 @@ public class PecanRawScorer implements PSMPeakScorer {
 	}
 	
 	public static String getPrimaryScoreName() {
-		return "primary";
+		return PRIMARY_SCORE_NAME;
 	}
 
 	@Override

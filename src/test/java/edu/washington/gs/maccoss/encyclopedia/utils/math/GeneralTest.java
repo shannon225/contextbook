@@ -37,6 +37,14 @@ public class GeneralTest extends TestCase {
 		Charter.launchChart("Intens", "RT", false, getTrace(trace1, rts), getTrace(trace2, rts), getTrace(trace3, rts), getTrace(trace4, rts), getTrace(trace5, rts));
 	}
 	
+	public void testNormalization() {
+		float[] f=new float[10];
+		for (int i = 0; i < 100; i++) {
+			f[5]=100.0f*(float)Math.random();
+			assertEquals(1.0f, General.normalizeToL2(f)[5]);
+		}
+	}
+	
 	public void testNumberOfOccurances() {
 		String s="THISISATHESISTEST";
 		assertEquals(2, General.numberOfOccurances(s, "TH"));

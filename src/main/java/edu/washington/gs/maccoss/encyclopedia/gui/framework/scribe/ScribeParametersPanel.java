@@ -85,7 +85,8 @@ public class ScribeParametersPanel extends JPanel implements ParametersPanelInte
 	private final FileChooserPanel backgroundFasta=new FileChooserPanel(null, "Background", new SimpleFilenameFilter(".fas", ".fasta"), true);
 	private final FileChooserPanel libraryFileChooser;
 	private final JComboBox<String> enzyme=new JComboBox<String>(new String[] {"Trypsin", "Glu-C", "Lys-C", "Arg-C", "Asp-N", "Lys-N", "CNBr", "Chymotrypsin", "Pepsin A", "No Enzyme"});
-	private final JComboBox<String> fragType=new JComboBox<String>(new String[] {FragmentationType.toName(FragmentationType.CID), FragmentationType.toName(FragmentationType.HCD), FragmentationType.toName(FragmentationType.ETD)});
+	private final JComboBox<String> fragType=new JComboBox<String>(new String[] {FragmentationType.toName(FragmentationType.CID), FragmentationType.toName(FragmentationType.HCD), //FragmentationType.toName(FragmentationType.SILAC), 
+			FragmentationType.toName(FragmentationType.ETD)});
 	private final JComboBox<PercolatorVersion> percolatorVersion=new JComboBox<PercolatorVersion>(PercolatorVersion.VALID_VERSIONS);
 
 	private final JFormattedTextField precursorWindowWidth=new JFormattedTextField(NumberFormat.getNumberInstance()); // not displayed anymore
@@ -126,8 +127,6 @@ public class ScribeParametersPanel extends JPanel implements ParametersPanelInte
 		options.add(new LabeledComponent("Fragment Mass Tolerance", fragmentTolerance));
 		options.add(new LabeledComponent("Library Mass Tolerance", libraryTolerance));
 		options.add(new LabeledComponent("Percolator Version", percolatorVersion));
-		options.add(new LabeledComponent("Number of Quantitative Ions", new JSpinner(numberOfQuantitativeIons)));
-		options.add(new LabeledComponent("Minimum Number of Quantitative Ions", new JSpinner(minNumOfQuantitativeIons)));
 		options.add(new LabeledComponent("Number of Cores", new JSpinner(numberOfJobs)));
 		options.add(new LabeledComponent("Additonal Command Line Options", additionalCommandLineOptions));
 
@@ -270,6 +269,8 @@ public class ScribeParametersPanel extends JPanel implements ParametersPanelInte
 				Optional.empty(),
 				Optional.empty(),
 				true,
+				true,
+				false,
 				false
 		);
 

@@ -1,33 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.Types;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.StringTokenizer;
-import java.util.function.Predicate;
-import java.util.zip.DataFormatException;
-
 import com.google.common.collect.ImmutableList;
-
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrerInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface;
@@ -37,42 +10,33 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.AmbiguousPeptid
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefinementData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefiner;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Chromatogram;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.ChromatogramLibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.LocalizedLibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursor;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroupInterface;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SimplePeptidePrecursor;
-import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
-import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
-import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
-import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
-import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
+import edu.washington.gs.maccoss.encyclopedia.utils.*;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.Version;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Ion;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.IonType;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.QuantitativeDIAData;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.*;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.BenjaminiHochberg;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.sql.*;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.function.Predicate;
+import java.util.zip.DataFormatException;
+
 public class LibraryFile extends SQLFile implements LibraryInterface {
+	private static final boolean KEEP_QUIET=false;
 	public static boolean OPEN_IN_PLACE=false;
 
-	private static final String SOURCEFILE_TIC_PREFIX="TIC_";
+	public static final String SOURCEFILE_TIC_PREFIX="TIC_";
 	private static final String SOURCEFILE_STRING="sourcefile";
 	private static final String SOURCE_FILE_SPLIT="|";
 	public static final String DLIB=".dlib";
@@ -84,9 +48,10 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			new Version(0, 1, 0), new Version(0, 1, 1), new Version(0, 1, 2), new Version(0, 1, 3), new Version(0, 1, 4),
 			new Version(0, 1, 5), new Version(0, 1, 6), new Version(0, 1, 7), new Version(0, 1, 8), new Version(0, 1, 9),
 			new Version(0, 1, 10), new Version(0, 1, 11), new Version(0, 1, 12), new Version(0, 1, 13), new Version(0, 1, 14),
-			new Version(0, 1, 15)
+			new Version(0, 1, 15),
+			new Version(0, 1, 16)
 	};
-	public static final Version MOST_RECENT_VERSION=new Version(0, 1, 15);
+	public static final Version MOST_RECENT_VERSION=new Version(0, 1, 16);
 
 	private File userFile=null;
 	private File tempFile;
@@ -164,10 +129,16 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	}
 
 	public void addTIC(StripeFileInterface diaFile) throws IOException, SQLException {
-		String key=SOURCEFILE_TIC_PREFIX+ diaFile.getOriginalFileName();
+		String originalFileName = diaFile.getOriginalFileName();
+		float tic = diaFile.getTIC();
+		addTIC(originalFileName, tic);
+	}
+
+	public void addTIC(String originalFileName, float tic) throws IOException, SQLException {
+		String key=SOURCEFILE_TIC_PREFIX+ originalFileName;
 
 		HashMap<String, String> map=new HashMap<String, String>();
-		map.put(key, Float.toString(diaFile.getTIC()));
+		map.put(key, Float.toString(tic));
 
 		addMetadata(map);
 	}
@@ -196,6 +167,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		try (Connection c = getConnection()) {
 			c.setAutoCommit(false);
 
+			int total = 0;
 			try (PreparedStatement s = c.prepareStatement(
 					"INSERT INTO retentiontimes (SourceFile, Library, Actual, Predicted, Delta, Probability, Decoy, PeptideModSeq) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
 			)) {
@@ -217,18 +189,23 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					s.addBatch();
 
 					if (i % 8192 == 0) {
-						s.executeBatch();
-						s.clearBatch();
+						total += General.sum(s.executeBatch());
 					}
 				}
-				s.executeBatch();
+				total += General.sum(s.executeBatch());
 			} catch (SQLException e) {
+				Logger.errorLine("Error writing RT alignment to ELIB; skipping.");
+				Logger.errorException(e);
+
 				c.rollback();
+				return;
 			} finally {
+				Logger.logLine(String.format("Wrote %d RT alignment points for %s", total, sourceFile));
 				c.commit();
 			}
 		} catch (SQLException | IOException e) {
-			e.printStackTrace();
+			Logger.errorLine("Unable to write RT alignment to ELIB; skipping.");
+			Logger.errorException(e);
 		}
 	}
 
@@ -364,7 +341,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	 * @throws IOException
 	 * @throws SQLException
 	 */
-	public void addIntegratedEntries(boolean requireFragmentIons, ArrayList<IntegratedLibraryEntry> entries, Optional<PeakLocationInferrerInterface> inferrer, Optional<HashMap<String, ModificationLocalizationData>> localizationData, AminoAcidConstants aaConstants, float fdrThreshold)
+	public void addIntegratedEntries(boolean requireFragmentIons, ArrayList<IntegratedLibraryEntry> entries, Optional<PeakLocationInferrerInterface> inferrer, Optional<HashMap<String, ModificationLocalizationData>> localizationData, SearchParameters params)
 			throws IOException, SQLException {
 		// first add normal data
 		HashMap<String, LibraryEntry> repeatsCatcher=new HashMap<String, LibraryEntry>();
@@ -394,7 +371,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					continue;
 				}
 				double fdr=localizationFDRValues.get(entry.getPeptideModSeq());
-				if (fdr>fdrThreshold) {
+				if (fdr>params.getPercolatorThreshold()) {
 					System.out.println("Skipping "+entry.getPeptideModSeq()+", FDR over threshold:"+fdr+"!");
 					countSkipped++;
 					continue;
@@ -516,7 +493,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			int start=0;
 			int stop=NUMBER_OF_PEPTIDE_ENTRIES_AT_ONCE;
 			while (stop<dataAndSourceList.size()) {
-				internalWritePeptideQuantLibraryEntriesToConnection(c, requireFragmentIons, inferrer, dataAndSourceList.subList(start, stop), aaConstants);
+				internalWritePeptideQuantLibraryEntriesToConnection(c, requireFragmentIons, inferrer, dataAndSourceList.subList(start, stop), params);
 				if (localizationData.isPresent()) {
 					internalWritePeptideLocalizationsToConnection(c, inferrer, localizationData.get(), localizationFDRValues, dataAndSourceList.subList(start, stop));
 				}
@@ -524,7 +501,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 				stop=stop+NUMBER_OF_PEPTIDE_ENTRIES_AT_ONCE;
 			}
 			if (start<dataAndSourceList.size()) {
-				internalWritePeptideQuantLibraryEntriesToConnection(c, requireFragmentIons, inferrer, dataAndSourceList.subList(start, dataAndSourceList.size()), aaConstants);
+				internalWritePeptideQuantLibraryEntriesToConnection(c, requireFragmentIons, inferrer, dataAndSourceList.subList(start, dataAndSourceList.size()), params);
 				if (localizationData.isPresent()) {
 					internalWritePeptideLocalizationsToConnection(c, inferrer, localizationData.get(), localizationFDRValues, dataAndSourceList.subList(start, dataAndSourceList.size()));
 				}
@@ -552,7 +529,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	private static final int NUMBER_OF_PEPTIDE_ENTRIES_AT_ONCE=20;
 	// private static final int NUMBER_OF_FRAGMENT_ENTRIES_AT_ONCE=4;
 
-	private void internalWritePeptideQuantLibraryEntriesToConnection(Connection c, boolean requireFragmentIons, Optional<PeakLocationInferrerInterface> inferrer, List<Pair<TransitionRefinementData, String>> dataAndSouceList, AminoAcidConstants aaConstants)
+	private void internalWritePeptideQuantLibraryEntriesToConnection(Connection c, boolean requireFragmentIons, Optional<PeakLocationInferrerInterface> inferrer, List<Pair<TransitionRefinementData, String>> dataAndSouceList, SearchParameters params)
 			throws SQLException, IOException {
 		int numValidEntries=0;
 		for (int i=0; i<dataAndSouceList.size(); i++) {
@@ -568,11 +545,12 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 
 		StringBuilder peptidePrepString=new StringBuilder("INSERT INTO peptidequants (PrecursorCharge, PeptideModSeq, PeptideSeq, SourceFile, RTInSecondsCenter, "
 				+"RTInSecondsStart, RTInSecondsStop, TotalIntensity, NumberOfQuantIons, QuantIonMassLength, "
-				+"QuantIonMassArray, QuantIonIntensityLength, QuantIonIntensityArray, BestFragmentCorrelation, BestFragmentDeltaMassPPM, "
+				+"QuantIonMassArray, QuantIonIntensityLength, QuantIonIntensityArray, QuantIonCorrelationLength, QuantIonCorrelationArray, "
+				+ "BestFragmentCorrelation, BestFragmentDeltaMassPPM, "
 				+"MedianChromatogramEncodedLength, MedianChromatogramArray, MedianChromatogramRTEncodedLength, MedianChromatogramRTArray, IdentifiedTICRatio)");
-		peptidePrepString.append(" VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+		peptidePrepString.append(" VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 		for (int i=1; i<numValidEntries; i++) {
-			peptidePrepString.append(", (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+			peptidePrepString.append(", (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 		}
 
 		PreparedStatement peptidePrep=c.prepareStatement(peptidePrepString.toString());
@@ -585,10 +563,10 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 				if (inferrer.isPresent()&&requireFragmentIons) {
 					Optional<QuantitativeDIAData> topNIntensity=inferrer.get().getQuantitativeData(dataAndSouceList.get(i).x);
 					if (topNIntensity.isPresent()) {
-						pepIndex=prepareQuantData(requireFragmentIons, pair.x, pair.y, inferrer, peptidePrep, pepIndex, aaConstants);
+						pepIndex=prepareQuantData(requireFragmentIons, pair.x, pair.y, inferrer, peptidePrep, pepIndex, params);
 					}
 				} else {
-					pepIndex=prepareQuantData(requireFragmentIons, pair.x, pair.y, inferrer, peptidePrep, pepIndex, aaConstants);
+					pepIndex=prepareQuantData(requireFragmentIons, pair.x, pair.y, inferrer, peptidePrep, pepIndex, params);
 				}
 			}
 			if (pepIndex>1) {
@@ -656,7 +634,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		return index;
 	}
 
-	public int prepareQuantData(boolean requireFragmentIons, TransitionRefinementData data, String sourceFile, Optional<PeakLocationInferrerInterface> inferrer, PreparedStatement peptidePrep, int index, AminoAcidConstants aaConstants) throws SQLException, IOException {
+	public int prepareQuantData(boolean requireFragmentIons, TransitionRefinementData data, String sourceFile, Optional<PeakLocationInferrerInterface> inferrer, PreparedStatement peptidePrep, int index, SearchParameters params) throws SQLException, IOException {
 		QuantitativeDIAData topN;
 		if (inferrer.isPresent()&&requireFragmentIons) {
 			Optional<QuantitativeDIAData> topNIntensity=inferrer.get().getQuantitativeData(data);
@@ -666,11 +644,12 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			}
 			topN=topNIntensity.get();
 		} else {
-			ArrayList<Peak> peaks=data.getTopNPeaks(TransitionRefiner.quantitativeCorrelationThreshold, Integer.MAX_VALUE);
-			Pair<double[], float[]> pair=Peak.toArrays(peaks);
+			ArrayList<PeakChromatogram> peaks=data.getTopNPeaks(TransitionRefiner.quantitativeCorrelationThreshold, Integer.MAX_VALUE);
+			Quadruplet<double[], float[], float[], boolean[]> pair=PeakChromatogram.toChromatogramArrays(peaks);
 			double[] topNMasses=pair.x;
 			float[] topNIntensities=pair.y;
-			topN=new QuantitativeDIAData(data.getPeptideModSeq(), data.getPrecursorCharge(), data.getApexRT(), data.getRange(), topNMasses, topNIntensities, aaConstants);
+			float[] topNCorrelations=pair.z;
+			topN=new QuantitativeDIAData(data.getPeptideModSeq(), data.getPrecursorCharge(), data.getApexRT(), data.getRange(), topNMasses, topNIntensities, topNCorrelations, params.getAAConstants());
 		}
 
 		float[] correlationArray=data.getCorrelationArray();
@@ -689,6 +668,13 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 				bestDeltaMass=ppmArray[i];
 			}
 		}
+		
+		float totalIntensity;
+		if (params.isMaskBadIntegrations()&&bestCorrelation<TransitionRefiner.quantitativeCorrelationThreshold) {
+			totalIntensity=0.0f;
+		} else {
+			totalIntensity=topN.getTIC();
+		}
 
 		peptidePrep.setInt(index++, topN.getPrecursorCharge());
 		peptidePrep.setString(index++, topN.getPeptideModSeq());
@@ -698,7 +684,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 
 		peptidePrep.setFloat(index++, topN.getRtScanRange().getStart());
 		peptidePrep.setFloat(index++, topN.getRtScanRange().getStop());
-		peptidePrep.setFloat(index++, topN.getTIC());
+		peptidePrep.setFloat(index++, totalIntensity);
 		peptidePrep.setInt(index++, topN.getNumNonZeroPeaks());
 
 		byte[] topNMassesByteArray=ByteConverter.toByteArray(topN.getMassArray());
@@ -708,6 +694,10 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		byte[] topNIntensitiesByteArray=ByteConverter.toByteArray(topN.getIntensityArray());
 		peptidePrep.setInt(index++, topNIntensitiesByteArray.length);
 		peptidePrep.setBytes(index++, CompressionUtils.compress(topNIntensitiesByteArray));
+
+		byte[] topNCorrelationsByteArray=ByteConverter.toByteArray(topN.getCorrelationArray());
+		peptidePrep.setInt(index++, topNCorrelationsByteArray.length);
+		peptidePrep.setBytes(index++, CompressionUtils.compress(topNCorrelationsByteArray));
 
 		peptidePrep.setFloat(index++, bestCorrelation);
 		peptidePrep.setFloat(index++, bestDeltaMass);
@@ -889,28 +879,34 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	}
 
 	public void addProteinsFromEntries(ArrayList<LibraryEntry> entries) throws IOException, SQLException {
+		HashMap<String, HashSet<String>> targetAccessionsByPeptide=new HashMap<>();
+		HashMap<String, HashSet<String>> decoyAccessionsByPeptide=new HashMap<>();
+
+		for (LibraryEntry entry : entries) {
+			HashMap<String, HashSet<String>> map;
+			if (entry.isDecoy()) {
+				map=decoyAccessionsByPeptide;
+			} else {
+				map=targetAccessionsByPeptide;
+			}
+			
+			HashSet<String> accessions=map.get(entry.getPeptideSeq());
+			if (accessions==null) {
+				accessions=new HashSet<>();
+				map.put(entry.getPeptideSeq(), accessions);
+			}
+			accessions.addAll(entry.getAccessions());
+		}
+		
+		addProteinsFromEntries(targetAccessionsByPeptide, decoyAccessionsByPeptide);
+	}
+
+	public void addProteinsFromEntries(HashMap<String, HashSet<String>> targetAccessionsByPeptide,
+			HashMap<String, HashSet<String>> decoyAccessionsByPeptide) throws IOException, SQLException {
 		Connection c=getConnection();
 		try {
 			PreparedStatement proteinPrep=c.prepareStatement("INSERT OR IGNORE INTO peptidetoprotein (PeptideSeq, IsDecoy, ProteinAccession) VALUES (?,?,?)");
 			try {
-				HashMap<String, HashSet<String>> targetAccessionsByPeptide=new HashMap<>();
-				HashMap<String, HashSet<String>> decoyAccessionsByPeptide=new HashMap<>();
-
-				for (LibraryEntry entry : entries) {
-					HashMap<String, HashSet<String>> map;
-					if (entry.isDecoy()) {
-						map=decoyAccessionsByPeptide;
-					} else {
-						map=targetAccessionsByPeptide;
-					}
-					
-					HashSet<String> accessions=map.get(entry.getPeptideSeq());
-					if (accessions==null) {
-						accessions=new HashSet<>();
-						map.put(entry.getPeptideSeq(), accessions);
-					}
-					accessions.addAll(entry.getAccessions());
-				}
 				
 				for (Entry<String, HashSet<String>> entry : targetAccessionsByPeptide.entrySet()) {
 					proteinPrep.setString(1, entry.getKey());
@@ -1612,7 +1608,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 
 					if (new Version(0, 1, 2).amIAbove(version) && version.amIAbove(new Version(0, 0, 9))) {
 						if (userFile!=null) {
-							Logger.logLine("Updating library to "+new Version(0, 1, 2));
+							if (!KEEP_QUIET) Logger.logLine("Updating library to "+new Version(0, 1, 2));
 						}
 						s.execute("ALTER TABLE entries ADD COLUMN CorrelationEncodedLength int");
 						s.execute("ALTER TABLE entries ADD COLUMN CorrelationArray blob");
@@ -1624,7 +1620,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					}
 					if (new Version(0, 1, 4).amIAbove(version)&&version.amIAbove(new Version(0, 1, 2))) {
 						if (userFile!=null) {
-							Logger.logLine("Updating library to "+new Version(0, 1, 4));
+							if (!KEEP_QUIET) Logger.logLine("Updating library to "+new Version(0, 1, 4));
 						}
 						s.execute("ALTER TABLE fragmentquants ADD COLUMN Background double");
 						s.execute("ALTER TABLE fragmentquants ADD COLUMN PeptideSeq string");
@@ -1634,7 +1630,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 
 					if (new Version(0, 1, 5).amIAbove(version)&&version.amIAbove(new Version(0, 1, 2))) {
 						if (userFile!=null) {
-							Logger.logLine("Updating library to "+new Version(0, 1, 5));
+							if (!KEEP_QUIET) Logger.logLine("Updating library to "+new Version(0, 1, 5));
 						}
 						s.execute("ALTER TABLE peptidequants ADD COLUMN RTInSecondsCenter double");
 						updated=true;
@@ -1642,7 +1638,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 
 					if (new Version(0, 1, 6).amIAbove(version)&&version.amIAbove(new Version(0, 1, 2))) {
 						if (userFile!=null) {
-							Logger.logLine("Updating library to "+new Version(0, 1, 6));
+							if (!KEEP_QUIET) Logger.logLine("Updating library to "+new Version(0, 1, 6));
 						}
 						s.execute("ALTER TABLE peptidequants ADD COLUMN IdentifiedTICRatio double");
 						updated=true;
@@ -1650,7 +1646,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 
 					if (new Version(0, 1, 7).amIAbove(version)&&version.amIAbove(new Version(0, 1, 2))) {
 						if (userFile!=null) {
-							Logger.logLine("Updating library to "+new Version(0, 1, 7));
+							if (!KEEP_QUIET) Logger.logLine("Updating library to "+new Version(0, 1, 7));
 						}
 						s.execute("ALTER TABLE fragmentquants ADD COLUMN IonIndex int");
 						updated=true;
@@ -1658,7 +1654,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 
 					if (new Version(0, 1, 8).amIAbove(version)&&version.amIAbove(new Version(0, 1, 2))) {
 						if (userFile!=null) {
-							Logger.logLine("Updating library to "+new Version(0, 1, 8));
+							if (!KEEP_QUIET) Logger.logLine("Updating library to "+new Version(0, 1, 8));
 						}
 						s.execute("ALTER TABLE peptidequants ADD COLUMN QuantIonMassLength int");
 						s.execute("ALTER TABLE peptidequants ADD COLUMN QuantIonMassArray blob");
@@ -1667,7 +1663,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 
 					if (new Version(0, 1, 10).amIAbove(version)&&version.amIAbove(new Version(0, 1, 2))) {
 						if (userFile!=null) {
-							Logger.logLine("Updating library to "+new Version(0, 1, 10));
+							if (!KEEP_QUIET) Logger.logLine("Updating library to "+new Version(0, 1, 10));
 						}
 						s.execute("CREATE TABLE IF NOT EXISTS peptidetoprotein ("+"PeptideSeq string not null,"+"ProteinAccession string not null"+");");
 						s.execute("ALTER TABLE peptidetoprotein ADD COLUMN isDecoy boolean");
@@ -1679,7 +1675,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 
 					if (new Version(0, 1, 11).amIAbove(version)&&version.amIAbove(new Version(0, 1, 2))) {
 						if (userFile!=null) {
-							Logger.logLine("Updating library to "+new Version(0, 1, 11));
+							if (!KEEP_QUIET) Logger.logLine("Updating library to "+new Version(0, 1, 11));
 						}
 						s.execute("ALTER TABLE peptidequants ADD COLUMN QuantIonIntensityLength int");
 						s.execute("ALTER TABLE peptidequants ADD COLUMN QuantIonIntensityArray blob");
@@ -1690,7 +1686,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 
 					if (new Version(0, 1, 12).amIAbove(version)&&version.amIAbove(new Version(0, 1, 9))) {
 						if (userFile!=null) {
-							Logger.logLine("Updating library to "+new Version(0, 1, 12));
+							if (!KEEP_QUIET) Logger.logLine("Updating library to "+new Version(0, 1, 12));
 						}
 						s.execute("ALTER TABLE peptidetoprotein ADD COLUMN isDecoy boolean");
 						updated=true;
@@ -1698,9 +1694,18 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 
 					if (new Version(0, 1, 15).amIAbove(version)&&version.amIAbove(new Version(0, 0, 9))) {
 						if (userFile!=null) {
-							Logger.logLine("Updating library to "+new Version(0, 1, 15));
+							if (!KEEP_QUIET) Logger.logLine("Updating library to "+new Version(0, 1, 15));
 						}
 						s.execute("ALTER TABLE entries ADD COLUMN QuantifiedIonsArray blob");
+						updated=true;
+					}
+
+					if (new Version(0, 1, 16).amIAbove(version)&&version.amIAbove(new Version(0, 0, 9))) {
+						if (userFile!=null) {
+							if (!KEEP_QUIET) Logger.logLine("Updating library to "+new Version(0, 1, 16));
+						}
+						s.execute("ALTER TABLE peptidequants ADD COLUMN QuantIonCorrelationLength int");
+						s.execute("ALTER TABLE peptidequants ADD COLUMN QuantIonCorrelationArray blob");
 						updated=true;
 					}
 				}
@@ -1720,7 +1725,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 				s.execute("CREATE TABLE IF NOT EXISTS peptidetoprotein ("+"PeptideSeq string not null,"+"isDecoy boolean,"+"ProteinAccession string not null"+");");
 
 				s.execute("CREATE TABLE IF NOT EXISTS peptidequants ( "
-						+"PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, SourceFile string not null, RTInSecondsCenter double not null, RTInSecondsStart double not null, RTInSecondsStop double not null, TotalIntensity double not null, NumberOfQuantIons int not null, QuantIonMassLength int not null, QuantIonMassArray blob not null, QuantIonIntensityLength int, QuantIonIntensityArray blob, BestFragmentCorrelation double not null, BestFragmentDeltaMassPPM double not null, MedianChromatogramEncodedLength int not null, MedianChromatogramArray blob not null, MedianChromatogramRTEncodedLength int, MedianChromatogramRTArray blob, IdentifiedTICRatio double not null "
+						+"PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, SourceFile string not null, RTInSecondsCenter double not null, RTInSecondsStart double not null, RTInSecondsStop double not null, TotalIntensity double not null, NumberOfQuantIons int not null, QuantIonMassLength int not null, QuantIonMassArray blob not null, QuantIonIntensityLength int, QuantIonIntensityArray blob, QuantIonCorrelationLength int, QuantIonCorrelationArray blob, BestFragmentCorrelation double not null, BestFragmentDeltaMassPPM double not null, MedianChromatogramEncodedLength int not null, MedianChromatogramArray blob not null, MedianChromatogramRTEncodedLength int, MedianChromatogramRTArray blob, IdentifiedTICRatio double not null "
 						+")"); // +"UNIQUE (PrecursorCharge, PeptideModSeq,
 								// SourceFile) )");
 

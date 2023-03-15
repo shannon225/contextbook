@@ -112,6 +112,8 @@ public class PecanParameterParser {
         final Optional<File> percolatorModelFile;
         final Optional<File> precursorIsolationRangeFile;
         final boolean normalizeByTIC;
+        final boolean subtractBackground;
+        final boolean maskBadIntegrations;
         final boolean enableAdvancedOptions;
 
 		ModificationMassMap variableMods=new ModificationMassMap(parameters.get("-variable"));
@@ -291,6 +293,8 @@ public class PecanParameterParser {
 		requireVariableMods=ParsingUtils.getBoolean("-requireVariableMods", parameters, false);
 		filterPeaklists = ParsingUtils.getBoolean("-filterPeaklists", parameters, false);
 		doNotUseGlobalFDR = ParsingUtils.getBoolean("-doNotUseGlobalFDR", parameters, false);
+		subtractBackground = ParsingUtils.getBoolean(SearchParameters.SUBTRACT_BACKGROUND, parameters, true);
+        maskBadIntegrations=ParsingUtils.getBoolean(SearchParameters.MASK_BAD_INTEGRATIONS, parameters, false);
 		normalizeByTIC = ParsingUtils.getBoolean("-normalizeByTIC", parameters, true);
 		enableAdvancedOptions = ParsingUtils.getBoolean(SearchParameters.ENABLE_ADVANCED_OPTIONS, parameters, false);
 
@@ -336,6 +340,8 @@ public class PecanParameterParser {
 				precursorIsolationRangeFile,
 				percolatorModelFile,
 				normalizeByTIC,
+				subtractBackground,
+				maskBadIntegrations,
 				enableAdvancedOptions
 		);
 	}

@@ -1,7 +1,10 @@
 EncyclopeDIA changelog for user-facing changes:
 
-encyclopedia-2.0.0-SNAPSHOT
-encyclopedia-2.11.2
+encyclopedia-3.0.0-SNAPSHOT
+ - Bugfix: check if any DDA data was searched with Scribe before using min/max with Percolator for Quant Reports
+ - Bugfix: fixed error parsing Pecan/Walnut primary score when making chromatogram libraries or Quant Reports
+
+encyclopedia-2.12.30
  - Feature: added Scribe searching and precursor quant for DDA
  - Feature: updated scoring system to EncyclopeDIA 2.0, default is still 1.0
  - Feature: added spectrum-specific browsing and annotation to peptide browser, added precursor browsing and the ability to export or append spectra to libraries
@@ -14,10 +17,14 @@ encyclopedia-2.11.2
  - Feature: added automatic iRTDB export along with exports to BLIB
  - Feature: added mass accuracy analysis over retention time for both MS1 and MS2
  - Feature: added option to toggle TIC normalization (default remains on)
+ - Feature: added options to generate Prosit libraries for DDA
+ - Feature: added checks for Java version to flag Java 17
+ - Feature: updated first pass percolator to only perform 3 rounds of optimization to speed up analysis
  - Bugfix: removed Jzy3D from build, which introduced an old version of Log4J
  - Bugfix: changed default behavior of “-quantifyAcrossSamples” to "true" to match GUI. This setting is only used if "-a true". If "true" and "-a true", then for below threshold peptides EncyclopeDIA will search within a +/- 1.5*expectedPeakWidth window around the RT alignment for the best peptide location. If "false" and "-a true", then for below threshold peptides EncyclopeDIA will always integrate entirely based on the exact RT alignment.
  - Bugfix: forced recalculation of precursor m/z in MSP reading to hide a bug in Prosit
  - Bugfix: removed recursive error with long gradients in KDE estimation for RT
+ - Bugfix: fixed IO bug if results directory does not exist yet
 
 encyclopedia-1.12.31 (December 31, 2021)
  - Feature: removed Log4J dependency from EncyclopeDIA build

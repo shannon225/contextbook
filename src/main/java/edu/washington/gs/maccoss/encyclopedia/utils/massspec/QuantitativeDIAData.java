@@ -20,8 +20,9 @@ public class QuantitativeDIAData implements PeptidePrecursor, Spectrum {
 	private final Range rtScanRange;
 	private final double[] massArray;
 	private final float[] intensityArray;
+	private final float[] correlationArray;
 
-	public QuantitativeDIAData(String peptideModSeq, byte precursorCharge, float scanStartTime, Range rtScanRange, double[] massArray, float[] intensityArray, AminoAcidConstants aaConstants) {
+	public QuantitativeDIAData(String peptideModSeq, byte precursorCharge, float scanStartTime, Range rtScanRange, double[] massArray, float[] intensityArray, float[] correlationArray, AminoAcidConstants aaConstants) {
 		this.peptideModSeq=peptideModSeq;
 		this.massCorrectedPeptideModSeq=PeptideUtils.getCorrectedMasses(peptideModSeq, aaConstants);
 		this.precursorMZ=aaConstants.getChargedMass(massCorrectedPeptideModSeq, precursorCharge);
@@ -31,12 +32,13 @@ public class QuantitativeDIAData implements PeptidePrecursor, Spectrum {
 		ArrayList<PeakChromatogram> peaks=new ArrayList<>();
 		int numPeaks=massArray.length;
 		for (int i=0; i<numPeaks; i++) {
-			peaks.add(new PeakChromatogram(massArray[i], intensityArray[i], 0.0f, false));
+			peaks.add(new PeakChromatogram(massArray[i], intensityArray[i], correlationArray[i], false));
 		}
 		Collections.sort(peaks);
 		Quadruplet<double[], float[], float[], boolean[]> arrays=PeakChromatogram.toChromatogramArrays(peaks);
 		this.massArray=arrays.x;
 		this.intensityArray=arrays.y;
+		this.correlationArray=arrays.z;
 		
 		this.rtScanRange=rtScanRange;
 	}
@@ -112,6 +114,10 @@ public class QuantitativeDIAData implements PeptidePrecursor, Spectrum {
 
 	public float[] getIntensityArray() {
 		return intensityArray;
+	}
+	
+	public float[] getCorrelationArray() {
+		return correlationArray;
 	}
 
 	public float getTIC() {

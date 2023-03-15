@@ -203,7 +203,7 @@ public class TransitionRefiner {
 				}
 				float[] array=list.toArray();
 				Arrays.sort(array);
-				medianChromatogram[i]=QuickMedian.median(array);
+				medianChromatogram[i]=aggregate(array);
 			}
 			IntRange initialIndices=getIndexRange(retentionTimes, medianChromatogram, expectedPeakWidth);
 
@@ -263,13 +263,21 @@ public class TransitionRefiner {
 				}
 				float[] array=list.toArray();
 				Arrays.sort(array);
-				medianChromatogram[i]=QuickMedian.median(array);
+				medianChromatogram[i]=aggregate(array);
 			}
 			indices=getIndexRange(retentionTimes, medianChromatogram, expectedPeakWidth);
 		}
 
 		MedianChromatogramData medianData=new MedianChromatogramData(normalizedChromatograms, indices, medianChromatogram);
 		return medianData;
+	}
+	
+	private static float aggregate(float[] values) {
+		if (false) {
+			return General.mean(values);
+		} else {
+			return QuickMedian.median(values);
+		}
 	}
 	
 	public static int[] numberOfCoelutingIons(double[] targetMasses, double[] allIons, ArrayList<Spectrum> stripes, int halfPeakWidthInScans, MassTolerance fragmentTolerance) {

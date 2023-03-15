@@ -27,6 +27,9 @@ public class FastaToPrositCSVParameters {
 
 	public static final double MAX_MZ = 1600.0;
 	public static final double DEFAULT_MAX_MZ = 1002.7;
+	
+	public static final boolean DEFAULT_ADJUST_NCE_FOR_DIA = true;
+	public static final boolean DEFAULT_ADD_DECOYS = false;
 
 	public static final DigestionEnzyme DEFAULT_ENZYME = DigestionEnzyme.getEnzyme("Trypsin");
 
@@ -38,9 +41,11 @@ public class FastaToPrositCSVParameters {
 	protected final double minMz;
 	protected final double maxMz;
 	protected final DigestionEnzyme enzyme;
+	protected final boolean adjustNCEForDIA;
+	protected final boolean addDecoys;
 
 	public FastaToPrositCSVParameters(int defaultNCE, byte defaultCharge, byte minCharge, byte maxCharge,
-                                      int maxMissedCleavage, double minMz, double maxMz, DigestionEnzyme enzyme) {
+                                      int maxMissedCleavage, double minMz, double maxMz, DigestionEnzyme enzyme, boolean adjustNCEForDIA, boolean addDecoys) {
 		this.defaultNCE = defaultNCE;
 		this.defaultCharge = defaultCharge;
 		this.minCharge = minCharge;
@@ -49,6 +54,8 @@ public class FastaToPrositCSVParameters {
 		this.minMz = minMz;
 		this.maxMz = maxMz;
 		this.enzyme = enzyme;
+		this.adjustNCEForDIA=adjustNCEForDIA;
+		this.addDecoys=addDecoys;
 	}
 
 	public String toString() {
@@ -61,6 +68,8 @@ public class FastaToPrositCSVParameters {
 		sb.append(" -minMz ").append(minMz).append("\n");
 		sb.append(" -maxMz ").append(maxMz).append("\n");
 		sb.append(" -enzyme ").append(enzyme.getName()).append("\n");
+		sb.append(" -adjustNCEForDIA ").append(adjustNCEForDIA).append("\n");
+		sb.append(" -addDecoys ").append(addDecoys).append("\n");
 		return sb.toString();
 	}
 	
@@ -74,6 +83,8 @@ public class FastaToPrositCSVParameters {
 		map.put("-minMz", Double.toString(minMz));
 		map.put("-maxMz", Double.toString(maxMz));
 		map.put("-enzyme", enzyme.getName());
+		map.put("-adjustNCEForDIA", Boolean.toString(adjustNCEForDIA));
+		map.put("-addDecoys", Boolean.toString(addDecoys));
 		return map;
 	}
 
@@ -107,5 +118,13 @@ public class FastaToPrositCSVParameters {
 
 	public DigestionEnzyme getEnzyme() {
 		return enzyme;
+	}
+	
+	public boolean isAddDecoys() {
+		return addDecoys;
+	}
+	
+	public boolean isAdjustNCEForDIA() {
+		return adjustNCEForDIA;
 	}
 }

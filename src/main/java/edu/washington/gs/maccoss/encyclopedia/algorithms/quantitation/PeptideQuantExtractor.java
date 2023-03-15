@@ -49,7 +49,7 @@ public class PeptideQuantExtractor {
 	//private final PhosphoLocalizer localizer;
 	private final SearchParameters parameters;
 	
-	public PeptideQuantExtractor(ProgressIndicator progress, LibraryInterface searchedLibrary, StripeFileInterface stripefile, SearchParameters parameters) {
+	public PeptideQuantExtractor(ProgressIndicator progress, StripeFileInterface stripefile, SearchParameters parameters) {
 		this.progress=progress;
 		this.stripefile=stripefile;
 		this.parameters=parameters;
@@ -76,7 +76,7 @@ public class PeptideQuantExtractor {
 				parameters);
 		
 		try {
-			PeptideQuantExtractor extractor=new PeptideQuantExtractor(progress, searchedLibrary, stripeFile, parameters);
+			PeptideQuantExtractor extractor=new PeptideQuantExtractor(progress, stripeFile, parameters);
 			ArrayList<IntegratedLibraryEntry> extractPeptides=extractor.extractPeptides(uniquedData.values(), inferrer, limitToQuantifiable);
 			
 			Logger.logLine("Attempted extraction for: "+uniquedData.size()+", found "+extractPeptides.size());

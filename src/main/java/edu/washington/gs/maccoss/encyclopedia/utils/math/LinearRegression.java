@@ -1,6 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.math;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
@@ -14,7 +15,7 @@ public class LinearRegression implements Function {
 	public final Range xRange;
 	public final Range yRange;
 	
-	public LinearRegression(ArrayList<XYPoint> values) {
+	public LinearRegression(List<XYPoint> values) {
 		Pair<double[], double[]> xys=XYTrace.toArrays(values);
 		float[] x=General.toFloatArray(xys.x);
 		float[] y=General.toFloatArray(xys.y);

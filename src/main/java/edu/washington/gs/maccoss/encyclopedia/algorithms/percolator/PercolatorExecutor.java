@@ -8,6 +8,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
@@ -143,6 +144,22 @@ public class PercolatorExecutor extends ExternalExecutor {
 		commandData.setPercolatorExecutableVersion(percolatorExecutableVersion.orElse(null));
 
 		Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides=PercolatorReader.getPassingPeptidesFromTSV(commandData.getPeptideOutputFile(), threshold, aaConstants, false);
+		
+		if (commandData.getParameters().getNumberOfExtraDecoyLibrariesSearched()>0.0f) {
+			// entrapment search
+			int targets=0;
+			int traps=0;
+			for (PercolatorPeptide pep : passingPeptides.x) {
+				if (!pep.isPSMIDDecoy()) {
+					if (pep.isEntrapment()) {
+						traps++;
+					} else {
+						targets++;
+					}
+				}
+			}
+			Logger.logLine("Entrapment analysis found "+traps+" entrapment peptides and "+targets+" target peptides, ("+new DecimalFormat("#.#").format(100.0f*traps/(float)targets)+"%)");
+		}
 
 		return passingPeptides;
 	}
@@ -210,17 +227,39 @@ public class PercolatorExecutor extends ExternalExecutor {
 			} catch (IOException ioe) {
 				Logger.errorLine("Problem extracting Percolator weights from "+modelFile.getName()+". Continuing without using weights...");
 				Logger.errorException(ioe);
-				params.add("--maxiter"); params.add(Integer.toString(commandData.getParameters().getPercolatorTrainingIterations()));
+				if (commandData.getParameters().getScoringBreadthType().runRecalibration()&&round==1) {
+					params.add("--maxiter"); params.add(Integer.toString(Math.min(3, commandData.getParameters().getPercolatorTrainingIterations())));
+				} else {
+					params.add("--maxiter"); params.add(Integer.toString(commandData.getParameters().getPercolatorTrainingIterations()));
+				}
 			}
 		} else {
-			params.add("--maxiter"); params.add(Integer.toString(commandData.getParameters().getPercolatorTrainingIterations()));
+			if (commandData.getParameters().getScoringBreadthType().runRecalibration()&&round==1) {
+				params.add("--maxiter"); params.add(Integer.toString(Math.min(3, commandData.getParameters().getPercolatorTrainingIterations())));
+			} else {
+				params.add("--maxiter"); params.add(Integer.toString(commandData.getParameters().getPercolatorTrainingIterations()));
+			}
 		}
 		
 		if (percolatorVersion.getMajorVersion()>2) {
 			params.add("--no-terminate");
 			params.add("-N"); params.add(Integer.toString(commandData.getParameters().getPercolatorTrainingSetSize()));
-			params.add("--testFDR"); params.add(Float.toString(commandData.getParameters().getPercolatorTestThreshold()));
-			params.add("--trainFDR"); params.add(Float.toString(commandData.getParameters().getPercolatorTrainingSetThreshold()));
+
+			final float percolatorTestThreshold = commandData.getParameters().getPercolatorTestThreshold();
+			params.add("--testFDR"); params.add(Float.toString(percolatorTestThreshold));
+
+			final float percolatorTrainingSetThreshold = commandData.getParameters().getPercolatorTrainingSetThreshold();
+			if (percolatorTrainingSetThreshold > 0.0) {
+				// Value of zero means "use the test FDR threshold", but a bug in Percolator 3.05
+				// means that zero threshold will be used for the initial round of training, leading
+				// to very poor performance! Thus we avoid specifying this parameter when it's set
+				// to zero.
+				params.add("--trainFDR"); params.add(Float.toString(percolatorTrainingSetThreshold));
+			} else {
+				// Explicitly specify the same train and test FDRs to avoid mismatches when we know
+				// the user wants them to match.
+				params.add("--trainFDR"); params.add(Float.toString(percolatorTestThreshold));
+			}
 		}
 		params.add(commandData.getInputTSV().getAbsolutePath());
 		

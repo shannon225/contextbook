@@ -32,6 +32,8 @@ public class SearchParameters implements XMLObject {
 	public static final String OPT_PERC_TRAINING_THRESH = "-percolatorTrainingFDR";
 	public static final String ENABLE_ADVANCED_OPTIONS="-enableAdvancedOptions";
 	public static final String NUMBER_OF_QUANTITATIVE_PEAKS = "-numberOfQuantitativePeaks";
+	public static final String SUBTRACT_BACKGROUND = "-subtractBackground";
+	public static final String MASK_BAD_INTEGRATIONS = "-maskBadIntegrations";
 
 	protected final AminoAcidConstants aaConstants;
 	protected final FragmentationType fragType;
@@ -71,6 +73,8 @@ public class SearchParameters implements XMLObject {
     protected final Optional<File> precursorIsolationRangeFile;
     protected final Optional<File> percolatorModelFile;
     protected final boolean normalizeByTIC;
+    protected final boolean subtractBackground;
+    protected final boolean maskBadIntegrations;
     
     public Optional<ArrayList<Range>> getPrecursorIsolationRanges() {
 		return precursorIsolationRanges;
@@ -81,7 +85,7 @@ public class SearchParameters implements XMLObject {
 			int percolatorTrainingIterations, DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, 
 			int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, int topNTargetsUsed, float minIntensity, Optional<PeptideModification> localizingModification, ScoringBreadthType CASiLBreadthType, 
 			float getNumberOfExtraDecoyLibrariesSearched, boolean quantifyAcrossSamples, boolean verifyModificationIons, float rtWindowInMin, boolean filterPeaklists, boolean doNotUseGlobalFDR, 
-			Optional<File> precursorIsolationRangeFile, Optional<File> percolatorModelFile, boolean normalizeByTIC, boolean enableAdvancedOptions) {
+			Optional<File> precursorIsolationRangeFile, Optional<File> percolatorModelFile, boolean normalizeByTIC, boolean subtractBackground, boolean maskBadIntegrations, boolean enableAdvancedOptions) {
 		this.aaConstants=aaConstants;
 		this.fragType=fragType;
 		this.precursorTolerance=precursorTolerance;
@@ -117,6 +121,8 @@ public class SearchParameters implements XMLObject {
         this.precursorIsolationRangeFile=precursorIsolationRangeFile;
         this.percolatorModelFile=percolatorModelFile;
         this.normalizeByTIC=normalizeByTIC;
+        this.subtractBackground=subtractBackground;
+        this.maskBadIntegrations=maskBadIntegrations;
         this.enableAdvancedOptions=enableAdvancedOptions;
         
         ArrayList<Range> ranges=null;
@@ -207,6 +213,9 @@ public class SearchParameters implements XMLObject {
 		sb.append(" -numberOfExtraDecoyLibrariesSearched "+numberOfExtraDecoyLibrariesSearched+"\n");
 		sb.append(" -verifyModificationIons "+verifyModificationIons+"\n");
 		sb.append(" -minIntensity "+minIntensity+"\n");
+		sb.append(" -normalizeByTIC "+normalizeByTIC+"\n");
+		sb.append(" "+SUBTRACT_BACKGROUND+" "+subtractBackground+"\n");
+		sb.append(" "+MASK_BAD_INTEGRATIONS+" "+maskBadIntegrations+"\n");
 		if (useTargetWindowCenter()) {
 			sb.append(" -targetWindowCenter "+targetWindowCenter+"\n");
 		}
@@ -255,6 +264,9 @@ public class SearchParameters implements XMLObject {
 		map.put("-scoringBreadthType", getScoringBreadthType().toShortname());
 		map.put("-verifyModificationIons", verifyModificationIons+"");
 		map.put("-minIntensity", minIntensity+"");
+		map.put("-normalizeByTIC", normalizeByTIC+"");
+		map.put(SUBTRACT_BACKGROUND, subtractBackground+"");
+		map.put(MASK_BAD_INTEGRATIONS, maskBadIntegrations+"");
 		if (localizingModification.isPresent()) {
 			map.put("-localizationModification", localizingModification.get().getShortname());
 		} else {
@@ -374,13 +386,15 @@ public class SearchParameters implements XMLObject {
 		return getEffectivePercolatorThreshold(percolatorThreshold, numberOfExtraDecoyLibrariesSearched);
 	}
 
+	// removed for further testing, now extra shuffle peptides work as entrapment peptides 
 	public static float getEffectivePercolatorThreshold(float percolatorThreshold, float numberOfExtraDecoyLibrariesSearched) {
+		return percolatorThreshold;
 		// FDR'=FDR * (XD*(1-((XD-1)*FDR)))
 		// where XD is the numberOfDecoyLibrariesSearched
 		// e.g. if XD=1, then FDR'=FDR*(1*(1-((1-1)*FDR)))=FDR*(1*(1-0))=FDR
 		// e.g. if XD=2, then FDR'=FDR*(2*(1-((2-1)*FDR)))=FDR*(2*(1-FDR))=2*FDR-2*FDR*FDR
-		float numberOfDecoyLibrariesSearched=numberOfExtraDecoyLibrariesSearched+1.0f; // always search 1x decoy minimum
-		return percolatorThreshold*(numberOfDecoyLibrariesSearched*(1-((numberOfDecoyLibrariesSearched-1)*percolatorThreshold)));
+		//float numberOfDecoyLibrariesSearched=numberOfExtraDecoyLibrariesSearched+1.0f; // always search 1x decoy minimum
+		//return percolatorThreshold*(numberOfDecoyLibrariesSearched*(1-((numberOfDecoyLibrariesSearched-1)*percolatorThreshold)));
 	}
 	
 	public PercolatorVersion getPercolatorVersionNumber() {
@@ -519,5 +533,13 @@ public class SearchParameters implements XMLObject {
 	}
     public boolean isNormalizeByTIC() {
 		return normalizeByTIC;
+	}
+    
+    public boolean isSubtractBackground() {
+		return subtractBackground;
+	}
+    
+    public boolean isMaskBadIntegrations() {
+		return maskBadIntegrations;
 	}
 }

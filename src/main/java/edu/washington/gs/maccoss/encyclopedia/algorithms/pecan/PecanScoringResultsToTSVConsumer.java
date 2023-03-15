@@ -39,7 +39,7 @@ public class PecanScoringResultsToTSVConsumer extends AbstractScoringResultsToTS
 				AbstractScoringResult result=resultsQueue.take();
 				if (AbstractScoringResult.POISON_RESULT==result) break;
 				if (!printedHeader) {
-					writer.print("id\tLabel\tScanNr\ttopN\trank\tpeakZScore\tpeakCalibratedScore\tdeltaSn\t"
+					writer.print("id\tLabel\tScanNr\ttopN\trank\tpeakZScore\t"+PecanRawScorer.PRIMARY_SCORE_NAME+"\tdeltaSn\t"
 							+ "avgIdotp\tmidIdotp\tpeakScore\tpeakWeightedScore\tNCI\tCIMassErrMean\tCIMassErrVar\tprecursorMassErrMean\t"
 							+ "precursorMassErrVar\tpeakSimilarity\tsampledTimes\tmidTime\tspectraNorm\t"
 							+ "pepLength\tcharge2\tcharge3\tprecursorMz\tsequence\tProteins");

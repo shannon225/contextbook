@@ -208,20 +208,36 @@ public class EncyclopediaOneAuxillaryPSMScorer extends EncyclopediaAuxillaryPSMS
 
 	public static String[] getScoreNames(boolean runXCorr) {
 		if (runXCorr) {
-			return new String[] {"primary", "xCorrLib", "xCorrModel", "LogDotProduct", "logWeightedDotProduct", "sumOfSquaredErrors", "weightedSumOfSquaredErrors", "numberOfMatchingPeaks", "numberOfMatchingPeaksAboveThreshold", "averageAbsFragmentDeltaMass", "averageFragmentDeltaMasses", "isotopeDotProduct", "averageAbsParentDeltaMass", "averageParentDeltaMass", "eValue"};
+			return new String[] { "primary", "xCorrLib", "xCorrModel", "LogDotProduct", "logWeightedDotProduct", // 0, 1, 2, 3, 4
+					"sumOfSquaredErrors", "weightedSumOfSquaredErrors", "numberOfMatchingPeaks", // 5, 6, 7
+					"numberOfMatchingPeaksAboveThreshold", "averageAbsFragmentDeltaMass", "averageFragmentDeltaMasses", // 8, 9, 10
+					"isotopeDotProduct", "averageAbsParentDeltaMass", "averageParentDeltaMass", "eValue" }; // 11, 12, 13, 14
 		} else {
-			return new String[] {"primary", "LogDotProduct", "logWeightedDotProduct", "sumOfSquaredErrors", "weightedSumOfSquaredErrors", "numberOfMatchingPeaks", "numberOfMatchingPeaksAboveThreshold", "averageAbsFragmentDeltaMass", "averageFragmentDeltaMasses", "isotopeDotProduct", "averageAbsParentDeltaMass", "averageParentDeltaMass", "xCorrModel", "eValue"};
+			return new String[] { "primary", "LogDotProduct", "logWeightedDotProduct", "sumOfSquaredErrors", // 0, 1, 2, 3,
+					"weightedSumOfSquaredErrors", "numberOfMatchingPeaks", "numberOfMatchingPeaksAboveThreshold", // 4, 5, 6
+					"averageAbsFragmentDeltaMass", "averageFragmentDeltaMasses", "isotopeDotProduct", // 7, 8, 9
+					"averageAbsParentDeltaMass", "averageParentDeltaMass", "xCorrModel", "eValue" }; // 10, 11, 12, 13
 		}
 	}
 
 	@Override
 	public int getParentDeltaMassIndex() {
-		return AuxillaryPSMScorer.MISSING_INDEX;
+		//return AuxillaryPSMScorer.MISSING_INDEX;
+		if (runXCorr) {
+			return 13;
+		} else {
+			return 11;
+		}
 	}
 
 	@Override
 	public int getFragmentDeltaMassIndex() {
-		return AuxillaryPSMScorer.MISSING_INDEX;
+		//return AuxillaryPSMScorer.MISSING_INDEX;
+		if (runXCorr) {
+			return 10;
+		} else {
+			return 8;
+		}
 	}
 	
 	@Override

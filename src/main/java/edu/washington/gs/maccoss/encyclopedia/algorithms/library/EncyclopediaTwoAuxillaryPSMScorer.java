@@ -175,6 +175,7 @@ public class EncyclopediaTwoAuxillaryPSMScorer extends EncyclopediaAuxillaryPSMS
 		float beta=0.075f*maxLadderLength;
 		float rho=0.15f*numImmoniumIonsFound[0];
 		float sp=General.sum(actualTargetIntensities.toArray())*numberOfMatchingPeaks*(1.0f+beta)*(1.0f+rho)/ions.length;
+		if (sp<1) sp=1;
 		
 		float averageFragmentDeltaMasses=0.0f, averageAbsFragDeltaMass=0.0f;
 		if (fragmentDeltaMasses.size()==0) {
@@ -239,7 +240,7 @@ public class EncyclopediaTwoAuxillaryPSMScorer extends EncyclopediaAuxillaryPSMS
 		float xCorrModel=sparseModel.score(sparseScan);
 		
 		return new float[] {xTandem, xCorrLib, xCorrModel, dotProduct, contrastAngle, logit, sumOfSquaredErrors, numberOfMatchingPeaks, numberOfMatchingPeaksAboveThreshold, 
-				averageFragmentDeltaMasses, isotopeDotProduct, averagePPM, percentBlankOverMono, numberPrecursorMatch, sp, 
+				averageFragmentDeltaMasses, isotopeDotProduct, averagePPM, percentBlankOverMono, numberPrecursorMatch, Log.protectedLn(sp), 
 				maxLadderLength};
 	
 	}
@@ -250,10 +251,10 @@ public class EncyclopediaTwoAuxillaryPSMScorer extends EncyclopediaAuxillaryPSMS
 	}
 
 	public static String[] getScoreNames() {
-		return new String[] {"xTandem", "xCorrLib", "xCorrModel", "dotProduct", "contrastAngle", "logit", "sumOfSquaredErrors", "numberOfMatchingPeaks", 
+		return new String[] {"primary", "xCorrLib", "xCorrModel", "dotProduct", "contrastAngle", "logit", "sumOfSquaredErrors", "numberOfMatchingPeaks", 
 				"numberOfMatchingPeaksAboveThreshold", "averageFragmentDeltaMasses", "isotopeDotProduct", 
-				"averageParentDeltaMass", "percentBlankOverMono", "numberPrecursorMatch", "sp", "maxLadderLength", 
-				"primary", "secondary", "evalue", "correlationToGaussian", "correlationToPrecursor", "isIntegratedSignal", "isIntegratedPrecursor", 
+				"averageParentDeltaMass", "percentBlankOverMono", "numberPrecursorMatch", "lnSp", "maxLadderLength", 
+				"evalue", "correlationToGaussian", "correlationToPrecursor", "isIntegratedSignal", "isIntegratedPrecursor", 
 				"numPeaksWithGoodCorrelation"};
 	}
 	

@@ -3,8 +3,11 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.library;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
+
+import org.jfree.chart.ChartPanel;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractLibraryScoringTask;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AuxillaryPSMScorer;
@@ -21,8 +24,11 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
@@ -32,6 +38,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.Correlation;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredIndex;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.CosineGaussian;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
@@ -177,14 +184,30 @@ public class EncyclopediaTwoScoringTask extends AbstractLibraryScoringTask {
 					float[][] chromatograms=General.transposeMatrix(localRawIntensities);
 					ArrayList<float[]> chromatogramList=new ArrayList<float[]>();
 					for (int j = 0; j < chromatograms.length; j++) {
-						chromatogramList.add(chromatograms[j]);
+						if (General.sum(chromatograms[j])>0.0f) {
+							chromatograms[j]=SkylineSGFilter.paddedSavitzkyGolaySmooth(chromatograms[j]);
+							if (parameters.isSubtractBackground()) {
+								chromatograms[j]=backgroundSubtractMovingMedian(chromatograms[j], movingAverageLength*10);
+							}
+							chromatogramList.add(chromatograms[j]);
+						}
 					}
+					
 					TransitionRefinementData data=TransitionRefiner.identifyTransitions(entry.getPeptideModSeq(), entry.getPrecursorCharge(), stripe.getScanStartTime(), 
 							ions, chromatogramList, localRetentionTimes, false, parameters);
 					float[] correlations=data.getCorrelationArray();
 					float[] integrations=data.getIntegrationArray();
 					float[] median=data.getMedianChromatogram();
 					Range rtRange=data.getRange();
+
+//					System.out.println(stripe.getScanStartTime()/60+" --> "+rtRange.getStart()/60f+"\t"+rtRange.getStop()/60f);
+//					HashMap<String, ChartPanel> panels=TransitionRefiner.getChartPanels(data);
+//					Charter.launchCharts("TITLE", panels);
+//					Charter.launchChart("RT (Min)", "Score", true, new XYTrace(General.divide(retentionTimes, 60f), primary, GraphType.line, "Primary"));					
+//					Charter.launchChart("RT (Min)", "Intensity", true, new XYTrace(General.divide(localRetentionTimes, 60f), median, GraphType.line, "Median"));
+//					try {
+//						Thread.sleep(1000000);
+//					} catch (Exception e) {}
 					
 					// 4 stdevs cover the range of 95% of the peak, assume peaks can't be smaller than 67% of the expected peak width
 					float stdev = Math.max(parameters.getExpectedPeakWidth()/6.0f, rtRange.getRange()/4.0f);
@@ -241,14 +264,18 @@ public class EncyclopediaTwoScoringTask extends AbstractLibraryScoringTask {
 					float correlationToPrecursor=0.0f;
 					//float correlationToPlusOne=0.0f;
 					if (sumMedianInRange>0) {
-						isIntegratedSignal=1;
-						isIntegratedPrecursor=General.sum(precursor)>0?1:0;
+						if (numPeaksWithGreatCorrelation>0) {
+							isIntegratedSignal=1;
+						}
+						if (General.sum(precursor)>0) {
+							isIntegratedPrecursor=1;
+						}
 						correlationToGaussian=Correlation.getPearsons(idealGaussian, median);
 						correlationToPrecursor=Correlation.getPearsons(precursor, median);
 						//correlationToPlusOne=Correlation.getPearsons(precursorPlusOne, median);
 					}
 					
-					auxScoreArray=General.concatenate(auxScoreArray, new float[] {primary[index], secondary[index], evalue, correlationToGaussian, 
+					auxScoreArray=General.concatenate(auxScoreArray, new float[] {evalue, correlationToGaussian, 
 							correlationToPrecursor, isIntegratedSignal, isIntegratedPrecursor,
 							numPeaksWithGoodCorrelation});
 					
@@ -321,14 +348,10 @@ public class EncyclopediaTwoScoringTask extends AbstractLibraryScoringTask {
 		double[] acquiredMasses=spectrum.getMassArray();
 		float[] acquiredIntensities=spectrum.getIntensityArray();
 
-		int numberOfMatchingPeaks=0;
-		double dotProduct=0.0;
 		TDoubleArrayList actualTargetMasses=new TDoubleArrayList();
 		TFloatArrayList actualTargetIntensities=new TFloatArrayList();
 		for (int i = 0; i < ions.length; i++) {
 			FragmentIon target=ions[i];
-			float predictedIntensity=predictedTargetIntensities[i];
-			float maxCorrelation=correlations[i];
 		
 			int[] indicies=acquiredTolerance.getIndicies(acquiredMasses, target.getMass());
 			float intensity=0.0f;
@@ -343,53 +366,50 @@ public class EncyclopediaTwoScoringTask extends AbstractLibraryScoringTask {
 					bestPeakMass=acquiredMasses[indicies[j]];
 				}
 			}
-			if (intensity>0) {
-				numberOfMatchingPeaks++;
-			}
-			float peakScore=predictedIntensity*intensity*maxCorrelation;
-			dotProduct+=peakScore;
 			actualTargetIntensities.add(intensity);
 			actualTargetMasses.add(bestPeakMass);
 		}
 
-		double[] actualTargetMassesArray=actualTargetMasses.toArray();
-		float[] actualTargetIntensitiesArray=actualTargetIntensities.toArray();
+		double[] actualTargetMassesRaw=actualTargetMasses.toArray();
+		float[] actualTargetIntensitiesRaw=actualTargetIntensities.toArray();
 		
-		float sumPredictedTargets=General.sum(predictedTargetIntensities);
-		float sumActualTargets=General.sum(actualTargetIntensitiesArray);
+		float[] predictedTargetIntensitiesArray=General.normalizeToL2(predictedTargetIntensities);
+		float[] actualTargetIntensitiesArray=General.normalizeToL2(actualTargetIntensitiesRaw);
+		
+		float dotProduct=General.sum(General.multiply(General.multiply(predictedTargetIntensitiesArray, actualTargetIntensitiesArray), correlations));
+
+		if (Float.isNaN(dotProduct)||dotProduct<0.0f) dotProduct=0.0f;
 		
 		float sumOfSquaredErrors=0.0f; // normalized to sum of targeted intensities
 
-		if (predictedTargetIntensities.length==0) {
-			sumOfSquaredErrors=1.0f;
-		}
-		
-		for (int i=0; i<predictedTargetIntensities.length; i++) {
-			float predicted=predictedTargetIntensities[i]/sumPredictedTargets;
-			float actual;
-			if (sumActualTargets==0.0f) {
-				actual=0.0f;
-			} else {
-				actual=actualTargetIntensitiesArray[i]/sumActualTargets;
+		int numberOfMatchingPeaks=0;
+		for (int i=0; i<predictedTargetIntensitiesArray.length; i++) {
+			if (predictedTargetIntensitiesArray[i]>0.0) {
+				float delta=predictedTargetIntensitiesArray[i]-actualTargetIntensitiesArray[i];
+				float deltaSquared=delta*delta;
+				sumOfSquaredErrors+=deltaSquared;
+				if (actualTargetIntensitiesArray[i]>0.0) {
+					numberOfMatchingPeaks++;
+				}
 			}
-			float delta=predicted-actual;
-			float deltaSquared=delta*delta;
-			sumOfSquaredErrors+=deltaSquared;
 		}
 		
-		if (sumOfSquaredErrors<1e-5f) {
-			sumOfSquaredErrors=1e-5f;
-		}
-
 		float xTandem;
-		if (numberOfMatchingPeaks==0) {
+		if (numberOfMatchingPeaks==0||dotProduct<=0) {
 			xTandem=0.0f;
 		} else {
 			xTandem=((float)Log.protectedLog10(dotProduct))+Log.logFactorial(numberOfMatchingPeaks); // really log10(X!Tandem score)
 		}
 		
-		return new Triplet<float[], double[], float[]>(new float[] {xTandem, Log.protectedLn(1.0f/sumOfSquaredErrors)}, 
-				actualTargetMassesArray, actualTargetIntensitiesArray);
+		float scribe;
+		if (sumOfSquaredErrors<=0.0f) {
+			scribe=0.0f;
+		} else {
+			scribe=Log.protectedLn(1.0f/sumOfSquaredErrors);
+		}
+		
+		return new Triplet<float[], double[], float[]>(new float[] {xTandem, scribe}, 
+				actualTargetMassesRaw, actualTargetIntensitiesRaw);
 	}
 
 

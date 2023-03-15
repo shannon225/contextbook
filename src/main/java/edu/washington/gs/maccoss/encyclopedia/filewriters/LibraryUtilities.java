@@ -213,6 +213,7 @@ public class LibraryUtilities {
 		if (targets.size()==0) return true;
 		if (targets.contains(entry.getPeptideSeq())) return true;
 		if (targets.contains(entry.getPeptideModSeq())) return true;
+		if (targets.contains(entry.getSource())) return true;
 		
 		for (String accession : entry.getAccessions()) {
 			if (targets.contains(accession)) return true;

@@ -95,11 +95,12 @@ public class SpectronautCSVToLibraryConverter {
 				private String lastGroup=null;
 				@Override
 				public void processRow(Map<String, String> row) {
-					final String peptideModSeq=OpenSwathTSVToLibraryConverter.getFromMap(row, "ModifiedPeptide");
-					final String chargeString=OpenSwathTSVToLibraryConverter.getFromMap(row, "PrecursorCharge");
-					final String productMz=OpenSwathTSVToLibraryConverter.getFromMap(row, "FragmentMz", "ProductMz");
-					final String libraryIntensity=OpenSwathTSVToLibraryConverter.getFromMap(row, "RelativeIntensity", "RelativeFragmentIntensity", "LibraryIntensity");
-					final String rtString = OpenSwathTSVToLibraryConverter.getFromMap(row, "iRT", "Tr_recalibrated");
+					final String localSourceFile=OpenSwathTSVToLibraryConverter.getFromMap(row, "R.Label");
+					final String peptideModSeq=OpenSwathTSVToLibraryConverter.getFromMap(row, "ModifiedPeptide", "EG.ModifiedPeptide");
+					final String chargeString=OpenSwathTSVToLibraryConverter.getFromMap(row, "PrecursorCharge", "FG.Charge");
+					final String productMz=OpenSwathTSVToLibraryConverter.getFromMap(row, "FragmentMz", "ProductMz", "F.CalibratedMz", "F.MeasuredMz");
+					final String libraryIntensity=OpenSwathTSVToLibraryConverter.getFromMap(row, "RelativeIntensity", "RelativeFragmentIntensity", "LibraryIntensity", "F.PeakHeight", "F.PeakArea");
+					final String rtString = OpenSwathTSVToLibraryConverter.getFromMap(row, "iRT", "Tr_recalibrated", "EG.ApexRT");
 
 					try {
 						final String group=peptideModSeq+"_"+chargeString+"H";
@@ -110,7 +111,10 @@ public class SpectronautCSVToLibraryConverter {
 							
 							if (lastPeptide!=null) peptides.add(new ImmutablePeptideEntry(lastPeptide));
 							
-							lastPeptide=new PeptideEntry(parseMods(peptideModSeq), charge, iRT*60f, sourceFile);
+							String source=sourceFile;
+							if (localSourceFile!=null) source=localSourceFile;
+							
+							lastPeptide=new PeptideEntry(parseMods(peptideModSeq), charge, iRT*60f, source);
 							lastGroup=group;
 							
 							if (peptides.size()%10000==0) {

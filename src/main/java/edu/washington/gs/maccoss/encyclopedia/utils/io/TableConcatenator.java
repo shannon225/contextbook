@@ -17,14 +17,22 @@ import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedianDouble;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.KDE;
-import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
 
 public class TableConcatenator {
 	private static final float TARGET_CONSISTENCY_PERCENTAGE = 0.5f;
 	private static final String DELIM = "\t";
+
+	public static void concatenatePINTables(ArrayList<File> tables, File output, String primaryScore, boolean isDDA) throws IOException {
+		if (tables.size()==0) return;
+		if (isDDA) {
+			// spectrum-centric searching means that the tables need to be merged retaining each spectrum
+			concatenateSpectrumCentricTables(tables, output);
+		} else {
+			concatenatePeptideCentricTables(tables, output, primaryScore);
+		}
+	}
 
 	/**
 	 * Assumes that all tables have the same number and location of columns.
@@ -32,7 +40,7 @@ public class TableConcatenator {
 	 * 
 	 * @param tables
 	 */
-	public static void concatenateTables(ArrayList<File> tables, File output) throws IOException {
+	public static void concatenateSpectrumCentricTables(ArrayList<File> tables, File output) throws IOException {
 		FileWriter fileStream=new FileWriter(output);
 		BufferedWriter out=new BufferedWriter(fileStream);
 
@@ -62,12 +70,10 @@ public class TableConcatenator {
 	 * Only keeps best peptide based on a primary score. Assumes primary scores increase as they get better!
 	 * @param tables
 	 */
-	public static void concatenatePINTables(ArrayList<File> tables, File output, String primaryScore) throws IOException {
-		if (tables.size()==0) return;
-		
+	public static void concatenatePeptideCentricTables(ArrayList<File> tables, File output, String primaryScore) throws IOException {
 		String[] columnNames=null;
 		int sequenceIndex=0;
-		int primaryScoreIndex=0;
+		int primaryScoreIndex=-1;
 		int deltaRTIndex=-1;
 		int midTimeIndex=-1;
 		
@@ -93,6 +99,9 @@ public class TableConcatenator {
 			deltaRTName="midTime";
 		}
 		Logger.logLine("Found indicies for sequence: "+sequenceIndex+", "+primaryScore+": "+primaryScoreIndex+", and "+deltaRTName+": "+deltaRTIndex);
+		if (primaryScoreIndex==-1) {
+			throw new EncyclopediaException("Failure to find primaryScore index when looking for ["+primaryScore+"]");
+		}
 
 		// calculate deltaRT distributions
 		HashMap<String, TFloatArrayList> scoresBySequence=new HashMap<>();
@@ -185,10 +194,18 @@ public class TableConcatenator {
 				return;
 			}
 			String[] data=row.split(DELIM, -1);
-			
-			String sequence=data[sequenceIndex];
-			String primaryScoreValue=data[primaryScoreIndex];
-			String deltaRTString=data[deltaRTIndex];
+
+			String sequence;
+			String primaryScoreValue;
+			String deltaRTString;
+			try {
+				sequence=data[sequenceIndex];
+				primaryScoreValue=data[primaryScoreIndex];
+				deltaRTString=data[deltaRTIndex];
+			} catch (ArrayIndexOutOfBoundsException aioobe) {
+				error=new EncyclopediaException("Problem indexing file! Total indicies: "+data.length+", Row: "+row);
+				throw error; 
+			}
 			
 			if (sequence==null) {
 				error=new EncyclopediaException("Couldn't find sequence in PIN file!");

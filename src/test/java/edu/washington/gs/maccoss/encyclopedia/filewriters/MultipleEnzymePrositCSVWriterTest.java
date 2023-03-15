@@ -27,7 +27,7 @@ public class MultipleEnzymePrositCSVWriterTest {
 			Logger.logLine("AFTER: normalPeptides:"+normalPeptides.size()+", splicingPeptides:"+splicingPeptides.size());
 			
 
-			int total = PrositCSVWriter.writePrositFile(fileName, defaultNCE, defaultCharge, false, splicingPeptides);
+			int total = PrositCSVWriter.writePrositFile(fileName, defaultNCE, defaultCharge, true, false, splicingPeptides);
 			Logger.logLine("Finished writing "+total+" peptides to Prosit CSV!");
 		}
 		

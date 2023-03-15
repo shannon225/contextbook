@@ -13,7 +13,7 @@ public class LinearDiscriminantAnalysisTest {
 	
 	
 	public static void main(String[] args) {
-		File f=new File("/Users/searleb/Documents/damien/dda_library_search/scoring_tests/multiple_evalues/23aug2017_hela_serum_timecourse_pool_dda_001.dia.scribe.features.txt");
+		File f=new File("/Users/searleb/Documents/encyclopedia/bugs/broken_v2_percolator/13Oct2020-Lumos_dlp_TPAD_CSF_DIA_chrlib_4mz_900to1000_ALLpoolLib_052.dia.features.txt");
 //		final String[] headers = new String[] { "e2Score", "evalue", "correlationToGaussian", "correlationToPrecursor",
 //				"correlationToPlusOne", "isIntegratedSignal", "isIntegratedPrecursor", "numPeaksWithGoodCorrelation",
 //				"numPeaksWithGreatCorrelation", "primary", "xCorrLib", "xCorrModel", "LogDotProduct",
@@ -25,7 +25,7 @@ public class LinearDiscriminantAnalysisTest {
 		//id	Label	ScanNr	DotProduct	contrastAngle	logit	primary	xCorrLib	xCorrModel	lnInvSumOfSquaredErrors	numberOfMatchingPeaks	averageAbsFragmentDeltaMass	averageFragmentDeltaMasses	isotopeDotProduct	averageAbsParentDeltaMass	averageParentDeltaMass	percentBlankOverMono	numberPrecursorMatch	Sp	maxLadderLength	eValueXCorr	eValueTandem	eValueSumSquares	oneHotXCorr	oneHotTandem	oneHotSumSquares	numConsidered	deltaRT	numMissedCleavage	pepLength	charge1	charge2	charge3	charge4	precursorMz	precursorMass	RTinMin	sequence	Proteins
 
 		
-		final String[] headers = new String[] { "xCorrLib" , "primary", "lnInvSumOfSquaredErrors"};
+//		final String[] headers = new String[] { "xCorrLib" , "primary", "lnInvSumOfSquaredErrors"};
 		
 //		File f=new File("/Users/searleb/Documents/teaching/encyclopedia/test/old_encyclopedia/23aug2017_hela_serum_timecourse_wide_1a.dia.features.txt");		
 //		final String[] headers = new String[] { "primary", "xCorrLib", "xCorrModel", "LogDotProduct",
@@ -33,6 +33,13 @@ public class LinearDiscriminantAnalysisTest {
 //				"numberOfMatchingPeaksAboveThreshold", "averageAbsFragmentDeltaMass", "averageFragmentDeltaMasses",
 //				"isotopeDotProduct", "averageAbsParentDeltaMass", "averageParentDeltaMass", "eValue", "deltaRT",
 //				"numMissedCleavage" };
+		final String[] headers = new String[] { "xTandem", "xCorrLib", "xCorrModel", "dotProduct", "contrastAngle",
+				"logit", "sumOfSquaredErrors", "numberOfMatchingPeaks", "numberOfMatchingPeaksAboveThreshold",
+				"averageFragmentDeltaMasses", "isotopeDotProduct", "averageParentDeltaMass", "percentBlankOverMono",
+				"numberPrecursorMatch", "sp", "maxLadderLength", "primary", "secondary", "evalue",
+				"correlationToGaussian", "correlationToPrecursor", "isIntegratedSignal", "isIntegratedPrecursor",
+				"numPeaksWithGoodCorrelation", "deltaRT", "ms1MassError", "ms2MassError", "numMissedCleavage",
+				"precursorMz", "precursorMass", "RTinMin"};
 		
 		ArrayList<float[]> target=new ArrayList<>();
 		ArrayList<float[]> decoy=new ArrayList<>();
@@ -65,7 +72,7 @@ public class LinearDiscriminantAnalysisTest {
 		});
 		//int count=target.size()+decoy.size();
 		
-		if (true) {
+		if (false) {
 			// calculate coefficients for current scores
 			
 			LinearDiscriminantAnalysis lda=LinearDiscriminantAnalysis.buildModel(target, decoy);

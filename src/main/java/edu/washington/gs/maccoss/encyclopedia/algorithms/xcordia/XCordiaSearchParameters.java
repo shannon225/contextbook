@@ -86,6 +86,8 @@ public class XCordiaSearchParameters extends PecanSearchParameters {
 			Optional<File> precursorIsolationRangeFile, 
 			Optional<File> percolatorModelFile, 
 			boolean normalizeByTIC,
+			boolean subtractBackground,
+			boolean maskBadIntegrations,
 			boolean enableAdvancedOptions
 	) {
 		super(
@@ -130,6 +132,8 @@ public class XCordiaSearchParameters extends PecanSearchParameters {
 				precursorIsolationRangeFile,
 				percolatorModelFile,
 				normalizeByTIC,
+				subtractBackground,
+				maskBadIntegrations,
 				enableAdvancedOptions
 		);
 	}
@@ -235,6 +239,8 @@ public class XCordiaSearchParameters extends PecanSearchParameters {
 				params.getPrecursorIsolationRangeFile(),
 				params.getPercolatorModelFile(),
 				params.isNormalizeByTIC(),
+				params.isSubtractBackground(),
+				params.isMaskBadIntegrations(),
 				params.isEnableAdvancedOptions()
 		);
 	}

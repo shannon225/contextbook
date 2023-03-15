@@ -130,6 +130,15 @@ public class SearchGUIMain {
 			JOptionPane.showMessageDialog(f, "Warning, you only have "+mbOfMemory+" MB of memory allocated.\nPlease make sure you are running 64-bit Java!", "Warning, Low Memory!", JOptionPane.WARNING_MESSAGE, image);
 		}
 
+	    Logger.logLine("Java version: "+System.getProperty("java.version"));
+	    Logger.logLine("Memory allocated: "+mbOfMemory+" MB");
+
+		if (!Main.isJavaVersionOK()) {
+			int javaVersion=Main.getJavaVersion();
+			String text=javaVersion<8?"lower":"higher";
+			JOptionPane.showMessageDialog(f, "Warning, Java version ("+javaVersion+") is "+text+" than expected (8-16), execution may be unstable!", "Warning, Incorrect Java Version!", JOptionPane.WARNING_MESSAGE, image);
+		}
+
 		Logger.logLine(shortName+" Graphical Interface (version "+program.getVersion()+")");
 		
 		Runtime.getRuntime().addShutdownHook(new Thread() {

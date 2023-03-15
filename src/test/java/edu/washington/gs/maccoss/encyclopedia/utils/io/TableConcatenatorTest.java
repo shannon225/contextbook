@@ -30,7 +30,7 @@ public class TableConcatenatorTest extends TestCase {
 		};
 		
 		ArrayList<File> list=new ArrayList<>(Arrays.asList(files));
-		TableConcatenator.concatenateTables(list, output);
+		TableConcatenator.concatenateSpectrumCentricTables(list, output);
 	}
 
 	public void testConcat() throws Exception {
@@ -46,14 +46,14 @@ public class TableConcatenatorTest extends TestCase {
 		
 		File output=File.createTempFile("output_", ".test");
 		
-		TableConcatenator.concatenateTables(list, output);
+		TableConcatenator.concatenateSpectrumCentricTables(list, output);
 		
 		assertEquals(602944, output.length());
 		assertEquals(1795, Files.lines(output.toPath()).count());
 		
 		output.delete();
 		
-		TableConcatenator.concatenatePINTables(list, output, "primary");
+		TableConcatenator.concatenatePeptideCentricTables(list, output, "primary");
 		
 		assertEquals(110924, output.length());
 		assertEquals(302, Files.lines(output.toPath()).count());

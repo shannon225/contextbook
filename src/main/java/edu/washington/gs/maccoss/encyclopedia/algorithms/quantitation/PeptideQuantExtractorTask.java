@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractLibraryScoringTask;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.DotProduct;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMPeakScorer;
@@ -212,6 +213,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 	}
 
 	public static TransitionRefinementData quantifyPeptide(PSMPeakScorer scorer, AnnotatedLibraryEntry unitEntry, boolean limitToQuantifiable, ArrayList<FragmentScan> stripes, boolean integrateEverything, boolean wasInferred, SearchParameters params) {
+		
 		// find the center
 		float bestDelta=Float.MAX_VALUE;
 		PeakScores[] bestScores=null;
@@ -249,8 +251,12 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 			}
 			totalIdentifiedIonCurrent.add(sumIdentifiedIntensities);
 			totalIonCurrent.add(stripe.getTIC());
-			
 		}
+
+		float[] deltas=General.firstDerivative(retentionTimes.toArray());
+		float averageDutyCycle=General.mean(deltas);
+		int movingAverageLength=Math.round(params.getExpectedPeakWidth()/averageDutyCycle);
+		
 		if (integrateEverything) {
 			/*
 			 * integrateEverything == “-quantifyAcrossSamples”
@@ -295,6 +301,9 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 			if (bestScores[i]!=null&&bestScores[i].getScore()>0) {
 				float[] chromatogram=traces[i].toArray();
 				chromatogram=SkylineSGFilter.paddedSavitzkyGolaySmooth(chromatogram);
+				if (params.isSubtractBackground()) {
+					chromatogram=AbstractLibraryScoringTask.backgroundSubtractMovingMedian(chromatogram, movingAverageLength*10);
+				}
 				chromatograms.add(chromatogram);
 				chromatogramDeltaMassesByRT.add(deltaMassesByRT[i]);
 				bestKeptPeaks.add(bestScores[i]);

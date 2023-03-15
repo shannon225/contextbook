@@ -46,6 +46,12 @@ public class ChromatogramCharter {
 		chartPanel.setMaximumDrawWidth(Integer.MAX_VALUE);
 		chartPanel.setMaximumDrawHeight(Integer.MAX_VALUE);
 		
+		ArrayList<XYTrace> allTraces=new ArrayList<XYTrace>();
+		if (precursors.isPresent()) allTraces.addAll(precursors.get());
+		if (fragments.isPresent()) allTraces.addAll(fragments.get());
+		
+		Charter.addCopyDataMenu("Retention Time (min)", chartPanel, allTraces.toArray(new XYTrace[0]));
+		
 		return chartPanel;
 	}
 
