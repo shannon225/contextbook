@@ -244,8 +244,22 @@ public class PercolatorExecutor extends ExternalExecutor {
 		if (percolatorVersion.getMajorVersion()>2) {
 			params.add("--no-terminate");
 			params.add("-N"); params.add(Integer.toString(commandData.getParameters().getPercolatorTrainingSetSize()));
-			params.add("--testFDR"); params.add(Float.toString(commandData.getParameters().getPercolatorTestThreshold()));
-			params.add("--trainFDR"); params.add(Float.toString(commandData.getParameters().getPercolatorTrainingSetThreshold()));
+
+			final float percolatorTestThreshold = commandData.getParameters().getPercolatorTestThreshold();
+			params.add("--testFDR"); params.add(Float.toString(percolatorTestThreshold));
+
+			final float percolatorTrainingSetThreshold = commandData.getParameters().getPercolatorTrainingSetThreshold();
+			if (percolatorTrainingSetThreshold > 0.0) {
+				// Value of zero means "use the test FDR threshold", but a bug in Percolator 3.05
+				// means that zero threshold will be used for the initial round of training, leading
+				// to very poor performance! Thus we avoid specifying this parameter when it's set
+				// to zero.
+				params.add("--trainFDR"); params.add(Float.toString(percolatorTrainingSetThreshold));
+			} else {
+				// Explicitly specify the same train and test FDRs to avoid mismatches when we know
+				// the user wants them to match.
+				params.add("--trainFDR"); params.add(Float.toString(percolatorTestThreshold));
+			}
 		}
 		params.add(commandData.getInputTSV().getAbsolutePath());
 		
