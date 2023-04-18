@@ -906,7 +906,7 @@ public class SearchToBLIB {
 			if (proteins!=null) {
 				if (inferrer.isPresent()) {
 					try {
-						LibraryReportExtractor.extractMatrix(elib, proteins, true);
+						LibraryReportExtractor.extractMatrix(elib, proteins, parameters.isNormalizeByTIC());
 					} catch (DataFormatException e) {
 						Logger.errorException(e);
 					}
@@ -1763,11 +1763,12 @@ public class SearchToBLIB {
 			elib.saveAsFile(elibFile);
 
 			try {
+				IntensityNormalizer tic = parameters.isNormalizeByTIC()?IntensityNormalizer.tic(ticMap):IntensityNormalizer::identity;
 				LibraryReportExtractor.extractMatrix(
 						elib,
 						jobs.stream().map(j -> j.getDiaFileReader().getOriginalFileName()).collect(Collectors.toList()),
 						proteins,
-						IntensityNormalizer.tic(ticMap),
+						tic,
 						Optional.empty(),
 						""
 				);

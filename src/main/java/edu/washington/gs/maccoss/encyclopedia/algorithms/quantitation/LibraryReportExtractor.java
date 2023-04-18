@@ -48,6 +48,7 @@ public class LibraryReportExtractor {
 		} else {
 			tag = UNORMALIZED_TAG;
 		}
+		Logger.logLine("Extracting text matrix (normalize:"+normalizeByTIC+")");
 
 		ArrayList<String> sourceFiles;
 		if (cvCalculator.isPresent()) {
