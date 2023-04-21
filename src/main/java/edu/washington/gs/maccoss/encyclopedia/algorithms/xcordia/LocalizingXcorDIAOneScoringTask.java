@@ -39,6 +39,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.BackgroundSubtractionFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.IndexedObject;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
@@ -113,7 +114,7 @@ public class LocalizingXcorDIAOneScoringTask extends AbstractLibraryScoringTask 
 			}
 			
 			// moving average of only 3 scans
-			float[] averagePrimary=movingCenteredAverage(primary, 3);//gaussianCenteredAverage(primary, movingAverageLength);
+			float[] averagePrimary=BackgroundSubtractionFilter.movingCenteredAverage(primary, 3);//gaussianCenteredAverage(primary, movingAverageLength);
 			
 			// determine the N best peaks for this peptide
 			LinkedList<ScoredIndex> keptIndicies=new LinkedList<>();

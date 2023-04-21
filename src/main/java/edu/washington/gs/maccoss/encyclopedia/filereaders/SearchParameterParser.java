@@ -139,6 +139,7 @@ public class SearchParameterParser {
         final boolean normalizeByTIC;
         final boolean subtractBackground;
         final boolean maskBadIntegrations;
+        final boolean integratePrecursors;
         final boolean enableAdvancedOptions;
         final Optional<File> percolatorModelFile;
         final Optional<File> precursorIsolationRangeFile;
@@ -361,6 +362,7 @@ public class SearchParameterParser {
 		normalizeByTIC = ParsingUtils.getBoolean("-normalizeByTIC", parameters, true);
         subtractBackground=ParsingUtils.getBoolean(SearchParameters.SUBTRACT_BACKGROUND, parameters, true);
         maskBadIntegrations=ParsingUtils.getBoolean(SearchParameters.MASK_BAD_INTEGRATIONS, parameters, false);
+        integratePrecursors=ParsingUtils.getBoolean(SearchParameters.INTEGRATE_PRECURSORS, parameters, false);
         enableAdvancedOptions=ParsingUtils.getBoolean(SearchParameters.ENABLE_ADVANCED_OPTIONS, parameters, false);
 
 		return new SearchParameters(
@@ -401,6 +403,7 @@ public class SearchParameterParser {
 				normalizeByTIC,
 				subtractBackground,
 				maskBadIntegrations,
+				integratePrecursors,
 				enableAdvancedOptions
 		);
 	}

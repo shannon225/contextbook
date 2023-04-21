@@ -300,7 +300,7 @@ public class LocalizationResultsBrowserPanel extends JPanel {
 				
 				ArrayList<FragmentScan> stripes=dia.getStripes(precursorMZ, minRT-deltaRT, maxRT+deltaRT, false);
 				
-				XYTraceInterface[] precursorTraces = ChromatogramExtractor.extractPrecursorChromatograms(parameters.getPrecursorTolerance(), precursorMZ, precursorCharge, precursors);
+				XYTraceInterface[] precursorTraces = ChromatogramExtractor.extractPrecursorChromatograms(parameters.getPrecursorTolerance(), precursorMZ, precursorCharge, precursors, true, false);
 				double maxPrecursor=XYTrace.getMaxY(precursorTraces);
 				ArrayList<XYTraceInterface> precursorTraceList=new ArrayList<>();
 				for (XYTraceInterface trace : precursorTraces) {
@@ -325,8 +325,8 @@ public class LocalizationResultsBrowserPanel extends JPanel {
 							downcastedSpectra.add(spectrum);
 						}
 					}
-					HashMap<FragmentIon, XYTrace> fragmentTraceMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), model.getPrimaryIonObjects(parameters.getFragType(), (byte)entry.getPrecursorCharge(), true, true), downcastedSpectra, entry.getRetentionTime(), GraphType.dashedline);
-					HashMap<FragmentIon, XYTrace> targetMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), entry.getLocalizationIons(), downcastedSpectra, null, GraphType.boldline);
+					HashMap<FragmentIon, XYTrace> fragmentTraceMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), model.getPrimaryIonObjects(parameters.getFragType(), (byte)entry.getPrecursorCharge(), true, true), downcastedSpectra, entry.getRetentionTime(), GraphType.dashedline, true, false);
+					HashMap<FragmentIon, XYTrace> targetMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), entry.getLocalizationIons(), downcastedSpectra, null, GraphType.boldline, true, false);
 					fragmentTraceMap.putAll(targetMap);
 					ArrayList<XYTrace> traces=new ArrayList<XYTrace>(fragmentTraceMap.values());
 					

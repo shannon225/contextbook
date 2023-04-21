@@ -59,15 +59,15 @@ public class ChromatogramExtractorTest {
 			boolean displayLegend=i==ppms.length-1;
 			MassTolerance tol=new MassTolerance(ppms[i]);
 			
-			HashMap<FragmentIon, XYTrace> map1=ChromatogramExtractor.extractFragmentChromatograms(tol, ionTypes1, spectra, null, GraphType.dashedline);
-			HashMap<FragmentIon, XYTrace> uniqueMap1=ChromatogramExtractor.extractFragmentChromatograms(tol, unique1, spectra, null, GraphType.boldline);
+			HashMap<FragmentIon, XYTrace> map1=ChromatogramExtractor.extractFragmentChromatograms(tol, ionTypes1, spectra, null, GraphType.dashedline, true, false);
+			HashMap<FragmentIon, XYTrace> uniqueMap1=ChromatogramExtractor.extractFragmentChromatograms(tol, unique1, spectra, null, GraphType.boldline, true, false);
 			map1.putAll(uniqueMap1);
 			ChartPanel chart1=Charter.getChart(peptideModSeq1+" Retention Time ("+tol.toString()+")", "Intensity", displayLegend, map1.values().toArray(new XYTrace[map1.size()]));
 			panel.add(chart1);
 			charts.add(chart1);
 			
-			HashMap<FragmentIon, XYTrace> map2=ChromatogramExtractor.extractFragmentChromatograms(tol, ionTypes2, spectra, null, GraphType.dashedline);
-			HashMap<FragmentIon, XYTrace> uniqueMap2=ChromatogramExtractor.extractFragmentChromatograms(tol, unique2, spectra, null, GraphType.boldline);
+			HashMap<FragmentIon, XYTrace> map2=ChromatogramExtractor.extractFragmentChromatograms(tol, ionTypes2, spectra, null, GraphType.dashedline, true, false);
+			HashMap<FragmentIon, XYTrace> uniqueMap2=ChromatogramExtractor.extractFragmentChromatograms(tol, unique2, spectra, null, GraphType.boldline, true, false);
 			map2.putAll(uniqueMap2);
 			ChartPanel chart2=Charter.getChart(peptideModSeq2+" Retention Time ("+tol.toString()+")", "Intensity", displayLegend, map2.values().toArray(new XYTrace[map2.size()]));
 			panel.add(chart2);

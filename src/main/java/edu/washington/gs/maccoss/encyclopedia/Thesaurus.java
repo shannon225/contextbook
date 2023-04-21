@@ -369,7 +369,7 @@ public class Thesaurus {
 		
 		Logger.logLine("Writing elib result library...");
 		try {
-			SearchToBLIB.convertElib(progress, job, job.getResultLibrary(), parameters);
+			SearchToBLIB.convertElib(progress, job, job.getResultLibrary(), parameters, parameters.isIntegratePrecursors());
 		} catch (Exception e) {
 			Logger.errorLine("Encountered error creating elib report...");
 			Logger.errorException(e);

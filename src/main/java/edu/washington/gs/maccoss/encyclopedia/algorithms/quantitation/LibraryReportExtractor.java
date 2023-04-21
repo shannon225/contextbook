@@ -48,6 +48,7 @@ public class LibraryReportExtractor {
 		} else {
 			tag = UNORMALIZED_TAG;
 		}
+		Logger.logLine("Extracting text matrix (normalize:"+normalizeByTIC+")");
 
 		ArrayList<String> sourceFiles;
 		if (cvCalculator.isPresent()) {
@@ -422,14 +423,14 @@ public class LibraryReportExtractor {
 				
 				TreeMap<String, PeptideReportData> intensitiesByPeptideModSeq=new TreeMap<String, PeptideReportData>();
 				
-				rs = s.executeQuery("select " +
+				String queryStatement="select " +
 						"pep.PrecursorCharge, " +
 						"pep.PeptideModSeq, " +
 						"pep.SourceFile, " +
 						"pep.RTInSecondsCenter, pep.RTInSecondsStart, pep.RTInSecondsStop, " +
 						"group_concat(p.ProteinAccession, '" + PSMData.ACCESSION_TOKEN + "') as ProteinAccessions, " +
 						"pep.QuantIonMassLength, pep.QuantIonMassArray, "+
-						"pep.QuantIonIntensityLength, pep.QuantIonIntensityArray "+
+						"pep.QuantIonIntensityLength, pep.QuantIonIntensityArray, "+
 						"pep.QuantIonCorrelationLength, pep.QuantIonCorrelationArray "+
 						"from " +
 						"peptidequants pep " +
@@ -437,8 +438,10 @@ public class LibraryReportExtractor {
 						"left join peptidetoprotein p " +
 						"where " +
 						"pep.PeptideSeq = p.PeptideSeq " +
-						"group by pep.rowid;"
-				);
+						"group by pep.rowid" +
+						";";
+				
+				rs = s.executeQuery(queryStatement);
 				
 				int count=0;
 				while (rs.next()) {
@@ -478,10 +481,10 @@ public class LibraryReportExtractor {
 					} else {
 						quantIonIntensities=new float[] {};
 					}
-					int quantIonCorrelationLength=rs.getInt(11);
+					int quantIonCorrelationLength=rs.getInt(12);
 					float[] quantIonCorrelation;
 					if (quantIonCorrelationLength>0) {
-						quantIonCorrelation=ByteConverter.toFloatArray(CompressionUtils.decompress(rs.getBytes(12), quantIonCorrelationLength));
+						quantIonCorrelation=ByteConverter.toFloatArray(CompressionUtils.decompress(rs.getBytes(13), quantIonCorrelationLength));
 					} else {
 						quantIonCorrelation=new float[] {};
 					}

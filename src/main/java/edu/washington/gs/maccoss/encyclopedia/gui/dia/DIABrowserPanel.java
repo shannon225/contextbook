@@ -326,7 +326,7 @@ public class DIABrowserPanel extends JPanel {
 		
 		ArrayList<PolymerIon> polymerList=PolymerIon.getAllPolymerProducts(new Range(minMZ, maxMZ));
 		PolymerIon[] polymerIons=polymerList.toArray(new PolymerIon[polymerList.size()]);
-		HashMap<PolymerIon, XYTrace> polymerMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getPrecursorTolerance(), polymerIons, precursors, null, GraphType.boldline);
+		HashMap<PolymerIon, XYTrace> polymerMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getPrecursorTolerance(), polymerIons, precursors, null, GraphType.boldline, true, false);
 		
 		HashMap<PolymerIon, XYTrace> trimmedPolymerMap=new HashMap<>();
 		for (Entry<PolymerIon, XYTrace> entry : polymerMap.entrySet()) {

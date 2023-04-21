@@ -285,6 +285,7 @@ public class ThesaurusParametersPanel extends JPanel implements ParametersPanelI
 				true,
 				true,
 				false,
+				false,
 				false
 		);
 

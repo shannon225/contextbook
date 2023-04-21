@@ -17,6 +17,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.precursor.DDAPrecursorI
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroupInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
@@ -67,6 +68,8 @@ public class LibraryToQuant {
 				}
 			});
 			elib.addIntegratedEntries(!integratePrecursors, pair.y, Optional.empty(), Optional.empty(), params);
+			
+			ArrayList<ProteinGroupInterface> proteins=library.getProteinGroups();
 
 			elib.createIndices();
 			elib.saveAsFile(resultFile);

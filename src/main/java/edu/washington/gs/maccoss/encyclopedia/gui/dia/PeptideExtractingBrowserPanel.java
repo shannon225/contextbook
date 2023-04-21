@@ -18,6 +18,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -111,6 +112,8 @@ public class PeptideExtractingBrowserPanel extends JPanel {
 	private final TableRowSorter<TableModel> rowSorter;
 	private final JTextField jtfFilter;
 	private final DIAScanTableModel model;
+	private final JCheckBox sgSmoothBox;
+	private final JCheckBox backgroundSubtractBox;
 
 	private StripeFileInterface dia=null;
 
@@ -184,8 +187,25 @@ public class PeptideExtractingBrowserPanel extends JPanel {
 			}
 		};
 
+		sgSmoothBox=new JCheckBox("Smooth");
+		sgSmoothBox.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				resetPeptide(peptide.getText(), (Integer) charge.getValue());
+			}
+		});
+		backgroundSubtractBox=new JCheckBox("Background Subtract");
+		backgroundSubtractBox.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				resetPeptide(peptide.getText(), (Integer) charge.getValue());
+			}
+		});
+
 		JToolBar bar=new JToolBar();
 		bar.add(diaFile);
+		bar.add(sgSmoothBox);
+		bar.add(backgroundSubtractBox);
 		bar.add(new JLabel("Peptide Sequence:"));
 		bar.add(peptide);
 		bar.add(new JLabel("Charge:"));
@@ -370,11 +390,11 @@ public class PeptideExtractingBrowserPanel extends JPanel {
 				updateToSelected();
 
 				HashMap<FragmentIon, XYTrace> targetFragmentTraceMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), entry.getIonAnnotations(), stripes, null,
-						GraphType.boldline);
+						GraphType.boldline, sgSmoothBox.isSelected(), backgroundSubtractBox.isSelected());
 				traces.addAll(targetFragmentTraceMap.values());
 
 				XYTraceInterface[] precursorTraceArray=ChromatogramExtractor.extractPrecursorChromatograms(parameters.getPrecursorTolerance(), 
-						entry.getPrecursorMZ(), entry.getPrecursorCharge(), precursors);
+						entry.getPrecursorMZ(), entry.getPrecursorCharge(), precursors, sgSmoothBox.isSelected(), backgroundSubtractBox.isSelected());
 				
 				double globalMaxYPrecursor=0.0;
 				for (XYTraceInterface trace : precursorTraceArray) {

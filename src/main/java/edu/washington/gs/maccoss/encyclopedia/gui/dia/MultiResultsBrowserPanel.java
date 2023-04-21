@@ -513,7 +513,7 @@ public class MultiResultsBrowserPanel extends JPanel {
 			}
 		}
 		precursors=trimmedPrecursors;
-		XYTraceInterface[] traceArray=ChromatogramExtractor.extractPrecursorChromatograms(parameters.getPrecursorTolerance(), quantitativeData.getPrecursorMZ(), quantitativeData.getPrecursorCharge(), precursors);
+		XYTraceInterface[] traceArray=ChromatogramExtractor.extractPrecursorChromatograms(parameters.getPrecursorTolerance(), quantitativeData.getPrecursorMZ(), quantitativeData.getPrecursorCharge(), precursors, true, false);
 
 		double maxY=0.0;
 		for (int i = 0; i < traceArray.length; i++) {
@@ -565,9 +565,9 @@ public class MultiResultsBrowserPanel extends JPanel {
 		ArrayList<Spectrum> downcastedSpectra=FragmentScan.downcastStripeToSpectrum(stripes);
 
 		HashMap<FragmentIon, XYTrace> targetFragmentTraceMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), targetIonArray, downcastedSpectra, null,
-				GraphType.boldline);
+				GraphType.boldline, true, false);
 		HashMap<FragmentIon, XYTrace> offTargetFragmentTraceMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), offTargetIonArray, downcastedSpectra,
-				null, GraphType.dashedline);
+				null, GraphType.dashedline, true, false);
 
 		traces.addAll(targetFragmentTraceMap.values());
 		double maxY=0.1;

@@ -7,6 +7,7 @@ import java.util.HashMap;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.SearchTestSupport;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
@@ -65,8 +66,31 @@ public class LibraryToQuantTest extends TestCase {
 		assertEquals(133, pair.y.size()); // 139 of 140
 		assertTrue(peptideModSeqs.containsKey("IPWTAASSQLK")); // a correct integration
 		assertFalse(peptideModSeqs.containsKey("NLENTQNQIK")); // missing because no peaks
-		
-		
 	}
 	
+	public static void main(String[] args) throws Exception {
+		File resultLibraryFile=new File("/Volumes/RedSSD/teera_yeast_hela/full_quant.elib");
+		File rawDirectory=resultLibraryFile.getParentFile();
+		LibraryFile resultLibrary=new LibraryFile();
+		resultLibrary.openFile(resultLibraryFile);
+		
+		File saveLibrary=new File("/Volumes/RedSSD/teera_yeast_hela/full_precursor_quant.elib");
+		HashMap<String, String> paramsMap=SearchParameterParser.getDefaultParameters();
+		paramsMap.put("-ptol","1.0");
+		paramsMap.put("-ftol","0.4");
+		paramsMap.put("-ptolunits","AMU");
+		paramsMap.put("-lftol","0.4");
+		paramsMap.put("-percolatorThreshold","1.0");
+		paramsMap.put("-lftolunits","AMU");
+		paramsMap.put("-scoringBreadthType","window");
+		paramsMap.put("-rtWindowInMin","1.0");
+		paramsMap.put("-ftolunits","AMU");
+		SearchParameters params=SearchParameterParser.parseParameters(paramsMap);
+		
+		LibraryToQuant.saveQuantData(resultLibrary, saveLibrary, rawDirectory, true, params, new EmptyProgressIndicator());
+
+		LibraryFile library=new LibraryFile();
+		library.openFile(saveLibrary);
+		LibraryReportExtractor.extractMatrix(library, true);
+	}
 }

@@ -67,6 +67,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
+import edu.washington.gs.maccoss.encyclopedia.utils.threading.SubProgressIndicator;
 
 public class Encyclopedia {
 	public static final String TARGET_LIBRARY_TAG="-l";
@@ -273,7 +274,7 @@ public class Encyclopedia {
 		ArrayList<SearchJobData> jobs=new ArrayList<SearchJobData>();
 		jobs.add(job);
 		
-		SearchToBLIB.convertElib(progress, job, elibFile, parameters);
+		SearchToBLIB.convertElib(progress, job, elibFile, parameters, parameters.isIntegratePrecursors());
 		
 		progress.update("Found "+passingPeptides.size()+" peptides identified at "+(job.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 		Logger.logLine("Finished analysis! "+passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100f)+"% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");
@@ -286,16 +287,21 @@ public class Encyclopedia {
 		SearchParameters parameters=taskFactory.getParameters();
 	
 		Logger.logLine("Calculating features...");
-		SaveResultsConsumer saveResultsConsumer=generateFeatureFile(progress, job, stripefile, Optional.empty());
-	
+		ProgressIndicator subProgress=new SubProgressIndicator(progress, 0.5f);
+		SaveResultsConsumer saveResultsConsumer=generateFeatureFile(subProgress, job, stripefile, Optional.empty());
+
+		subProgress=new SubProgressIndicator(progress, 0.5f);
 		Logger.logLine("Running Percolator...");
-		Pair<ArrayList<PercolatorPeptide>, ScoredPSMFilterInterface> percolatorResults=percolatePeptides(progress, job, stripefile, saveResultsConsumer);
+		Pair<ArrayList<PercolatorPeptide>, ScoredPSMFilterInterface> percolatorResults=percolatePeptides(subProgress, job, stripefile, saveResultsConsumer);
 
 		if (parameters.getScoringBreadthType().runRecalibration()) {
-			Logger.logLine("Recalculating features...");
-			saveResultsConsumer=generateFeatureFile(progress, job, stripefile, Optional.ofNullable(percolatorResults.y));
-			percolatorResults=percolatePeptides(progress, job, stripefile, saveResultsConsumer);
-			percolatorResults=repercolatePeptides(progress, job, stripefile, saveResultsConsumer, percolatorResults.y);
+			if (percolatorResults.x.size()>0) {
+				Logger.logLine("Recalculating features...");
+				
+				saveResultsConsumer=generateFeatureFile(subProgress, job, stripefile, Optional.ofNullable(percolatorResults.y));
+				percolatorResults=percolatePeptides(subProgress, job, stripefile, saveResultsConsumer);
+			}
+			percolatorResults=repercolatePeptides(subProgress, job, stripefile, saveResultsConsumer, percolatorResults.y);
 		}
 		
 		ArrayList<PercolatorPeptide> passingPeptides=percolatorResults.x;
@@ -305,7 +311,7 @@ public class Encyclopedia {
 		ArrayList<SearchJobData> jobs=new ArrayList<SearchJobData>();
 		jobs.add(job);
 		
-		SearchToBLIB.convertElib(progress, job, elibFile, parameters);
+		SearchToBLIB.convertElib(subProgress, job, elibFile, parameters, parameters.isIntegratePrecursors());
 		
 		progress.update("Found "+passingPeptides.size()+" peptides identified at "+(job.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 		Logger.logLine("Finished analysis! "+passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100f)+"% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");
