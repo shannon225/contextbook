@@ -16,10 +16,13 @@ import java.util.Optional;
 import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideAccessionMatchingTrie;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryEntryCleaner;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
@@ -221,7 +224,7 @@ public class LibraryUtilities {
 		return false;
 	}
 	
-	public static LibraryFile mergeLibraries(ProgressIndicator progress, ArrayList<File> files, File saveFile, boolean rtAlign, boolean removeDuplicates, boolean higherScoresAreBetter) throws IOException, SQLException, DataFormatException {
+	public static LibraryFile mergeLibraries(ProgressIndicator progress, ArrayList<File> files, File saveFile, boolean rtAlign, boolean removeDuplicates, boolean higherScoresAreBetter, Optional<File> fasta, SearchParameters params) throws IOException, SQLException, DataFormatException {
 		HashMap<String, ArrayList<LibraryEntry>> groupedEntries=new HashMap<>();
 		int totalEntries=0;
 		int count=0;
@@ -258,6 +261,20 @@ public class LibraryUtilities {
 		if (removeDuplicates) {
 			allEntries=LibraryEntryCleaner.removeDuplicateEntries(allEntries, higherScoresAreBetter);
 			progress.update("Removing duplicates...");
+		}
+		
+		if (fasta.isPresent()) {
+			// if a fasta is provided, clear out the old entries and add new ones for the new database
+			for (LibraryEntry entry : allEntries) {
+				entry.getAccessions().clear();
+			}
+			File fastaFile=fasta.get();
+			Logger.logLine("Reading Fasta file "+fastaFile.getName());
+			ArrayList<FastaEntryInterface> proteins=FastaReader.readFasta(fastaFile, params);
+			
+			Logger.logLine("Constructing trie from library peptides");
+			PeptideAccessionMatchingTrie trie=new PeptideAccessionMatchingTrie(allEntries);
+			trie.addFasta(proteins);
 		}
 
 		LibraryFile saveLibrary=new LibraryFile();

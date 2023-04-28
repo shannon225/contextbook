@@ -543,7 +543,7 @@ public class SearchPanel extends JPanel {
 		combineELIB.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				SearchPanelUtilities.combineELIBs(SearchPanel.this, getJobProcessor());
+				SearchPanelUtilities.combineELIBs(SearchPanel.this, getVisibleTab().getParameters(), getJobProcessor());
 			}
 		});
 		convertMenu.add(combineELIB);

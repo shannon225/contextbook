@@ -3,9 +3,12 @@ package edu.washington.gs.maccoss.encyclopedia.cli;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Optional;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.ParsingUtils;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.LibraryUtilities;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
@@ -26,6 +29,7 @@ public class MergeLibraryFiles {
 			Logger.timelessLogLine("\t-i\tinput library files or directories (merge multiple files by deliminating with \""+deliminator+"\")");
 			Logger.timelessLogLine("Other Parameters: ");
 			Logger.timelessLogLine("\t-o\toutput .DLIB file");
+			Logger.timelessLogLine("\t-fasta\t(default: empty), use to reset the peptide-protein annotations");
 			Logger.timelessLogLine("\t-rtAlign\t(default: "+IS_RT_ALIGN+")");
 			Logger.timelessLogLine("\t-removeDuplicates\t(default: "+IS_REMOVE_DUPLICATES+")");
 			Logger.timelessLogLine("\t-higherScoresAreBetter\t(default: "+IS_HIGHER_SCORES_ARE_BETTER+"), only used if removeDuplicates=true");
@@ -82,10 +86,14 @@ public class MergeLibraryFiles {
 
 		boolean removeDuplicates=ParsingUtils.getBoolean("-removeDuplicates", arguments, IS_REMOVE_DUPLICATES);
 		boolean higherScoresAreBetter=ParsingUtils.getBoolean("-higherScoresAreBetter", arguments, IS_HIGHER_SCORES_ARE_BETTER);
+		File fastaFile=null;
+		if (arguments.containsKey("-fasta")) {
+			fastaFile = new File(arguments.get("-fasta"));
+		}
 
 		try {
 			Logger.logLine("Merging "+files.size()+" libraries into "+saveFile.getName());
-			LibraryUtilities.mergeLibraries(new EmptyProgressIndicator(false), files, saveFile, rtAlign, removeDuplicates, higherScoresAreBetter);
+			LibraryUtilities.mergeLibraries(new EmptyProgressIndicator(false), files, saveFile, rtAlign, removeDuplicates, higherScoresAreBetter, Optional.ofNullable(fastaFile), SearchParameterParser.getDefaultParametersObject());
 		} catch (Exception e) {
 			Logger.errorLine("Encountered Fatal Error!");
 			Logger.errorException(e);

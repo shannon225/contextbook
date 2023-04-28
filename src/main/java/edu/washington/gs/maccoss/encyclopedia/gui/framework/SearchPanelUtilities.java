@@ -459,11 +459,12 @@ public class SearchPanelUtilities {
 		}
 	}
 	
-	public static void combineELIBs(Component root, final JobProcessor processor) {
+	public static void combineELIBs(Component root, final SearchParameters params, final JobProcessor processor) {
 		final JFrame frame = (JFrame)SwingUtilities.getRoot(root);
 		final JDialog dialog=new JDialog(frame, "Combine Libraries", true);
 		
-		final FileChooserPanel saveFileChooser=new FileChooserPanel(null, "Library", new SimpleFilenameFilter(".dlib"), true, false);
+		final FileChooserPanel saveFileChooser=new FileChooserPanel(null, "New Library File", new SimpleFilenameFilter(".dlib"), true, false);
+		final FileChooserPanel fastafileChooser=new FileChooserPanel(null, "FASTA File (optional)", new SimpleFilenameFilter(".fas", ".fasta"), false);
 
 		final FileChooserList choosers=new FileChooserList("Library File (.dlib or .elib)", new SimpleFilenameFilter(".dlib", ".elib"));
 		
@@ -484,10 +485,11 @@ public class SearchPanelUtilities {
 		JPanel options=new JPanel();
 		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
 		options.add(choosers);
-		options.add(saveFileChooser);
+		options.add(fastafileChooser);
 		options.add(rtAlignBox);
 		options.add(removeDuplicatesBox);
 		options.add(higherScoresAreBetterBox);
+		options.add(saveFileChooser);
 		
 		choosers.addActionListener(new ActionListener() {
 			@Override
@@ -544,7 +546,7 @@ public class SearchPanelUtilities {
 
 						@Override
 						public void runJob(ProgressIndicator progress) throws Exception {
-							LibraryUtilities.mergeLibraries(progress, files, saveFile, rtAlign, removeDuplicates, higherScoresAreBetter);
+							LibraryUtilities.mergeLibraries(progress, files, saveFile, rtAlign, removeDuplicates, higherScoresAreBetter, Optional.ofNullable(fastafileChooser.getFile()), params);
 						}
 					};
 					processor.addJob(job);
