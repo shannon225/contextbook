@@ -12,6 +12,7 @@ import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefiner;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.DDASearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibrarySearchJobData;
@@ -22,6 +23,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.SubProgressIndicator;
 import gnu.trove.map.hash.TObjectFloatHashMap;
@@ -106,6 +108,8 @@ public class EncyclopediaTwoPeakLocationInferrer {
 			
 			for (LibraryEntry entry : entries) {
 				String peptideModSeq=entry.getPeptideModSeq();
+				
+				AnnotatedLibraryEntry annotated=new AnnotatedLibraryEntry(entry, params);
 
 				// always accept if no passing peptides were used
 				if (passingPeptideModSeqs.size()==0||passingPeptideModSeqs.contains(peptideModSeq)) {
@@ -115,17 +119,22 @@ public class EncyclopediaTwoPeakLocationInferrer {
 						bestIonsMap=new CorrelationPeakFrequencyCalculator(params.getFragmentTolerance());
 						ionCounter.put(peptideModSeq, bestIonsMap);
 					}
-					double[] masses=entry.getMassArray();
-					float[] intensity=entry.getIntensityArray();
-					float[] correlation=entry.getCorrelationArray();
-					boolean[] isQuant=entry.getQuantifiedIonsArray();
+					FragmentIon[] ions=annotated.getIonAnnotations();
+					//double[] masses=annotated.getMassArray();
+					float[] intensity=annotated.getIntensityArray();
+					float[] correlation=annotated.getCorrelationArray();
+					boolean[] isQuant=annotated.getQuantifiedIonsArray();
 					for (int i=0; i<correlation.length; i++) {
-						boolean passesThreshold = isQuant[i]&&(isLibrary||correlation[i]>=TransitionRefiner.quantitativeCorrelationThreshold);
-						float thisCorrelation=0.0f;
-						if (correlation[i]>=TransitionRefiner.identificationCorrelationThreshold) {
-							thisCorrelation=correlation[i];
+						if (ions[i]!=null) {
+							boolean passesThreshold = isQuant[i]&&(isLibrary||correlation[i]>=TransitionRefiner.quantitativeCorrelationThreshold);
+							float thisCorrelation=0.0f;
+							if (correlation[i]>=TransitionRefiner.identificationCorrelationThreshold) {
+								thisCorrelation=correlation[i];
+							}
+							
+							double correctMass=ions[i].getMass();
+							bestIonsMap.increment(correctMass, intensity[i], thisCorrelation, passesThreshold, isLibrary);
 						}
-						bestIonsMap.increment(masses[i], intensity[i], thisCorrelation, passesThreshold, isLibrary);
 					}	
 				}
 			}
