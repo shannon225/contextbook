@@ -57,7 +57,7 @@ public class SearchParameters implements XMLObject {
 	protected final int numberOfQuantitativePeaks;
 	protected final int minNumOfQuantitativePeaks;
 	protected final float minIntensity;
-	protected final boolean useIITNumberOfIonsThreshold;
+	protected final float minIntensityNumIons;
 	protected final double precursorOffsetPPM;
 	protected final double fragmentOffsetPPM;
 	protected final double precursorIsolationMargin;
@@ -86,7 +86,7 @@ public class SearchParameters implements XMLObject {
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, double precursorOffsetPPM, double precursorIsolationMargin, MassTolerance fragmentTolerance, double fragmentOffsetPPM, MassTolerance libraryFragmentTolerance, DigestionEnzyme enzyme,
 			float percolatorThreshold, float percolatorProteinThreshold, PercolatorVersion percolatorVersionNumber, int percolatorTrainingSetSize, float percolatorTrainingSetThreshold,
 			int percolatorTrainingIterations, DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, 
-			int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, int topNTargetsUsed, float minIntensity, boolean useIITNumberOfIonsThreshold, Optional<PeptideModification> localizingModification, ScoringBreadthType CASiLBreadthType, 
+			int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, int topNTargetsUsed, float minIntensity, float minIntensityNumIons, Optional<PeptideModification> localizingModification, ScoringBreadthType CASiLBreadthType, 
 			float getNumberOfExtraDecoyLibrariesSearched, boolean quantifyAcrossSamples, boolean verifyModificationIons, float rtWindowInMin, boolean filterPeaklists, boolean doNotUseGlobalFDR, 
 			Optional<File> precursorIsolationRangeFile, Optional<File> percolatorModelFile, boolean normalizeByTIC, boolean subtractBackground, boolean maskBadIntegrations, boolean integratePrecursors, boolean enableAdvancedOptions) {
 		this.aaConstants=aaConstants;
@@ -113,7 +113,7 @@ public class SearchParameters implements XMLObject {
 		this.minNumOfQuantitativePeaks=minNumOfQuantitativePeaks;
 		this.topNTargetsUsed=topNTargetsUsed;
 		this.minIntensity=minIntensity;
-		this.useIITNumberOfIonsThreshold=useIITNumberOfIonsThreshold;
+		this.minIntensityNumIons=minIntensityNumIons;
 		this.CASiLBreadthType=CASiLBreadthType;
 		this.localizingModification=localizingModification;
 		this.numberOfExtraDecoyLibrariesSearched=getNumberOfExtraDecoyLibrariesSearched;
@@ -218,7 +218,7 @@ public class SearchParameters implements XMLObject {
 		sb.append(" -numberOfExtraDecoyLibrariesSearched "+numberOfExtraDecoyLibrariesSearched+"\n");
 		sb.append(" -verifyModificationIons "+verifyModificationIons+"\n");
 		sb.append(" -minIntensity "+minIntensity+"\n");
-		sb.append(" -useIITNumberOfIonsThreshold "+useIITNumberOfIonsThreshold+"\n");
+		sb.append(" -minIntensityNumIons "+minIntensityNumIons+"\n");
 		sb.append(" -normalizeByTIC "+normalizeByTIC+"\n");
 		sb.append(" "+SUBTRACT_BACKGROUND+" "+subtractBackground+"\n");
 		sb.append(" "+MASK_BAD_INTEGRATIONS+" "+maskBadIntegrations+"\n");
@@ -270,7 +270,7 @@ public class SearchParameters implements XMLObject {
 		map.put("-scoringBreadthType", getScoringBreadthType().toShortname());
 		map.put("-verifyModificationIons", verifyModificationIons+"");
 		map.put("-minIntensity", minIntensity+"");
-		map.put("-useIITNumberOfIonsThreshold", useIITNumberOfIonsThreshold+"");
+		map.put("-minIntensityNumIons", minIntensityNumIons+"");
 		map.put("-normalizeByTIC", normalizeByTIC+"");
 		map.put(SUBTRACT_BACKGROUND, subtractBackground+"");
 		map.put(MASK_BAD_INTEGRATIONS, maskBadIntegrations+"");
@@ -494,8 +494,8 @@ public class SearchParameters implements XMLObject {
 	public float getMinIntensity() {
 		return minIntensity;
 	}
-	public boolean isUseIITNumberOfIonsThreshold() {
-		return useIITNumberOfIonsThreshold;
+	public float getMinIntensityNumIons() {
+		return minIntensityNumIons;
 	}
 	public boolean isUseNLsForXCorr() {
 		return useNLsForXCorr;

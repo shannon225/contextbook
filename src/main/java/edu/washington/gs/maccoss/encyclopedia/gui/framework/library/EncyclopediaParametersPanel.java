@@ -235,7 +235,7 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 		int numberOfQuantitativeIonsValue=((Integer)numberOfQuantitativeIons.getValue());
 		int minNumOfQuantitativeIonsValue=((Integer)minNumOfQuantitativeIons.getValue());
 		float minIntensity=-1.0f;
-		boolean IITNumberOfIonsThreshold=false;
+		float IITNumberOfIonsThreshold=-1.0f;
 		Optional<PeptideModification> modificationType=Optional.empty();
 		SearchParameters parameters=new SearchParameters(
 				aaConstants,
