@@ -105,6 +105,7 @@ public class PecanParameterParser {
 		final int minNumOfQuantitativePeaks;
 		final int topNTargetsUsed;
 		final float minIntensity;
+		final boolean useIITNumberOfIonsThreshold;
 		final boolean quantifyAcrossSamples;
 		final boolean requireVariableMods;
         final boolean filterPeaklists;
@@ -290,6 +291,7 @@ public class PecanParameterParser {
 		topNTargetsUsed=ParsingUtils.getInteger("-topNTargetsUsed", parameters, -1);
 		
 		minIntensity=ParsingUtils.getFloat("-minIntensity", parameters, -1.0f);
+		useIITNumberOfIonsThreshold=ParsingUtils.getBoolean("-useIITNumberOfIonsThreshold", parameters, false);
 		quantifyAcrossSamples=ParsingUtils.getBoolean("-quantifyAcrossSamples", parameters, false);
 		requireVariableMods=ParsingUtils.getBoolean("-requireVariableMods", parameters, false);
 		filterPeaklists = ParsingUtils.getBoolean("-filterPeaklists", parameters, false);
@@ -334,6 +336,7 @@ public class PecanParameterParser {
 				minNumOfQuantitativePeaks,
 				topNTargetsUsed,
 				minIntensity,
+				useIITNumberOfIonsThreshold,
 				quantifyAcrossSamples,
 				true,
 				requireVariableMods,

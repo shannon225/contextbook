@@ -422,9 +422,15 @@ public class MzmlSAXToMSMSProducer extends DefaultHandler implements MSMSProduce
 				}
 				
 				if (parameters!=null&&parameters.getMinIntensity()>0.0f) {
+					float minIntensity = parameters.getMinIntensity();
+					if (parameters.isUseIITNumberOfIonsThreshold()&&ionInjectTime!=null&&ionInjectTime>0) {
+						// to get the minimum number of actual ions from ions/second (Thermo only)
+						minIntensity=parameters.getMinIntensity()/ionInjectTime;
+					}
+					
 					ArrayList<Peak> peaks=new ArrayList<>();
 					for (int i=0; i<intensityArray.length; i++) {
-						if (intensityArray[i]>parameters.getMinIntensity()) {
+						if (intensityArray[i]>minIntensity) {
 							peaks.add(new Peak(massArray[i], intensityArray[i]));
 						}
 					}

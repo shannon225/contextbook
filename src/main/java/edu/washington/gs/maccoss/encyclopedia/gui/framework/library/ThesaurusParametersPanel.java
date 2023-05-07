@@ -272,6 +272,7 @@ public class ThesaurusParametersPanel extends JPanel implements ParametersPanelI
 				minNumOfQuantitativeIonsValue,
 				-1,
 				0.0f,
+				false,
 				modification,
 				CASiLSearchBreadthType,
 				0.0f,

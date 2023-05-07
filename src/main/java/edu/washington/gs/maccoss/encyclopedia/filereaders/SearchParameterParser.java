@@ -128,6 +128,7 @@ public class SearchParameterParser {
 		final int minNumOfQuantitativePeaks;
 		final int topNTargetsUsed;
 		final float minIntensity;
+		final boolean useIITNumberOfIonsThreshold;
 		final float numberOfExtraDecoyLibrariesSearched;
 		final Optional<PeptideModification> localizationModification;
 		final ScoringBreadthType breadthType;
@@ -306,6 +307,7 @@ public class SearchParameterParser {
 		topNTargetsUsed=ParsingUtils.getInteger("-topNTargetsUsed", parameters, -1);
 		
 		minIntensity=ParsingUtils.getFloat("-minIntensity", parameters, -1.0f);
+		useIITNumberOfIonsThreshold=ParsingUtils.getBoolean("-useIITNumberOfIonsThreshold", parameters, false);
 		rtWindowInMin=ParsingUtils.getFloat("-rtWindowInMin", parameters, -1f);
 		
 		value=parameters.get("-localizationModification");
@@ -390,6 +392,7 @@ public class SearchParameterParser {
 				minNumOfQuantitativePeaks,
 				topNTargetsUsed,
 				minIntensity,
+				useIITNumberOfIonsThreshold,
 				localizationModification,
 				breadthType,
 				numberOfExtraDecoyLibrariesSearched,
