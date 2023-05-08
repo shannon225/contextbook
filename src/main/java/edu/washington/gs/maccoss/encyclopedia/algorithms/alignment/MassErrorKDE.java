@@ -1,6 +1,5 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.alignment;
 
-import java.awt.Color;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Map;
@@ -8,16 +7,12 @@ import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
-import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
-import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserProducer;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.Function;
 
 public class MassErrorKDE extends RectangleKDE {
 	public static final int MASS_ERROR_RESOLUTION = 1000;
@@ -71,7 +66,10 @@ public class MassErrorKDE extends RectangleKDE {
 			Logger.errorException(ie);
 		}
 
+		long time=System.currentTimeMillis();
 		MassErrorFilter filter=MassErrorFilter.getFilter(new MassTolerance(10), 1, targets);
+		System.out.println((System.currentTimeMillis()-time)+" ms");
+		
 		filter.plot(targets, Optional.empty());
 
 //		ArrayList<XYTrace> traces=new ArrayList<>();

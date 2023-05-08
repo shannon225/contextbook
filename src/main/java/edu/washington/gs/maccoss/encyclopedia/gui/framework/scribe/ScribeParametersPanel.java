@@ -233,6 +233,7 @@ public class ScribeParametersPanel extends JPanel implements ParametersPanelInte
 		int numberOfQuantitativeIonsValue=((Integer)numberOfQuantitativeIons.getValue());
 		int minNumOfQuantitativeIonsValue=((Integer)minNumOfQuantitativeIons.getValue());
 		float minIntensity=-1.0f;
+		float IITNumberOfIonsThreshold=-1.0f;
 		Optional<PeptideModification> modificationType=Optional.empty();
 		ScribeSearchParameters parameters=new ScribeSearchParameters(
 				aaConstants,
@@ -259,6 +260,7 @@ public class ScribeParametersPanel extends JPanel implements ParametersPanelInte
 				minNumOfQuantitativeIonsValue,
 				-1,
 				minIntensity,
+				IITNumberOfIonsThreshold,
 				modificationType,
 				ScoringBreadthType.ENTIRE_RT_WINDOW,
 				numberOfExtraDecoyLibrariesValue,

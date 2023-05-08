@@ -149,7 +149,7 @@ public class PercolatorExecutorIT {
 						params.getPercolatorTrainingIterations(), params.getDataAcquisitionType(), params.getNumberOfThreadsUsed(),
 						params.getExpectedPeakWidth(), params.getTargetWindowCenter(), params.getPrecursorWindowSize(),
 						params.getNumberOfQuantitativePeaks(), params.getMinNumOfQuantitativePeaks(), params.getTopNTargetsUsed(),
-						params.getMinIntensity(), params.getLocalizingModification(), params.getScoringBreadthType(),
+						params.getMinIntensity(), params.getMinIntensityNumIons(), params.getLocalizingModification(), params.getScoringBreadthType(),
 						params.getNumberOfExtraDecoyLibrariesSearched(), params.isQuantifySameFragmentsAcrossSamples(),
 						params.isVerifyModificationIons(), params.getRtWindowInMin(), params.isFilterPeaklists(), params.isDoNotUseGlobalFDR(),
 						params.getPrecursorIsolationRangeFile(), params.getPercolatorModelFile(), params.isNormalizeByTIC(),

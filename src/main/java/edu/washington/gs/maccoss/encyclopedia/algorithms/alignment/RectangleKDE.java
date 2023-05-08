@@ -116,62 +116,76 @@ public class RectangleKDE {
 		}
 		
 		ArrayList<XYPoint> points=new ArrayList<XYPoint>();
-		traceWest(maxXIndex, maxYIndex, points);
-		traceEast(maxXIndex, maxYIndex, points);
+		traceWestWithoutIteration(maxXIndex, maxYIndex, points);
+		traceEastWithoutIteration(maxXIndex, maxYIndex, points);
 		Collections.sort(points);
 		
 		return new LinearInterpolatedFunction(points);
 	}
 	
-	public void traceEast(int i, int j, ArrayList<XYPoint> prev) {
-		float x=xRange.mapBackToRange(i, 0, xResolution-1);
-		float y=yRange.mapBackToRange(j, 0, yResolution-1);
-		prev.add(new XYPoint(x, y));
-		
-		if (i>=xResolution-1) return;
-		if (j<=0) {
-			j=1;
-		} else if (j>=yResolution-1) {
-			j=yResolution-2;
-		}
-		
-		float east=twoDimensionalHistogram[i+1][j];
-		float northeast=twoDimensionalHistogram[i+1][j+1];
-		float southeast=twoDimensionalHistogram[i+1][j-1];
-		float max=Math.max(Math.max(east, southeast), northeast);
-		
-		if (east==max||northeast==southeast) {
-			traceEast(i+1, j, prev);
-		} else if (northeast==max) {
-			traceEast(i+1, j+1, prev);
-		} else {
-			traceEast(i+1, j-1, prev);
+	public void traceEastWithoutIteration(int initialI, int initialJ, ArrayList<XYPoint> prev) {
+		int i = initialI;
+		int j = initialJ;
+
+		while (true) {// guaranteed to exit because each step i always increases
+			float x=xRange.mapBackToRange(i, 0, xResolution-1);
+			float y=yRange.mapBackToRange(j, 0, yResolution-1);
+			prev.add(new XYPoint(x, y));
+			
+			if (i>=xResolution-1) return;
+			if (j<=0) {
+				j=1;
+			} else if (j>=yResolution-1) {
+				j=yResolution-2;
+			}
+			
+			float east=twoDimensionalHistogram[i+1][j];
+			float northeast=twoDimensionalHistogram[i+1][j+1];
+			float southeast=twoDimensionalHistogram[i+1][j-1];
+			float max=Math.max(Math.max(east, southeast), northeast);
+			
+			if (east==max||northeast==southeast) {
+				i++;
+			} else if (northeast==max) {
+				i++;
+				j++;
+			} else {
+				i++;
+				j--;
+			}
 		}
 	}
 	
-	public void traceWest(int i, int j, ArrayList<XYPoint> prev) {
-		float x=xRange.mapBackToRange(i, 0, xResolution-1);
-		float y=yRange.mapBackToRange(j, 0, yResolution-1);
-		prev.add(new XYPoint(x, y));
-		
-		if (i<=0) return;
-		if (j<=0) {
-			j=1;
-		} else if (j>=yResolution-1) {
-			j=yResolution-2;
-		}
-		
-		float west=twoDimensionalHistogram[i-1][j];
-		float southwest=twoDimensionalHistogram[i-1][j-1];
-		float northwest=twoDimensionalHistogram[i-1][j+1];
-		float max=Math.max(Math.max(west, northwest), southwest);
-		
-		if (west==max||southwest==northwest) {
-			traceWest(i-1, j, prev);
-		} else if (southwest==max) {
-			traceWest(i-1, j-1, prev);
-		} else {
-			traceWest(i-1, j+1, prev);
+	public void traceWestWithoutIteration(int initialI, int initialJ, ArrayList<XYPoint> prev) {
+		int i = initialI;
+		int j = initialJ;
+
+		while (true) {// guaranteed to exit because each step i always decreases
+			float x=xRange.mapBackToRange(i, 0, xResolution-1);
+			float y=yRange.mapBackToRange(j, 0, yResolution-1);
+			prev.add(new XYPoint(x, y));
+			
+			if (i<=0) return;
+			if (j<=0) {
+				j=1;
+			} else if (j>=yResolution-1) {
+				j=yResolution-2;
+			}
+			
+			float west=twoDimensionalHistogram[i-1][j];
+			float southwest=twoDimensionalHistogram[i-1][j-1];
+			float northwest=twoDimensionalHistogram[i-1][j+1];
+			float max=Math.max(Math.max(west, northwest), southwest);
+			
+			if (west==max||southwest==northwest) {
+				i--;
+			} else if (southwest==max) {
+				i--;
+				j--;
+			} else {
+				i--;
+				j++;
+			}
 		}
 	}
 	

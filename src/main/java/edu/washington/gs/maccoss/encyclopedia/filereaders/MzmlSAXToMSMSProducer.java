@@ -421,16 +421,28 @@ public class MzmlSAXToMSMSProducer extends DefaultHandler implements MSMSProduce
 					charge=selectedCharge;
 				}
 				
-				if (parameters!=null&&parameters.getMinIntensity()>0.0f) {
-					ArrayList<Peak> peaks=new ArrayList<>();
-					for (int i=0; i<intensityArray.length; i++) {
-						if (intensityArray[i]>parameters.getMinIntensity()) {
-							peaks.add(new Peak(massArray[i], intensityArray[i]));
-						}
+				if (parameters!=null&&(parameters.getMinIntensity()>0.0f||parameters.getMinIntensityNumIons()>0.0f)) {
+					float minIntensity = Float.MAX_VALUE;
+					if (parameters.getMinIntensity()>0.0f) {
+						minIntensity=Math.min(minIntensity, parameters.getMinIntensity());
 					}
-					Pair<double[], float[]> peakArrays=Peak.toArrays(peaks);
-					massArray=peakArrays.x;
-					intensityArray=peakArrays.y;
+					if (parameters.getMinIntensityNumIons()>0.0f&&ionInjectTime!=null&&ionInjectTime>0) {
+						// to get the minimum number of actual ions from ions/second (Thermo only)
+						minIntensity=Math.min(minIntensity, parameters.getMinIntensityNumIons()/ionInjectTime);
+					}
+
+					// check to make sure that a minimum intensity was set in case the user specified a IIT-based minimum when IIT is not available
+					if (minIntensity != Float.MAX_VALUE) {
+						ArrayList<Peak> peaks=new ArrayList<>();
+						for (int i=0; i<intensityArray.length; i++) {
+							if (intensityArray[i]>minIntensity) {
+								peaks.add(new Peak(massArray[i], intensityArray[i]));
+							}
+						}
+						Pair<double[], float[]> peakArrays=Peak.toArrays(peaks);
+						massArray=peakArrays.x;
+						intensityArray=peakArrays.y;
+					}
 				}
 				
 				double precursorIsolationMargin = parameters==null?0.0:parameters.getPrecursorIsolationMargin();

@@ -53,6 +53,7 @@ public class PecanParameterParser {
 		map.put(SearchParameters.NUMBER_OF_QUANTITATIVE_PEAKS, "5");
 		map.put("-minNumOfQuantitativePeaks", "3");
 		map.put("-minIntensity", "-1.0");
+		map.put("-minIntensityNumIons", "-1.0");
 		map.put("-requireVariableMods", "false");
         map.put("-filterPeaklists", "false");
         map.put("-normalizeByTIC", "true");
@@ -105,6 +106,7 @@ public class PecanParameterParser {
 		final int minNumOfQuantitativePeaks;
 		final int topNTargetsUsed;
 		final float minIntensity;
+		final float minIntensityNumIons;
 		final boolean quantifyAcrossSamples;
 		final boolean requireVariableMods;
         final boolean filterPeaklists;
@@ -290,6 +292,7 @@ public class PecanParameterParser {
 		topNTargetsUsed=ParsingUtils.getInteger("-topNTargetsUsed", parameters, -1);
 		
 		minIntensity=ParsingUtils.getFloat("-minIntensity", parameters, -1.0f);
+		minIntensityNumIons=ParsingUtils.getFloat("-minIntensityNumIons", parameters, -1.0f);
 		quantifyAcrossSamples=ParsingUtils.getBoolean("-quantifyAcrossSamples", parameters, false);
 		requireVariableMods=ParsingUtils.getBoolean("-requireVariableMods", parameters, false);
 		filterPeaklists = ParsingUtils.getBoolean("-filterPeaklists", parameters, false);
@@ -334,6 +337,7 @@ public class PecanParameterParser {
 				minNumOfQuantitativePeaks,
 				topNTargetsUsed,
 				minIntensity,
+				minIntensityNumIons,
 				quantifyAcrossSamples,
 				true,
 				requireVariableMods,

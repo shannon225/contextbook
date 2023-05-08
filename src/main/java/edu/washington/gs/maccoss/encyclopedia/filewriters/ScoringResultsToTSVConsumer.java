@@ -111,7 +111,7 @@ public class ScoringResultsToTSVConsumer extends AbstractScoringResultsToTSVCons
 				writer.print("\t"+sequence);
 
 				HashSet<String> accessions=peptide.getAccessions();
-				writer.print("\t"+ PSMData.accessionsToString(accessions, "\t"));
+				writer.print("\t"+ PSMData.accessionsToString(accessions));
 
 				// Percolator assumes linux line endings on Mac!
 				switch (os) {
