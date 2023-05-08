@@ -64,6 +64,7 @@ public class SearchParameterParser {
 		map.put("-normalizeByTIC", "true");
 		map.put(SearchParameters.SUBTRACT_BACKGROUND, "true");
 		map.put(SearchParameters.MASK_BAD_INTEGRATIONS, "false");
+		map.put(SearchParameters.INTEGRATE_PRECURSORS, "false");
 		return map;
 	}
 	
@@ -87,6 +88,7 @@ public class SearchParameterParser {
 		map.put("-normalizeByTIC", "true");
 		map.put(SearchParameters.SUBTRACT_BACKGROUND, "true");
 		map.put(SearchParameters.MASK_BAD_INTEGRATIONS, "false");
+		map.put(SearchParameters.INTEGRATE_PRECURSORS, "false");
 		return map;
 	}
 	
