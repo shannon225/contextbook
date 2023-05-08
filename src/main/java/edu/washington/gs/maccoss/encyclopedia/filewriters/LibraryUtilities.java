@@ -40,6 +40,8 @@ import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 
 public class LibraryUtilities {
+	private static final int TOTAL_NUMBER_OF_ENTRIES_AT_A_TIME = 1000000;
+
 	public static void modifyLibrary(final File saveFile, TCharDoubleHashMap modMasses, boolean isFixed, LibraryInterface library) throws IOException, SQLException, DataFormatException {
 		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
 		
@@ -268,13 +270,19 @@ public class LibraryUtilities {
 			for (LibraryEntry entry : allEntries) {
 				entry.getAccessions().clear();
 			}
+			
 			File fastaFile=fasta.get();
 			Logger.logLine("Reading Fasta file "+fastaFile.getName());
 			ArrayList<FastaEntryInterface> proteins=FastaReader.readFasta(fastaFile, params);
 			
-			Logger.logLine("Constructing trie from library peptides");
-			PeptideAccessionMatchingTrie trie=new PeptideAccessionMatchingTrie(allEntries);
-			trie.addFasta(proteins);
+			// if necessary, break list into up to 1M entries
+			int iteration=0;
+			for (List<LibraryEntry> sublist : splitList(allEntries, TOTAL_NUMBER_OF_ENTRIES_AT_A_TIME)) {
+				Logger.logLine("Constructing trie from library peptides to add FASTA entries "+(iteration*TOTAL_NUMBER_OF_ENTRIES_AT_A_TIME+1));
+				PeptideAccessionMatchingTrie trie=new PeptideAccessionMatchingTrie(sublist);
+				trie.addFasta(proteins);
+				iteration++;
+			}
 		}
 
 		LibraryFile saveLibrary=new LibraryFile();
@@ -289,6 +297,17 @@ public class LibraryUtilities {
 		progress.update("Saved "+saveFile.getName()+", "+allEntries.size()+" total", 1.0f);
 		Logger.logLine("Saved "+saveFile.getName()+", "+allEntries.size()+" total");
 		return saveLibrary;
+	}
+	
+	static <T> List<List<T>> splitList(List<T> list, final int listLength) {
+	    List<List<T>> parts = new ArrayList<List<T>>();
+	    final int totalLength = list.size();
+	    for (int i = 0; i < totalLength; i += listLength) {
+	        parts.add(new ArrayList<T>(
+	            list.subList(i, Math.min(totalLength, i + listLength)))
+	        );
+	    }
+	    return parts;
 	}
 	
 	/*
