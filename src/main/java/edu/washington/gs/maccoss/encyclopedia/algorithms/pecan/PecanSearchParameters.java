@@ -43,56 +43,25 @@ public class PecanSearchParameters extends SearchParameters {
 	private final boolean requireVariableMods;
 	
 	public String toString() {
-		final StringBuilder sb=new StringBuilder();
-		sb.append(" -fixed "+aaConstants.getFixedModString()+"\n");
-		sb.append(" -frag "+FragmentationType.toString(fragType)+"\n");
-		sb.append(" -ptol "+precursorTolerance.getToleranceThreshold()+"\n");
-		sb.append(" -ftol "+fragmentTolerance.getToleranceThreshold()+"\n");
-		sb.append(" -ptolunits"+precursorTolerance.getUnits()+"\n");
-		sb.append(" -ftolunits"+fragmentTolerance.getUnits()+"\n");
-		sb.append(" -poffset "+precursorOffsetPPM+"\n");
-		sb.append(" -foffset "+fragmentOffsetPPM+"\n");
-		sb.append(" -enzyme "+enzyme.getName()+"\n");
+		final StringBuilder sb=new StringBuilder(super.toString());
 		sb.append(" -minLength "+minPeptideLength+"\n");
 		sb.append(" -maxLength "+maxPeptideLength+"\n");
 		sb.append(" -maxMissedCleavage "+maxMissedCleavages+"\n");
 		sb.append(" -minCharge "+minCharge+"\n");
 		sb.append(" -maxCharge "+maxCharge+"\n");
-		sb.append(" -expectedPeakWidth "+expectedPeakWidth+"\n");
 		sb.append(" -numberOfReportedPeaks "+numberOfReportedPeaks+"\n");
 		sb.append(" -addDecoysToBackground "+addDecoysToBackgound+"\n");
 		sb.append(" -dontRunDecoys "+dontRunDecoys+"\n");
-		sb.append(" -percolatorThreshold "+percolatorThreshold+"\n");
-		sb.append(" -percolatorVersionNumber "+percolatorVersionNumber+"\n");
-		sb.append(" ").append(OPT_PERC_TRAINING_SIZE).append(" ").append(percolatorTrainingSetSize).append("\n");
-		sb.append(" ").append(OPT_PERC_TRAINING_THRESH).append(" ").append(percolatorTrainingSetThreshold).append("\n");
-		sb.append(" -acquisition "+DataAcquisitionType.toString(dataAcquisitionType)+"\n");
-		sb.append(" -numberOfThreadsUsed "+numberOfThreadsUsed+"\n");
-		sb.append(" ").append(NUMBER_OF_QUANTITATIVE_PEAKS).append(" ").append(numberOfQuantitativePeaks).append("\n");
-		sb.append(" -minNumOfQuantitativePeaks "+minNumOfQuantitativePeaks+"\n");
 		sb.append(" -alpha "+alpha+"\n");
 		sb.append(" -beta "+beta+"\n");
-		sb.append(" -quantifyAcrossSamples "+quantifyAcrossSamples+"\n");
-		sb.append(" -minIntensity "+minIntensity+"\n");
 		sb.append(" -requireVariableMods "+requireVariableMods+"\n");
-		sb.append(" -precursorIsolationRangeFile "+(precursorIsolationRangeFile.isPresent()?precursorIsolationRangeFile.get().getAbsolutePath():"none")+"\n");
-		sb.append(" -percolatorModelFile "+(percolatorModelFile.isPresent()?percolatorModelFile.get().getAbsolutePath():"none")+"\n");
 		
 		return sb.toString();
 	}
 	
 	@Override
 	public HashMap<String, String> toParameterMap() {
-		HashMap<String, String> map=new HashMap<String, String>();
-		map.put("-fixed", aaConstants.getFixedModString());
-		map.put("-frag", FragmentationType.toString(fragType));
-		map.put("-ptol", precursorTolerance.getToleranceThreshold()+"");
-		map.put("-ftol", fragmentTolerance.getToleranceThreshold()+"");
-		map.put("-ptolunits", precursorTolerance.getUnits());
-		map.put("-ftolunits", fragmentTolerance.getUnits());
-		map.put("-poffset", precursorOffsetPPM+"");
-		map.put("-foffset", fragmentOffsetPPM+"");
-		map.put("-enzyme", enzyme.getName());
+		HashMap<String, String> map=super.toParameterMap();
 		map.put("-minLength", minPeptideLength+"");
 		map.put("-maxLength", maxPeptideLength+"");
 		map.put("-maxMissedCleavage", maxMissedCleavages+"");
@@ -102,23 +71,9 @@ public class PecanSearchParameters extends SearchParameters {
 		map.put("-numberOfReportedPeaks", numberOfReportedPeaks+"");
 		map.put("-addDecoysToBackground", addDecoysToBackgound+"");
 		map.put("-dontRunDecoys", dontRunDecoys+"");
-		map.put("-percolatorThreshold", percolatorThreshold+"");
-		map.put("-percolatorVersion", percolatorVersionNumber+"");
-		map.put("-percolatorVersionNumber", percolatorVersionNumber.getMajorVersion()+"");
-		map.put(OPT_PERC_TRAINING_SIZE, Integer.toString(percolatorTrainingSetSize));
-		map.put(OPT_PERC_TRAINING_THRESH, Float.toString(percolatorTrainingSetThreshold));
-		map.put("-acquisition", DataAcquisitionType.toString(dataAcquisitionType));
-		map.put("-numberOfThreadsUsed", numberOfThreadsUsed+"");
-		map.put("-precursorWindowSize", precursorWindowSize+"");
-		map.put(NUMBER_OF_QUANTITATIVE_PEAKS, numberOfQuantitativePeaks+"");
-		map.put("-minNumOfQuantitativePeaks", minNumOfQuantitativePeaks+"");
 		map.put("-alpha", alpha+"");
 		map.put("-beta", beta+"");
-		map.put("-quantifyAcrossSamples", quantifyAcrossSamples+"");
-		map.put("-minIntensity", minIntensity+"");
 		map.put("-requireVariableMods", "false");
-        map.put("-precursorIsolationRangeFile", (precursorIsolationRangeFile.isPresent()?precursorIsolationRangeFile.get().getAbsolutePath():"none"));
-        map.put("-percolatorModelFile", (percolatorModelFile.isPresent()?percolatorModelFile.get().getAbsolutePath():"none"));
 		return map;
 	}
 	
@@ -242,6 +197,8 @@ public class PecanSearchParameters extends SearchParameters {
 			boolean quantifyAcrossSamples, 
 			boolean verifyModificationIons, 
 			boolean requireVariableMods, 
+			float rtWindowInMin,
+			int minNumIntegratedRTPoints,
 			boolean filterPeaklists, 
 			boolean doNotUseGlobalFDR, 
 			Optional<File> precursorIsolationRangeFile, 
@@ -283,7 +240,8 @@ public class PecanSearchParameters extends SearchParameters {
 				0,
 				quantifyAcrossSamples,
 				verifyModificationIons,
-				-1.0f,
+				rtWindowInMin,
+				minNumIntegratedRTPoints,
 				filterPeaklists,
 				doNotUseGlobalFDR, 
 				precursorIsolationRangeFile,
@@ -369,6 +327,7 @@ public class PecanSearchParameters extends SearchParameters {
 				quantifyAcrossSamples,
 				verifyModificationIons,
 				-1.0f,
+				SearchParameters.DEFAULT_MIN_NUM_INTEGRATED_RT_POINTS,
 				false,
 				false, 
 				Optional.empty(),
@@ -436,6 +395,7 @@ public class PecanSearchParameters extends SearchParameters {
 				quantifyAcrossSamples,
 				verifyModificationIons,
 				-1.0f,
+				SearchParameters.DEFAULT_MIN_NUM_INTEGRATED_RT_POINTS,
 				false,
 				false,
 				Optional.empty(),
@@ -504,6 +464,7 @@ public class PecanSearchParameters extends SearchParameters {
 				quantifyAcrossSamples,
 				verifyModificationIons,
 				-1.0f,
+				SearchParameters.DEFAULT_MIN_NUM_INTEGRATED_RT_POINTS,
 				false,
 				false, 
 				Optional.empty(),
@@ -574,6 +535,7 @@ public class PecanSearchParameters extends SearchParameters {
 				quantifyAcrossSamples,
 				verifyModificationIons,
 				-1.0f,
+				SearchParameters.DEFAULT_MIN_NUM_INTEGRATED_RT_POINTS,
 				false,
 				false, 
 				Optional.empty(),

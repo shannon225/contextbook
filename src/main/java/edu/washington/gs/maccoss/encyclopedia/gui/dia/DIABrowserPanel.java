@@ -332,7 +332,7 @@ public class DIABrowserPanel extends JPanel {
 		for (Entry<PolymerIon, XYTrace> entry : polymerMap.entrySet()) {
 			PolymerIon key = entry.getKey();
 			XYTrace value = entry.getValue();
-			Range range = TransitionRefiner.getPeakRange(value, parameters.getExpectedPeakWidth());
+			Range range = TransitionRefiner.getPeakRange(value, parameters.getMinNumIntegratedRTPoints(), parameters.getExpectedPeakWidth());
 			trimmedPolymerMap.put(key, value.trim(range));
 		}
 

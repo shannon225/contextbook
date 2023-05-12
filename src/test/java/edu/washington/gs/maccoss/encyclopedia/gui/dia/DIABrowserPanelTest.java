@@ -14,6 +14,15 @@ import junit.framework.TestCase;
 public class DIABrowserPanelTest {
 	public static void main(String[] args) {
 		ArrayList<XYPoint> TESTPoints=new ArrayList<>();
+		TESTPoints.add(new XYPoint(1, 0.0));
+		TESTPoints.add(new XYPoint(2, 0.0));
+		TESTPoints.add(new XYPoint(3, 0.0));
+		TESTPoints.add(new XYPoint(4, 0.0));
+		TESTPoints.add(new XYPoint(5, 0.0));
+		TESTPoints.add(new XYPoint(6, 0.0));
+		TESTPoints.add(new XYPoint(7, 0.0));
+		
+		/**
 		TESTPoints.add(new XYPoint(3154.998291015625, 0.0));
 		TESTPoints.add(new XYPoint(3158.427734375, 0.0027473419904708862));
 		TESTPoints.add(new XYPoint(3161.698486328125, 0.010544613935053349));
@@ -44,8 +53,9 @@ public class DIABrowserPanelTest {
 		TESTPoints.add(new XYPoint(3245.166015625, 0.03805849328637123));
 		TESTPoints.add(new XYPoint(3248.443115234375, 0.022103870287537575));
 		TESTPoints.add(new XYPoint(3251.826416015625, 7.605495629832149E-4));
+		**/
 		XYTrace TESTTrace=new XYTrace(TESTPoints, GraphType.line, "TEST");
-		Range TESTRange=TransitionRefiner.getPeakRange(TESTTrace, 25f);
+		Range TESTRange=TransitionRefiner.getPeakRange(TESTTrace, 3, 25f);
 		XYTrace TESTTrimmed=TESTTrace.trim(TESTRange).updateColor(Color.green, 4.0f);
 		Charter.launchChart("RT", "Intensity", true, TESTTrace, TESTTrimmed);
 	}
@@ -84,7 +94,7 @@ public class DIABrowserPanelTest {
 		TESTPoints.add(new XYPoint(3573.402587890625, 0.0));
 		TESTPoints.add(new XYPoint(3576.711669921875, 0.0));
 		XYTrace TESTTrace=new XYTrace(TESTPoints, GraphType.line, "TEST");
-		Range TESTRange=TransitionRefiner.getPeakRange(TESTTrace, 25f);
+		Range TESTRange=TransitionRefiner.getPeakRange(TESTTrace, 3, 25f);
 		XYTrace TESTTrimmed=TESTTrace.trim(TESTRange).updateColor(Color.green, 4.0f);
 		Charter.launchChart("RT", "Intensity", true, TESTTrace, TESTTrimmed);
 	}
@@ -175,7 +185,7 @@ public class DIABrowserPanelTest {
 		PEG_17Points.add(new XYPoint(76.51170349121094, 1193069.544642857));
 		PEG_17Points.add(new XYPoint(76.51709747314453, 1231571.8066829005));
 		XYTrace PEG_17Trace=new XYTrace(PEG_17Points, GraphType.line, "PEG_17");
-		Range PEG_17Range=TransitionRefiner.getPeakRange(PEG_17Trace, 25f);
+		Range PEG_17Range=TransitionRefiner.getPeakRange(PEG_17Trace, 3, 25f);
 		XYTrace PEG_17Trimmed=PEG_17Trace.trim(PEG_17Range).updateColor(Color.green, 4.0f);
 		Charter.launchChart("RT", "Intensity", true, PEG_17Trace, PEG_17Trimmed);
 		ArrayList<XYPoint> PEG_7Points=new ArrayList<>();
@@ -347,7 +357,7 @@ public class DIABrowserPanelTest {
 		PEG_7Points.add(new XYPoint(38.58121871948242, 793517.4329004328));
 		PEG_7Points.add(new XYPoint(38.58515930175781, 768265.4875541126));
 		XYTrace PEG_7Trace=new XYTrace(PEG_7Points, GraphType.line, "PEG_7");
-		Range PEG_7Range=TransitionRefiner.getPeakRange(PEG_7Trace, 25f);
+		Range PEG_7Range=TransitionRefiner.getPeakRange(PEG_7Trace, 3, 25f);
 		XYTrace PEG_7Trimmed=PEG_7Trace.trim(PEG_7Range).updateColor(Color.green, 4.0f);
 		Charter.launchChart("RT", "Intensity", true, PEG_7Trace, PEG_7Trimmed);
 		ArrayList<XYPoint> PEGp2H_60Points=new ArrayList<>();
@@ -378,7 +388,7 @@ public class DIABrowserPanelTest {
 		PEGp2H_60Points.add(new XYPoint(108.46691131591797, 0.0));
 		PEGp2H_60Points.add(new XYPoint(108.4831771850586, 0.0));
 		XYTrace PEGp2H_60Trace=new XYTrace(PEGp2H_60Points, GraphType.line, "PEGp2H_60");
-		Range PEGp2H_60Range=TransitionRefiner.getPeakRange(PEGp2H_60Trace, 25f);
+		Range PEGp2H_60Range=TransitionRefiner.getPeakRange(PEGp2H_60Trace, 3, 25f);
 		XYTrace PEGp2H_60Trimmed=PEGp2H_60Trace.trim(PEGp2H_60Range).updateColor(Color.green, 4.0f);
 		Charter.launchChart("RT", "Intensity", true, PEGp2H_60Trace, PEGp2H_60Trimmed);
 		ArrayList<XYPoint> PEGp2H_40Points=new ArrayList<>();
@@ -412,7 +422,7 @@ public class DIABrowserPanelTest {
 		PEGp2H_40Points.add(new XYPoint(107.2739028930664, 0.0));
 		PEGp2H_40Points.add(new XYPoint(107.29012298583984, 0.0));
 		XYTrace PEGp2H_40Trace=new XYTrace(PEGp2H_40Points, GraphType.line, "PEGp2H_40");
-		Range PEGp2H_40Range=TransitionRefiner.getPeakRange(PEGp2H_40Trace, 25f);
+		Range PEGp2H_40Range=TransitionRefiner.getPeakRange(PEGp2H_40Trace, 3, 25f);
 		XYTrace PEGp2H_40Trimmed=PEGp2H_40Trace.trim(PEGp2H_40Range).updateColor(Color.green, 4.0f);
 		Charter.launchChart("RT", "Intensity", true, PEGp2H_40Trace, PEGp2H_40Trimmed);
 		ArrayList<XYPoint> PEGp3H_93Points=new ArrayList<>();
@@ -477,7 +487,7 @@ public class DIABrowserPanelTest {
 		PEGp3H_93Points.add(new XYPoint(99.78716278076172, 0.0));
 		PEGp3H_93Points.add(new XYPoint(99.79096221923828, 0.0));
 		XYTrace PEGp3H_93Trace=new XYTrace(PEGp3H_93Points, GraphType.line, "PEGp3H_93");
-		Range PEGp3H_93Range=TransitionRefiner.getPeakRange(PEGp3H_93Trace, 25f);
+		Range PEGp3H_93Range=TransitionRefiner.getPeakRange(PEGp3H_93Trace, 3, 25f);
 		XYTrace PEGp3H_93Trimmed=PEGp3H_93Trace.trim(PEGp3H_93Range).updateColor(Color.green, 4.0f);
 		Charter.launchChart("RT", "Intensity", true, PEGp3H_93Trace, PEGp3H_93Trimmed);
 		ArrayList<XYPoint> PEGp2H_20Points=new ArrayList<>();
@@ -604,7 +614,7 @@ public class DIABrowserPanelTest {
 		PEGp2H_20Points.add(new XYPoint(83.04976654052734, 3718155.41991342));
 		PEGp2H_20Points.add(new XYPoint(83.05463409423828, 3679564.341991342));
 		XYTrace PEGp2H_20Trace=new XYTrace(PEGp2H_20Points, GraphType.line, "PEGp2H_20");
-		Range PEGp2H_20Range=TransitionRefiner.getPeakRange(PEGp2H_20Trace, 25f);
+		Range PEGp2H_20Range=TransitionRefiner.getPeakRange(PEGp2H_20Trace, 3, 25f);
 		XYTrace PEGp2H_20Trimmed=PEGp2H_20Trace.trim(PEGp2H_20Range).updateColor(Color.green, 4.0f);
 		Charter.launchChart("RT", "Intensity", true, PEGp2H_20Trace, PEGp2H_20Trimmed);
 		ArrayList<XYPoint> PEGp3H_63Points=new ArrayList<>();
@@ -678,7 +688,7 @@ public class DIABrowserPanelTest {
 		PEGp3H_63Points.add(new XYPoint(84.88911437988281, 4790.221590909091));
 		PEGp3H_63Points.add(new XYPoint(84.893310546875, 7180.560699066558));
 		XYTrace PEGp3H_63Trace=new XYTrace(PEGp3H_63Points, GraphType.line, "PEGp3H_63");
-		Range PEGp3H_63Range=TransitionRefiner.getPeakRange(PEGp3H_63Trace, 25f);
+		Range PEGp3H_63Range=TransitionRefiner.getPeakRange(PEGp3H_63Trace, 3, 25f);
 		XYTrace PEGp3H_63Trimmed=PEGp3H_63Trace.trim(PEGp3H_63Range).updateColor(Color.green, 4.0f);
 		Charter.launchChart("RT", "Intensity", true, PEGp3H_63Trace, PEGp3H_63Trimmed);
 		ArrayList<XYPoint> PEGp3H_33Points=new ArrayList<>();
@@ -808,7 +818,7 @@ public class DIABrowserPanelTest {
 		PEGp3H_33Points.add(new XYPoint(102.33635711669922, 533175.7479707792));
 		PEGp3H_33Points.add(new XYPoint(102.34169006347656, 486819.1617965368));
 		XYTrace PEGp3H_33Trace=new XYTrace(PEGp3H_33Points, GraphType.line, "PEGp3H_33");
-		Range PEGp3H_33Range=TransitionRefiner.getPeakRange(PEGp3H_33Trace, 25f);
+		Range PEGp3H_33Range=TransitionRefiner.getPeakRange(PEGp3H_33Trace, 3, 25f);
 		XYTrace PEGp3H_33Trimmed=PEGp3H_33Trace.trim(PEGp3H_33Range).updateColor(Color.green, 4.0f);
 		Charter.launchChart("RT", "Intensity", true, PEGp3H_33Trace, PEGp3H_33Trimmed);
 		ArrayList<XYPoint> PEGp3H_100Points=new ArrayList<>();
@@ -851,7 +861,7 @@ public class DIABrowserPanelTest {
 		PEGp3H_100Points.add(new XYPoint(114.63397979736328, 0.0));
 		PEGp3H_100Points.add(new XYPoint(114.64338684082031, 0.0));
 		XYTrace PEGp3H_100Trace=new XYTrace(PEGp3H_100Points, GraphType.line, "PEGp3H_100");
-		Range PEGp3H_100Range=TransitionRefiner.getPeakRange(PEGp3H_100Trace, 25f);
+		Range PEGp3H_100Range=TransitionRefiner.getPeakRange(PEGp3H_100Trace, 3, 25f);
 		XYTrace PEGp3H_100Trimmed=PEGp3H_100Trace.trim(PEGp3H_100Range).updateColor(Color.green, 4.0f);
 		Charter.launchChart("RT", "Intensity", true, PEGp3H_100Trace, PEGp3H_100Trimmed);
 	}

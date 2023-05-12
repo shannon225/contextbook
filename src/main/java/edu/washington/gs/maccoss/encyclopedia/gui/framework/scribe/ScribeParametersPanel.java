@@ -266,6 +266,8 @@ public class ScribeParametersPanel extends JPanel implements ParametersPanelInte
 				numberOfExtraDecoyLibrariesValue,
 				true,
 				true,
+				-1.0f,
+				SearchParameters.DEFAULT_MIN_NUM_INTEGRATED_RT_POINTS,
 				false,
 				false,
 				Optional.empty(),
