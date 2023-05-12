@@ -64,6 +64,7 @@ public class SearchParameterParser {
 		map.put("-normalizeByTIC", "true");
 		map.put(SearchParameters.SUBTRACT_BACKGROUND, "true");
 		map.put(SearchParameters.MASK_BAD_INTEGRATIONS, "false");
+		map.put(SearchParameters.INTEGRATE_PRECURSORS, "false");
 		return map;
 	}
 	
@@ -87,6 +88,7 @@ public class SearchParameterParser {
 		map.put("-normalizeByTIC", "true");
 		map.put(SearchParameters.SUBTRACT_BACKGROUND, "true");
 		map.put(SearchParameters.MASK_BAD_INTEGRATIONS, "false");
+		map.put(SearchParameters.INTEGRATE_PRECURSORS, "false");
 		return map;
 	}
 	
@@ -142,6 +144,7 @@ public class SearchParameterParser {
         final boolean subtractBackground;
         final boolean maskBadIntegrations;
         final boolean integratePrecursors;
+        final boolean adjustInferredRTBoundaries;
         final boolean enableAdvancedOptions;
         final Optional<File> percolatorModelFile;
         final Optional<File> precursorIsolationRangeFile;
@@ -366,6 +369,7 @@ public class SearchParameterParser {
         subtractBackground=ParsingUtils.getBoolean(SearchParameters.SUBTRACT_BACKGROUND, parameters, true);
         maskBadIntegrations=ParsingUtils.getBoolean(SearchParameters.MASK_BAD_INTEGRATIONS, parameters, false);
         integratePrecursors=ParsingUtils.getBoolean(SearchParameters.INTEGRATE_PRECURSORS, parameters, false);
+        adjustInferredRTBoundaries=ParsingUtils.getBoolean(SearchParameters.ADJUST_INFERRED_RT_BOUNDARIES, parameters, false);
         enableAdvancedOptions=ParsingUtils.getBoolean(SearchParameters.ENABLE_ADVANCED_OPTIONS, parameters, false);
 
 		return new SearchParameters(
@@ -407,6 +411,7 @@ public class SearchParameterParser {
 				normalizeByTIC,
 				subtractBackground,
 				maskBadIntegrations,
+				adjustInferredRTBoundaries,
 				integratePrecursors,
 				enableAdvancedOptions
 		);

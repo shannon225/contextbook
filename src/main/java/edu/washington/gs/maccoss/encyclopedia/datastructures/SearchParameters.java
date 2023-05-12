@@ -35,6 +35,7 @@ public class SearchParameters implements XMLObject {
 	public static final String SUBTRACT_BACKGROUND = "-subtractBackground";
 	public static final String MASK_BAD_INTEGRATIONS = "-maskBadIntegrations";
 	public static final String INTEGRATE_PRECURSORS = "-integratePrecursors";
+	public static final String ADJUST_INFERRED_RT_BOUNDARIES = "-adjustInferredRTBoundaries";
 
 	protected final AminoAcidConstants aaConstants;
 	protected final FragmentationType fragType;
@@ -78,6 +79,7 @@ public class SearchParameters implements XMLObject {
     protected final boolean subtractBackground;
     protected final boolean maskBadIntegrations;
     protected final boolean integratePrecursors;
+    protected final boolean adjustInferredRTBoundaries;
     
     public Optional<ArrayList<Range>> getPrecursorIsolationRanges() {
 		return precursorIsolationRanges;
@@ -88,7 +90,7 @@ public class SearchParameters implements XMLObject {
 			int percolatorTrainingIterations, DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, 
 			int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, int topNTargetsUsed, float minIntensity, float minIntensityNumIons, Optional<PeptideModification> localizingModification, ScoringBreadthType CASiLBreadthType, 
 			float getNumberOfExtraDecoyLibrariesSearched, boolean quantifyAcrossSamples, boolean verifyModificationIons, float rtWindowInMin, boolean filterPeaklists, boolean doNotUseGlobalFDR, 
-			Optional<File> precursorIsolationRangeFile, Optional<File> percolatorModelFile, boolean normalizeByTIC, boolean subtractBackground, boolean maskBadIntegrations, boolean integratePrecursors, boolean enableAdvancedOptions) {
+			Optional<File> precursorIsolationRangeFile, Optional<File> percolatorModelFile, boolean normalizeByTIC, boolean subtractBackground, boolean maskBadIntegrations, boolean adjustInferredRTBoundaries, boolean integratePrecursors, boolean enableAdvancedOptions) {
 		this.aaConstants=aaConstants;
 		this.fragType=fragType;
 		this.precursorTolerance=precursorTolerance;
@@ -127,6 +129,7 @@ public class SearchParameters implements XMLObject {
         this.normalizeByTIC=normalizeByTIC;
         this.subtractBackground=subtractBackground;
         this.maskBadIntegrations=maskBadIntegrations;
+        this.adjustInferredRTBoundaries=adjustInferredRTBoundaries;
         this.integratePrecursors=integratePrecursors;
         this.enableAdvancedOptions=enableAdvancedOptions;
         
@@ -555,5 +558,9 @@ public class SearchParameters implements XMLObject {
     
     public boolean isIntegratePrecursors() {
 		return integratePrecursors;
+	}
+    
+    public boolean adjustInferredRTBoundaries() {
+		return adjustInferredRTBoundaries;
 	}
 }

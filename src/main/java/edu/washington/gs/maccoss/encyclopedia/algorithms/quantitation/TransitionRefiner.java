@@ -132,7 +132,9 @@ public class TransitionRefiner {
 
 	public static TransitionRefinementData identifyTransitions(String peptideModSeq, byte precursorCharge, float retentionTimeInSec, FragmentIon[] fragmentMasses, ArrayList<float[]> chromatograms, float[] retentionTimes, Optional<float[]> maybeMedianChromatogram, boolean wasInferred, boolean plot, SearchParameters params) {
 		if (chromatograms.size()==0) return new TransitionRefinementData(peptideModSeq, precursorCharge, new FragmentIon[0], chromatograms, new float[0], new boolean[0], new float[0], new float[0], new float[0], new Range(retentionTimes[0], retentionTimes[retentionTimes.length-1]), params.getAAConstants());
-		MedianChromatogramData medianData = extractMedianChromatogram(retentionTimeInSec, chromatograms, retentionTimes, maybeMedianChromatogram, wasInferred, params.getExpectedPeakWidth());
+		
+		boolean adjustPeakBoundaries=wasInferred&&params.adjustInferredRTBoundaries();
+		MedianChromatogramData medianData = extractMedianChromatogram(retentionTimeInSec, chromatograms, retentionTimes, maybeMedianChromatogram, adjustPeakBoundaries, params.getExpectedPeakWidth());
 
 		float medianMean=General.mean(medianData.getMedianChromatogram(), medianData.getIndices().getStart(), medianData.getIndices().getStop());
 		float[] correlationArray=new float[medianData.getNormalizedChromatograms().size()];

@@ -1,8 +1,18 @@
 EncyclopeDIA changelog for user-facing changes:
 
 encyclopedia-3.0.0-SNAPSHOT
+ - Feature: added "-minIntensityNumIons" to filter raw files based on minimum number of ions measured (default is -1 or "off", Thermo raw files only)
+ - Feature: added option to specify a new FASTA when combining multiple libraries together. This can be beneficial if libraries were originally created with different FASTA databases
+ - Feature: added "-maskBadIntegrations" to suppress background quantification when no "quantitative" ions are found. This inserts 0s for quant, which is useful in testing knockout studies or circumstances where specific peptides should not be found in certain samples (default is false)
+ - Feature: added "-integratePrecursors" to use Scribe-like precursor integration for DIA datasets (default is false)
+ - Feature: added "-subtractBackground" to background subtract quantitative ions using a moving median (default is true)
  - Bugfix: check if any DDA data was searched with Scribe before using min/max with Percolator for Quant Reports
  - Bugfix: fixed error parsing Pecan/Walnut primary score when making chromatogram libraries or Quant Reports
+ - Bugfix: fixed error in m/z mass inconsistency between PeptideQuants and Entries tables when using non-chromatogram library searches. This fixes some behavior with Skyline
+ - Bugfix: fixed StackOverflowError in mass accuracy calculation when searching very long files with Scribe
+ - Bugfix: fixed protein grouping error in parsimony calculation
+ - Bugfix: fixed bug specifying Percolator test and train FDRs when using Percolator 3.05 and above (thanks Seth!)
+ - Bugfix: fixed minor bugs in parsing Spectronaut Libraries
 
 encyclopedia-2.12.30
  - Feature: added Scribe searching and precursor quant for DDA

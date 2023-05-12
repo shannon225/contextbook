@@ -89,6 +89,7 @@ public class XCordiaSearchParameters extends PecanSearchParameters {
 			boolean normalizeByTIC,
 			boolean subtractBackground,
 			boolean maskBadIntegrations,
+			boolean adjustInferredRTBoundaries,
 			boolean integratePrecursors,
 			boolean enableAdvancedOptions
 	) {
@@ -137,6 +138,7 @@ public class XCordiaSearchParameters extends PecanSearchParameters {
 				normalizeByTIC,
 				subtractBackground,
 				maskBadIntegrations,
+				adjustInferredRTBoundaries,
 				integratePrecursors,
 				enableAdvancedOptions
 		);
@@ -246,6 +248,7 @@ public class XCordiaSearchParameters extends PecanSearchParameters {
 				params.isNormalizeByTIC(),
 				params.isSubtractBackground(),
 				params.isMaskBadIntegrations(),
+				params.adjustInferredRTBoundaries(), 
 				params.isIntegratePrecursors(),
 				params.isEnableAdvancedOptions()
 		);
