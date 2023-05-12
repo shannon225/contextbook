@@ -63,9 +63,12 @@ public class LibraryToQuantTest extends TestCase {
 //		}
 
 		assertEquals(140, pair2.y.size()); // 140 of 140
-		assertEquals(133, pair.y.size()); // 139 of 140
+		assertEquals(140, pair.y.size()); // 139 of 140
 		assertTrue(peptideModSeqs.containsKey("IPWTAASSQLK")); // a correct integration
-		assertFalse(peptideModSeqs.containsKey("NLENTQNQIK")); // missing because no peaks
+		
+		// now true because we're forcing integration of everything!
+		//assertFalse(peptideModSeqs.containsKey("NLENTQNQIK")); // missing because no peaks
+		assertEquals(0.0f, peptideModSeqs.get("NLENTQNQIK").getIntegrationScore());
 	}
 	
 	public static void main(String[] args) throws Exception {
