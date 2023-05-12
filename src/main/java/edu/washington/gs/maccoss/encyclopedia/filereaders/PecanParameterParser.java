@@ -116,6 +116,7 @@ public class PecanParameterParser {
         final boolean normalizeByTIC;
         final boolean subtractBackground;
         final boolean maskBadIntegrations;
+        final boolean adjustInferredRTBoundaries;
         final boolean integratePrecursors;
         final boolean enableAdvancedOptions;
 
@@ -300,6 +301,7 @@ public class PecanParameterParser {
 		subtractBackground = ParsingUtils.getBoolean(SearchParameters.SUBTRACT_BACKGROUND, parameters, true);
         maskBadIntegrations=ParsingUtils.getBoolean(SearchParameters.MASK_BAD_INTEGRATIONS, parameters, false);
         integratePrecursors=ParsingUtils.getBoolean(SearchParameters.INTEGRATE_PRECURSORS, parameters, false);
+        adjustInferredRTBoundaries=ParsingUtils.getBoolean(SearchParameters.ADJUST_INFERRED_RT_BOUNDARIES, parameters, false);
 		normalizeByTIC = ParsingUtils.getBoolean("-normalizeByTIC", parameters, true);
 		enableAdvancedOptions = ParsingUtils.getBoolean(SearchParameters.ENABLE_ADVANCED_OPTIONS, parameters, false);
 
@@ -348,6 +350,7 @@ public class PecanParameterParser {
 				normalizeByTIC,
 				subtractBackground,
 				maskBadIntegrations,
+				adjustInferredRTBoundaries,
 				integratePrecursors,
 				enableAdvancedOptions
 		);

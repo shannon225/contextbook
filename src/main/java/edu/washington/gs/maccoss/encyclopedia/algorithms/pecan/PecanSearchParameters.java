@@ -249,6 +249,7 @@ public class PecanSearchParameters extends SearchParameters {
 			boolean normalizeByTIC,
 			boolean subtractBackground,
 			boolean maskBadIntegrations,
+			boolean adjustInferredRTBoundaries,
 			boolean integratePrecursors,
 			boolean enableAdvancedOptions) {
 		super(
@@ -290,6 +291,7 @@ public class PecanSearchParameters extends SearchParameters {
 				normalizeByTIC,
 				subtractBackground,
 				maskBadIntegrations,
+				adjustInferredRTBoundaries,
 				integratePrecursors,
 				enableAdvancedOptions
 		);
@@ -375,6 +377,7 @@ public class PecanSearchParameters extends SearchParameters {
 				true,
 				false,
 				false,
+				false,
 				false
 		);
 		minPeptideLength=5;
@@ -439,6 +442,7 @@ public class PecanSearchParameters extends SearchParameters {
 				Optional.empty(),
 				true,
 				true,
+				false,
 				false,
 				false,
 				false);
@@ -508,6 +512,7 @@ public class PecanSearchParameters extends SearchParameters {
 				true,
 				false,
 				false,
+				false,
 				false
 		);
 		minPeptideLength=5;
@@ -575,6 +580,7 @@ public class PecanSearchParameters extends SearchParameters {
 				Optional.empty(),
 				true,
 				true,
+				false,
 				false,
 				false,
 				false);

@@ -174,6 +174,7 @@ public class ThesaurusSearchParameters extends SearchParameters {
 			boolean normalizeByTIC,
 			boolean subtractBackground,
 			boolean maskBadIntegrations,
+			boolean adjustInferredRTBoundaries,
 			boolean integratePrecursors,
 			boolean enableAdvancedOptions
 	) {
@@ -216,6 +217,7 @@ public class ThesaurusSearchParameters extends SearchParameters {
 				normalizeByTIC,
 				subtractBackground,
 				maskBadIntegrations,
+				adjustInferredRTBoundaries,
 				integratePrecursors,
 				enableAdvancedOptions
 		);
@@ -269,6 +271,7 @@ public class ThesaurusSearchParameters extends SearchParameters {
 				params.isNormalizeByTIC(),
 				params.isSubtractBackground(),
 				params.isMaskBadIntegrations(),
+				params.adjustInferredRTBoundaries(), 
 				params.isIntegratePrecursors(),
 				params.isEnableAdvancedOptions()
 		);

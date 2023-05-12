@@ -149,6 +149,7 @@ public class ScribeSearchParameters extends SearchParameters {
 			boolean normalizeByTIC,
 			boolean subtractBackground,
 			boolean maskBadIntegrations,
+			boolean adjustInferredRTBoundaries,
 			boolean integratePrecursors,
 			boolean enableAdvancedOptions
 	) {
@@ -191,6 +192,7 @@ public class ScribeSearchParameters extends SearchParameters {
 				normalizeByTIC,
 				subtractBackground,
 				maskBadIntegrations,
+				adjustInferredRTBoundaries,
 				integratePrecursors,
 				enableAdvancedOptions
 		);
@@ -235,6 +237,7 @@ public class ScribeSearchParameters extends SearchParameters {
 				params.isNormalizeByTIC(),
 				params.isSubtractBackground(),
 				params.isMaskBadIntegrations(),
+				params.adjustInferredRTBoundaries(), 
 				params.isIntegratePrecursors(),
 				params.isEnableAdvancedOptions()
 		);
