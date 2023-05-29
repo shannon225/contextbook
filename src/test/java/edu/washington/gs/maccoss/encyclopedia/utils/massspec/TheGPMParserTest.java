@@ -65,7 +65,7 @@ public class TheGPMParserTest {
 		entries=FastaReader.readFasta(fasta, params);
 		
 		for (DigestionEnzyme enzyme : enzymes) {
-			HashSet<GPMPeptide> kept = matchToEnzyme(entries, params, pepBySeq, enzyme, 250);
+			HashSet<GPMPeptide> kept = matchToEnzyme(entries, params, pepBySeq, enzyme, 1000);
 			peptideSetByEnzyme.get(enzyme).addAll(kept);
 			System.out.println(enzyme+" --> "+peptideSetByEnzyme.get(enzyme).size());
 		}
@@ -77,7 +77,7 @@ public class TheGPMParserTest {
 		entries=FastaReader.readFasta(fasta, params);
 		
 		for (DigestionEnzyme enzyme : enzymes) {
-			HashSet<GPMPeptide> kept = matchToEnzyme(entries, params, pepBySeq, enzyme, 100);
+			HashSet<GPMPeptide> kept = matchToEnzyme(entries, params, pepBySeq, enzyme, 1000);
 			peptideSetByEnzyme.get(enzyme).addAll(kept);
 			System.out.println(enzyme+" --> "+peptideSetByEnzyme.get(enzyme).size());
 		}
@@ -89,7 +89,7 @@ public class TheGPMParserTest {
 		entries=FastaReader.readFasta(fasta, params);
 		
 		for (DigestionEnzyme enzyme : enzymes) {
-			HashSet<GPMPeptide> kept = matchToEnzyme(entries, params, pepBySeq, enzyme, 100);
+			HashSet<GPMPeptide> kept = matchToEnzyme(entries, params, pepBySeq, enzyme, 1000);
 			peptideSetByEnzyme.get(enzyme).addAll(kept);
 			System.out.println(enzyme+" --> "+peptideSetByEnzyme.get(enzyme).size());
 		}
@@ -101,7 +101,7 @@ public class TheGPMParserTest {
 		entries=FastaReader.readFasta(fasta, params);
 		
 		for (DigestionEnzyme enzyme : enzymes) {
-			HashSet<GPMPeptide> kept = matchToEnzyme(entries, params, pepBySeq, enzyme, 100);
+			HashSet<GPMPeptide> kept = matchToEnzyme(entries, params, pepBySeq, enzyme, 500);
 			peptideSetByEnzyme.get(enzyme).addAll(kept);
 			System.out.println(enzyme+" --> "+peptideSetByEnzyme.get(enzyme).size());
 		}
@@ -113,7 +113,7 @@ public class TheGPMParserTest {
 		entries=FastaReader.readFasta(fasta, params);
 		
 		for (DigestionEnzyme enzyme : enzymes) {
-			HashSet<GPMPeptide> kept = matchToEnzyme(entries, params, pepBySeq, enzyme, 100);
+			HashSet<GPMPeptide> kept = matchToEnzyme(entries, params, pepBySeq, enzyme, 500);
 			peptideSetByEnzyme.get(enzyme).addAll(kept);
 			System.out.println(enzyme+" --> "+peptideSetByEnzyme.get(enzyme).size());
 		}
@@ -125,7 +125,7 @@ public class TheGPMParserTest {
 		entries=FastaReader.readFasta(fasta, params);
 		
 		for (DigestionEnzyme enzyme : enzymes) {
-			HashSet<GPMPeptide> kept = matchToEnzyme(entries, params, pepBySeq, enzyme, 100);
+			HashSet<GPMPeptide> kept = matchToEnzyme(entries, params, pepBySeq, enzyme, 500);
 			peptideSetByEnzyme.get(enzyme).addAll(kept);
 			System.out.println(enzyme+" --> "+peptideSetByEnzyme.get(enzyme).size());
 		}

@@ -24,6 +24,7 @@ import gnu.trove.map.hash.TCharDoubleHashMap;
 
 public class MProphetIT {
 	public static void main(String[] args) throws Exception {
+		//File featureFile=new File("/Volumes/MacOnlySSD/day8/2022_12_05_ID5_day2_tcells_16mzst_DIA_wtrap_50cm_01.mzML.features.txt");
 		File featureFile=new File("/Users/searleb/Documents/teaching/encyclopedia/test/23aug2017_hela_serum_timecourse_wide_1a.dia.features.txt");
 		File fastaFile=new File(featureFile.getParent(), "uniprot-9606.fasta");
 		processMProphet(featureFile, fastaFile);
@@ -55,13 +56,14 @@ public class MProphetIT {
 		final AminoAcidConstants aaConstants = new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
 		final float threshold = 0.01f;
 		
-		if (true) return; // FIXME finish test
-		
 		Pair<ArrayList<PercolatorPeptide>, Float> origpair=MProphet.executeMProphetTSV(percolatorFiles, threshold, aaConstants, 0);
 
 		assertTrue(origpair.x.size()>0);
 		assertTrue(origpair.y>0);
-
+		
+		System.out.println("total pep: "+origpair.x.size());
+		System.out.println("pi_0: "+origpair.y);
+		
 		// Check that re-reading the results gives the same data as the return from executing Percolator
 		Pair<ArrayList<PercolatorPeptide>, Float> pair= PercolatorReader.getPassingPeptidesFromTSV(percolatorFiles.getPeptideOutputFile(), threshold, aaConstants, false);
 		assertEquals(origpair.x.size(), pair.x.size());
