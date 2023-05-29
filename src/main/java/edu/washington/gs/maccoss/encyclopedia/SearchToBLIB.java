@@ -72,6 +72,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroupInterfa
 import edu.washington.gs.maccoss.encyclopedia.datastructures.QuantitativeSearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.parameters.InstrumentSpecificSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
@@ -115,7 +116,8 @@ public class SearchToBLIB {
 	public static void main(String[] args) {
 		final Pair<List<String>, HashMap<String, String>> parsedArgs = CommandLineParser.parseMultipleAndRemainingArguments(args, Encyclopedia.INPUT_DIA_TAG);
 		final List<String> diaPaths = parsedArgs.x;
-		final HashMap<String, String> arguments = parsedArgs.y;
+		HashMap<String, String> arguments = parsedArgs.y;
+		arguments=InstrumentSpecificSearchParameters.checkParameters(arguments);
 
 		if (arguments.size()==0) {
 			SearchGUIMain.runGUI(ProgramType.EncyclopeDIA);
@@ -308,6 +310,8 @@ public class SearchToBLIB {
 			Logger.errorLine("You are required to specify an input file or directory (-i), an input library file (-l), a fasta database (-f), and an output library file (-o)");
 			System.exit(1);
 		}
+		
+		arguments=InstrumentSpecificSearchParameters.checkParameters(arguments);
 
 		File fastaFile=new File(arguments.get("-f"));
 		File libraryFile=new File(arguments.get("-l"));

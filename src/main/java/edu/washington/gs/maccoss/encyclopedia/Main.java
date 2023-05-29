@@ -7,6 +7,7 @@ import java.util.TreeMap;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.parameters.InstrumentSpecificSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.ConfigFileParser;
@@ -37,6 +38,8 @@ public class Main {
 		}
 		
 		HashMap<String, String> arguments=CommandLineParser.parseArguments(args);
+		arguments=InstrumentSpecificSearchParameters.checkParameters(arguments);
+		
 		if (arguments.containsKey(ConfigFileParser.CONFIG_FILE_TAG)) {
 			ConfigFileParser.updateArguments(arguments);
 			args = CommandLineParser.unparseArguments(arguments);

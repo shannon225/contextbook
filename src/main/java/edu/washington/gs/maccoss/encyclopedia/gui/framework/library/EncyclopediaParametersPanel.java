@@ -280,6 +280,7 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 				false,
 				false
 		);
+		//parameters=Instr
 
 		String cmds=additionalCommandLineOptions.getText();
 		HashMap<String, String> params=parameters.toParameterMap();

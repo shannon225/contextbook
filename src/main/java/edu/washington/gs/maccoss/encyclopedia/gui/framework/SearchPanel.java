@@ -14,10 +14,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Optional;
+import java.util.Vector;
 
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -43,6 +45,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ThesaurusSearch
 import edu.washington.gs.maccoss.encyclopedia.algorithms.scribe.ScribeSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCordiaSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.parameters.InstrumentSpecificSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
@@ -74,6 +77,7 @@ import edu.washington.gs.maccoss.encyclopedia.jobs.SearchToBLIBJob;
 import edu.washington.gs.maccoss.encyclopedia.jobs.SearchToELIBJob;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.Networking;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 
 public class SearchPanel extends JPanel {
 	private static final long serialVersionUID=1L;
@@ -89,7 +93,9 @@ public class SearchPanel extends JPanel {
 	private static final ImageIcon helpIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/help_icon.png"));
 	private static final ImageIcon windowSchemeIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/window_scheme_icon.png"));
 	private static final ImageIcon xmlFileIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/xml_file_icon.png"));
-	
+
+	private final JComboBox<InstrumentSpecificSearchParameters> instrumentCombo=new JComboBox<InstrumentSpecificSearchParameters>(InstrumentSpecificSearchParameters.INSTRUMENTS);
+	private final JComboBox<DigestionEnzyme> enzymeCombo=new JComboBox<DigestionEnzyme>(new Vector<>(DigestionEnzyme.getAvailableEnzymes()));
 	
 	JobProcessorTableModel processorTableModel=new JobProcessorTableModel();
 	

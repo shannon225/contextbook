@@ -17,6 +17,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.parameters.InstrumentSpecificSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
@@ -90,6 +91,11 @@ public class SearchParameterParser {
 		map.put(SearchParameters.MASK_BAD_INTEGRATIONS, "false");
 		map.put(SearchParameters.INTEGRATE_PRECURSORS, "false");
 		return map;
+	}
+	
+	public static SearchParameters getDefaultParametersObject(InstrumentSpecificSearchParameters instrument) {
+		HashMap<String, String> defaultParameters = instrument.overwriteParameters(getDefaultParameters());
+		return parseParameters(defaultParameters);
 	}
 	
 	public static SearchParameters getDefaultParametersObject() {

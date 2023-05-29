@@ -12,6 +12,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.parameters.InstrumentSpecificSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
@@ -58,6 +59,11 @@ public class PecanParameterParser {
         map.put("-filterPeaklists", "false");
         map.put("-normalizeByTIC", "true");
 		return map;
+	}
+	
+	public static SearchParameters getDefaultParametersObject(InstrumentSpecificSearchParameters instrument) {
+		HashMap<String, String> defaultParameters = instrument.overwriteParameters(getDefaultParameters());
+		return parseParameters(defaultParameters);
 	}
 	
 	public static PecanSearchParameters getDefaultParametersObject() {
