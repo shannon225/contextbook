@@ -14,12 +14,15 @@ import gnu.trove.map.hash.TCharDoubleHashMap;
 
 public class LibraryEntryModifier {
 	public static void main(String[] args) throws Exception {
-		File inputFile=new File("/Volumes/RedSSD/billur/2023_01_29_SILAC_TESTS/DC_R10_clib.elib");
-		File outputFile=new File("/Volumes/RedSSD/billur/2023_01_29_SILAC_TESTS/DC_R10_clib_silac.dlib");
+		File inputFile=new File("/Users/searle.30/Documents/students/ariana/v3_library_exploris.elib");
+		File outputFile=new File("/Users/searle.30/Documents/students/ariana/v3_library_exploris_dimethyl.dlib");
 
 		TCharDoubleHashMap ptms=new TCharDoubleHashMap();
-		ptms.put('K',8.014199);
-		ptms.put('R',10.008269);
+		//ptms.put('K',8.014199);
+		//ptms.put('R',10.008269);
+
+		ptms.put('K',28.031300);
+		ptms.put('n',28.031300);
 		
 		//ptms.put('C',4.02);
 		
@@ -69,6 +72,40 @@ public class LibraryEntryModifier {
 		double[] modificationMasses=model.getModificationMasses().clone();
 		double[] masses=model.getMasses().clone();
 		String[] aas=model.getAas().clone();
+		
+		if (fixedMods.get(AminoAcidConstants.N_TERM)!=0.0) {
+			int i=0;
+			char aa=aas[i].charAt(0);
+			double ptmMass=fixedMods.get(AminoAcidConstants.N_TERM);
+			if (changePTMs) {
+				aas[i]=aa+"["+ptmMass+"]";
+				masses[i]=masses[i]-modificationMasses[i]+ptmMass;
+				modificationMasses[i]=ptmMass;
+				neutralLosses[i]=0.0; // don't adjust or keep neutral loss intensities since they most likely won't equate
+			} else {
+				masses[i]=masses[i]+ptmMass;
+				modificationMasses[i]=modificationMasses[i]+ptmMass;
+				aas[i]=aa+"["+modificationMasses[i]+"]";
+				// keep original neutral loss, since the new fixed mass change affects the AA, not the original ptm 
+			}
+		}
+		
+		if (fixedMods.get(AminoAcidConstants.C_TERM)!=0.0) {
+			int i=aas.length-1;
+			char aa=aas[i].charAt(0);
+			double ptmMass=fixedMods.get(AminoAcidConstants.C_TERM);
+			if (changePTMs) {
+				aas[i]=aa+"["+ptmMass+"]";
+				masses[i]=masses[i]-modificationMasses[i]+ptmMass;
+				modificationMasses[i]=ptmMass;
+				neutralLosses[i]=0.0; // don't adjust or keep neutral loss intensities since they most likely won't equate
+			} else {
+				masses[i]=masses[i]+ptmMass;
+				modificationMasses[i]=modificationMasses[i]+ptmMass;
+				aas[i]=aa+"["+modificationMasses[i]+"]";
+				// keep original neutral loss, since the new fixed mass change affects the AA, not the original ptm 
+			}
+		}
 		
 		for (int i = 0; i < aas.length; i++) {
 			char aa=aas[i].charAt(0);
