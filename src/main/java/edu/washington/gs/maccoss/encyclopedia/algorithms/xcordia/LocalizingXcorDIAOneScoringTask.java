@@ -188,7 +188,7 @@ public class LocalizingXcorDIAOneScoringTask extends AbstractLibraryScoringTask 
 					allChromatograms.add(chromatogram);
 				}
 			}
-			MedianChromatogramData allIonsData=TransitionRefiner.extractMedianChromatogram(stripe.getScanStartTime(), allChromatograms, chromMap.getRetentionTimes(), Optional.empty(), false, parameters.getExpectedPeakWidth());
+			MedianChromatogramData allIonsData=TransitionRefiner.extractMedianChromatogram(stripe.getScanStartTime(), allChromatograms, chromMap.getRetentionTimes(), Optional.empty(), false, parameters.getMinNumIntegratedRTPoints(), parameters.getExpectedPeakWidth());
 			float medianMean=General.mean(allIonsData.getMedianChromatogram(), allIonsData.getIndices().getStart(), allIonsData.getIndices().getStop());
 			int numberOfPeaks=0;
 			float sumCorrelation=0.0f;
@@ -310,7 +310,7 @@ public class LocalizingXcorDIAOneScoringTask extends AbstractLibraryScoringTask 
 			}
 			double[] uniqueIonMasses=FragmentIon.getMasses(uniqueIons.toArray(new FragmentIon[uniqueIons.size()]));
 			
-			MedianChromatogramData variantSpecificData=TransitionRefiner.extractMedianChromatogram(stripes.get(index).getScanStartTime(), variantSpecificChromatograms, chromMap.getRetentionTimes(), Optional.empty(), true, parameters.getExpectedPeakWidth());
+			MedianChromatogramData variantSpecificData=TransitionRefiner.extractMedianChromatogram(stripes.get(index).getScanStartTime(), variantSpecificChromatograms, chromMap.getRetentionTimes(), Optional.empty(), true, parameters.getMinNumIntegratedRTPoints(), parameters.getExpectedPeakWidth());
 			float medianMean=General.mean(variantSpecificData.getMedianChromatogram(), variantSpecificData.getIndices().getStart(), variantSpecificData.getIndices().getStop());
 
 			// calculate variant-specific p-value
@@ -347,7 +347,7 @@ public class LocalizingXcorDIAOneScoringTask extends AbstractLibraryScoringTask 
 					siteSpecificPeakshape = Optional.of(variantSpecificData.getMedianChromatogram());
 				}
 				
-				MedianChromatogramData allIonsData=TransitionRefiner.extractMedianChromatogram(stripes.get(index).getScanStartTime(), allChromatograms, chromMap.getRetentionTimes(), siteSpecificPeakshape, true, parameters.getExpectedPeakWidth());
+				MedianChromatogramData allIonsData=TransitionRefiner.extractMedianChromatogram(stripes.get(index).getScanStartTime(), allChromatograms, chromMap.getRetentionTimes(), siteSpecificPeakshape, true, parameters.getMinNumIntegratedRTPoints(), parameters.getExpectedPeakWidth());
 				medianMean=General.mean(allIonsData.getMedianChromatogram(), allIonsData.getIndices().getStart(), allIonsData.getIndices().getStop());
 				int numberOfPeaks=0;
 				float sumCorrelation=0.0f;

@@ -232,7 +232,7 @@ public class PrecursorIntegrator {
 		float[] rts=peak.getRt();
 		float[] intensities=peak.getIntensity();
 		
-		IntRange range=TransitionRefiner.getIndexRange(rts, intensities, params.getExpectedPeakWidth());
+		IntRange range=TransitionRefiner.getIndexRange(rts, intensities, params.getExpectedPeakWidth(), params.getMinNumIntegratedRTPoints());
 		
 		// require that the boundary contains the PSMs
 		RetentionTimeBoundary boundaryFromPSMs = RetentionTimeBoundary.getMedianBoundaries(psmRTsInSec);

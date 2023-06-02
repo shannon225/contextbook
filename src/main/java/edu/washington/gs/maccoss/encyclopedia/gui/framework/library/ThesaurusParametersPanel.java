@@ -278,6 +278,8 @@ public class ThesaurusParametersPanel extends JPanel implements ParametersPanelI
 				0.0f,
 				true,
 				false,
+				-1.0f,
+				SearchParameters.DEFAULT_MIN_NUM_INTEGRATED_RT_POINTS,
 				false,
 				false,
 				considerRearrangement,

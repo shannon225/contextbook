@@ -49,6 +49,11 @@ public class Targeted10HzParameters implements AbstractDilutionCurveFittingParam
 	public String getTargetAccessionNumberKeyword() {
 		return targetAccessionNumberKeyword;
 	}
+	
+	@Override
+	public boolean isTargetedProtein(String accession) {
+		return true;
+	}
 
 	public boolean isRequireAlignmentRT() {
 		return requireAlignmentRT;

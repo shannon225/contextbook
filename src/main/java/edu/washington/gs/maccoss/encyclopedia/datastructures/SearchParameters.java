@@ -36,6 +36,8 @@ public class SearchParameters implements XMLObject {
 	public static final String MASK_BAD_INTEGRATIONS = "-maskBadIntegrations";
 	public static final String INTEGRATE_PRECURSORS = "-integratePrecursors";
 	public static final String ADJUST_INFERRED_RT_BOUNDARIES = "-adjustInferredRTBoundaries";
+	public static final String MIN_NUM_INTEGRATED_RT_POINTS = "-minNumIntegratedRTPoints";
+	public static final int DEFAULT_MIN_NUM_INTEGRATED_RT_POINTS = 3;
 
 	protected final AminoAcidConstants aaConstants;
 	protected final FragmentationType fragType;
@@ -68,6 +70,7 @@ public class SearchParameters implements XMLObject {
 	protected final boolean quantifyAcrossSamples;
 	protected final boolean verifyModificationIons;
     protected final float rtWindowInMin;
+    protected final int minNumIntegratedRTPoints;
     protected final boolean filterPeaklists;
     protected final boolean doNotUseGlobalFDR;
     protected final int topNTargetsUsed;
@@ -89,7 +92,7 @@ public class SearchParameters implements XMLObject {
 			float percolatorThreshold, float percolatorProteinThreshold, PercolatorVersion percolatorVersionNumber, int percolatorTrainingSetSize, float percolatorTrainingSetThreshold,
 			int percolatorTrainingIterations, DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, 
 			int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, int topNTargetsUsed, float minIntensity, float minIntensityNumIons, Optional<PeptideModification> localizingModification, ScoringBreadthType CASiLBreadthType, 
-			float getNumberOfExtraDecoyLibrariesSearched, boolean quantifyAcrossSamples, boolean verifyModificationIons, float rtWindowInMin, boolean filterPeaklists, boolean doNotUseGlobalFDR, 
+			float getNumberOfExtraDecoyLibrariesSearched, boolean quantifyAcrossSamples, boolean verifyModificationIons, float rtWindowInMin, int minNumIntegratedRTPoints, boolean filterPeaklists, boolean doNotUseGlobalFDR, 
 			Optional<File> precursorIsolationRangeFile, Optional<File> percolatorModelFile, boolean normalizeByTIC, boolean subtractBackground, boolean maskBadIntegrations, boolean adjustInferredRTBoundaries, boolean integratePrecursors, boolean enableAdvancedOptions) {
 		this.aaConstants=aaConstants;
 		this.fragType=fragType;
@@ -122,6 +125,7 @@ public class SearchParameters implements XMLObject {
 		this.quantifyAcrossSamples=quantifyAcrossSamples;
 		this.verifyModificationIons=verifyModificationIons;
         this.rtWindowInMin=rtWindowInMin;
+        this.minNumIntegratedRTPoints=minNumIntegratedRTPoints;
         this.filterPeaklists=filterPeaklists;
         this.doNotUseGlobalFDR=doNotUseGlobalFDR;
         this.precursorIsolationRangeFile=precursorIsolationRangeFile;
@@ -225,6 +229,9 @@ public class SearchParameters implements XMLObject {
 		sb.append(" -normalizeByTIC "+normalizeByTIC+"\n");
 		sb.append(" "+SUBTRACT_BACKGROUND+" "+subtractBackground+"\n");
 		sb.append(" "+MASK_BAD_INTEGRATIONS+" "+maskBadIntegrations+"\n");
+		sb.append(" "+INTEGRATE_PRECURSORS+" "+integratePrecursors+"\n");
+		sb.append(" "+ADJUST_INFERRED_RT_BOUNDARIES+" "+adjustInferredRTBoundaries+"\n");
+		sb.append(" "+MIN_NUM_INTEGRATED_RT_POINTS+" "+minNumIntegratedRTPoints+"\n");
 		if (useTargetWindowCenter()) {
 			sb.append(" -targetWindowCenter "+targetWindowCenter+"\n");
 		}
@@ -277,6 +284,9 @@ public class SearchParameters implements XMLObject {
 		map.put("-normalizeByTIC", normalizeByTIC+"");
 		map.put(SUBTRACT_BACKGROUND, subtractBackground+"");
 		map.put(MASK_BAD_INTEGRATIONS, maskBadIntegrations+"");
+		map.put(INTEGRATE_PRECURSORS, integratePrecursors+"");
+		map.put(ADJUST_INFERRED_RT_BOUNDARIES, adjustInferredRTBoundaries+"");
+		map.put(MIN_NUM_INTEGRATED_RT_POINTS, minNumIntegratedRTPoints+"");
 		if (localizingModification.isPresent()) {
 			map.put("-localizationModification", localizingModification.get().getShortname());
 		} else {
@@ -524,7 +534,10 @@ public class SearchParameters implements XMLObject {
 	}
 	public float getRtWindowInMin() {
 		return rtWindowInMin;
-}
+	}
+	public int getMinNumIntegratedRTPoints() {
+		return minNumIntegratedRTPoints;
+	}
     public boolean isFilterPeaklists() {
         return filterPeaklists;
     }

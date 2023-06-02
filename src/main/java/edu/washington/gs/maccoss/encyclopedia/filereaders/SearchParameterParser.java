@@ -144,6 +144,7 @@ public class SearchParameterParser {
 		final boolean quantifyAcrossSamples;
 		final boolean verifyModificationIons;
 		final float rtWindowInMin;
+		final int minNumIntegratedRTPoints;
         final boolean filterPeaklists;
         final boolean doNotUseGlobalFDR;
         final boolean normalizeByTIC;
@@ -319,6 +320,7 @@ public class SearchParameterParser {
 		minIntensity=ParsingUtils.getFloat("-minIntensity", parameters, -1.0f);
 		minIntensityNumIons=ParsingUtils.getFloat("-minIntensityNumIons", parameters, -1.0f);
 		rtWindowInMin=ParsingUtils.getFloat("-rtWindowInMin", parameters, -1f);
+		minNumIntegratedRTPoints=ParsingUtils.getInteger("-minNumIntegratedRTPoints", parameters, SearchParameters.DEFAULT_MIN_NUM_INTEGRATED_RT_POINTS);
 		
 		value=parameters.get("-localizationModification");
 		if (value != null) {
@@ -410,6 +412,7 @@ public class SearchParameterParser {
 				quantifyAcrossSamples,
 				verifyModificationIons,
 				rtWindowInMin,
+				minNumIntegratedRTPoints,
 				filterPeaklists,
 				doNotUseGlobalFDR,
 				precursorIsolationRangeFile,

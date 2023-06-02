@@ -115,6 +115,8 @@ public class PecanParameterParser {
 		final float minIntensityNumIons;
 		final boolean quantifyAcrossSamples;
 		final boolean requireVariableMods;
+		final float rtWindowInMin;
+		final int minNumIntegratedRTPoints;
         final boolean filterPeaklists;
         final boolean doNotUseGlobalFDR;
         final Optional<File> percolatorModelFile;
@@ -298,6 +300,9 @@ public class PecanParameterParser {
 		minNumOfQuantitativePeaks=ParsingUtils.getInteger("-minNumOfQuantitativePeaks", parameters, 3);
 		topNTargetsUsed=ParsingUtils.getInteger("-topNTargetsUsed", parameters, -1);
 		
+		rtWindowInMin=ParsingUtils.getFloat("-rtWindowInMin", parameters, -1.0f);
+		minNumIntegratedRTPoints=ParsingUtils.getInteger("-minNumIntegratedRTPoints", parameters, SearchParameters.DEFAULT_MIN_NUM_INTEGRATED_RT_POINTS);
+		
 		minIntensity=ParsingUtils.getFloat("-minIntensity", parameters, -1.0f);
 		minIntensityNumIons=ParsingUtils.getFloat("-minIntensityNumIons", parameters, -1.0f);
 		quantifyAcrossSamples=ParsingUtils.getBoolean("-quantifyAcrossSamples", parameters, false);
@@ -349,6 +354,8 @@ public class PecanParameterParser {
 				quantifyAcrossSamples,
 				true,
 				requireVariableMods,
+				rtWindowInMin,
+				minNumIntegratedRTPoints,
 				filterPeaklists,
 				doNotUseGlobalFDR,
 				precursorIsolationRangeFile,

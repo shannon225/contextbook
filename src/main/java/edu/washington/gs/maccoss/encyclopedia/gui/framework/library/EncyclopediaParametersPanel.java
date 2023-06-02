@@ -269,6 +269,7 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 				true,
 				true,
 				-1.0f,
+				SearchParameters.DEFAULT_MIN_NUM_INTEGRATED_RT_POINTS,
 				false,
 				false,
 				Optional.empty(),

@@ -151,7 +151,7 @@ public class PercolatorExecutorIT {
 						params.getNumberOfQuantitativePeaks(), params.getMinNumOfQuantitativePeaks(), params.getTopNTargetsUsed(),
 						params.getMinIntensity(), params.getMinIntensityNumIons(), params.getLocalizingModification(), params.getScoringBreadthType(),
 						params.getNumberOfExtraDecoyLibrariesSearched(), params.isQuantifySameFragmentsAcrossSamples(),
-						params.isVerifyModificationIons(), params.getRtWindowInMin(), params.isFilterPeaklists(), params.isDoNotUseGlobalFDR(),
+						params.isVerifyModificationIons(), params.getRtWindowInMin(), params.getMinNumIntegratedRTPoints(), params.isFilterPeaklists(), params.isDoNotUseGlobalFDR(),
 						params.getPrecursorIsolationRangeFile(), params.getPercolatorModelFile(), params.isNormalizeByTIC(),
 						params.isSubtractBackground(), params.isMaskBadIntegrations(), params.adjustInferredRTBoundaries(), params.isIntegratePrecursors(), params.isEnableAdvancedOptions()
 				);
