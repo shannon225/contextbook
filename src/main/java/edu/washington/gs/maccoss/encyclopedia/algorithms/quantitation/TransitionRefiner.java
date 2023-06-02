@@ -464,7 +464,7 @@ public class TransitionRefiner {
 			
 			// create peak boundary if the local minimum is less than 1%
 			if (y[firstData]<threshold) {
-				firstData=i;
+				firstData=i-1; // go out one more spot
 				//System.out.println("HIT LEFT THRESHOLD "+firstData+" --> "+y[firstData]);
 				break;
 			}
@@ -496,7 +496,7 @@ public class TransitionRefiner {
 			
 			// create peak boundary if the local minimum is less than 1%
 			if (y[lastData]<threshold) {
-				lastData=i;
+				lastData=i+1; // go out one more spot
 				//System.out.println("HIT RIGHT THRESHOLD "+lastData+" --> "+y[lastData]);
 				break;
 			}

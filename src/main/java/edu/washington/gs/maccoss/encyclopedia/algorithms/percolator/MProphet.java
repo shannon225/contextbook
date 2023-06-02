@@ -75,16 +75,16 @@ public class MProphet implements Runnable {
 	}
 
 	private Pair<ArrayList<PercolatorPeptide>, Float> calculateProbabilities(MProphetDataset dataset) throws EncyclopediaException {
-		System.out.println("Features: "+dataset.featureNames.size());
-		System.out.println("Targets: "+dataset.targetPeptideData.size());
-		System.out.println("Decoys: "+dataset.decoyPeptideData.size());
+//		System.out.println("Features: "+dataset.featureNames.size());
+//		System.out.println("Targets: "+dataset.targetPeptideData.size());
+//		System.out.println("Decoys: "+dataset.decoyPeptideData.size());
 		LinearDiscriminantAnalysis lda=LinearDiscriminantAnalysis.buildModel(dataset.getTargetData(), dataset.getDecoyData());
 
-		double[] coefficients=lda.getCoefficients();
-		for (int i = 0; i < coefficients.length; i++) {
-			System.out.println(dataset.featureNames.get(i)+":\t"+coefficients[i]);
-		}
-		System.out.println("c:\t"+lda.getConstant());
+//		double[] coefficients=lda.getCoefficients();
+//		for (int i = 0; i < coefficients.length; i++) {
+//			System.out.println(dataset.featureNames.get(i)+":\t"+coefficients[i]);
+//		}
+//		System.out.println("c:\t"+lda.getConstant());
 
 		ArrayList<ScoredObject<MProphetData>> scoredDataset=new ArrayList<>();
 		TFloatArrayList targetScores=new TFloatArrayList();
@@ -126,9 +126,11 @@ public class MProphet implements Runnable {
 		ArrayList<XYPoint> scaledDecoys=new ArrayList<XYPoint>();
 		ArrayList<XYPoint> delta=new ArrayList<XYPoint>();
 		ArrayList<XYPoint> thresholdedDelta=new ArrayList<XYPoint>();
+		float maxHistogram=0.0f;
 		for (int i = 0; i < targets.size(); i++) {
 			XYPoint target = targets.get(i);
 			XYPoint decoy = decoys.get(i);
+			maxHistogram=(float)Math.max(maxHistogram, target.y);
 			double deltaRatio=target.y/(target.y+decoy.y);
 			delta.add(new XYPoint(target.x, deltaRatio));
 			thresholdedDelta.add(new XYPoint(target.x, Math.max(pi0Estimate, deltaRatio)));
@@ -167,6 +169,7 @@ public class MProphet implements Runnable {
 
 		// Find target peptides, estimate PEPs, and write files
 		ArrayList<PercolatorPeptide> detectedPeptides=new ArrayList<>();
+		float minScore=Float.MAX_VALUE;
 		try {
 			PrintWriter targetWriter=new PrintWriter(settings.getPeptideOutputFile(), "UTF-8");
 			PrintWriter decoyWriter=new PrintWriter(settings.getPeptideDecoyFile(), "UTF-8");
@@ -180,6 +183,9 @@ public class MProphet implements Runnable {
 				float qValue=qValueFunc.getYValue(score);
 				float posteriorErrorProb=pepValueFunction.getYValue(score);
 				if (qValue<=peptideFDRThreshold&&!scoredData.y.isDecoy) {
+					if (score<minScore) {
+						minScore=score;
+					}
 					PercolatorPeptide pep=new PercolatorPeptide(scoredData.y.id, scoredData.y.protein, qValue, posteriorErrorProb, aaConstants);
 					detectedPeptides.add(pep);
 				}
@@ -203,21 +209,22 @@ public class MProphet implements Runnable {
 		} catch (UnsupportedEncodingException e) {
 			throw new EncyclopediaException("Error setting up output file: " + settings.getPeptideOutputFile().getAbsolutePath(), e);
 		}
-		
-//		XYTraceInterface[] traces=new XYTraceInterface[2];
-//		traces[0]=new XYTrace(targets, GraphType.line, "Target");
-//		traces[1]=new XYTrace(scaledDecoys, GraphType.line, "Decoy*pi0");
-//		Charter.launchChart("LDA Score", "Count", true, traces);
+
+//		XYTrace scoreMaxThresholdTrace=new XYTrace(new double[] {minScore, minScore}, new double[] {0, maxHistogram}, GraphType.dashedline, "Threshold");
+//		XYTrace scoreThresholdTrace=new XYTrace(new double[] {minScore, minScore}, new double[] {0, 1}, GraphType.dashedline, "Threshold");
+//		
+//		XYTrace targetTrace=new XYTrace(targets, GraphType.line, "Target");
+//		XYTrace decoyTrace=new XYTrace(scaledDecoys, GraphType.line, "Decoy*pi0");
+//		Charter.launchChart("LDA Score", "Count", true, targetTrace, decoyTrace, scoreMaxThresholdTrace);
 //
 //		XYTrace fdrTrace = new XYTrace(fdrCalc, GraphType.line, "FDR");
 //		XYTrace qvalueTrace=new XYTrace(qValueCalc, GraphType.dashedline, "Q-Value");
-//		XYTrace scoreThresholdTrace=new XYTrace(new double[] {targetScore, targetScore}, new double[] {0, 1}, GraphType.dashedline, "Threshold");
 //		Charter.launchChart("LDA Score", "FDR/Q-Value", true, fdrTrace, qvalueTrace, scoreThresholdTrace);
 //
 //		XYTrace ratioTrace = new XYTrace(delta, GraphType.line, "Ratio");
-//		XYTrace curveFit=new XYTrace(warper.getKnots(), GraphType.dashedline, "Fit");
+//		XYTrace curveFit=new XYTrace(pepValueFunction.getKnots(), GraphType.dashedline, "Fit");
 //		XYTrace piZeroTrace=new XYTrace(new double[] {targets.get(0).x, medianDecoy}, new double[] {pi0Estimate, pi0Estimate}, GraphType.dashedline, "Pi0");
-//		Charter.launchChart("LDA Score", "Ratio", true, ratioTrace, curveFit, piZeroTrace);
+//		Charter.launchChart("LDA Score", "Ratio", true, ratioTrace, curveFit, scoreThresholdTrace, piZeroTrace);
 //		
 //		try {Thread.sleep(1000000000);} catch (Exception e) {} // FIXME
 		
