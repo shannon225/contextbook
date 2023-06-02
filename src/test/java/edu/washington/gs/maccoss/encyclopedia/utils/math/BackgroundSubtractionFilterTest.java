@@ -28,9 +28,9 @@ public class BackgroundSubtractionFilterTest extends TestCase {
 		float[] bgSubtractprecursorMono=BackgroundSubtractionFilter.backgroundSubtractMovingMedian(precursorMono, bandwidth);
 		
 		XYTraceInterface[] traces=new XYTraceInterface[] {
-			new XYTrace(retentionTimeInSec, precursorMono, GraphType.line, "precursorMono"),
+			new XYTrace(retentionTimeInSec, precursorMono, GraphType.line, "original"),
 			new XYTrace(retentionTimeInSec, bgprecursorMono, GraphType.line, "background"),
-			new XYTrace(retentionTimeInSec, bgSubtractprecursorMono, GraphType.line, "subtract"),
+			new XYTrace(retentionTimeInSec, bgSubtractprecursorMono, GraphType.line, "subtracted"),
 		};
 		Charter.launchChart("RT", "Intensity", true, traces);
 	}
