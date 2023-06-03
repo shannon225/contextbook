@@ -31,7 +31,7 @@ import gnu.trove.list.array.TFloatArrayList;
 
 public class EncyclopediaElibTCellParser {
 	private static final float fdrThreshold = 0.01f;
-	private static final float pvalueThreshold = 0.001f;
+	private static final float pvalueThreshold = 0.01f;
 	public static String[] sampleNames=new String[] {"Naive", "Acute D3", "Chronic D3", "Chronic D7"};
 	public static int[] tests=new int[] {3};
 	public static int[] controls=new int[] {0, 1};
