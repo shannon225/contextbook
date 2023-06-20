@@ -12,6 +12,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.parameters.InstrumentSpecificSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
@@ -53,10 +54,16 @@ public class PecanParameterParser {
 		map.put(SearchParameters.NUMBER_OF_QUANTITATIVE_PEAKS, "5");
 		map.put("-minNumOfQuantitativePeaks", "3");
 		map.put("-minIntensity", "-1.0");
+		map.put("-minIntensityNumIons", "-1.0");
 		map.put("-requireVariableMods", "false");
         map.put("-filterPeaklists", "false");
         map.put("-normalizeByTIC", "true");
 		return map;
+	}
+	
+	public static SearchParameters getDefaultParametersObject(InstrumentSpecificSearchParameters instrument) {
+		HashMap<String, String> defaultParameters = instrument.overwriteParameters(getDefaultParameters());
+		return parseParameters(defaultParameters);
 	}
 	
 	public static PecanSearchParameters getDefaultParametersObject() {
@@ -105,8 +112,11 @@ public class PecanParameterParser {
 		final int minNumOfQuantitativePeaks;
 		final int topNTargetsUsed;
 		final float minIntensity;
+		final float minIntensityNumIons;
 		final boolean quantifyAcrossSamples;
 		final boolean requireVariableMods;
+		final float rtWindowInMin;
+		final int minNumIntegratedRTPoints;
         final boolean filterPeaklists;
         final boolean doNotUseGlobalFDR;
         final Optional<File> percolatorModelFile;
@@ -114,6 +124,8 @@ public class PecanParameterParser {
         final boolean normalizeByTIC;
         final boolean subtractBackground;
         final boolean maskBadIntegrations;
+        final boolean adjustInferredRTBoundaries;
+        final boolean integratePrecursors;
         final boolean enableAdvancedOptions;
 
 		ModificationMassMap variableMods=new ModificationMassMap(parameters.get("-variable"));
@@ -288,13 +300,19 @@ public class PecanParameterParser {
 		minNumOfQuantitativePeaks=ParsingUtils.getInteger("-minNumOfQuantitativePeaks", parameters, 3);
 		topNTargetsUsed=ParsingUtils.getInteger("-topNTargetsUsed", parameters, -1);
 		
+		rtWindowInMin=ParsingUtils.getFloat("-rtWindowInMin", parameters, -1.0f);
+		minNumIntegratedRTPoints=ParsingUtils.getInteger("-minNumIntegratedRTPoints", parameters, SearchParameters.DEFAULT_MIN_NUM_INTEGRATED_RT_POINTS);
+		
 		minIntensity=ParsingUtils.getFloat("-minIntensity", parameters, -1.0f);
+		minIntensityNumIons=ParsingUtils.getFloat("-minIntensityNumIons", parameters, -1.0f);
 		quantifyAcrossSamples=ParsingUtils.getBoolean("-quantifyAcrossSamples", parameters, false);
 		requireVariableMods=ParsingUtils.getBoolean("-requireVariableMods", parameters, false);
 		filterPeaklists = ParsingUtils.getBoolean("-filterPeaklists", parameters, false);
 		doNotUseGlobalFDR = ParsingUtils.getBoolean("-doNotUseGlobalFDR", parameters, false);
 		subtractBackground = ParsingUtils.getBoolean(SearchParameters.SUBTRACT_BACKGROUND, parameters, true);
         maskBadIntegrations=ParsingUtils.getBoolean(SearchParameters.MASK_BAD_INTEGRATIONS, parameters, false);
+        integratePrecursors=ParsingUtils.getBoolean(SearchParameters.INTEGRATE_PRECURSORS, parameters, false);
+        adjustInferredRTBoundaries=ParsingUtils.getBoolean(SearchParameters.ADJUST_INFERRED_RT_BOUNDARIES, parameters, false);
 		normalizeByTIC = ParsingUtils.getBoolean("-normalizeByTIC", parameters, true);
 		enableAdvancedOptions = ParsingUtils.getBoolean(SearchParameters.ENABLE_ADVANCED_OPTIONS, parameters, false);
 
@@ -332,9 +350,12 @@ public class PecanParameterParser {
 				minNumOfQuantitativePeaks,
 				topNTargetsUsed,
 				minIntensity,
+				minIntensityNumIons,
 				quantifyAcrossSamples,
 				true,
 				requireVariableMods,
+				rtWindowInMin,
+				minNumIntegratedRTPoints,
 				filterPeaklists,
 				doNotUseGlobalFDR,
 				precursorIsolationRangeFile,
@@ -342,6 +363,8 @@ public class PecanParameterParser {
 				normalizeByTIC,
 				subtractBackground,
 				maskBadIntegrations,
+				adjustInferredRTBoundaries,
+				integratePrecursors,
 				enableAdvancedOptions
 		);
 	}

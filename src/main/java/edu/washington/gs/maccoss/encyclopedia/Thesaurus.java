@@ -46,6 +46,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.parameters.InstrumentSpecificSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
@@ -69,6 +70,8 @@ public class Thesaurus {
 
 	public static void main(String[] args) {
 		HashMap<String, String> arguments=CommandLineParser.parseArguments(args);
+		arguments=InstrumentSpecificSearchParameters.checkParameters(arguments);
+		
 		if (arguments.size()==0) {
 			SearchGUIMain.runGUI(ProgramType.CASiL);
 			
@@ -369,7 +372,7 @@ public class Thesaurus {
 		
 		Logger.logLine("Writing elib result library...");
 		try {
-			SearchToBLIB.convertElib(progress, job, job.getResultLibrary(), parameters);
+			SearchToBLIB.convertElib(progress, job, job.getResultLibrary(), parameters, parameters.isIntegratePrecursors());
 		} catch (Exception e) {
 			Logger.errorLine("Encountered error creating elib report...");
 			Logger.errorException(e);

@@ -14,6 +14,7 @@ import com.google.common.collect.ImmutableSortedSet;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.XMLObject;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.XMLUtils;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import gnu.trove.map.hash.TIntIntHashMap;
 
 public class FastaPeptideEntry implements Comparable<FastaPeptideEntry>, XMLObject {
@@ -38,8 +39,11 @@ public class FastaPeptideEntry implements Comparable<FastaPeptideEntry>, XMLObje
 
 	public FastaPeptideEntry(String sequence) {
 		this("Unknown File", "Unknown Annotation", sequence);
-	} 
-
+	}
+	
+	public FastaEntryInterface toFastaEntryInterface() {
+		return new FastaEntry(filename, PSMData.accessionsToString(accessions), sequence);
+	}
 
 	@Override
 	public void writeToXML(Document doc, Element parentElement) {

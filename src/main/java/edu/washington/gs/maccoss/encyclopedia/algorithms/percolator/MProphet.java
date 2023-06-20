@@ -4,7 +4,9 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -25,6 +27,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.io.LineParserMuscle;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.FloatPair;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.LinearDiscriminantAnalysis;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.LinearInterpolatedFunction;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.PivotTableGenerator;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RunningMedianWarper;
@@ -38,16 +41,19 @@ public class MProphet implements Runnable {
 	private static final String DELIM = "\t";
 	private final float peptideFDRThreshold;
 	private final MProphetExecutionData settings;
+	private final AminoAcidConstants aaConstants;
+	
 	private Throwable error;
 	private Pair<ArrayList<PercolatorPeptide>, Float> result;
 
-	public MProphet(MProphetExecutionData settings, float peptideFDRThreshold) {
+	public MProphet(MProphetExecutionData settings, float peptideFDRThreshold, AminoAcidConstants aaConstants) {
 		this.settings = settings;
 		this.peptideFDRThreshold=peptideFDRThreshold;
+		this.aaConstants=aaConstants;
 	}
 	
 	public static Pair<ArrayList<PercolatorPeptide>, Float> executeMProphetTSV(MProphetExecutionData commandData, float threshold, AminoAcidConstants aaConstants, int round) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
-		MProphet prophet=new MProphet(commandData, threshold);
+		MProphet prophet=new MProphet(commandData, threshold, aaConstants);
 		prophet.run();
 		return prophet.getPeptides();
 	}
@@ -69,16 +75,16 @@ public class MProphet implements Runnable {
 	}
 
 	private Pair<ArrayList<PercolatorPeptide>, Float> calculateProbabilities(MProphetDataset dataset) throws EncyclopediaException {
-		System.out.println("Features: "+dataset.featureNames.size());
-		System.out.println("Targets: "+dataset.targetPeptideData.size());
-		System.out.println("Decoys: "+dataset.decoyPeptideData.size());
+//		System.out.println("Features: "+dataset.featureNames.size());
+//		System.out.println("Targets: "+dataset.targetPeptideData.size());
+//		System.out.println("Decoys: "+dataset.decoyPeptideData.size());
 		LinearDiscriminantAnalysis lda=LinearDiscriminantAnalysis.buildModel(dataset.getTargetData(), dataset.getDecoyData());
 
-		double[] coefficients=lda.getCoefficients();
-		for (int i = 0; i < coefficients.length; i++) {
-			System.out.println(dataset.featureNames.get(i)+":\t"+coefficients[i]);
-		}
-		System.out.println("c:\t"+lda.getConstant());
+//		double[] coefficients=lda.getCoefficients();
+//		for (int i = 0; i < coefficients.length; i++) {
+//			System.out.println(dataset.featureNames.get(i)+":\t"+coefficients[i]);
+//		}
+//		System.out.println("c:\t"+lda.getConstant());
 
 		ArrayList<ScoredObject<MProphetData>> scoredDataset=new ArrayList<>();
 		TFloatArrayList targetScores=new TFloatArrayList();
@@ -94,10 +100,12 @@ public class MProphet implements Runnable {
 		}
 
 		// 1 stdev below the mean (still in the increasing section) or 10000 values, which ever is bigger 
-		float medianDecoy=QuickMedian.select(decoyScores.toArray(), Math.max(0.1586f, 10000f/decoyScores.size()));
+		float b = Math.min(10000f/decoyScores.size(), 0.309f); // max at 0.5 stdevs below mean (if less than 30k peptides)
+		b=Math.max(b, Math.min(1000f/decoyScores.size(), 0.5f)); // max at median (if less than 2000 peptides)
+		float medianDecoy=QuickMedian.select(decoyScores.toArray(), Math.max(0.1586f, b));
 		
 		int bestBinCount=0;
-		float bestWeightedAverage=0.0f;
+		float pi0Estimate=0.0f;
 		float bestSumSquaredErrors=Float.MAX_VALUE;
 		for (int binCount = 10; binCount < 100; binCount++) {
 			FloatPair weightedAverageData = getPi0Estimate(targetScores, decoyScores, medianDecoy, binCount);
@@ -105,10 +113,11 @@ public class MProphet implements Runnable {
 			
 			if (weightedAverageData.getTwo()<bestSumSquaredErrors) {
 				bestSumSquaredErrors=weightedAverageData.getTwo();
-				bestWeightedAverage=weightedAverageData.getOne();
+				pi0Estimate=weightedAverageData.getOne();
 				bestBinCount=binCount;
 			}
 		}
+		float pi0Prob = pi0Estimate/0.5f;
 
 		ArrayList<XYPoint>[] points=PivotTableGenerator.createPivotTables(new float[][] {targetScores.toArray(), decoyScores.toArray()}, true);
 		ArrayList<XYPoint> targets = points[0];
@@ -117,31 +126,109 @@ public class MProphet implements Runnable {
 		ArrayList<XYPoint> scaledDecoys=new ArrayList<XYPoint>();
 		ArrayList<XYPoint> delta=new ArrayList<XYPoint>();
 		ArrayList<XYPoint> thresholdedDelta=new ArrayList<XYPoint>();
+		float maxHistogram=0.0f;
 		for (int i = 0; i < targets.size(); i++) {
 			XYPoint target = targets.get(i);
 			XYPoint decoy = decoys.get(i);
+			maxHistogram=(float)Math.max(maxHistogram, target.y);
 			double deltaRatio=target.y/(target.y+decoy.y);
 			delta.add(new XYPoint(target.x, deltaRatio));
-			thresholdedDelta.add(new XYPoint(target.x, Math.max(bestWeightedAverage, deltaRatio)));
-			scaledDecoys.add(new XYPoint(decoy.x, decoy.y*bestWeightedAverage));
+			thresholdedDelta.add(new XYPoint(target.x, Math.max(pi0Estimate, deltaRatio)));
+			scaledDecoys.add(new XYPoint(decoy.x, decoy.y*pi0Prob));
 		}
+		int order=Math.max(3, Math.round(delta.size()/50f));
+		RunningMedianWarper pepValueFunction=new RunningMedianWarper(thresholdedDelta, order, true);
 		
-//		XYTraceInterface[] traces=new XYTraceInterface[2];
-//		traces[0]=new XYTrace(targets, GraphType.line, "Target");
-//		traces[1]=new XYTrace(scaledDecoys, GraphType.line, "Decoy*pi0");
-//		Charter.launchChart("LDA Score", "Count", true, traces);
+		// calculate FDRs using T/D
+		Collections.sort(scoredDataset);
+		Collections.reverse(scoredDataset);
+		float targetCount=0f;
+		float decoyCount=0f;
+		ArrayList<XYPoint> fdrCalc=new ArrayList<XYPoint>();
+		for (ScoredObject<MProphetData> scoredData : scoredDataset) {
+			float score=scoredData.getScore();
+			boolean isDecoy=scoredData.y.isDecoy;
+			
+			if (isDecoy) {
+				decoyCount+=pi0Prob;
+			} else {
+				targetCount++;
+			}
+			fdrCalc.add(new XYPoint(score, decoyCount/targetCount));
+		}
+
+		// calculate Q-values from FDRs
+		ArrayList<XYPoint> qValueCalc=new ArrayList<XYPoint>();
+		float movingQ=1.0f;
+		for (int i = fdrCalc.size()-1; i >=0; i--) {
+			XYPoint xyPoint = fdrCalc.get(i);
+			movingQ=Math.min(movingQ, (float)xyPoint.y);
+			qValueCalc.add(new XYPoint(xyPoint.x, movingQ));
+		}
+		LinearInterpolatedFunction qValueFunc=new LinearInterpolatedFunction(qValueCalc);
+
+		// Find target peptides, estimate PEPs, and write files
+		ArrayList<PercolatorPeptide> detectedPeptides=new ArrayList<>();
+		float minScore=Float.MAX_VALUE;
+		try {
+			PrintWriter targetWriter=new PrintWriter(settings.getPeptideOutputFile(), "UTF-8");
+			PrintWriter decoyWriter=new PrintWriter(settings.getPeptideDecoyFile(), "UTF-8");
+			
+			targetWriter.println("PSMId\tscore\tq-value\tposterior_error_prob\tpeptide\tproteinIds");
+			decoyWriter.println("PSMId\tscore\tq-value\tposterior_error_prob\tpeptide\tproteinIds");
+			
+			for (ScoredObject<MProphetData> scoredData : scoredDataset) {
+				float score=scoredData.getScore();
+				
+				float qValue=qValueFunc.getYValue(score);
+				float posteriorErrorProb=pepValueFunction.getYValue(score);
+				if (qValue<=peptideFDRThreshold&&!scoredData.y.isDecoy) {
+					if (score<minScore) {
+						minScore=score;
+					}
+					PercolatorPeptide pep=new PercolatorPeptide(scoredData.y.id, scoredData.y.protein, qValue, posteriorErrorProb, aaConstants);
+					detectedPeptides.add(pep);
+				}
+				
+				if (scoredData.y.isDecoy) {
+					decoyWriter.println(scoredData.y.id+"\t"+score+"\t"+qValue+"\t"+posteriorErrorProb+"\t"+"-."+scoredData.y.sequence+".-"+"\t"+scoredData.y.protein);
+				} else {
+					targetWriter.println(scoredData.y.id+"\t"+score+"\t"+qValue+"\t"+posteriorErrorProb+"\t"+"-."+scoredData.y.sequence+".-"+"\t"+scoredData.y.protein);
+				}
+			}
+			targetWriter.println("pi_0="+pi0Prob);
+			decoyWriter.println("pi_0="+pi0Prob);
+
+			targetWriter.flush();
+			decoyWriter.flush();
+			targetWriter.close();
+			decoyWriter.close();
+			
+		} catch (FileNotFoundException e) {
+			throw new EncyclopediaException("Error setting up output file: " + settings.getPeptideOutputFile().getAbsolutePath(), e);
+		} catch (UnsupportedEncodingException e) {
+			throw new EncyclopediaException("Error setting up output file: " + settings.getPeptideOutputFile().getAbsolutePath(), e);
+		}
+
+//		XYTrace scoreMaxThresholdTrace=new XYTrace(new double[] {minScore, minScore}, new double[] {0, maxHistogram}, GraphType.dashedline, "Threshold");
+//		XYTrace scoreThresholdTrace=new XYTrace(new double[] {minScore, minScore}, new double[] {0, 1}, GraphType.dashedline, "Threshold");
+//		
+//		XYTrace targetTrace=new XYTrace(targets, GraphType.line, "Target");
+//		XYTrace decoyTrace=new XYTrace(scaledDecoys, GraphType.line, "Decoy*pi0");
+//		Charter.launchChart("LDA Score", "Count", true, targetTrace, decoyTrace, scoreMaxThresholdTrace);
+//
+//		XYTrace fdrTrace = new XYTrace(fdrCalc, GraphType.line, "FDR");
+//		XYTrace qvalueTrace=new XYTrace(qValueCalc, GraphType.dashedline, "Q-Value");
+//		Charter.launchChart("LDA Score", "FDR/Q-Value", true, fdrTrace, qvalueTrace, scoreThresholdTrace);
 //
 //		XYTrace ratioTrace = new XYTrace(delta, GraphType.line, "Ratio");
-//
-//		int order=Math.max(3, Math.round(delta.size()/50f));
-//		RunningMedianWarper warper=new RunningMedianWarper(thresholdedDelta, order, true);
-//		XYTrace curveFit=new XYTrace(warper.getKnots(), GraphType.dashedline, "Fit");
-//		XYTrace piZeroTrace=new XYTrace(new double[] {targets.get(0).x, medianDecoy}, new double[] {bestWeightedAverage, bestWeightedAverage}, GraphType.dashedline, "Pi0");
-//		Charter.launchChart("LDA Score", "Ratio", true, ratioTrace, curveFit, piZeroTrace);
+//		XYTrace curveFit=new XYTrace(pepValueFunction.getKnots(), GraphType.dashedline, "Fit");
+//		XYTrace piZeroTrace=new XYTrace(new double[] {targets.get(0).x, medianDecoy}, new double[] {pi0Estimate, pi0Estimate}, GraphType.dashedline, "Pi0");
+//		Charter.launchChart("LDA Score", "Ratio", true, ratioTrace, curveFit, scoreThresholdTrace, piZeroTrace);
 //		
 //		try {Thread.sleep(1000000000);} catch (Exception e) {} // FIXME
 		
-		Pair<ArrayList<PercolatorPeptide>, Float> thisResult=new Pair<ArrayList<PercolatorPeptide>, Float>(null, null);
+		Pair<ArrayList<PercolatorPeptide>, Float> thisResult=new Pair<ArrayList<PercolatorPeptide>, Float>(detectedPeptides, pi0Prob);
 		return thisResult;
 	}
 
@@ -331,7 +418,7 @@ public class MProphet implements Runnable {
 	}
 	
 	public Pair<ArrayList<PercolatorPeptide>, Float> getPeptides() {
-		throw new RuntimeException("NOT IMPLEMENTED YET");
+		return result;
 	}
 	
 	protected class MProphetDataset {
@@ -372,6 +459,10 @@ public class MProphet implements Runnable {
 				data.add(mProphetData.data);
 			}
 			return data;
+		}
+		
+		public ArrayList<MProphetData> getTargetPeptides() {
+			return targetPeptideData;
 		}
 	}
 	

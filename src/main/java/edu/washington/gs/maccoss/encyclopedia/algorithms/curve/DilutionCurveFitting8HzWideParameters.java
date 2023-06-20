@@ -46,6 +46,11 @@ public class DilutionCurveFitting8HzWideParameters implements AbstractDilutionCu
 	public String getTargetAccessionNumberKeyword() {
 		return targetAccessionNumberKeyword;
 	}
+	
+	@Override
+	public boolean isTargetedProtein(String accession) {
+		return accession.indexOf(targetAccessionNumberKeyword)>=0;
+	}
 
 	public boolean isRequireAlignmentRT() {
 		return requireAlignmentRT;

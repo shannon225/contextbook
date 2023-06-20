@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -30,8 +31,8 @@ public final class DigestionEnzyme {
 	private final TCharHashSet nterm;
 	private final TCharHashSet cterm;
 	
-	public static HashSet<DigestionEnzyme> getAvailableEnzymes() {
-		HashSet<DigestionEnzyme> enzymes=new HashSet<DigestionEnzyme>();
+	public static List<DigestionEnzyme> getAvailableEnzymes() {
+		List<DigestionEnzyme> enzymes=new ArrayList<DigestionEnzyme>();
 		enzymes.add(getEnzyme("Trypsin"));
 		enzymes.add(getEnzyme("Trypsin/p"));
 		enzymes.add(getEnzyme("Lys-C"));
@@ -216,6 +217,11 @@ public final class DigestionEnzyme {
 
 	public String getName() {
 		return name;
+	}
+	
+	@Override
+	public String toString() {
+		return getName();
 	}
 	
 	public String getPercolatorName() {

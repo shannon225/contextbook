@@ -18,7 +18,9 @@ public interface AbstractDilutionCurveFittingParameters {
 
 	public int getAssayMaxDensity();
 
-	public String getTargetAccessionNumberKeyword();
+	//public String getTargetAccessionNumberKeyword();
+	
+	public boolean isTargetedProtein(String accession);
 
 	public boolean isRequireAlignmentRT();
 	

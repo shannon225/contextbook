@@ -160,11 +160,14 @@ public class ThesaurusSearchParameters extends SearchParameters {
 			int minNumOfQuantitativePeaks,
 			int topNTargetsUsed,
 			float minIntensity,
+			float minIntensityNumIons, 
 			PeptideModification modification,
 			ScoringBreadthType searchType,
 			float getNumberOfExtraDecoyLibrariesSearched,
 			boolean quantifyAcrossSamples,
 			boolean verifyModificationIons,
+			float rtWindowInMin,
+			int minNumIntegratedRTPoints,
 			boolean filterPeaklists,
 			boolean doNotUseGlobalFDR,
 			boolean considerRearrangement, 
@@ -173,6 +176,8 @@ public class ThesaurusSearchParameters extends SearchParameters {
 			boolean normalizeByTIC,
 			boolean subtractBackground,
 			boolean maskBadIntegrations,
+			boolean adjustInferredRTBoundaries,
+			boolean integratePrecursors,
 			boolean enableAdvancedOptions
 	) {
 		super(
@@ -200,12 +205,14 @@ public class ThesaurusSearchParameters extends SearchParameters {
 				minNumOfQuantitativePeaks,
 				topNTargetsUsed,
 				minIntensity,
+				minIntensityNumIons, 
 				Optional.of(modification),
 				searchType,
 				getNumberOfExtraDecoyLibrariesSearched,
 				quantifyAcrossSamples,
 				verifyModificationIons,
-				-1.0f,
+				rtWindowInMin,
+				minNumIntegratedRTPoints,
 				filterPeaklists,
 				doNotUseGlobalFDR,
 				precursorIsolationRangeFile,
@@ -213,6 +220,8 @@ public class ThesaurusSearchParameters extends SearchParameters {
 				normalizeByTIC,
 				subtractBackground,
 				maskBadIntegrations,
+				adjustInferredRTBoundaries,
+				integratePrecursors,
 				enableAdvancedOptions
 		);
 		this.considerRearrangement=considerRearrangement;
@@ -251,11 +260,14 @@ public class ThesaurusSearchParameters extends SearchParameters {
 				params.getMinNumOfQuantitativePeaks(),
 				params.getTopNTargetsUsed(),
 				params.getMinIntensity(),
+				params.getMinIntensityNumIons(),
 				mod,
 				params.getScoringBreadthType(),
 				params.getNumberOfExtraDecoyLibrariesSearched(),
 				params.isQuantifySameFragmentsAcrossSamples(),
 				params.isVerifyModificationIons(),
+				params.getRtWindowInMin(),
+				params.getMinNumIntegratedRTPoints(),
 				params.isFilterPeaklists(),
 				params.isDoNotUseGlobalFDR(),
 				considerRearrangement,
@@ -264,6 +276,8 @@ public class ThesaurusSearchParameters extends SearchParameters {
 				params.isNormalizeByTIC(),
 				params.isSubtractBackground(),
 				params.isMaskBadIntegrations(),
+				params.adjustInferredRTBoundaries(), 
+				params.isIntegratePrecursors(),
 				params.isEnableAdvancedOptions()
 		);
 	}

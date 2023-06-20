@@ -1,12 +1,14 @@
 package edu.washington.gs.maccoss.encyclopedia;
 
 import edu.washington.gs.maccoss.encyclopedia.cli.*;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.parameters.InstrumentSpecificSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.*;
 import java.util.*;
 
 public class CLIConverter {
 	public static void main(String[] args) {
 		HashMap<String, String> arguments=CommandLineParser.parseArguments(args);
+		arguments=InstrumentSpecificSearchParameters.checkParameters(arguments);
 		
 		if (arguments.containsKey("-prositcsvtolibrary")||arguments.containsKey("-prositCSVToLibrary")) {
 			ConvertPrositCSVToLibrary.main(args);

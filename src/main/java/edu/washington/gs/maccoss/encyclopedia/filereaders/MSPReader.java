@@ -69,6 +69,7 @@ public class MSPReader {
 		int[] counts=new int[21];
 		for (LibraryEntry entry : entries) {
 			int size=Math.min(counts.length-1, entry.getAccessions().size());
+			if (size==0) System.out.println(entry.getPeptideModSeq());
 			counts[size]++;
 		}
 		Logger.logLine("Accession count histogram: ");

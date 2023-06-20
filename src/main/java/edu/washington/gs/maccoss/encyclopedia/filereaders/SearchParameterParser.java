@@ -17,6 +17,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.parameters.InstrumentSpecificSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
@@ -57,12 +58,14 @@ public class SearchParameterParser {
 		map.put("-topNTargetsUsed", "-1");
 		map.put("-verifyModificationIons", "true");
 		map.put("-minIntensity", "-1.0");
+		map.put("-minIntensityNumIons", "-1.0");
 		map.put("-rtWindowInMin", "-1.0");
         map.put("-filterPeaklists", "false");
         map.put("-numberOfThreadsUsed", Integer.toString(Runtime.getRuntime().availableProcessors()));
 		map.put("-normalizeByTIC", "true");
 		map.put(SearchParameters.SUBTRACT_BACKGROUND, "true");
 		map.put(SearchParameters.MASK_BAD_INTEGRATIONS, "false");
+		map.put(SearchParameters.INTEGRATE_PRECURSORS, "false");
 		return map;
 	}
 	
@@ -86,7 +89,13 @@ public class SearchParameterParser {
 		map.put("-normalizeByTIC", "true");
 		map.put(SearchParameters.SUBTRACT_BACKGROUND, "true");
 		map.put(SearchParameters.MASK_BAD_INTEGRATIONS, "false");
+		map.put(SearchParameters.INTEGRATE_PRECURSORS, "false");
 		return map;
+	}
+	
+	public static SearchParameters getDefaultParametersObject(InstrumentSpecificSearchParameters instrument) {
+		HashMap<String, String> defaultParameters = instrument.overwriteParameters(getDefaultParameters());
+		return parseParameters(defaultParameters);
 	}
 	
 	public static SearchParameters getDefaultParametersObject() {
@@ -128,17 +137,21 @@ public class SearchParameterParser {
 		final int minNumOfQuantitativePeaks;
 		final int topNTargetsUsed;
 		final float minIntensity;
+		final float minIntensityNumIons;
 		final float numberOfExtraDecoyLibrariesSearched;
 		final Optional<PeptideModification> localizationModification;
 		final ScoringBreadthType breadthType;
 		final boolean quantifyAcrossSamples;
 		final boolean verifyModificationIons;
 		final float rtWindowInMin;
+		final int minNumIntegratedRTPoints;
         final boolean filterPeaklists;
         final boolean doNotUseGlobalFDR;
         final boolean normalizeByTIC;
         final boolean subtractBackground;
         final boolean maskBadIntegrations;
+        final boolean integratePrecursors;
+        final boolean adjustInferredRTBoundaries;
         final boolean enableAdvancedOptions;
         final Optional<File> percolatorModelFile;
         final Optional<File> precursorIsolationRangeFile;
@@ -305,7 +318,9 @@ public class SearchParameterParser {
 		topNTargetsUsed=ParsingUtils.getInteger("-topNTargetsUsed", parameters, -1);
 		
 		minIntensity=ParsingUtils.getFloat("-minIntensity", parameters, -1.0f);
+		minIntensityNumIons=ParsingUtils.getFloat("-minIntensityNumIons", parameters, -1.0f);
 		rtWindowInMin=ParsingUtils.getFloat("-rtWindowInMin", parameters, -1f);
+		minNumIntegratedRTPoints=ParsingUtils.getInteger("-minNumIntegratedRTPoints", parameters, SearchParameters.DEFAULT_MIN_NUM_INTEGRATED_RT_POINTS);
 		
 		value=parameters.get("-localizationModification");
 		if (value != null) {
@@ -361,6 +376,8 @@ public class SearchParameterParser {
 		normalizeByTIC = ParsingUtils.getBoolean("-normalizeByTIC", parameters, true);
         subtractBackground=ParsingUtils.getBoolean(SearchParameters.SUBTRACT_BACKGROUND, parameters, true);
         maskBadIntegrations=ParsingUtils.getBoolean(SearchParameters.MASK_BAD_INTEGRATIONS, parameters, false);
+        integratePrecursors=ParsingUtils.getBoolean(SearchParameters.INTEGRATE_PRECURSORS, parameters, false);
+        adjustInferredRTBoundaries=ParsingUtils.getBoolean(SearchParameters.ADJUST_INFERRED_RT_BOUNDARIES, parameters, false);
         enableAdvancedOptions=ParsingUtils.getBoolean(SearchParameters.ENABLE_ADVANCED_OPTIONS, parameters, false);
 
 		return new SearchParameters(
@@ -388,12 +405,14 @@ public class SearchParameterParser {
 				minNumOfQuantitativePeaks,
 				topNTargetsUsed,
 				minIntensity,
+				minIntensityNumIons,
 				localizationModification,
 				breadthType,
 				numberOfExtraDecoyLibrariesSearched,
 				quantifyAcrossSamples,
 				verifyModificationIons,
 				rtWindowInMin,
+				minNumIntegratedRTPoints,
 				filterPeaklists,
 				doNotUseGlobalFDR,
 				precursorIsolationRangeFile,
@@ -401,6 +420,8 @@ public class SearchParameterParser {
 				normalizeByTIC,
 				subtractBackground,
 				maskBadIntegrations,
+				adjustInferredRTBoundaries,
+				integratePrecursors,
 				enableAdvancedOptions
 		);
 	}

@@ -32,6 +32,7 @@ import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 
 public class TransitionRefiner {
+	private static final float NO_AVAILABLE_INTENSITY_MARKER = -1.0f;
 	public static final float PERCENT_RT_UPHILL_PEAKWIDTH = 0.2f;
 	public static final float MINIMUM_THRESHOLD_PERCENTAGE = 0.01f;
 
@@ -132,7 +133,9 @@ public class TransitionRefiner {
 
 	public static TransitionRefinementData identifyTransitions(String peptideModSeq, byte precursorCharge, float retentionTimeInSec, FragmentIon[] fragmentMasses, ArrayList<float[]> chromatograms, float[] retentionTimes, Optional<float[]> maybeMedianChromatogram, boolean wasInferred, boolean plot, SearchParameters params) {
 		if (chromatograms.size()==0) return new TransitionRefinementData(peptideModSeq, precursorCharge, new FragmentIon[0], chromatograms, new float[0], new boolean[0], new float[0], new float[0], new float[0], new Range(retentionTimes[0], retentionTimes[retentionTimes.length-1]), params.getAAConstants());
-		MedianChromatogramData medianData = extractMedianChromatogram(retentionTimeInSec, chromatograms, retentionTimes, maybeMedianChromatogram, wasInferred, params.getExpectedPeakWidth());
+		
+		boolean adjustPeakBoundaries=wasInferred&&params.adjustInferredRTBoundaries();
+		MedianChromatogramData medianData = extractMedianChromatogram(retentionTimeInSec, chromatograms, retentionTimes, maybeMedianChromatogram, adjustPeakBoundaries, params.getMinNumIntegratedRTPoints(), params.getExpectedPeakWidth());
 
 		float medianMean=General.mean(medianData.getMedianChromatogram(), medianData.getIndices().getStart(), medianData.getIndices().getStop());
 		float[] correlationArray=new float[medianData.getNormalizedChromatograms().size()];
@@ -173,7 +176,8 @@ public class TransitionRefiner {
 		return new TransitionRefinementData(peptideModSeq, precursorCharge, fragmentMasses, chromatograms, correlationArray, quantitativeIonsArray, integrationArray, backgroundArray, medianData.getMedianChromatogram(), range, params.getAAConstants());
 	}
 
-	public static MedianChromatogramData extractMedianChromatogram(float retentionTimeInSec, ArrayList<float[]> chromatograms, float[] retentionTimes, Optional<float[]> maybeMedianChromatogram, boolean adjustPeakBoundaries, float expectedPeakWidth) {
+	public static MedianChromatogramData extractMedianChromatogram(float retentionTimeInSec, ArrayList<float[]> chromatograms, float[] retentionTimes, Optional<float[]> maybeMedianChromatogram, boolean adjustPeakBoundaries, 
+			int minNumIntegratedRTPoints, float expectedPeakWidth) {
 		if (chromatograms.size()==0) return new MedianChromatogramData(new ArrayList<>(), new IntRange(0, 0), new float[0]);
 		
 		ArrayList<float[]> normalizedChromatograms;
@@ -183,7 +187,7 @@ public class TransitionRefiner {
 		if (maybeMedianChromatogram.isPresent()&&maybeMedianChromatogram.get().length>0) {
 			// already started with a median chromatogram
 			medianChromatogram=maybeMedianChromatogram.get();
-			indices=getIndexRange(retentionTimes, medianChromatogram, expectedPeakWidth);
+			indices=getIndexRange(retentionTimes, medianChromatogram, expectedPeakWidth, minNumIntegratedRTPoints);
 			normalizedChromatograms=normalizeAndBackgroundSubtract(chromatograms, indices);
 			
 		} else {
@@ -205,7 +209,7 @@ public class TransitionRefiner {
 				Arrays.sort(array);
 				medianChromatogram[i]=aggregate(array);
 			}
-			IntRange initialIndices=getIndexRange(retentionTimes, medianChromatogram, expectedPeakWidth);
+			IntRange initialIndices=getIndexRange(retentionTimes, medianChromatogram, expectedPeakWidth, minNumIntegratedRTPoints);
 
 			if (false) { //FIXME REMOVE TEST CODE
 				String name="TEST"; //peptideModSeq+"p"+data.getPrecursorCharge();
@@ -242,7 +246,7 @@ public class TransitionRefiner {
 						index = retentionTimes.length - 1;
 					}
 
-					initialIndices=getIndexRange(retentionTimes, medianChromatogram, index, expectedPeakWidth);
+					initialIndices=getIndexRange(retentionTimes, medianChromatogram, index, expectedPeakWidth, minNumIntegratedRTPoints);
 				}
 				testRange=new Range(retentionTimes[initialIndices.getStart()], retentionTimes[initialIndices.getStop()]);
 			}
@@ -265,7 +269,7 @@ public class TransitionRefiner {
 				Arrays.sort(array);
 				medianChromatogram[i]=aggregate(array);
 			}
-			indices=getIndexRange(retentionTimes, medianChromatogram, expectedPeakWidth);
+			indices=getIndexRange(retentionTimes, medianChromatogram, expectedPeakWidth, minNumIntegratedRTPoints);
 		}
 
 		MedianChromatogramData medianData=new MedianChromatogramData(normalizedChromatograms, indices, medianChromatogram);
@@ -408,27 +412,30 @@ public class TransitionRefiner {
 		return intensity;
 	}
 
-	public static Range getPeakRange(XYTrace trace, float expectedPeakWidth) {
+	public static Range getPeakRange(XYTrace trace, int minNumIntegratedRTPoints, float expectedPeakWidth) {
 		Pair<double[], double[]> pair=trace.toArrays();
 		float[] x=General.toFloatArray(pair.x);
 		float[] y=General.toFloatArray(pair.y);
-		IntRange indicies= getIndexRange(x, y, expectedPeakWidth);
+		IntRange indicies= getIndexRange(x, y, expectedPeakWidth, minNumIntegratedRTPoints);
 		return new Range(trace.getPoints().get(indicies.getStart()).x, trace.getPoints().get(indicies.getStop()).x);
 	}
 	
-	public static IntRange getIndexRange(float[] x, float[] y, float expectedPeakWidth) {
-		int maxIndex=0;
-		float maxY=-Float.MAX_VALUE;
+	public static IntRange getIndexRange(float[] x, float[] y, float expectedPeakWidth, int minNumIntegratedRTPoints) {
+		// default to be the middle of the window
+		int maxIndex=(int)Math.floor((y.length-1)/2.0f);
+		if (maxIndex<0) maxIndex=0;
+		float maxY=y[maxIndex];
+		
 		for (int i = 0; i < y.length; i++) {
 			if (y[i]>maxY) {
 				maxIndex=i;
 				maxY=y[i];
 			}
 		}
-		return getIndexRange(x, y, maxIndex, expectedPeakWidth);
+		return getIndexRange(x, y, maxIndex, expectedPeakWidth, minNumIntegratedRTPoints);
 	}
 	
-	public static IntRange getIndexRange(float[] x, float[] y, int maxIndex, float expectedPeakWidth) {
+	public static IntRange getIndexRange(float[] x, float[] y, int maxIndex, float expectedPeakWidth, int minNumIntegratedRTPoints) {
 		float fiftyPercentPoint=y[maxIndex]/2.0f;
 		float threshold=y[maxIndex]*MINIMUM_THRESHOLD_PERCENTAGE; // 1% of max
 		float rtThreshold=expectedPeakWidth*PERCENT_RT_UPHILL_PEAKWIDTH; // if we start moving by more than 20% of the expected peakwidth
@@ -462,7 +469,7 @@ public class TransitionRefiner {
 			
 			// create peak boundary if the local minimum is less than 1%
 			if (y[firstData]<threshold) {
-				firstData=i;
+				firstData=i-1; // go out one more spot
 				//System.out.println("HIT LEFT THRESHOLD "+firstData+" --> "+y[firstData]);
 				break;
 			}
@@ -494,7 +501,7 @@ public class TransitionRefiner {
 			
 			// create peak boundary if the local minimum is less than 1%
 			if (y[lastData]<threshold) {
-				lastData=i;
+				lastData=i+1; // go out one more spot
 				//System.out.println("HIT RIGHT THRESHOLD "+lastData+" --> "+y[lastData]);
 				break;
 			}
@@ -503,6 +510,39 @@ public class TransitionRefiner {
 		
 		int startIndex=(firstData<=0)?(0):(firstData);
 		int stopIndex=(lastData>=y.length-1)?(y.length-1):(lastData);
+		
+		boolean lastUpdatedStop=true;
+		// increment by checking for the best value on either side
+		while (stopIndex-startIndex<(minNumIntegratedRTPoints-1)) {
+			float startSide=NO_AVAILABLE_INTENSITY_MARKER;
+			float stopSide=NO_AVAILABLE_INTENSITY_MARKER;
+			
+			if (startIndex>0) {
+				startSide=y[startIndex-1];
+			}
+			if (stopIndex<y.length-1) {
+				stopSide=y[stopIndex+1];
+			}
+
+			if (startSide>stopSide) {
+				startIndex=startIndex-1;
+				lastUpdatedStop=false;
+			} else if (startSide<stopSide) {
+				stopIndex=stopIndex+1;
+			} else if (startSide==NO_AVAILABLE_INTENSITY_MARKER) {
+				// both startSide and stopSide==NO_AVAILABLE_INTENSITY_MARKER
+				break;
+			} else {
+				// if there's no difference, then choose whatever was not last chosen
+				if (lastUpdatedStop) {
+					startIndex=startIndex-1;
+					lastUpdatedStop=false;
+				} else {
+					stopIndex=stopIndex+1;
+					lastUpdatedStop=true;
+				}
+			}
+		}
 		IntRange indices=new IntRange(startIndex, stopIndex);
 		return indices;
 	}

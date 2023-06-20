@@ -78,9 +78,12 @@ public class XCordiaSearchParameters extends PecanSearchParameters {
 			int minNumOfQuantitativePeaks,
 			int topNTargetsUsed,
 			float minIntensity,
+			float minIntensityNumIons, 
 			boolean quantifyAcrossSamples,
 			boolean verifyModificationIons,
 			boolean requireVariableMods,
+			float rtWindowInMin,
+			int minNumIntegratedRTPoints,
 			boolean filterPeaklists,
 			boolean doNotUseGlobalFDR,
 			Optional<File> precursorIsolationRangeFile, 
@@ -88,6 +91,8 @@ public class XCordiaSearchParameters extends PecanSearchParameters {
 			boolean normalizeByTIC,
 			boolean subtractBackground,
 			boolean maskBadIntegrations,
+			boolean adjustInferredRTBoundaries,
+			boolean integratePrecursors,
 			boolean enableAdvancedOptions
 	) {
 		super(
@@ -124,9 +129,12 @@ public class XCordiaSearchParameters extends PecanSearchParameters {
 				minNumOfQuantitativePeaks,
 				topNTargetsUsed,
 				minIntensity,
+				minIntensityNumIons, 
 				quantifyAcrossSamples,
 				verifyModificationIons,
 				requireVariableMods,
+				rtWindowInMin,
+				minNumIntegratedRTPoints,
 				filterPeaklists,
 				doNotUseGlobalFDR,
 				precursorIsolationRangeFile,
@@ -134,6 +142,8 @@ public class XCordiaSearchParameters extends PecanSearchParameters {
 				normalizeByTIC,
 				subtractBackground,
 				maskBadIntegrations,
+				adjustInferredRTBoundaries,
+				integratePrecursors,
 				enableAdvancedOptions
 		);
 	}
@@ -231,9 +241,12 @@ public class XCordiaSearchParameters extends PecanSearchParameters {
 				params.getMinNumOfQuantitativePeaks(),
 				params.getTopNTargetsUsed(),
 				params.getMinIntensity(),
+				params.getMinIntensityNumIons(),
 				params.isQuantifySameFragmentsAcrossSamples(),
 				params.isVerifyModificationIons(),
 				params.isRequireVariableMods(),
+				params.getRtWindowInMin(),
+				params.getMinNumIntegratedRTPoints(),
 				params.isFilterPeaklists(),
 				params.isDoNotUseGlobalFDR(),
 				params.getPrecursorIsolationRangeFile(),
@@ -241,6 +254,8 @@ public class XCordiaSearchParameters extends PecanSearchParameters {
 				params.isNormalizeByTIC(),
 				params.isSubtractBackground(),
 				params.isMaskBadIntegrations(),
+				params.adjustInferredRTBoundaries(), 
+				params.isIntegratePrecursors(),
 				params.isEnableAdvancedOptions()
 		);
 	}

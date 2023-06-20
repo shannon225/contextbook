@@ -24,6 +24,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.SortLaterXYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.BackgroundSubtractionFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredIndex;
 import gnu.trove.map.hash.TFloatFloatHashMap;
@@ -90,7 +91,7 @@ public class XCorDIAOneScoringTask extends AbstractLibraryScoringTask {
 				rts[i]=xcordiaStripe.getScanStartTime();
 			}
 			
-			float[] averagePrimary=gaussianCenteredAverage(primary, movingAverageLength);
+			float[] averagePrimary=BackgroundSubtractionFilter.gaussianCenteredAverage(primary, movingAverageLength);
 
 			TFloatFloatHashMap map=new TFloatFloatHashMap();
 			ArrayList<ScoredIndex> goodStripes=new ArrayList<ScoredIndex>();

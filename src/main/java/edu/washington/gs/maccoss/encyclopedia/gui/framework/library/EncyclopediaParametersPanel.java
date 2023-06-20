@@ -235,6 +235,7 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 		int numberOfQuantitativeIonsValue=((Integer)numberOfQuantitativeIons.getValue());
 		int minNumOfQuantitativeIonsValue=((Integer)minNumOfQuantitativeIons.getValue());
 		float minIntensity=-1.0f;
+		float IITNumberOfIonsThreshold=-1.0f;
 		Optional<PeptideModification> modificationType=Optional.empty();
 		SearchParameters parameters=new SearchParameters(
 				aaConstants,
@@ -261,21 +262,26 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 				minNumOfQuantitativeIonsValue,
 				-1,
 				minIntensity,
+				IITNumberOfIonsThreshold,
 				modificationType,
 				ScoringBreadthType.ENTIRE_RT_WINDOW,
 				numberOfExtraDecoyLibrariesValue,
 				true,
 				true,
 				-1.0f,
+				SearchParameters.DEFAULT_MIN_NUM_INTEGRATED_RT_POINTS,
 				false,
 				false,
 				Optional.empty(),
 				Optional.empty(),
 				true,
 				true,
+				false,
+				false,
 				false,
 				false
 		);
+		//parameters=Instr
 
 		String cmds=additionalCommandLineOptions.getText();
 		HashMap<String, String> params=parameters.toParameterMap();

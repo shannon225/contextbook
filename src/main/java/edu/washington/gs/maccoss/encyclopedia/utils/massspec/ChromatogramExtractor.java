@@ -11,12 +11,13 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.BackgroundSubtractionFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
 
 public class ChromatogramExtractor {
 	public static final byte[] isotopes=new byte[] {0, 1, 2};
 	public static final Color[] isotopeColors=new Color[] {new Color(0, 0, 255), new Color(138, 43, 226), new Color(165, 42, 42)};
-	public static XYTraceInterface[] extractPrecursorChromatograms(MassTolerance tolerance, double precursorMz, byte charge, List<? extends Spectrum> precursors) {
+	public static XYTraceInterface[] extractPrecursorChromatograms(MassTolerance tolerance, double precursorMz, byte charge, List<? extends Spectrum> precursors, boolean sgSmooth, boolean backgroundSubtract) {
 		double[] targetMasses=new double[isotopes.length];
 		for (int i=0; i<targetMasses.length; i++) {
 			targetMasses[i] = MassConstants.getChargedIsotopeMass(precursorMz, charge, isotopes[i]);
@@ -45,13 +46,19 @@ public class ChromatogramExtractor {
 				name="Precursor";
 			}
 			XYTrace trace=new XYTrace(traces[i], GraphType.line, name, isotopeColors[i], 3.0f);
-			kept.add(SkylineSGFilter.paddedSavitzkyGolaySmooth(trace));
-			//kept.add(trace);
+			
+			if (sgSmooth) {
+				trace=SkylineSGFilter.paddedSavitzkyGolaySmooth(trace);
+			}
+			if (backgroundSubtract) {
+				trace=BackgroundSubtractionFilter.backgroundSubtractMovingMedian(trace, 75);
+			}
+			kept.add(trace);
 		}
 		return kept.toArray(new XYTrace[kept.size()]);
 	}
 
-	public static <T extends Ion> HashMap<T, XYTrace> extractFragmentChromatograms(MassTolerance tolerance, T[] ionTypes, List<? extends Spectrum> stripes, Float targetRTInSec, GraphType type) {
+	public static <T extends Ion> HashMap<T, XYTrace> extractFragmentChromatograms(MassTolerance tolerance, T[] ionTypes, List<? extends Spectrum> stripes, Float targetRTInSec, GraphType type, boolean sgSmooth, boolean backgroundSubtract) {
 		HashMap<T, XYTrace> kept=new HashMap<T, XYTrace>();
 
 		ArrayList<T> centerIonTypes=new ArrayList<T>();
@@ -105,9 +112,13 @@ public class ChromatogramExtractor {
 				trace=new XYTrace(traceData.getValue(), GraphType.line, name, key.getColor(), 2.0f);
 				break;
 			}
-			XYTrace sgSmoothed=SkylineSGFilter.paddedSavitzkyGolaySmooth(trace);
-			kept.put(key, sgSmoothed);
-			//kept.put(key, trace);
+			if (sgSmooth) {
+				trace=SkylineSGFilter.paddedSavitzkyGolaySmooth(trace);
+			}
+			if (backgroundSubtract) {
+				trace=BackgroundSubtractionFilter.backgroundSubtractMovingMedian(trace, 75);
+			}
+			kept.put(key, trace);
 		}
 		
 		return kept;

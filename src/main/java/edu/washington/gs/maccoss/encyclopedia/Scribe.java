@@ -46,6 +46,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.parameters.InstrumentSpecificSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryEntryCleaner;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
@@ -81,6 +82,7 @@ public class Scribe {
 	
 	public static void main(String[] args) {
 		HashMap<String, String> arguments=CommandLineParser.parseArguments(args);
+		arguments=InstrumentSpecificSearchParameters.checkParameters(arguments);
 		
 		if (arguments.size()==0) {
 			SearchGUIMain.runGUI(ProgramType.Scribe);
@@ -166,7 +168,7 @@ public class Scribe {
 					ArrayList<SearchJobData> jobs=new ArrayList<SearchJobData>();
 					jobs.add(job);
 					
-					SearchToBLIB.convertElib(progress, job, elibFile, job.getParameters());
+					SearchToBLIB.convertElib(progress, job, elibFile, job.getParameters(), job.getParameters().isIntegratePrecursors());
 				}
 				Logger.logLine("Previously found "+passingPeptidesFromTSV.size()+" peptides identified at "+(job.getParameters().getPercolatorThreshold()*100.0f)+"% FDR");
 				progress.update("Previously found "+passingPeptidesFromTSV.size()+" peptides identified at "+(job.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
@@ -214,7 +216,7 @@ public class Scribe {
 		Logger.logLine("Writing elib result library...");
 		File elibFile=job.getResultLibrary();
 		
-		SearchToBLIB.convertElib(progress, job, elibFile, parameters);
+		SearchToBLIB.convertElib(progress, job, elibFile, parameters, parameters.isIntegratePrecursors());
 		
 		progress.update("Found "+passingPeptides.size()+" peptides identified at "+(job.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 		Logger.logLine("Finished analysis! "+passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100f)+"% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");

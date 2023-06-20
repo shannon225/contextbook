@@ -18,6 +18,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.SortLaterXYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakScores;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.BackgroundSubtractionFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredIndex;
 import gnu.trove.map.hash.TDoubleObjectHashMap;
@@ -98,16 +99,16 @@ public class PecanOneScoringTask extends AbstractPecanScoringTask {
 				}
 			}
 
-			float[] sumRawScores=movingForwardSum(rawScores, scanAveragingWindow);
-			float[] sumBgsubScores=movingForwardSum(bgsubScores, scanAveragingWindow);
-			float[] sumZScores=movingForwardSum(zScores, scanAveragingWindow);
+			float[] sumRawScores=BackgroundSubtractionFilter.movingForwardSum(rawScores, scanAveragingWindow);
+			float[] sumBgsubScores=BackgroundSubtractionFilter.movingForwardSum(bgsubScores, scanAveragingWindow);
+			float[] sumZScores=BackgroundSubtractionFilter.movingForwardSum(zScores, scanAveragingWindow);
 			float[][] sumFragmentTraces=new float[entry.getIntensityArray().length][];
 			float[][] sumFragmentDeltaMasses=new float[entry.getIntensityArray().length][];
 			for (int i=0; i<sumFragmentTraces.length; i++) {
-				sumFragmentTraces[i]=movingForwardSum(fragmentTraces[i], scanAveragingWindow);
-				sumFragmentDeltaMasses[i]=movingForwardAverage(fragmentDeltaMasses[i], scanAveragingWindow);
+				sumFragmentTraces[i]=BackgroundSubtractionFilter.movingForwardSum(fragmentTraces[i], scanAveragingWindow);
+				sumFragmentDeltaMasses[i]=BackgroundSubtractionFilter.movingForwardAverage(fragmentDeltaMasses[i], scanAveragingWindow);
 			}
-			float[] midTime=movingForwardRTAverage(rawRTs, scanAveragingWindow);
+			float[] midTime=BackgroundSubtractionFilter.movingForwardRTAverage(rawRTs, scanAveragingWindow);
 
 			ArrayList<ScoredIndex> goodStripes=new ArrayList<ScoredIndex>();
 			int[] numAboveThresholdMatches=new int[sumRawScores.length];

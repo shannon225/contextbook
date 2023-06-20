@@ -72,6 +72,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroupInterfa
 import edu.washington.gs.maccoss.encyclopedia.datastructures.QuantitativeSearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.parameters.InstrumentSpecificSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
@@ -115,7 +116,8 @@ public class SearchToBLIB {
 	public static void main(String[] args) {
 		final Pair<List<String>, HashMap<String, String>> parsedArgs = CommandLineParser.parseMultipleAndRemainingArguments(args, Encyclopedia.INPUT_DIA_TAG);
 		final List<String> diaPaths = parsedArgs.x;
-		final HashMap<String, String> arguments = parsedArgs.y;
+		HashMap<String, String> arguments = parsedArgs.y;
+		arguments=InstrumentSpecificSearchParameters.checkParameters(arguments);
 
 		if (arguments.size()==0) {
 			SearchGUIMain.runGUI(ProgramType.EncyclopeDIA);
@@ -308,6 +310,8 @@ public class SearchToBLIB {
 			Logger.errorLine("You are required to specify an input file or directory (-i), an input library file (-l), a fasta database (-f), and an output library file (-o)");
 			System.exit(1);
 		}
+		
+		arguments=InstrumentSpecificSearchParameters.checkParameters(arguments);
 
 		File fastaFile=new File(arguments.get("-f"));
 		File libraryFile=new File(arguments.get("-l"));
@@ -444,8 +448,8 @@ public class SearchToBLIB {
 		 */
 		ELIB {
 			@Override
-			void convert(ProgressIndicator progress, List<? extends SearchJobData> jobs, File outputFile, Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides, Optional<PercolatorExecutionData> globalPercolatorFiles, Optional<PeakLocationInferrerInterface> inferrer, SearchParameters parameters) {
-				convertElib(progress, jobs, outputFile, Optional.of(passingPeptides), globalPercolatorFiles, inferrer, parameters);
+			void convert(ProgressIndicator progress, List<? extends SearchJobData> jobs, File outputFile, Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides, Optional<PercolatorExecutionData> globalPercolatorFiles, Optional<PeakLocationInferrerInterface> inferrer, SearchParameters parameters, boolean integratePrecursors) {
+				convertElib(progress, jobs, outputFile, Optional.of(passingPeptides), globalPercolatorFiles, inferrer, parameters, integratePrecursors);
 			}
 		},
 
@@ -458,7 +462,7 @@ public class SearchToBLIB {
 		 */
 		ALIB {
 			@Override
-			void convert(ProgressIndicator progress, List<? extends SearchJobData> jobs, File outputFile, Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides, Optional<PercolatorExecutionData> globalPercolatorFiles, Optional<PeakLocationInferrerInterface> inferrer, SearchParameters parameters) {
+			void convert(ProgressIndicator progress, List<? extends SearchJobData> jobs, File outputFile, Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides, Optional<PercolatorExecutionData> globalPercolatorFiles, Optional<PeakLocationInferrerInterface> inferrer, SearchParameters parameters, boolean integratePrecursors) {
 				if (!inferrer.isPresent()) {
 					throw new IllegalArgumentException("Unable to export alignment-only library without RT alignment and transition refinement!");
 				}
@@ -473,7 +477,7 @@ public class SearchToBLIB {
 		 */
 		BLIB {
 			@Override
-			void convert(ProgressIndicator progress, List<? extends SearchJobData> jobs, File outputFile, Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides, Optional<PercolatorExecutionData> globalPercolatorFiles, Optional<PeakLocationInferrerInterface> inferrer, SearchParameters parameters) {
+			void convert(ProgressIndicator progress, List<? extends SearchJobData> jobs, File outputFile, Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides, Optional<PercolatorExecutionData> globalPercolatorFiles, Optional<PeakLocationInferrerInterface> inferrer, SearchParameters parameters, boolean integratePrecursors) {
 				convertBlib(progress, jobs, outputFile, Optional.of(passingPeptides.x), inferrer);
 			}
 		};
@@ -495,7 +499,7 @@ public class SearchToBLIB {
 		 * @param inferrer If aligning between files, the inferrer which provides RT alignment and consistent, refined transitions
 		 * @param parameters The parameters that should be used during conversion and (in some cases) written to the output file
 		 */
-		abstract void convert(ProgressIndicator progress, List<? extends SearchJobData> jobs, File outputFile, Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides, Optional<PercolatorExecutionData> globalPercolatorFiles, Optional<PeakLocationInferrerInterface> inferrer, SearchParameters parameters);
+		abstract void convert(ProgressIndicator progress, List<? extends SearchJobData> jobs, File outputFile, Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides, Optional<PercolatorExecutionData> globalPercolatorFiles, Optional<PeakLocationInferrerInterface> inferrer, SearchParameters parameters, boolean integratePrecursors);
 	}
 
 	/**
@@ -546,20 +550,6 @@ public class SearchToBLIB {
 		}
 
 		final SearchJobData representativeJob=pecanJobs.get(0);
-
-		boolean anyDDA=false;
-		for (int i=0; i<pecanJobs.size(); i++) {
-			SearchJobData job=pecanJobs.get(i);
-			if (job instanceof DDASearchJobData) {
-				anyDDA=true;
-				break;
-			}
-		}
-		if (anyDDA) {
-			Logger.logLine("Found DDA data, running Percolator in target-decoy completition mode");
-		} else {
-			Logger.logLine("Found DIA data only, running Percolator in min-max mode");
-		}
 		
 		ArrayList<File> featureFiles=new ArrayList<File>();
 		for (int i=0; i<pecanJobs.size(); i++) {
@@ -572,6 +562,26 @@ public class SearchToBLIB {
 			Logger.logLine("Using "+representativeJob.getDiaFileReader().getOriginalFileName()+" to extract representative search parameters");
 			parameters=representativeJob.getParameters();
 		}
+		
+		boolean integratePrecursors=parameters.isIntegratePrecursors();
+
+		boolean anyDDA=false;
+		for (int i=0; i<pecanJobs.size(); i++) {
+			SearchJobData job=pecanJobs.get(i);
+			if (job instanceof DDASearchJobData) {
+				anyDDA=true;
+				break;
+			}
+		}
+		if (anyDDA) {
+			Logger.logLine("Found DDA data, running Percolator in target-decoy completition mode");
+			if (!integratePrecursors) {
+				Logger.logLine("Found DDA data, forcing integration of precursors");
+				integratePrecursors=true;
+			}
+		} else {
+			Logger.logLine("Found DIA data only, running Percolator in min-max mode");
+		}
 
 		String filename=libFile.getName();
 		if (filename.lastIndexOf('.')>0) {
@@ -582,7 +592,7 @@ public class SearchToBLIB {
 		File bigPercolatorDecoyFile=new File(representativeJob.getPercolatorFiles().getInputTSV().getParentFile(), filename+"_concatenated_decoy.txt");
 		File bigPercolatorProteinFile=new File(representativeJob.getPercolatorFiles().getInputTSV().getParentFile(), filename+"_concatenated_protein_results.txt");
 		File bigPercolatorProteinDecoyFile=new File(representativeJob.getPercolatorFiles().getInputTSV().getParentFile(), filename+"_concatenated_protein_decoy.txt");
-		PercolatorExecutionData bigPercolatorFiles=new PercolatorExecutionData(bigFeatureFile, representativeJob.getPercolatorFiles().getFastaFile(), bigPercolatorFile, bigPercolatorDecoyFile, bigPercolatorProteinFile, bigPercolatorProteinDecoyFile, parameters, !anyDDA);
+		PercolatorExecutionData bigPercolatorFiles=new PercolatorExecutionData(bigFeatureFile, representativeJob.getPercolatorFiles().getFastaFile(), bigPercolatorFile, bigPercolatorDecoyFile, bigPercolatorProteinFile, bigPercolatorProteinDecoyFile, parameters, !integratePrecursors);
 
 		final float threshold=parameters.getEffectivePercolatorThreshold();
 		try {
@@ -597,7 +607,7 @@ public class SearchToBLIB {
 			if (!foundLibrary) {
 				Optional<PercolatorExecutionData> globalPercolatorFiles = Optional.ofNullable(featureFiles.size() == 1 ? null : bigPercolatorFiles);
 
-				quantifySamples(progress, pecanJobs, libFile, outputFormat, alignBetweenFiles, parameters, percolatorDataPair.x, globalPercolatorFiles);
+				quantifySamples(progress, pecanJobs, libFile, outputFormat, alignBetweenFiles, parameters, percolatorDataPair.x, globalPercolatorFiles, integratePrecursors);
 			}
 			progress.update(percolatorDataPair.x.x.size()+" peptides identified at "+(threshold*100.0f)+"% FDR", 1.0f);
 		} catch (IOException ioe) {
@@ -689,7 +699,7 @@ public class SearchToBLIB {
 	private static void quantifySamples(ProgressIndicator progress, List<? extends SearchJobData> pecanJobs,
 										File libFile, OutputFormat outputFormat, boolean alignBetweenFiles, SearchParameters parameters,
 										Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides,
-										Optional<PercolatorExecutionData> globalPercolatorFiles) {
+										Optional<PercolatorExecutionData> globalPercolatorFiles, boolean integratePrecursors) {
 		Optional<PeakLocationInferrerInterface> inferrer;
 		if (alignBetweenFiles) {
 			Logger.logLine("Inferring peak boundaries across files...");
@@ -706,7 +716,7 @@ public class SearchToBLIB {
 			inferrer=Optional.empty();
 		}
 
-		outputFormat.convert(progress, pecanJobs, libFile, passingPeptides, globalPercolatorFiles, inferrer, parameters);
+		outputFormat.convert(progress, pecanJobs, libFile, passingPeptides, globalPercolatorFiles, inferrer, parameters, integratePrecursors);
 	}
 
 	private static Pair<Pair<ArrayList<PercolatorPeptide>, Float>, Pair<ArrayList<PercolatorPeptide>, Float>> getPeptidesWithoutGlobalFDR(List<? extends SearchJobData> pecanJobs, SearchParameters parameters) {
@@ -829,14 +839,14 @@ public class SearchToBLIB {
 		return counterTotals;
 	}
 
-	static void convertElib(ProgressIndicator progress, SearchJobData pecanJob, File elibFile, SearchParameters parameters) {
+	static void convertElib(ProgressIndicator progress, SearchJobData pecanJob, File elibFile, SearchParameters parameters, boolean integratePrecursors) {
 		ArrayList<SearchJobData> jobs=new ArrayList<>();
 		jobs.add(pecanJob);
 
-		convertElib(progress, jobs, elibFile, Optional.empty(), Optional.empty(), Optional.empty(), parameters);
+		convertElib(progress, jobs, elibFile, Optional.empty(), Optional.empty(), Optional.empty(), parameters, integratePrecursors);
 	}
 
-	static void convertElib(ProgressIndicator progress, List<? extends SearchJobData> pecanJobs, File elibFile, Optional<Pair<ArrayList<PercolatorPeptide>, Float>> passingPeptides, Optional<PercolatorExecutionData> globalPercolatorFiles, Optional<PeakLocationInferrerInterface> inferrer, SearchParameters parameters) {
+	static void convertElib(ProgressIndicator progress, List<? extends SearchJobData> pecanJobs, File elibFile, Optional<Pair<ArrayList<PercolatorPeptide>, Float>> passingPeptides, Optional<PercolatorExecutionData> globalPercolatorFiles, Optional<PeakLocationInferrerInterface> inferrer, SearchParameters parameters, boolean integratePrecursors) {
 		try {
 			LibraryFile elib=new LibraryFile();
 			elib.openFile();
@@ -860,7 +870,7 @@ public class SearchToBLIB {
 
 				Logger.logLine(job.getDiaFileReader().getOriginalFileName()+": Number of global peptides: "+globalPassingPeptides.size()+" vs local peptides: "+localPassingPeptides.x.size());
 				
-				convertFileElib(subProgress, job, globalPassingPeptides, localPassingPeptides.x, inferrer, elib, pecanJobs.size()>1);
+				convertFileElib(subProgress, job, globalPassingPeptides, localPassingPeptides.x, inferrer, elib, pecanJobs.size()>1, integratePrecursors);
 
 				if ((!globalPercolatorFiles.isPresent())) {
 					if (job.hasBeenRun()) {
@@ -900,7 +910,7 @@ public class SearchToBLIB {
 			if (proteins!=null) {
 				if (inferrer.isPresent()) {
 					try {
-						LibraryReportExtractor.extractMatrix(elib, proteins, true);
+						LibraryReportExtractor.extractMatrix(elib, proteins, parameters.isNormalizeByTIC());
 					} catch (DataFormatException e) {
 						Logger.errorException(e);
 					}
@@ -922,7 +932,7 @@ public class SearchToBLIB {
 	/**
 	 * Does not limit to quantifiable! Reports all potential peaks!
 	 */
-	static void convertFileElib(ProgressIndicator subProgress, SearchJobData job, ArrayList<PercolatorPeptide> globalPassingPeptides, ArrayList<PercolatorPeptide> localPassingPeptides, Optional<PeakLocationInferrerInterface> inferrer, LibraryFile elib, boolean combineJobs) throws IOException, SQLException {
+	static void convertFileElib(ProgressIndicator subProgress, SearchJobData job, ArrayList<PercolatorPeptide> globalPassingPeptides, ArrayList<PercolatorPeptide> localPassingPeptides, Optional<PeakLocationInferrerInterface> inferrer, LibraryFile elib, boolean combineJobs, boolean integratePrecursors) throws IOException, SQLException {
 		String diaFileName=job.getDiaFileReader().getOriginalFileName();
 		Logger.logLine("Reading Percolator Results from "+diaFileName+"...");
 		subProgress.update(diaFileName+": Reading Percolator Results", 0.0f);
@@ -937,7 +947,7 @@ public class SearchToBLIB {
 		inferrer.ifPresent(inf -> elib.addRtAlignment(job, inf));
 
 		ArrayList<IntegratedLibraryEntry> libraryEntries;
-		if (job instanceof QuantitativeSearchJobData) {
+		if (job instanceof QuantitativeSearchJobData&&(!integratePrecursors)) {
 			LibraryInterface library=null;
 			if (job instanceof EncyclopediaJobData) {
 				library=((EncyclopediaJobData)job).getLibrary();
@@ -963,7 +973,7 @@ public class SearchToBLIB {
 			localizationData=Optional.empty();
 		}
 
-		elib.addIntegratedEntries(!(job instanceof DDASearchJobData), libraryEntries, inferrer, localizationData, job.getParameters());
+		elib.addIntegratedEntries(!integratePrecursors, libraryEntries, inferrer, localizationData, job.getParameters());
 		
 
 		Logger.logLine("Finished writing to Encyclopedia ELIB at "+new Date().toString());
@@ -1447,7 +1457,7 @@ public class SearchToBLIB {
 				throw new EncyclopediaException("Unable to read alignment results", e);
 			}
 
-			convertElibQuantOnly(progress, jobs, elibFile, passingPeptides, inferrer, proteins, ticMap, parameters);
+			convertElibQuantOnly(progress, jobs, elibFile, passingPeptides, inferrer, proteins, ticMap, parameters, parameters.isIntegratePrecursors());
 		} finally {
 			Logger.close();
 		}
@@ -1715,7 +1725,7 @@ public class SearchToBLIB {
 	 * @param proteins the previously-computed set of scored and grouped proteins
 	 * @param parameters the parameters to use for quant (should match those used for the initial alignment exactly!)
 	 */
-	static void convertElibQuantOnly(ProgressIndicator progress, List<? extends SearchJobData> jobs, File elibFile, Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides, PeakLocationInferrerInterface inferrer, ArrayList<? extends ProteinGroupInterface> proteins, TObjectFloatMap<? super String> ticMap, SearchParameters parameters) {
+	static void convertElibQuantOnly(ProgressIndicator progress, List<? extends SearchJobData> jobs, File elibFile, Pair<ArrayList<PercolatorPeptide>, Float> passingPeptides, PeakLocationInferrerInterface inferrer, ArrayList<? extends ProteinGroupInterface> proteins, TObjectFloatMap<? super String> ticMap, SearchParameters parameters, boolean integratePrecursors) {
 		if (null == passingPeptides || null == passingPeptides.x || passingPeptides.x.size() < 1) {
 			throw new IllegalArgumentException("Can't extract quantities for zero peptides!");
 		}
@@ -1741,7 +1751,7 @@ public class SearchToBLIB {
 
 				Logger.logLine(job.getDiaFileReader().getOriginalFileName() + ": Number of global peptides: " + globalPassingPeptides.size() + " vs local peptides: " + localPassingPeptides.x.size());
 
-				convertFileElib(subProgress, job, globalPassingPeptides, localPassingPeptides.x, Optional.of(inferrer), elib, jobs.size() > 1);
+				convertFileElib(subProgress, job, globalPassingPeptides, localPassingPeptides.x, Optional.of(inferrer), elib, jobs.size() > 1, integratePrecursors);
 			}
 
 			writeElibMetadata(elib, jobs, parameters, true);
@@ -1757,11 +1767,12 @@ public class SearchToBLIB {
 			elib.saveAsFile(elibFile);
 
 			try {
+				IntensityNormalizer tic = parameters.isNormalizeByTIC()?IntensityNormalizer.tic(ticMap):IntensityNormalizer::identity;
 				LibraryReportExtractor.extractMatrix(
 						elib,
 						jobs.stream().map(j -> j.getDiaFileReader().getOriginalFileName()).collect(Collectors.toList()),
 						proteins,
-						IntensityNormalizer.tic(ticMap),
+						tic,
 						Optional.empty(),
 						""
 				);

@@ -44,6 +44,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideDatabase;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.parameters.InstrumentSpecificSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
@@ -73,6 +74,8 @@ public class XCorDIA {
 
 	public static void main(String[] args) {
 		HashMap<String, String> arguments=CommandLineParser.parseArguments(args);
+		arguments=InstrumentSpecificSearchParameters.checkParameters(arguments);
+		
 		if (arguments.containsKey("-classic")) {
 			arguments.remove("-classic");
 		} else {
@@ -453,7 +456,7 @@ public class XCorDIA {
 		stripefile.close();
 		
 		Logger.logLine("Writing elib result library...");
-		SearchToBLIB.convertElib(progress, jobData, jobData.getResultLibrary(), parameters);
+		SearchToBLIB.convertElib(progress, jobData, jobData.getResultLibrary(), parameters, parameters.isIntegratePrecursors());
 		
 		Logger.logLine("Finished analysis! "+resultsConsumer.getNumberProcessed()+" total peaks processed, "+passingPeptides.size()+" peptides identified at 1% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");
 		Logger.logLine(""); 

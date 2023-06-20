@@ -332,7 +332,7 @@ public class PhosphoLocalizerExample {
 		for (PrecursorScan stripe : stripefile.getPrecursors(libentry.getRetentionTime()-duration, libentry.getRetentionTime()+duration)) {
 			limitedPrecursors.add(stripe);
 		}
-		Charter.launchChart("Retention Time (min)", "Intensity", false, new Dimension(500, 300), ChromatogramExtractor.extractPrecursorChromatograms(parameters.getPrecursorTolerance(), libentry.getPrecursorMZ(), libentry.getPrecursorCharge(), limitedPrecursors));
+		Charter.launchChart("Retention Time (min)", "Intensity", false, new Dimension(500, 300), ChromatogramExtractor.extractPrecursorChromatograms(parameters.getPrecursorTolerance(), libentry.getPrecursorMZ(), libentry.getPrecursorCharge(), limitedPrecursors, true, false));
 		
 		HashMap<String, Pair<TFloatFloatHashMap, TFloatFloatHashMap>> allVsUniqueList=actuallyPhosphoData.getScoreTraces();
 		ArrayList<XYTrace> traces=new ArrayList<XYTrace>();

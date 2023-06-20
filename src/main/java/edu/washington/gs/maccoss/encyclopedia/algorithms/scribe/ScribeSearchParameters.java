@@ -136,11 +136,14 @@ public class ScribeSearchParameters extends SearchParameters {
 			int minNumOfQuantitativePeaks,
 			int topNTargetsUsed,
 			float minIntensity,
+			float minIntensityNumIons, 
 			Optional<PeptideModification> modification,
 			ScoringBreadthType searchType,
 			float getNumberOfExtraDecoyLibrariesSearched,
 			boolean quantifyAcrossSamples,
 			boolean verifyModificationIons,
+			float rtWindowInMin,
+			int minNumIntegratedRTPoints,
 			boolean filterPeaklists,
 			boolean doNotUseGlobalFDR,
 			Optional<File> precursorIsolationRangeFile, 
@@ -148,6 +151,8 @@ public class ScribeSearchParameters extends SearchParameters {
 			boolean normalizeByTIC,
 			boolean subtractBackground,
 			boolean maskBadIntegrations,
+			boolean adjustInferredRTBoundaries,
+			boolean integratePrecursors,
 			boolean enableAdvancedOptions
 	) {
 		super(
@@ -175,12 +180,14 @@ public class ScribeSearchParameters extends SearchParameters {
 				minNumOfQuantitativePeaks,
 				topNTargetsUsed,
 				minIntensity,
+				minIntensityNumIons, 
 				modification,
 				searchType,
 				getNumberOfExtraDecoyLibrariesSearched,
 				quantifyAcrossSamples,
 				verifyModificationIons,
-				-1.0f,
+				rtWindowInMin,
+				minNumIntegratedRTPoints,
 				filterPeaklists,
 				doNotUseGlobalFDR,
 				precursorIsolationRangeFile,
@@ -188,6 +195,8 @@ public class ScribeSearchParameters extends SearchParameters {
 				normalizeByTIC,
 				subtractBackground,
 				maskBadIntegrations,
+				adjustInferredRTBoundaries,
+				integratePrecursors,
 				enableAdvancedOptions
 		);
 	}
@@ -218,11 +227,14 @@ public class ScribeSearchParameters extends SearchParameters {
 				params.getMinNumOfQuantitativePeaks(),
 				params.getTopNTargetsUsed(),
 				params.getMinIntensity(),
+				params.getMinIntensityNumIons(),
 				params.getLocalizingModification(),
 				params.getScoringBreadthType(),
 				params.getNumberOfExtraDecoyLibrariesSearched(),
 				params.isQuantifySameFragmentsAcrossSamples(),
 				params.isVerifyModificationIons(),
+				params.getRtWindowInMin(),
+				params.getMinNumIntegratedRTPoints(),
 				params.isFilterPeaklists(),
 				params.isDoNotUseGlobalFDR(),
 				params.getPrecursorIsolationRangeFile(),
@@ -230,6 +242,8 @@ public class ScribeSearchParameters extends SearchParameters {
 				params.isNormalizeByTIC(),
 				params.isSubtractBackground(),
 				params.isMaskBadIntegrations(),
+				params.adjustInferredRTBoundaries(), 
+				params.isIntegratePrecursors(),
 				params.isEnableAdvancedOptions()
 		);
 	}
