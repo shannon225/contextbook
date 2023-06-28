@@ -56,7 +56,6 @@ import gnu.trove.map.hash.TCharDoubleHashMap;
 public class EncyclopediaParametersPanel extends JPanel implements ParametersPanelInterface {
 	
 	private static final long serialVersionUID=1L;
-	private static final int numberOfCores=Runtime.getRuntime().availableProcessors();
 	private static final String[] NUMBER_OF_EXTRA_DECOY_ITEMS=new String[] {"Normal Target/Decoy", "+10% Extra Decoys", "+20% Extra Decoys", "+50% Extra Decoys", "+100% Extra Decoys (2x Time)"};
 	private static final float[] NUMBER_OF_EXTRA_DECOY_VALUES=new float[] {0.0f, 0.1f, 0.2f, 0.5f, 1.0f};
 	
@@ -84,17 +83,13 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 
 	private final FileChooserPanel backgroundFasta=new FileChooserPanel(null, "Background", new SimpleFilenameFilter(".fas", ".fasta"), true);
 	private final FileChooserPanel libraryFileChooser;
-	private final JComboBox<String> enzyme=new JComboBox<String>(new String[] {"Trypsin", "Glu-C", "Lys-C", "Arg-C", "Asp-N", "Lys-N", "CNBr", "Chymotrypsin", "Pepsin A", "No Enzyme"});
 	private final JComboBox<String> fragType=new JComboBox<String>(new String[] {FragmentationType.toName(FragmentationType.CID), FragmentationType.toName(FragmentationType.HCD), //FragmentationType.toName(FragmentationType.SILAC), 
 			FragmentationType.toName(FragmentationType.ETD)});
 	private final JComboBox<PercolatorVersion> percolatorVersion=new JComboBox<PercolatorVersion>(PercolatorVersion.VALID_VERSIONS);
 
 	private final JFormattedTextField precursorWindowWidth=new JFormattedTextField(NumberFormat.getNumberInstance()); // not displayed anymore
 
-	private final JComboBox<MassTolerance> precursorTolerance=new JComboBox<MassTolerance>(TOLERANCE_VALUES);
-	private final JComboBox<MassTolerance> fragmentTolerance=new JComboBox<MassTolerance>(TOLERANCE_VALUES);
 	private final JComboBox<MassTolerance> libraryTolerance=new JComboBox<MassTolerance>(TOLERANCE_VALUES);
-	private final SpinnerModel numberOfJobs=new SpinnerNumberModel(numberOfCores, 1, numberOfCores, 1);
 	private final SpinnerModel numberOfQuantitativeIons=new SpinnerNumberModel(5, 1, 100, 1);
 	private final SpinnerModel minNumOfQuantitativeIons=new SpinnerNumberModel(3, 0, 100, 1);
 	private final JComboBox<String> numberOfExtraDecoyLibraries=new JComboBox<String>(NUMBER_OF_EXTRA_DECOY_ITEMS);
@@ -121,15 +116,9 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 		options.add(libraryFileChooser);
 		options.add(backgroundFasta);
 		options.add(new LabeledComponent("Target/Decoy Approach", numberOfExtraDecoyLibraries));
-		options.add(new LabeledComponent("Enzyme", enzyme));
-		options.add(new LabeledComponent("Fragmentation", fragType));
-		options.add(new LabeledComponent("Precursor Mass Tolerance", precursorTolerance));
-		options.add(new LabeledComponent("Fragment Mass Tolerance", fragmentTolerance));
 		options.add(new LabeledComponent("Library Mass Tolerance", libraryTolerance));
-		options.add(new LabeledComponent("Percolator Version", percolatorVersion));
 		options.add(new LabeledComponent("Number of Quantitative Ions", new JSpinner(numberOfQuantitativeIons)));
 		options.add(new LabeledComponent("Minimum Number of Quantitative Ions", new JSpinner(minNumOfQuantitativeIons)));
-		options.add(new LabeledComponent("Number of Cores", new JSpinner(numberOfJobs)));
 		options.add(new LabeledComponent("Additonal Command Line Options", additionalCommandLineOptions));
 
 		this.add(options, BorderLayout.CENTER);
@@ -220,13 +209,13 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 
 	public SearchParameters getParameters() {
 		DataAcquisitionType dataAcquisitionType=DataAcquisitionType.DIA;
-		DigestionEnzyme digestionEnzyme=DigestionEnzyme.getEnzyme((String)enzyme.getSelectedItem());
+		DigestionEnzyme digestionEnzyme=searchPanel.getEnzyme();
 		AminoAcidConstants aaConstants=new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
 		FragmentationType fragmentation=FragmentationType.getFragmentationType((String)fragType.getSelectedItem());
-		MassTolerance precursorValue=(MassTolerance)precursorTolerance.getSelectedItem();
-		MassTolerance fragmentValue=(MassTolerance)fragmentTolerance.getSelectedItem();
+		MassTolerance precursorValue=searchPanel.getInstrument().getPrecursorTolerance();
+		MassTolerance fragmentValue=searchPanel.getInstrument().getFragmentTolerance();
 		MassTolerance libraryFragmentValue=(MassTolerance)libraryTolerance.getSelectedItem();
-		int numberOfJobsValue=((Integer)numberOfJobs.getValue());
+		int numberOfJobsValue=searchPanel.getNumberOfJobs();
 		Number value=(Number)precursorWindowWidth.getValue();
 		float precursorWindowWidthValue=value==null?-1.0f:value.floatValue();
 		PercolatorVersion percolator=(PercolatorVersion)percolatorVersion.getSelectedItem();
@@ -279,12 +268,13 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 				false,
 				false,
 				false,
+				searchPanel.getInstrument(),
 				false
 		);
-		//parameters=Instr
 
 		String cmds=additionalCommandLineOptions.getText();
 		HashMap<String, String> params=parameters.toParameterMap();
+		params=searchPanel.getInstrument().overwriteParameters(params);
 		params.putAll(CommandLineParser.parseArguments(cmds.split(" ")));
 		parameters=SearchParameterParser.parseParameters(params);
 		
@@ -301,32 +291,7 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 			if (fastaFile.exists()) backgroundFasta.update(fastaFile);
 		}
 		
-		enzyme.setSelectedItem(params.getEnzyme().getName());
-		fragType.setSelectedItem(FragmentationType.toName(params.getFragType()));
-		
 		boolean gotIt=false;
-		MassTolerance pre=params.getPrecursorTolerance();
-		for (int i=0; i<TOLERANCE_VALUES.length; i++) {
-			if (TOLERANCE_VALUES[i].equals(pre)) {
-				precursorTolerance.setSelectedIndex(i);
-				gotIt=true;
-				break;
-			}
-		}
-		if (!gotIt) precursorTolerance.setSelectedIndex(1);
-		
-		gotIt=false;
-		MassTolerance frag=params.getFragmentTolerance();
-		for (int i=0; i<TOLERANCE_VALUES.length; i++) {
-			if (TOLERANCE_VALUES[i].equals(frag)) {
-				fragmentTolerance.setSelectedIndex(i);
-				gotIt=true;
-				break;
-			}
-		}
-		if (!gotIt) fragmentTolerance.setSelectedIndex(1);
-		
-		gotIt=false;
 		MassTolerance lib=params.getLibraryFragmentTolerance();
 		for (int i=0; i<TOLERANCE_VALUES.length; i++) {
 			if (TOLERANCE_VALUES[i].equals(lib)) {
@@ -337,7 +302,6 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 		}
 		if (!gotIt) libraryTolerance.setSelectedIndex(1);
 		
-		numberOfJobs.setValue(params.getNumberOfThreadsUsed());
 		if (params.getPrecursorWindowSize()>0) {
 			precursorWindowWidth.setValue(params.getPrecursorWindowSize());
 		} else {

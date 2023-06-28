@@ -5,18 +5,21 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.FileDialog;
 import java.awt.FlowLayout;
+import java.awt.Insets;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Optional;
 import java.util.Vector;
 
 import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -29,11 +32,16 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSeparator;
+import javax.swing.JSpinner;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.KeyStroke;
+import javax.swing.SpinnerModel;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import javax.swing.table.TableColumn;
 
 import edu.washington.gs.maccoss.encyclopedia.Encyclopedia;
@@ -68,6 +76,7 @@ import edu.washington.gs.maccoss.encyclopedia.gui.framework.xcordia.XCorDIAParam
 import edu.washington.gs.maccoss.encyclopedia.gui.general.AboutDialog;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessorTableModel;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.LabeledComponent;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.LogConsole;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.MemoryMonitor;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.ProgressRenderer;
@@ -78,6 +87,8 @@ import edu.washington.gs.maccoss.encyclopedia.jobs.SearchToELIBJob;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.Networking;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 
 public class SearchPanel extends JPanel {
 	private static final long serialVersionUID=1L;
@@ -94,13 +105,22 @@ public class SearchPanel extends JPanel {
 	private static final ImageIcon windowSchemeIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/window_scheme_icon.png"));
 	private static final ImageIcon xmlFileIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/xml_file_icon.png"));
 
+	private static final int numberOfCores=Runtime.getRuntime().availableProcessors();
+	private final SpinnerModel numberOfJobs=new SpinnerNumberModel(numberOfCores, 1, numberOfCores, 1);
 	private final JComboBox<InstrumentSpecificSearchParameters> instrumentCombo=new JComboBox<InstrumentSpecificSearchParameters>(InstrumentSpecificSearchParameters.INSTRUMENTS);
 	private final JComboBox<DigestionEnzyme> enzymeCombo=new JComboBox<DigestionEnzyme>(new Vector<>(DigestionEnzyme.getAvailableEnzymes()));
 	
 	JobProcessorTableModel processorTableModel=new JobProcessorTableModel();
 	
-	private final JTabbedPane optionsTabs;
+	private final JTabbedPane engineSpecificParameters;
 	//private final JCheckBox alignBetweenFiles;
+	
+
+	public void setParameters(SearchParameters params) {
+		instrumentCombo.setSelectedItem(params.getInstrument());
+		enzymeCombo.setSelectedItem(params.getEnzyme());
+		numberOfJobs.setValue(params.getNumberOfThreadsUsed());
+	}
 	
 	public SearchPanel(ProgramType program) {
 		super(new BorderLayout());
@@ -110,7 +130,35 @@ public class SearchPanel extends JPanel {
 
 		JSplitPane split=new JSplitPane();
 
-		optionsTabs=new JTabbedPane();
+		JPanel generalParameters=new JPanel();
+		generalParameters.setBackground(Color.white);
+		generalParameters.setLayout(new BoxLayout(generalParameters, BoxLayout.PAGE_AXIS));
+		
+		generalParameters.add(new JSeparator(JSeparator.HORIZONTAL));
+		generalParameters.add(new LabeledComponent("<p style=\"font-size:12px; font-family: Helvetica, sans-serif\"><b>General Parameters", new JLabel()));
+		generalParameters.add(new LabeledComponent("Instrument", instrumentCombo));
+		generalParameters.add(new LabeledComponent("Enzyme", enzymeCombo));
+		generalParameters.add(new LabeledComponent("Number of Cores", new JSpinner(numberOfJobs)));
+		
+		// to make it have the same margins as the JTabbedPane
+		Insets insets = UIManager.getInsets("TabbedPane.tabInsets");
+		generalParameters.setBorder(BorderFactory.createEmptyBorder(insets.top, insets.left, insets.bottom, insets.right));
+
+		// set up JTabbedPane
+		engineSpecificParameters=new JTabbedPane();
+
+		HashMap<String, String> map;
+		SearchParameters params;
+		try {
+			map=SearchParameters.readPreferences();
+			params=SearchParameterParser.parseParameters(map);
+			setParameters(params);
+		} catch (Exception e) {
+			Logger.errorLine("Unexpected error reading saved parameters; using default parameters.");
+			Logger.errorException(e);
+			map=SearchParameterParser.getDefaultParameters();
+			params=SearchParameterParser.parseParameters(map);
+		}
 		
 		if (ProgramType.Global==program||ProgramType.EncyclopeDIA==program) {
 			try {
@@ -129,9 +177,8 @@ public class SearchPanel extends JPanel {
 						encyclopedia=new EncyclopediaParametersPanel(this);
 						break;
 				}
-				HashMap<String, String> map=SearchParameters.readPreferences();
-				encyclopedia.setParameters(SearchParameterParser.parseParameters(map), map.get(Encyclopedia.TARGET_LIBRARY_TAG), map.get(Encyclopedia.BACKGROUND_FASTA_TAG));
-				optionsTabs.addTab(encyclopedia.getProgramName(), encyclopedia.getSmallImage(), encyclopedia, encyclopedia.getProgramShortDescription());
+				encyclopedia.setParameters(params, map.get(Encyclopedia.TARGET_LIBRARY_TAG), map.get(Encyclopedia.BACKGROUND_FASTA_TAG));
+				engineSpecificParameters.addTab(encyclopedia.getProgramName(), encyclopedia.getSmallImage(), encyclopedia, encyclopedia.getProgramShortDescription());
 			} catch (Exception e) {
 				Logger.errorLine("Unexpected error reading saved parameters; using default parameters.");
 				Logger.errorException(e);
@@ -140,10 +187,10 @@ public class SearchPanel extends JPanel {
 		if (ProgramType.Global==program||ProgramType.CASiL==program||ProgramType.EncyclopeDIA==program) {
 			try {
 				ThesaurusParametersPanel CASiL=new ThesaurusParametersPanel(this);
-				HashMap<String, String> map=ThesaurusSearchParameters.readPreferences();
+				map=ThesaurusSearchParameters.readPreferences();
 				ThesaurusSearchParameters thesaurusParameters=ThesaurusSearchParameters.parseParameters(map);
 				CASiL.setParameters(thesaurusParameters, map.get(Encyclopedia.TARGET_LIBRARY_TAG), map.get(Encyclopedia.BACKGROUND_FASTA_TAG));
-				optionsTabs.addTab(CASiL.getProgram().toString(), CASiL.getSmallImage(), CASiL, CASiL.getProgramShortDescription());
+				engineSpecificParameters.addTab(CASiL.getProgram().toString(), CASiL.getSmallImage(), CASiL, CASiL.getProgramShortDescription());
 			} catch (Exception e) {
 				Logger.errorLine("Unexpected error reading saved parameters; using default parameters.");
 				Logger.errorException(e);
@@ -152,7 +199,7 @@ public class SearchPanel extends JPanel {
 		if (ProgramType.Global==program||ProgramType.PecanPie==program||ProgramType.EncyclopeDIA==program) {
 			PecanParametersPanel pecan=new PecanParametersPanel(this);
 			try {
-				HashMap<String, String> map=PecanSearchParameters.readPreferences();
+				map=PecanSearchParameters.readPreferences();
 				PecanSearchParameters parseParameters=PecanParameterParser.parseParameters(map);
 				pecan.setParameters(parseParameters, map.get(Pecanpie.BACKGROUND_FASTA_TAG), map.get(Pecanpie.TARGET_FASTA_TAG));
 				
@@ -160,12 +207,12 @@ public class SearchPanel extends JPanel {
 				Logger.errorLine("Unexpected error reading saved parameters; using default parameters.");
 				Logger.errorException(e);
 			}
-			optionsTabs.addTab(pecan.getProgram().toString(), pecan.getSmallImage(), pecan, pecan.getProgramShortDescription());
+			engineSpecificParameters.addTab(pecan.getProgram().toString(), pecan.getSmallImage(), pecan, pecan.getProgramShortDescription());
 		}
 		if (ProgramType.Global==program||ProgramType.XCorDIA==program) {
 			XCorDIAParametersPanel xcordia=new XCorDIAParametersPanel(this);
 			try {
-				HashMap<String, String> map=XCordiaSearchParameters.readPreferences();
+				map=XCordiaSearchParameters.readPreferences();
 				XCordiaSearchParameters xcordiaParameters=XCordiaSearchParameters.convertFromPecan(PecanParameterParser.parseParameters(map));
 				xcordia.setParameters(xcordiaParameters, map.get(Pecanpie.BACKGROUND_FASTA_TAG), map.get(Pecanpie.TARGET_FASTA_TAG));
 				
@@ -173,12 +220,12 @@ public class SearchPanel extends JPanel {
 				Logger.errorLine("Unexpected error reading saved parameters; using default parameters.");
 				Logger.errorException(e);
 			}
-			optionsTabs.addTab(xcordia.getProgram().toString(), xcordia.getSmallImage(), xcordia, xcordia.getProgramShortDescription());
+			engineSpecificParameters.addTab(xcordia.getProgram().toString(), xcordia.getSmallImage(), xcordia, xcordia.getProgramShortDescription());
 		}
 		if ((ProgramType.Global==program)||ProgramType.Scribe==program||ProgramType.EncyclopeDIA==program) {
 			ScribeParametersPanel scribe=new ScribeParametersPanel(this);
 			try {
-				HashMap<String, String> map=ScribeSearchParameters.readPreferences();
+				map=ScribeSearchParameters.readPreferences();
 				ScribeSearchParameters scribeParameters=ScribeSearchParameters.convertFromEncyclopeDIA(SearchParameterParser.parseParameters(map));
 				scribe.setParameters(scribeParameters, map.get(Encyclopedia.TARGET_LIBRARY_TAG), map.get(Encyclopedia.BACKGROUND_FASTA_TAG));
 				
@@ -186,7 +233,7 @@ public class SearchPanel extends JPanel {
 				Logger.errorLine("Unexpected error reading saved parameters; using default parameters.");
 				Logger.errorException(e);
 			}
-			optionsTabs.addTab(scribe.getProgram().toString(), scribe.getSmallImage(), scribe, scribe.getProgramShortDescription());
+			engineSpecificParameters.addTab(scribe.getProgram().toString(), scribe.getSmallImage(), scribe, scribe.getProgramShortDescription());
 		}
 
 		LogConsole console=new LogConsole();
@@ -196,10 +243,16 @@ public class SearchPanel extends JPanel {
 		MemoryMonitor memory=new MemoryMonitor();
 		memory.start();
 		
+		JPanel settingsWrapper=new JPanel(new BorderLayout());
+		settingsWrapper.setOpaque(true);
+		settingsWrapper.setBackground(Color.white);
+		settingsWrapper.add((Component)engineSpecificParameters, BorderLayout.CENTER);
+		settingsWrapper.add(generalParameters, BorderLayout.SOUTH);
+		
 		JPanel optionsWrapper=new JPanel(new BorderLayout());
 		optionsWrapper.setOpaque(true);
 		optionsWrapper.setBackground(Color.white);
-		optionsWrapper.add((Component)optionsTabs, BorderLayout.NORTH);
+		optionsWrapper.add(settingsWrapper, BorderLayout.NORTH);
 		optionsWrapper.add(console, BorderLayout.CENTER);
 		optionsWrapper.add(memory, BorderLayout.SOUTH);
 		
@@ -675,14 +728,14 @@ public class SearchPanel extends JPanel {
 	
 	public Collection<ParametersPanelInterface> getAllTabs() {
 		ArrayList<ParametersPanelInterface> list=new ArrayList<ParametersPanelInterface>();
-		for (int i=0; i<optionsTabs.getTabCount(); i++) {
-			list.add((ParametersPanelInterface)optionsTabs.getComponentAt(i));
+		for (int i=0; i<engineSpecificParameters.getTabCount(); i++) {
+			list.add((ParametersPanelInterface)engineSpecificParameters.getComponentAt(i));
 		}
 		return list;
 	}
 	
 	public ParametersPanelInterface getVisibleTab() {
-		return (ParametersPanelInterface)optionsTabs.getSelectedComponent();
+		return (ParametersPanelInterface)engineSpecificParameters.getSelectedComponent();
 	}
 	
 	public void launchFeatureBrowser() {
@@ -960,5 +1013,17 @@ public class SearchPanel extends JPanel {
 	
 	public void clearJobs() {
 		processorTableModel.clearJobs();
+	}
+	
+	public InstrumentSpecificSearchParameters getInstrument() {
+		return (InstrumentSpecificSearchParameters)instrumentCombo.getSelectedItem();
+	}
+	
+	public DigestionEnzyme getEnzyme() {
+		return (DigestionEnzyme)enzymeCombo.getSelectedItem();
+	}
+	
+	public int getNumberOfJobs() {
+		return ((Integer)numberOfJobs.getValue()).intValue();
 	}
 }

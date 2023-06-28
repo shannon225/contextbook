@@ -19,6 +19,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorEx
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorVersion;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ScoringBreadthType;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.parameters.InstrumentSpecificSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.XMLObject;
@@ -37,6 +38,7 @@ public class SearchParameters implements XMLObject {
 	public static final String INTEGRATE_PRECURSORS = "-integratePrecursors";
 	public static final String ADJUST_INFERRED_RT_BOUNDARIES = "-adjustInferredRTBoundaries";
 	public static final String MIN_NUM_INTEGRATED_RT_POINTS = "-minNumIntegratedRTPoints";
+	public static final String INSTRUMENT="-instrument"; 
 	public static final int DEFAULT_MIN_NUM_INTEGRATED_RT_POINTS = 3;
 
 	protected final AminoAcidConstants aaConstants;
@@ -83,6 +85,7 @@ public class SearchParameters implements XMLObject {
     protected final boolean maskBadIntegrations;
     protected final boolean integratePrecursors;
     protected final boolean adjustInferredRTBoundaries;
+    protected final InstrumentSpecificSearchParameters instrument;
     
     public Optional<ArrayList<Range>> getPrecursorIsolationRanges() {
 		return precursorIsolationRanges;
@@ -93,7 +96,7 @@ public class SearchParameters implements XMLObject {
 			int percolatorTrainingIterations, DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, 
 			int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, int topNTargetsUsed, float minIntensity, float minIntensityNumIons, Optional<PeptideModification> localizingModification, ScoringBreadthType CASiLBreadthType, 
 			float getNumberOfExtraDecoyLibrariesSearched, boolean quantifyAcrossSamples, boolean verifyModificationIons, float rtWindowInMin, int minNumIntegratedRTPoints, boolean filterPeaklists, boolean doNotUseGlobalFDR, 
-			Optional<File> precursorIsolationRangeFile, Optional<File> percolatorModelFile, boolean normalizeByTIC, boolean subtractBackground, boolean maskBadIntegrations, boolean adjustInferredRTBoundaries, boolean integratePrecursors, boolean enableAdvancedOptions) {
+			Optional<File> precursorIsolationRangeFile, Optional<File> percolatorModelFile, boolean normalizeByTIC, boolean subtractBackground, boolean maskBadIntegrations, boolean adjustInferredRTBoundaries, boolean integratePrecursors, InstrumentSpecificSearchParameters instrument, boolean enableAdvancedOptions) {
 		this.aaConstants=aaConstants;
 		this.fragType=fragType;
 		this.precursorTolerance=precursorTolerance;
@@ -135,6 +138,7 @@ public class SearchParameters implements XMLObject {
         this.maskBadIntegrations=maskBadIntegrations;
         this.adjustInferredRTBoundaries=adjustInferredRTBoundaries;
         this.integratePrecursors=integratePrecursors;
+        this.instrument=instrument;
         this.enableAdvancedOptions=enableAdvancedOptions;
         
         ArrayList<Range> ranges=null;
@@ -245,6 +249,7 @@ public class SearchParameters implements XMLObject {
         sb.append(" -filterPeaklists "+filterPeaklists+"\n");
 		sb.append(" -precursorIsolationRangeFile "+(precursorIsolationRangeFile.isPresent()?precursorIsolationRangeFile.get().getAbsolutePath():NO_FILE)+"\n");
 		sb.append(" -percolatorModelFile "+(percolatorModelFile.isPresent()?percolatorModelFile.get().getAbsolutePath():NO_FILE)+"\n");
+		sb.append(" "+INSTRUMENT+" "+instrument.toString()+"\n");
 		return sb.toString();
 	}
 	
@@ -296,6 +301,7 @@ public class SearchParameters implements XMLObject {
         map.put("-filterPeaklists", filterPeaklists+"");
         map.put("-precursorIsolationRangeFile", (precursorIsolationRangeFile.isPresent()?precursorIsolationRangeFile.get().getAbsolutePath():NO_FILE));
         map.put("-percolatorModelFile", (percolatorModelFile.isPresent()?percolatorModelFile.get().getAbsolutePath():NO_FILE));
+        map.put(INSTRUMENT, instrument.toString());
 		return map;
 	}
 	
@@ -575,5 +581,9 @@ public class SearchParameters implements XMLObject {
     
     public boolean adjustInferredRTBoundaries() {
 		return adjustInferredRTBoundaries;
+	}
+    
+    public InstrumentSpecificSearchParameters getInstrument() {
+		return instrument;
 	}
 }

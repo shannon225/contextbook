@@ -57,12 +57,15 @@ public class FragmentationModel {
 		return getUnitSpectrum(filename, accessions, precursorCharge, retentionTime, params, minimumMass, false, forQuant);
 	} 
 	public AnnotatedLibraryEntry getUnitSpectrum(String filename, HashSet<String> accessions, byte precursorCharge, float retentionTime, SearchParameters params, double minimumMass, boolean isDecoy, boolean forQuant) {
-		return getUnitSpectrum(filename, accessions, precursorCharge, retentionTime, params, null, minimumMass, false, forQuant);
+		return getUnitSpectrum(filename, accessions, precursorCharge, retentionTime, params, null, minimumMass, isDecoy, forQuant);
 	}
 	public AnnotatedLibraryEntry getUnitSpectrum(String filename, HashSet<String> accessions, byte precursorCharge, float retentionTime, SearchParameters params, double[] targetMasses, double minimumMass, boolean isDecoy, boolean forQuant) {
+		return getUnitSpectrum(filename, accessions, precursorCharge, retentionTime, params, null, minimumMass, isDecoy, true, forQuant);
+	}
+	public AnnotatedLibraryEntry getUnitSpectrum(String filename, HashSet<String> accessions, byte precursorCharge, float retentionTime, SearchParameters params, double[] targetMasses, double minimumMass, boolean isDecoy, boolean useNeutralLosses, boolean forQuant) {
 		String sequence=getPeptideModSeq();
 		double precursorMZ=getChargedMass(precursorCharge);
-		FragmentIon[] ions=getPrimaryIonObjects(params.getFragType(), precursorCharge, forQuant);
+		FragmentIon[] ions=getPrimaryIonObjects(params.getFragType(), precursorCharge, useNeutralLosses, forQuant);
 		MassTolerance fragmentTolerance=params.getFragmentTolerance();
 		ions = FragmentIon.getUniqueFragments(ions, fragmentTolerance);
 		

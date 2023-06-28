@@ -21,6 +21,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.ScoringBreadthT
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.parameters.InstrumentSpecificSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
@@ -208,6 +209,7 @@ public class PecanSearchParameters extends SearchParameters {
 			boolean maskBadIntegrations,
 			boolean adjustInferredRTBoundaries,
 			boolean integratePrecursors,
+			InstrumentSpecificSearchParameters instrument,
 			boolean enableAdvancedOptions) {
 		super(
 				aaConstants,
@@ -251,6 +253,7 @@ public class PecanSearchParameters extends SearchParameters {
 				maskBadIntegrations,
 				adjustInferredRTBoundaries,
 				integratePrecursors,
+				instrument,
 				enableAdvancedOptions
 		);
 		this.minPeptideLength=minPeptideLength;
@@ -293,7 +296,8 @@ public class PecanSearchParameters extends SearchParameters {
 			float numberOfExtraDecoyLibrariesSearched,
 			boolean quantifyAcrossSamples,
 			boolean verifyModificationIons,
-			boolean requireVariableMods
+			boolean requireVariableMods,
+			InstrumentSpecificSearchParameters instrument
 	) {
 		super(
 				aaConstants,
@@ -337,6 +341,7 @@ public class PecanSearchParameters extends SearchParameters {
 				false,
 				false,
 				false,
+				instrument,
 				false
 		);
 		minPeptideLength=5;
@@ -405,6 +410,7 @@ public class PecanSearchParameters extends SearchParameters {
 				false,
 				false,
 				false,
+				InstrumentSpecificSearchParameters.OrbitrapOrbitrap,
 				false);
 		minPeptideLength=5;
 		maxPeptideLength=100;
@@ -474,6 +480,7 @@ public class PecanSearchParameters extends SearchParameters {
 				false,
 				false,
 				false,
+				InstrumentSpecificSearchParameters.OrbitrapOrbitrap,
 				false
 		);
 		minPeptideLength=5;
@@ -545,6 +552,7 @@ public class PecanSearchParameters extends SearchParameters {
 				false,
 				false,
 				false,
+				InstrumentSpecificSearchParameters.OrbitrapOrbitrap,
 				false);
 		this.maxMissedCleavages=maxMissedCleavages;
 		minPeptideLength=5;
