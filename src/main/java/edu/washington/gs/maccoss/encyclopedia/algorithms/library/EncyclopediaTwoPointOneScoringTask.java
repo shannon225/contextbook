@@ -59,11 +59,13 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 		this.precursorIsolationRange=new Range(precursorIsolationRange.getStart(), precursorIsolationRange.getStop());
 	}
 	
-	private static final int peaksKept=5;
-	private static final int peaksConsidered=7;
+	private static final int peaksKept=1;
+	private static final int peaksConsidered=1;
 
 	@Override
 	protected Nothing process() {
+		if (super.stripes.size()==0) return Nothing.NOTHING;
+		
 		MassTolerance libraryTolerance=parameters.getLibraryFragmentTolerance();
 		EncyclopediaScorer eScorer=(EncyclopediaScorer)scorer;
 		int movingAverageLength=Math.round(parameters.getExpectedPeakWidth()/dutyCycle);

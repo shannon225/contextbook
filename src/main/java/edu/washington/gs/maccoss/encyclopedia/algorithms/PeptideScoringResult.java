@@ -5,6 +5,7 @@ import java.util.Arrays;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.ScoredPSMFilter;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.ScoredPSMFilterInterface;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.TargeteDecoyPSMFilter;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
@@ -23,7 +24,7 @@ public class PeptideScoringResult extends AbstractScoringResult {
 	
 	public AbstractScoringResult rescore(ScoredPSMFilterInterface filter) {
 		AbstractScoringResult newResult;
-		if (filter instanceof ScoredPSMFilter) {
+		if (filter instanceof ScoredPSMFilter||filter instanceof TargeteDecoyPSMFilter) {
 			newResult=new RecalibratedPeptideScoringResult(entry);
 		} else {
 			newResult=new RescoredPeptideScoringResult(entry);

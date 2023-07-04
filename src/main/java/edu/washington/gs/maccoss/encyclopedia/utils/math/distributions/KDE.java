@@ -22,6 +22,10 @@ public class KDE implements Distribution {
 		this(getUnitWeightedValues(values), prior);
 	}
 	
+	public KDE(float[] values, double prior) {
+		this(getUnitWeightedValues(General.toDoubleArray(values)), prior);
+	}
+	
 	private static ArrayList<WeightedValue> getUnitWeightedValues(double[] values) {
 		ArrayList<WeightedValue> list=new ArrayList<WeightedValue>();
 		for (int i = 0; i < values.length; i++) {

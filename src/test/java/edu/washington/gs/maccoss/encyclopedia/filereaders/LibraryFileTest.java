@@ -21,8 +21,28 @@ import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 
 public class LibraryFileTest {
-	
 	public static void main(String[] args) throws Exception {
+
+		LibraryInterface lib=BlibToLibraryConverter.getFile(new File("/Users/searleb/Documents/encyclopedia/tests/uniprot_human_25apr2019.z3_nce.dlib"));
+		final ArrayList<LibraryEntry> entries=lib.getAllEntries(false, new AminoAcidConstants());
+		
+		System.out.println(entries.size());
+		ArrayList<LibraryEntry> selected=new ArrayList<>();
+		for (LibraryEntry entry : entries) {
+			selected.add(entry.updateRetentionTime(entry.getRetentionTime()*60f));
+		}
+		System.out.println(selected.size());
+		
+		LibraryFile out=new LibraryFile();
+		out.openFile();
+		out.dropIndices();
+		out.addEntries(selected);
+		out.addProteinsFromEntries(selected);
+		out.createIndices();
+		out.saveAsFile(new File("/Users/searleb/Documents/encyclopedia/tests/uniprot_human_25apr2019_min.z3_nce.dlib"));
+	}
+	
+	public static void main5(String[] args) throws Exception {
 		float minIntensity = 0.01f;
 		File folder=new File("/Users/searleb/Documents/encyclopedia/Deanna_TPAD2_CSF/CSF_DIA_elibs_forBrian/Individuals");
 		for (String fname : folder.list(new SimpleFilenameFilter(".elib"))) {

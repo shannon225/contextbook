@@ -45,6 +45,7 @@ import javax.swing.UIManager;
 import javax.swing.table.TableColumn;
 
 import edu.washington.gs.maccoss.encyclopedia.Encyclopedia;
+import edu.washington.gs.maccoss.encyclopedia.EncyclopediaTwo;
 import edu.washington.gs.maccoss.encyclopedia.Pecanpie;
 import edu.washington.gs.maccoss.encyclopedia.ProgramType;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaScoringFactory;
@@ -67,6 +68,7 @@ import edu.washington.gs.maccoss.encyclopedia.gui.dia.ResultsBrowserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.WindowingSchemeWizard;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.AustinsSpecialEncyclopediaPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.EncyclopediaParametersPanel;
+import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.EncyclopediaTwoParametersPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.LindsaysSpecialEncyclopediaPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.MoMosSpecialEncyclopediaPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.ThesaurusParametersPanel;
@@ -97,7 +99,7 @@ public class SearchPanel extends JPanel {
 	private static final ImageIcon skylineIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/skyline_icon.png"));
 	private static final ImageIcon openDBIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/filedb.png"));
 	private static final ImageIcon convertDBIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/convertdb.png"));
-	private static final ImageIcon libraryBrowserIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/encyclopedia_small_icon.png"));
+	private static final ImageIcon libraryBrowserIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/library_small_icon.png"));
 	private static final ImageIcon diaBrowserIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/orbi_icon.png"));
 	private static final ImageIcon peptideBrowserIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/peptide_icon.png"));
 	private static final ImageIcon featureBrowserIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/feature_icon.png"));
@@ -122,7 +124,7 @@ public class SearchPanel extends JPanel {
 		numberOfJobs.setValue(params.getNumberOfThreadsUsed());
 	}
 	
-	public SearchPanel(ProgramType program) {
+	public SearchPanel(ProgramType program, boolean enableAdvancedOptions) {
 		super(new BorderLayout());
 	    
 		setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
@@ -160,6 +162,17 @@ public class SearchPanel extends JPanel {
 			params=SearchParameterParser.parseParameters(map);
 		}
 		
+		if ((ProgramType.Global==program||ProgramType.EncyclopeDIA==program)&&enableAdvancedOptions) {
+			try {
+				EncyclopediaTwoParametersPanel encyclopedia=new EncyclopediaTwoParametersPanel(this);
+				
+				encyclopedia.setParameters(params, map.get(EncyclopediaTwo.PREALIGNMENT_LIBRARY_TAG), map.get(EncyclopediaTwo.TARGET_LIBRARY_TAG), map.get(EncyclopediaTwo.BACKGROUND_FASTA_TAG));
+				engineSpecificParameters.addTab(encyclopedia.getProgramName(), encyclopedia.getSmallImage(), encyclopedia, encyclopedia.getProgramShortDescription());
+			} catch (Exception e) {
+				Logger.errorLine("Unexpected error reading saved parameters; using default parameters.");
+				Logger.errorException(e);
+			}
+		}
 		if (ProgramType.Global==program||ProgramType.EncyclopeDIA==program) {
 			try {
 				EncyclopediaParametersPanel encyclopedia;

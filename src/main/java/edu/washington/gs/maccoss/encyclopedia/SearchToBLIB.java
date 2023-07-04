@@ -164,15 +164,43 @@ public class SearchToBLIB {
 					.map(Path::toFile)
 					.collect(Collectors.toList());
 
-			if (arguments.containsKey("-pecan")||arguments.containsKey("-walnut")) {
-				VersioningDetector.checkVersionCLI(ProgramType.PecanPie);
-				convertPecan(diaFiles, arguments);
-			} else if (arguments.containsKey("-xcordia")) {
-				VersioningDetector.checkVersionCLI(ProgramType.XCorDIA);
-				convertXCorDIA(diaFiles, arguments);
-			} else {
-				VersioningDetector.checkVersionCLI(ProgramType.EncyclopeDIA);
-				convertEncyclopedia(diaFiles, arguments);
+			try {
+				if (arguments.containsKey("-pecan")||arguments.containsKey("-walnut")) {
+					VersioningDetector.checkVersionCLI(ProgramType.PecanPie);
+					convertPecan(diaFiles, arguments);
+				} else if (arguments.containsKey("-xcordia")) {
+					VersioningDetector.checkVersionCLI(ProgramType.XCorDIA);
+					convertXCorDIA(diaFiles, arguments);
+				} else {
+					VersioningDetector.checkVersionCLI(ProgramType.EncyclopeDIA);
+					convertEncyclopedia(diaFiles, arguments);
+				}
+
+			} catch (Exception e) {
+				Logger.errorLine("Encountered Fatal Error!");
+				Logger.errorException(e);
+
+				// Forcibly exit with error to avoid hanging the process if there are any leftover user threads
+				// that weren't properly cleaned up as a result of the error. First we log any hung / remaining
+				// threads though, to aid debugging.
+
+				for (Entry<Thread, StackTraceElement[]> threadEntry : Thread.getAllStackTraces().entrySet()) {
+					if (threadEntry.getKey().isDaemon()) {
+						continue;
+					}
+					if (Thread.currentThread().equals(threadEntry.getKey())) {
+						continue;
+					}
+
+					Logger.errorLine("\nLeftover user thread will be KILLED: " + threadEntry.getKey().getName());
+					for (StackTraceElement element : threadEntry.getValue()) {
+						Logger.errorLine("  " + element);
+					}
+				}
+
+				System.exit(1); // nonzero status indicates error
+			} finally {
+				Logger.close();
 			}
 		}
 	}
@@ -896,6 +924,7 @@ public class SearchToBLIB {
 				
 				subProgress.update("Wrote "+globalPassingPeptides.size()+" peptides identified at "+(job.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 			}
+			
 
 			ArrayList<PercolatorProteinGroup> proteins=null;
 			if (globalPercolatorFiles.isPresent()) {
@@ -952,6 +981,7 @@ public class SearchToBLIB {
 			if (job instanceof EncyclopediaJobData) {
 				library=((EncyclopediaJobData)job).getLibrary();
 			}
+			
 			libraryEntries=PeptideQuantExtractor.parseSearchFeatures(subProgress, job, false, globalPassingPeptides, localPassingPeptides, inferrer, stripeFile, library, job.getParameters());
 		} else {
 			HashMap<String, PSMData> targetPSMs=PeptideQuantExtractor.findTargetPSMData(job, globalPassingPeptides, localPassingPeptides, inferrer, job.getParameters());

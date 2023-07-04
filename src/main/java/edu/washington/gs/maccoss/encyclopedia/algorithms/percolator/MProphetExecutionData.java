@@ -17,6 +17,13 @@ public class MProphetExecutionData {
 		this.peptideDecoyFile = peptideDecoyFile;
 		this.parameters = parameters;
 	}
+	public MProphetExecutionData(PercolatorExecutionData data) {
+		this.inputTSV = data.getInputTSV();
+		this.fastaFile = data.getFastaFile();
+		this.peptideOutputFile = data.getPeptideOutputFile();
+		this.peptideDecoyFile = data.getPeptideDecoyFile();
+		this.parameters = data.getParameters();
+	}	
 	public File getInputTSV() {
 		return inputTSV;
 	}
