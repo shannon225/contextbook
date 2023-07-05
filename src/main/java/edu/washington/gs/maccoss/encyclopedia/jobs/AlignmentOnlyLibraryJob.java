@@ -37,7 +37,7 @@ public class AlignmentOnlyLibraryJob implements WorkerJob, XMLObject {
 
 		if (!jobData.isEmpty()) {
 			final SearchJobData reprJob = jobData.iterator().next();
-			Logger.logLine("Extracting representative search parameters from job " + reprJob.getDiaFileReader().getOriginalFileName());
+			Logger.logLine("Extracting representative search parameters from job " + reprJob.getOriginalDiaFileName());
 
 			SearchToBLIB.convert(
 					progress,

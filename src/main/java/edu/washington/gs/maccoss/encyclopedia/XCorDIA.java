@@ -214,7 +214,7 @@ public class XCorDIA {
 		int cores=parameters.getNumberOfThreadsUsed();
 
 		Logger.logLine("Using "+jobData.getTaskFactory().getName());
-		Logger.logLine("Input File: "+jobData.getDiaFileReader().getOriginalFileName());
+		Logger.logLine("Input File: "+jobData.getOriginalDiaFileName());
 		Logger.logLine("FASTA File: "+jobData.getFastaFile().getName());
 		Logger.logLine("Result File: "+jobData.getResultLibrary().getName());
 		Logger.logLine("Parameters:");

@@ -13,6 +13,8 @@ public interface SearchJobData {
 	String toString();
 
 	StripeFileInterface getDiaFileReader();
+	
+	String getOriginalDiaFileName();
 
 	PercolatorExecutionData getPercolatorFiles();
 

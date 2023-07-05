@@ -238,7 +238,7 @@ public class EncyclopediaTwo {
 		}
 		
 		Logger.logLine("Using "+job.getTaskFactory().getName());
-		Logger.logLine("Input File: "+job.getDiaFileReader().getOriginalFileName());
+		Logger.logLine("Input File: "+job.getOriginalDiaFileName());
 		Logger.logLine("Prealignment Library File: "+job.getPrealignmentLibrary().getName());
 		Logger.logLine("Library File: "+job.getLibrary().getName());
 		Logger.logLine("Result File: "+job.getResultLibrary().getName());

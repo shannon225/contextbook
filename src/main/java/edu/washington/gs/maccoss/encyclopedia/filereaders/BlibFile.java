@@ -379,7 +379,7 @@ public class BlibFile extends SQLFile {
 	}
 
 	public int[] addLibrary(SearchJobData job, ArrayList<LibraryEntry> entries, int idCounter, int jobCounter, int modCounter) throws IOException, SQLException {
-		String diaFileName=job.getDiaFileReader().getOriginalFileName();
+		String diaFileName=job.getOriginalDiaFileName();
 		AminoAcidConstants aaConstants=job.getParameters().getAAConstants();
 		String version=job.getVersion();
 		return addLibrary(entries, diaFileName, aaConstants, version, idCounter, jobCounter, modCounter);

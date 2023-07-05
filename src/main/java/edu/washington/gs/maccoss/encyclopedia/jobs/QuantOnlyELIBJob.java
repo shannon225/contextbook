@@ -78,7 +78,7 @@ public class QuantOnlyELIBJob implements WorkerJob, XMLObject {
 
 		if (!jobData.isEmpty()) {
 			final SearchJobData representative = jobData.iterator().next();
-			Logger.logLine("Extracting representative search parameters from job " + representative.getDiaFileReader().getOriginalFileName());
+			Logger.logLine("Extracting representative search parameters from job " + representative.getOriginalDiaFileName());
 
 			SearchToBLIB.convertElibQuantOnly(
 					progress,

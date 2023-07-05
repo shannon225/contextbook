@@ -162,7 +162,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	}
 
 	public void addRtAlignment(SearchJobData job, List<RetentionTimeAlignmentInterface.AlignmentDataPoint> alignment) {
-		final String sourceFile = job.getDiaFileReader().getOriginalFileName();
+		final String sourceFile = job.getOriginalDiaFileName();
 
 		try (Connection c = getConnection()) {
 			c.setAutoCommit(false);
@@ -217,7 +217,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 				sb.append(SOURCE_FILE_SPLIT);
 			}
 			
-			sb.append(searchJobData.getDiaFileReader().getOriginalFileName());
+			sb.append(searchJobData.getOriginalDiaFileName());
 
 		}
 		map.put(SOURCEFILE_STRING, sb.toString());
