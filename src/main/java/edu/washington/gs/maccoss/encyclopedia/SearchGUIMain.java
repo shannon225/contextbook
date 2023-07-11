@@ -114,7 +114,7 @@ public class SearchGUIMain {
 			}
 		});
 
-		final SearchPanel panel=new SearchPanel(program);
+		final SearchPanel panel=new SearchPanel(program, enableAdvancedOptions);
 		f.getContentPane().add(panel, BorderLayout.CENTER);
 		f.setJMenuBar(panel.createMenus(program, enableAdvancedOptions));
 

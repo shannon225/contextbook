@@ -355,13 +355,13 @@ public abstract class AbstractEndToEndIT {
 					nonquantJobs.removeAll(quantJobData);
 
 					for (SearchJobData job : nonquantJobs) {
-						ps.setString(1, job.getDiaFileReader().getOriginalFileName());
-						ps.setString(2, job.getDiaFileReader().getOriginalFileName());
+						ps.setString(1, job.getOriginalDiaFileName());
+						ps.setString(2, job.getOriginalDiaFileName());
 
 						try (ResultSet rs = ps.executeQuery()) {
 							assertTrue(rs.next());
 
-							assertEquals("Too many " + rs.getString(2) + " for " + job.getDiaFileReader().getOriginalFileName() + ": " + rs.getInt(1),
+							assertEquals("Too many " + rs.getString(2) + " for " + job.getOriginalDiaFileName() + ": " + rs.getInt(1),
 									0,
 									rs.getInt(1)
 							);
@@ -460,14 +460,14 @@ public abstract class AbstractEndToEndIT {
 //					" WHERE SourceFile = ?;"
 //			)) {
 //				for (QuantitativeSearchJobData job : jobs) {
-//					s.setString(1, job.getDiaFileReader().getOriginalFileName());
+//					s.setString(1, job.getOriginalDiaFileName());
 //
 //					try (ResultSet rs = s.executeQuery()) {
 //						assertTrue(rs.next());
 //
 //						final int numRts = rs.getInt(1);
 //
-//						Logger.logLine(String.format("Found %d RTs for %s in quant ELIB", numRts, job.getDiaFileReader().getOriginalFileName()));
+//						Logger.logLine(String.format("Found %d RTs for %s in quant ELIB", numRts, job.getOriginalDiaFileName()));
 //						assertNotEquals(0, numRts);
 //					}
 //				}
@@ -485,7 +485,7 @@ public abstract class AbstractEndToEndIT {
 					");"
 			)) {
 				for (QuantitativeSearchJobData job : jobs) {
-					s.setString(1, job.getDiaFileReader().getOriginalFileName());
+					s.setString(1, job.getOriginalDiaFileName());
 					s.setDouble(2, epsilon);
 					s.setDouble(3, epsilon);
 
@@ -494,7 +494,7 @@ public abstract class AbstractEndToEndIT {
 							throw new AssertionError(String.format(
 									"%s in %s: expected %.02f, got %.02f",
 									rs.getString(1),
-									job.getDiaFileReader().getOriginalFileName(),
+									job.getOriginalDiaFileName(),
 									rs.getFloat(3),
 									rs.getFloat(2)
 							));
@@ -515,7 +515,7 @@ public abstract class AbstractEndToEndIT {
 					");"
 			)) {
 				for (QuantitativeSearchJobData job : jobs) {
-					s.setString(1, job.getDiaFileReader().getOriginalFileName());
+					s.setString(1, job.getOriginalDiaFileName());
 
 					try (ResultSet rs = s.executeQuery()) {
 						assertTrue(rs.next());
@@ -524,7 +524,7 @@ public abstract class AbstractEndToEndIT {
 
 						Logger.logLine(String.format("Found %d peptides not quantified in reference for %s, e.g. %s",
 								numMissingRef,
-								job.getDiaFileReader().getOriginalFileName(),
+								job.getOriginalDiaFileName(),
 								rs.getString(2)
 						));
 						assertEquals(0, numMissingRef);
@@ -544,7 +544,7 @@ public abstract class AbstractEndToEndIT {
 					");"
 			)) {
 				for (QuantitativeSearchJobData job : jobs) {
-					s.setString(1, job.getDiaFileReader().getOriginalFileName());
+					s.setString(1, job.getOriginalDiaFileName());
 
 					try (ResultSet rs = s.executeQuery()) {
 						assertTrue(rs.next());
@@ -553,7 +553,7 @@ public abstract class AbstractEndToEndIT {
 
 						Logger.logLine(String.format("Found %d reference peptides not quantified for %s, e.g. %s",
 								numMissingQuant,
-								job.getDiaFileReader().getOriginalFileName(),
+								job.getOriginalDiaFileName(),
 								rs.getString(2)
 						));
 						assertEquals(0, numMissingQuant);
@@ -572,7 +572,7 @@ public abstract class AbstractEndToEndIT {
 							");"
 			)) {
 				for (QuantitativeSearchJobData job : jobs) {
-					s.setString(1, job.getDiaFileReader().getOriginalFileName());
+					s.setString(1, job.getOriginalDiaFileName());
 					s.setDouble(2, epsilon);
 
 					try (ResultSet rs = s.executeQuery()) {
@@ -582,7 +582,7 @@ public abstract class AbstractEndToEndIT {
 
 						Logger.logLine(String.format("Found %d mismatched entries for %s, e.g. %s",
 								numMismatch,
-								job.getDiaFileReader().getOriginalFileName(),
+								job.getOriginalDiaFileName(),
 								rs.getString(2)
 						));
 //						assertEquals(0, numMismatch); // will be asserted row-by-row below
@@ -601,7 +601,7 @@ public abstract class AbstractEndToEndIT {
 							" WHERE SourceFile = ?;"
 			)) {
 				for (QuantitativeSearchJobData job : jobs) {
-					s.setString(1, job.getDiaFileReader().getOriginalFileName());
+					s.setString(1, job.getOriginalDiaFileName());
 
 					try (ResultSet rs = s.executeQuery()) {
 						while (rs.next()) {
@@ -612,7 +612,7 @@ public abstract class AbstractEndToEndIT {
 							assertEquals(
 									String.format("entry rt mismatch: %s in %s: expected %.02f, got %.02f",
 											pep,
-											job.getDiaFileReader().getOriginalFileName(),
+											job.getOriginalDiaFileName(),
 											refRt,
 											rt
 									),
@@ -639,7 +639,7 @@ public abstract class AbstractEndToEndIT {
 					");"
 			)) {
 				for (QuantitativeSearchJobData job : jobs) {
-					s.setString(1, job.getDiaFileReader().getOriginalFileName());
+					s.setString(1, job.getOriginalDiaFileName());
 					s.setDouble(2, epsilon);
 					s.setDouble(3, epsilon);
 					s.setDouble(4, epsilon);
@@ -652,7 +652,7 @@ public abstract class AbstractEndToEndIT {
 
 						Logger.logLine(String.format("Found %d mismatched quants for %s, e.g. %s",
 								numMismatch,
-								job.getDiaFileReader().getOriginalFileName(),
+								job.getOriginalDiaFileName(),
 								rs.getString(2)
 						));
 //						assertEquals(0, numMismatch); // will be asserted row-by-row below
@@ -677,7 +677,7 @@ public abstract class AbstractEndToEndIT {
 					" WHERE SourceFile = ?;"
 			)) {
 				for (QuantitativeSearchJobData job : jobs) {
-					s.setString(1, job.getDiaFileReader().getOriginalFileName());
+					s.setString(1, job.getOriginalDiaFileName());
 
 					try (ResultSet rs = s.executeQuery()) {
 						while (rs.next()) {
@@ -692,7 +692,7 @@ public abstract class AbstractEndToEndIT {
 							assertEquals(
 									String.format("quant rt mismatch: %s in %s: expected (%.02f, %.02f), got (%.02f, %.02f)",
 											pep,
-											job.getDiaFileReader().getOriginalFileName(),
+											job.getOriginalDiaFileName(),
 											refRt,
 											refInten,
 											rt,
@@ -705,7 +705,7 @@ public abstract class AbstractEndToEndIT {
 							assertArrayEquals(
 									String.format("ions mismatch for %s in %s: expected %s, got %s",
 											pep,
-											job.getDiaFileReader().getOriginalFileName(),
+											job.getOriginalDiaFileName(),
 											Arrays.toString(refIons),
 											Arrays.toString(ions)
 									),
@@ -716,7 +716,7 @@ public abstract class AbstractEndToEndIT {
 							assertEquals(
 									String.format("intensity mismatch for %s in %s: expected (%.02f, %.02f), got (%.02f, %.02f)",
 											pep,
-											job.getDiaFileReader().getOriginalFileName(),
+											job.getOriginalDiaFileName(),
 											refRt,
 											refInten,
 											rt,
@@ -889,7 +889,7 @@ public abstract class AbstractEndToEndIT {
 			}
 		}
 
-		final QuantMuscle muscle = new QuantMuscle(jobData.stream().map(d -> d.getDiaFileReader().getOriginalFileName()).collect(Collectors.toSet()));
+		final QuantMuscle muscle = new QuantMuscle(jobData.stream().map(d -> d.getOriginalDiaFileName()).collect(Collectors.toSet()));
 
 		TableParser.parseTSV(f, muscle);
 

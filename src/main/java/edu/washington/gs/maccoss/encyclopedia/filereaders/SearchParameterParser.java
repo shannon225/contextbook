@@ -379,6 +379,9 @@ public class SearchParameterParser {
         integratePrecursors=ParsingUtils.getBoolean(SearchParameters.INTEGRATE_PRECURSORS, parameters, false);
         adjustInferredRTBoundaries=ParsingUtils.getBoolean(SearchParameters.ADJUST_INFERRED_RT_BOUNDARIES, parameters, false);
         enableAdvancedOptions=ParsingUtils.getBoolean(SearchParameters.ENABLE_ADVANCED_OPTIONS, parameters, false);
+        
+        String instrumentValue=parameters.get(SearchParameters.INSTRUMENT);
+        InstrumentSpecificSearchParameters instrument=instrumentValue==null?InstrumentSpecificSearchParameters.OrbitrapOrbitrap:InstrumentSpecificSearchParameters.fromString(instrumentValue);
 
 		return new SearchParameters(
 				aaConstants,
@@ -422,6 +425,7 @@ public class SearchParameterParser {
 				maskBadIntegrations,
 				adjustInferredRTBoundaries,
 				integratePrecursors,
+				instrument,
 				enableAdvancedOptions
 		);
 	}

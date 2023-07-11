@@ -13,6 +13,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParame
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorVersion;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.parameters.InstrumentSpecificSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
@@ -93,6 +94,7 @@ public class XCordiaSearchParameters extends PecanSearchParameters {
 			boolean maskBadIntegrations,
 			boolean adjustInferredRTBoundaries,
 			boolean integratePrecursors,
+			InstrumentSpecificSearchParameters instrument,
 			boolean enableAdvancedOptions
 	) {
 		super(
@@ -144,6 +146,7 @@ public class XCordiaSearchParameters extends PecanSearchParameters {
 				maskBadIntegrations,
 				adjustInferredRTBoundaries,
 				integratePrecursors,
+				instrument,
 				enableAdvancedOptions
 		);
 	}
@@ -175,7 +178,8 @@ public class XCordiaSearchParameters extends PecanSearchParameters {
 			float numberOfExtraDecoyLibrariesSearched,
 			boolean quantifyAcrossSamples,
 			boolean verifyModificationIons,
-			boolean requireVariableMods
+			boolean requireVariableMods,
+			InstrumentSpecificSearchParameters instrument
 	) {
 		super(
 				aaConstants,
@@ -202,7 +206,8 @@ public class XCordiaSearchParameters extends PecanSearchParameters {
 				numberOfExtraDecoyLibrariesSearched,
 				quantifyAcrossSamples,
 				verifyModificationIons,
-				requireVariableMods
+				requireVariableMods,
+				instrument
 		);
 	}
 	
@@ -256,6 +261,7 @@ public class XCordiaSearchParameters extends PecanSearchParameters {
 				params.isMaskBadIntegrations(),
 				params.adjustInferredRTBoundaries(), 
 				params.isIntegratePrecursors(),
+				params.getInstrument(),
 				params.isEnableAdvancedOptions()
 		);
 	}

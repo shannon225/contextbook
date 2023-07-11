@@ -4,15 +4,21 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+
+import org.jfree.chart.ChartPanel;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ScoredPSM;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaOneScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefinementData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -25,6 +31,8 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.ExtendedChartPanel;
+import edu.washington.gs.maccoss.encyclopedia.gui.massspec.ChromatogramCharter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
@@ -33,15 +41,131 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.ChromatogramExtractor;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Ion;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.IonType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 
 public class PhosphoLocalizerExample {
+	public static void main(String[] args) throws Exception {
+		File diaFile=new File("/Users/searleb/Downloads/q05498_bs_MCF7_IMAC_DIA_R1 (2)..dia");
+		boolean isSmoothed=true;
+		boolean isBackgroundSubtracted=false;
+
+		HashMap<String, String> defaults=SearchParameterParser.getDefaultParameters();
+		//defaults.put("-frag", "yonly");
+		SearchParameters parameters=SearchParameterParser.parseParameters(defaults);
+		StripeFileInterface stripefile=StripeFileGenerator.getFile(diaFile, parameters, true);
+		AnnotatedLibraryEntry entry1 = getPeptide(diaFile, parameters, "SRTES[79.966331]ITATSPASMVGGKPGSFR", 25.7f*60f);
+		AnnotatedLibraryEntry entry2 = getPeptide(diaFile, parameters, "SRTESITATS[79.966331]PASMVGGKPGSFR", 25.2f*60f);
+		
+		ArrayList<FragmentScan> stripes=stripefile.getStripes(entry1.getPrecursorMZ(), entry1.getRetentionTime()-1.5f*60f, entry1.getRetentionTime()+1.5f*60f, false);
+		
+		ArrayList<Ion> targets1=new ArrayList<>();
+		ArrayList<Ion> targets2=new ArrayList<>();
+		ArrayList<Ion> common=new ArrayList<>();
+		
+		// FIXME calculate correlation to the "best" ions and only keep ions that follow that representative shape
+		FragmentIon[] ions1=entry1.getIonAnnotations();
+		FragmentIon[] ions2=entry2.getIonAnnotations();
+		double[] masses1=entry1.getMassArray();
+		double[] masses2=entry2.getMassArray();
+		for (int i = 0; i < masses1.length; i++) {
+			if (masses1[i]<300) continue;
+			
+			if (parameters.getFragmentTolerance().getIndex(masses2, masses1[i]).isPresent()) {
+				common.add(new ColoredIon(masses1[i], Color.gray));
+			} else if (Math.round(masses1[i])==855||Math.round(masses1[i])==514) {
+				System.out.println(entry1.getPeptideModSeq()+" --> "+ions1[i].toString());
+				targets1.add(new ColoredIon(masses1[i], Color.red));
+			}
+		}
+		for (int i = 0; i < masses2.length; i++) {
+			if (masses2[i]<300) continue;
+			if (parameters.getFragmentTolerance().getIndex(masses1, masses2[i]).isPresent()) {
+				//common.add(new ColoredIon(masses2[i], Color.gray));
+			} else if (Math.round(masses2[i])==846||Math.round(masses2[i])==674||Math.round(masses2[i])==1458||Math.round(masses2[i])==338||Math.round(masses2[i])==424) {
+				System.out.println(entry2.getPeptideModSeq()+" --> "+ions2[i].toString());
+				targets2.add(new ColoredIon(masses2[i], Color.blue));
+			}
+		}
+		
+		System.out.println(targets1.size()+", "+targets2.size()+", "+common.size());
+		
+		HashMap<Ion, XYTrace> fragmentTraceMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), common.toArray(new Ion[common.size()]), stripes, entry2.getRetentionTime(), GraphType.dashedline, isSmoothed, isBackgroundSubtracted);
+		HashMap<Ion, XYTrace> targetMap1=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), targets1.toArray(new Ion[targets1.size()]), stripes, entry1.getRetentionTime(), GraphType.boldline, isSmoothed, isBackgroundSubtracted);
+		HashMap<Ion, XYTrace> targetMap2=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), targets2.toArray(new Ion[targets2.size()]), stripes, entry2.getRetentionTime(), GraphType.boldline, isSmoothed, isBackgroundSubtracted);
+
+		System.out.println(targetMap1.size()+", "+targetMap2.size()+", "+fragmentTraceMap.size());
+		//fragmentTraceMap.clear();
+		fragmentTraceMap.putAll(targetMap1);
+		fragmentTraceMap.putAll(targetMap2);
+		
+		ArrayList<XYTrace> traces=new ArrayList<XYTrace>(fragmentTraceMap.values());
+		System.out.println(traces.size());
+		
+		ChartPanel fragmentChart=Charter.getChart("Retention Time (min)", "Intensity", false, traces.toArray(new XYTrace[traces.size()]));
+		
+		
+		Charter.launchChart(fragmentChart, entry1.getPeptideModSeq());
+	}
+
+	private static class ColoredIon implements Ion {
+		private final double mass;
+		private final Color color;
+		
+
+		public ColoredIon(double mass, Color color) {
+			this.mass = mass;
+			this.color = color;
+		}
+
+		@Override
+		public double getMass() {
+			return mass;
+		}
+
+		@Override
+		public String getName() {
+			return Long.toString(Math.round(mass));
+		}
+
+		@Override
+		public Color getColor() {
+			return color;
+		}
+
+		@Override
+		public byte getIndex() {
+			return 0;
+		}
+
+		@Override
+		public IonType getType() {
+			return IonType.b;
+		}
+		
+		@Override
+		public String toString() {
+			return getName();
+		}
+		
+	}
+
+	private static AnnotatedLibraryEntry getPeptide(File diaFile, SearchParameters parameters, String peptideModSeq, float retentionTime) {
+		String filename=diaFile.getName();
+		HashSet<String> accessions=new HashSet<>();
+		byte precursorCharge=3;
+		boolean isDecoy=false; 
+		FragmentationModel model=PeptideUtils.getPeptideModel(peptideModSeq, parameters.getAAConstants());
+		return model.getUnitSpectrum(filename, accessions, precursorCharge, retentionTime, parameters, null, 0.0, isDecoy, false, false);
+	}
+	
 
 	@SuppressWarnings("unused")
-	public static void main(String[] args) throws Exception {
+	public static void main2(String[] args) throws Exception {
 		//StripeFile.OPEN_IN_PLACE=true;
 		LibraryFile.OPEN_IN_PLACE=true;
 		

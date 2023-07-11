@@ -59,7 +59,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 
 public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInterface {
 	private static final long serialVersionUID=1L;
-	private static final int numberOfCores=Runtime.getRuntime().availableProcessors();
 	private static final String programShortDescription="XCorDIA Peptide Search";
 	public static final ImageIcon smallimage=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/mike_rotate_small_icon.png"));
 	public static final ImageIcon image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/mike_rotate_icon.png"));
@@ -76,14 +75,11 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 	private final FileChooserPanel backgroundFasta;
 	private final FileChooserPanel targetFasta;
 	private final FileChooserPanel libraryFileChooser;
-	private final JComboBox<String> enzyme=new JComboBox<String>(new String[] {"Trypsin", "Glu-C", "Lys-C", "Arg-C", "Asp-N", "Lys-N", "CNBr", "Chymotrypsin", "Pepsin A", "No Enzyme"});
 	private final JComboBox<String> fixed=new JComboBox<String>(new String[] {"C+57 (Carbamidomethyl)", "C+58 (Carboxymethyl)", "C+46 (MMTS)", "C+125 (NEM)", "None"});
 	private final JComboBox<String> variable=new JComboBox<String>(VARIABLE_MODIFICATION_ITEMS);
 	private final JComboBox<String> fragType=new JComboBox<String>(new String[] {FragmentationType.toName(FragmentationType.CID), FragmentationType.toName(FragmentationType.HCD), //FragmentationType.toName(FragmentationType.SILAC), 
 			FragmentationType.toName(FragmentationType.ETD)});
 
-	private final JComboBox<MassTolerance> precursorTolerance=new JComboBox<MassTolerance>(EncyclopediaParametersPanel.TOLERANCE_VALUES);
-	private final JComboBox<MassTolerance> fragmentTolerance=new JComboBox<MassTolerance>(EncyclopediaParametersPanel.TOLERANCE_VALUES);
 	private final JComboBox<PercolatorVersion> percolatorVersion=new JComboBox<PercolatorVersion>(PercolatorVersion.VALID_VERSIONS);
 	
 	private final JFormattedTextField precursorWindowWidth=new JFormattedTextField(NumberFormat.getNumberInstance());
@@ -91,7 +87,6 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 	private final SpinnerModel minCharge=new SpinnerNumberModel(2, 1, 2, 1);
 	private final SpinnerModel maxCharge=new SpinnerNumberModel(3, 2, 4, 1);
 	private final SpinnerModel maxMissedCleavage=new SpinnerNumberModel(1, 0, 3, 1);
-	private final SpinnerModel numberOfJobs=new SpinnerNumberModel(numberOfCores, 1, numberOfCores, 1);
 	private final SpinnerModel numberOfQuantitativeIons=new SpinnerNumberModel(5, 1, 100, 1);
 	private final SpinnerModel minNumOfQuantitativeIons=new SpinnerNumberModel(3, 0, 100, 1);
 	private final SpinnerModel percolatorThreshold=new SpinnerNumberModel(0.01, 0.001, 0.1, 0.001);
@@ -135,20 +130,12 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 		libraryFileChooser=new FileChooserPanel(null, "Library", new SimpleFilenameFilter(LibraryFile.DLIB, LibraryFile.ELIB), false);
 		options.add(libraryFileChooser);
 		options.add(new LabeledComponent("Target/Decoy Approach", numberOfExtraDecoyLibraries));
-		options.add(new LabeledComponent("Precursor Window Width (blank=extract from file)", precursorWindowWidth));
-		options.add(new LabeledComponent("Enzyme", enzyme));
 		options.add(new LabeledComponent("Fixed", fixed));
 		options.add(new LabeledComponent("Variable", variable));
-		options.add(new LabeledComponent("Fragmentation", fragType));
-		options.add(new LabeledComponent("Precursor Mass Tolerance", precursorTolerance));
-		options.add(new LabeledComponent("Fragment Mass Tolerance", fragmentTolerance));
 				
 		options.add(new LabeledComponent("Maximum Missed Cleavage", new JSpinner(maxMissedCleavage)));
-		options.add(new LabeledComponent("Percolator Version", percolatorVersion));
-		options.add(new LabeledComponent("Percolator FDR threshold", new JSpinner(percolatorThreshold)));
 		options.add(new LabeledComponent("Number of Quantitative Ions", new JSpinner(numberOfQuantitativeIons)));
 		options.add(new LabeledComponent("Minimum Number of Quantitative Ions", new JSpinner(minNumOfQuantitativeIons)));
-		options.add(new LabeledComponent("Number of Cores", new JSpinner(numberOfJobs)));
 
 		JPanel chargeRange=new JPanel(new FlowLayout());
 		chargeRange.setOpaque(true);
@@ -265,16 +252,16 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 
 	public XCordiaSearchParameters getParameters() {
 		DataAcquisitionType dataAcquisitionType=DataAcquisitionType.DIA;
-		DigestionEnzyme digestionEnzyme=DigestionEnzyme.getEnzyme((String)enzyme.getSelectedItem());
+		DigestionEnzyme digestionEnzyme=searchPanel.getEnzyme();
 		FragmentationType fragmentation=FragmentationType.getFragmentationType((String)fragType.getSelectedItem());
-		MassTolerance precursorPPMValue=(MassTolerance)precursorTolerance.getSelectedItem();
-		MassTolerance fragmentPPMValue=(MassTolerance)fragmentTolerance.getSelectedItem();
+		MassTolerance precursorPPMValue=searchPanel.getInstrument().getPrecursorTolerance();
+		MassTolerance fragmentPPMValue=searchPanel.getInstrument().getFragmentTolerance();
 		byte minChargeValue=((Number)minCharge.getValue()).byteValue();
 		byte maxChargeValue=((Number)maxCharge.getValue()).byteValue();
 		byte maxMissedCleavageValue=((Number)maxMissedCleavage.getValue()).byteValue();
 		Number value=(Number)precursorWindowWidth.getValue();
 		float precursorWindowWidthValue=value==null?-1.0f:value.floatValue();
-		int numberOfJobsValue=((Integer)numberOfJobs.getValue());
+		int numberOfJobsValue=searchPanel.getNumberOfJobs();
 		int numberOfQuantitativeIonsValue=((Integer)numberOfQuantitativeIons.getValue());
 		int minNumOfQuantitativeIonsValue=((Integer)minNumOfQuantitativeIons.getValue());
 		float numberOfExtraDecoyLibrariesValue=NUMBER_OF_EXTRA_DECOY_VALUES[((Integer)numberOfExtraDecoyLibraries.getSelectedIndex())];
@@ -310,7 +297,8 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 				numberOfExtraDecoyLibrariesValue,
 				true,
 				true,
-				isRequireVariableMods
+				isRequireVariableMods,
+				searchPanel.getInstrument()
 		);
 
 		String cmds=additionalCommandLineOptions.getText();
@@ -330,36 +318,12 @@ public class XCorDIAParametersPanel extends JPanel implements ParametersPanelInt
 			File targetFile=new File(targetFileName);
 			if (targetFile.exists()) targetFasta.update(targetFile);
 		}
-		enzyme.setSelectedItem(params.getEnzyme().getName());
 		fixed.setSelectedItem(AminoAcidConstants.toName(params.getAAConstants()));
 		fragType.setSelectedItem(FragmentationType.toName(params.getFragType()));
-		
-		boolean gotIt=false;
-		MassTolerance pre=params.getPrecursorTolerance();
-		for (int i=0; i<EncyclopediaParametersPanel.TOLERANCE_VALUES.length; i++) {
-			if (EncyclopediaParametersPanel.TOLERANCE_VALUES[i].equals(pre)) {
-				precursorTolerance.setSelectedIndex(i);
-				gotIt=true;
-				break;
-			}
-		}
-		if (!gotIt) precursorTolerance.setSelectedIndex(1);
-		
-		gotIt=false;
-		MassTolerance frag=params.getFragmentTolerance();
-		for (int i=0; i<EncyclopediaParametersPanel.TOLERANCE_VALUES.length; i++) {
-			if (EncyclopediaParametersPanel.TOLERANCE_VALUES[i].equals(frag)) {
-				fragmentTolerance.setSelectedIndex(i);
-				gotIt=true;
-				break;
-			}
-		}
-		if (!gotIt) fragmentTolerance.setSelectedIndex(1);
 
 		minCharge.setValue(new Integer(params.getMinCharge()));
 		maxCharge.setValue(new Integer(params.getMaxCharge()));
 		maxMissedCleavage.setValue(params.getMaxMissedCleavages());
-		numberOfJobs.setValue(params.getNumberOfThreadsUsed());
 		if (params.getPrecursorWindowSize()>0) {
 			precursorWindowWidth.setValue(params.getPrecursorWindowSize());
 		} else {

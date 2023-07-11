@@ -164,15 +164,43 @@ public class SearchToBLIB {
 					.map(Path::toFile)
 					.collect(Collectors.toList());
 
-			if (arguments.containsKey("-pecan")||arguments.containsKey("-walnut")) {
-				VersioningDetector.checkVersionCLI(ProgramType.PecanPie);
-				convertPecan(diaFiles, arguments);
-			} else if (arguments.containsKey("-xcordia")) {
-				VersioningDetector.checkVersionCLI(ProgramType.XCorDIA);
-				convertXCorDIA(diaFiles, arguments);
-			} else {
-				VersioningDetector.checkVersionCLI(ProgramType.EncyclopeDIA);
-				convertEncyclopedia(diaFiles, arguments);
+			try {
+				if (arguments.containsKey("-pecan")||arguments.containsKey("-walnut")) {
+					VersioningDetector.checkVersionCLI(ProgramType.PecanPie);
+					convertPecan(diaFiles, arguments);
+				} else if (arguments.containsKey("-xcordia")) {
+					VersioningDetector.checkVersionCLI(ProgramType.XCorDIA);
+					convertXCorDIA(diaFiles, arguments);
+				} else {
+					VersioningDetector.checkVersionCLI(ProgramType.EncyclopeDIA);
+					convertEncyclopedia(diaFiles, arguments);
+				}
+
+			} catch (Exception e) {
+				Logger.errorLine("Encountered Fatal Error!");
+				Logger.errorException(e);
+
+				// Forcibly exit with error to avoid hanging the process if there are any leftover user threads
+				// that weren't properly cleaned up as a result of the error. First we log any hung / remaining
+				// threads though, to aid debugging.
+
+				for (Entry<Thread, StackTraceElement[]> threadEntry : Thread.getAllStackTraces().entrySet()) {
+					if (threadEntry.getKey().isDaemon()) {
+						continue;
+					}
+					if (Thread.currentThread().equals(threadEntry.getKey())) {
+						continue;
+					}
+
+					Logger.errorLine("\nLeftover user thread will be KILLED: " + threadEntry.getKey().getName());
+					for (StackTraceElement element : threadEntry.getValue()) {
+						Logger.errorLine("  " + element);
+					}
+				}
+
+				System.exit(1); // nonzero status indicates error
+			} finally {
+				Logger.close();
 			}
 		}
 	}
@@ -557,9 +585,9 @@ public class SearchToBLIB {
 			featureFiles.add(job.getPercolatorFiles().getInputTSV());
 		}
 
-		Logger.logLine("Using "+representativeJob.getDiaFileReader().getOriginalFileName()+" to extract representative search parameters");
+		Logger.logLine("Using "+representativeJob.getOriginalDiaFileName()+" to extract representative search parameters");
 		if (parameters==null) {
-			Logger.logLine("Using "+representativeJob.getDiaFileReader().getOriginalFileName()+" to extract representative search parameters");
+			Logger.logLine("Using "+representativeJob.getOriginalDiaFileName()+" to extract representative search parameters");
 			parameters=representativeJob.getParameters();
 		}
 		
@@ -681,12 +709,12 @@ public class SearchToBLIB {
 		ArrayList<SearchJobData> processedJobs=new ArrayList<SearchJobData>();
 		List<? extends SearchJobData> pecanJobsObj = Lists.newArrayList(origPecanJobs); // mutable copy
 		// Sort files in alphabetical order for deterministic Percolator sampling
-		Collections.sort(pecanJobsObj, (a, b) -> a.getDiaFileReader().getOriginalFileName().compareTo(b.getDiaFileReader().getOriginalFileName()));
+		Collections.sort(pecanJobsObj, (a, b) -> a.getOriginalDiaFileName().compareTo(b.getOriginalDiaFileName()));
 
 		for (int i=0; i<pecanJobsObj.size(); i++) {
 			SearchJobData job=pecanJobsObj.get(i);
 			if (!job.hasBeenRun()) {
-				Logger.logLine("Can't find a "+job.getSearchType()+" analysis of "+job.getDiaFileReader().getOriginalFileName()+", skipping extraction on that file.");
+				Logger.logLine("Can't find a "+job.getSearchType()+" analysis of "+job.getOriginalDiaFileName()+", skipping extraction on that file.");
 				continue;
 			} else {
 				processedJobs.add(job);
@@ -802,7 +830,7 @@ public class SearchToBLIB {
 	 * trims to quantifiable peptides! for loading into skyline!
 	 */
 	static int[] convertFileBlib(ProgressIndicator subProgress, SearchJobData job, ArrayList<PercolatorPeptide> globalPassingPeptides, ArrayList<PercolatorPeptide> localPassingPeptides, int[] counterTotals, Optional<PeakLocationInferrerInterface> inferrer, PrintWriter integrationFileWriter, BlibFile blib) throws IOException, SQLException {
-		final String diaFileName = job.getDiaFileReader().getOriginalFileName();
+		final String diaFileName = job.getOriginalDiaFileName();
 
 		Logger.logLine("Reading Percolator Results from "+ diaFileName +"...");
 		subProgress.update(diaFileName +": Reading Percolator Results", 0.0f);
@@ -868,7 +896,7 @@ public class SearchToBLIB {
 					globalPassingPeptides=localPassingPeptides.x;
 				}
 
-				Logger.logLine(job.getDiaFileReader().getOriginalFileName()+": Number of global peptides: "+globalPassingPeptides.size()+" vs local peptides: "+localPassingPeptides.x.size());
+				Logger.logLine(job.getOriginalDiaFileName()+": Number of global peptides: "+globalPassingPeptides.size()+" vs local peptides: "+localPassingPeptides.x.size());
 				
 				convertFileElib(subProgress, job, globalPassingPeptides, localPassingPeptides.x, inferrer, elib, pecanJobs.size()>1, integratePrecursors);
 
@@ -884,7 +912,7 @@ public class SearchToBLIB {
 						
 						Pair<ArrayList<PercolatorProteinGroup>, ArrayList<PercolatorProteinGroup>> targetDecoyProteins=ParsimonyProteinGrouper.groupProteins(targets.x, decoys.x, parameters.getPercolatorProteinThreshold(), parameters.getAAConstants());
 						Logger.logLine("Writing local target/decoy proteins: "+targetDecoyProteins.x.size()+"/"+targetDecoyProteins.y.size());
-						elib.addTargetDecoyProteins(job.getDiaFileReader().getOriginalFileName(), targetDecoyProteins.x, targetDecoyProteins.y);
+						elib.addTargetDecoyProteins(job.getOriginalDiaFileName(), targetDecoyProteins.x, targetDecoyProteins.y);
 
 						job.getPercolatorFiles()
 								.getPercolatorExecutableVersion()
@@ -896,6 +924,7 @@ public class SearchToBLIB {
 				
 				subProgress.update("Wrote "+globalPassingPeptides.size()+" peptides identified at "+(job.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 			}
+			
 
 			ArrayList<PercolatorProteinGroup> proteins=null;
 			if (globalPercolatorFiles.isPresent()) {
@@ -933,7 +962,7 @@ public class SearchToBLIB {
 	 * Does not limit to quantifiable! Reports all potential peaks!
 	 */
 	static void convertFileElib(ProgressIndicator subProgress, SearchJobData job, ArrayList<PercolatorPeptide> globalPassingPeptides, ArrayList<PercolatorPeptide> localPassingPeptides, Optional<PeakLocationInferrerInterface> inferrer, LibraryFile elib, boolean combineJobs, boolean integratePrecursors) throws IOException, SQLException {
-		String diaFileName=job.getDiaFileReader().getOriginalFileName();
+		String diaFileName=job.getOriginalDiaFileName();
 		Logger.logLine("Reading Percolator Results from "+diaFileName+"...");
 		subProgress.update(diaFileName+": Reading Percolator Results", 0.0f);
 
@@ -952,6 +981,7 @@ public class SearchToBLIB {
 			if (job instanceof EncyclopediaJobData) {
 				library=((EncyclopediaJobData)job).getLibrary();
 			}
+			
 			libraryEntries=PeptideQuantExtractor.parseSearchFeatures(subProgress, job, false, globalPassingPeptides, localPassingPeptides, inferrer, stripeFile, library, job.getParameters());
 		} else {
 			HashMap<String, PSMData> targetPSMs=PeptideQuantExtractor.findTargetPSMData(job, globalPassingPeptides, localPassingPeptides, inferrer, job.getParameters());
@@ -1060,19 +1090,19 @@ public class SearchToBLIB {
 		parameterMap.put("RT align between samples", Boolean.toString(align));
 		for (int i = 0; i < jobs.size(); i++) {
 			final SearchJobData job = jobs.get(i);
-			parameterMap.put(job.getDiaFileReader().getOriginalFileName() + " search type", job.getSearchType());
+			parameterMap.put(job.getOriginalDiaFileName() + " search type", job.getSearchType());
 			if (job instanceof EncyclopediaJobData) {
-				parameterMap.put(job.getDiaFileReader().getOriginalFileName() + " library", ((EncyclopediaJobData) job).getLibrary().getName());
+				parameterMap.put(job.getOriginalDiaFileName() + " library", ((EncyclopediaJobData) job).getLibrary().getName());
 			} else if (job instanceof PecanJobData) {
-				parameterMap.put(job.getDiaFileReader().getOriginalFileName() + " fasta", ((PecanJobData) job).getFastaFile().getName());
-				parameterMap.put(job.getDiaFileReader().getOriginalFileName() + " used narrow target list", Boolean.toString(((PecanJobData) job).getTargetList().isPresent()));
+				parameterMap.put(job.getOriginalDiaFileName() + " fasta", ((PecanJobData) job).getFastaFile().getName());
+				parameterMap.put(job.getOriginalDiaFileName() + " used narrow target list", Boolean.toString(((PecanJobData) job).getTargetList().isPresent()));
 			} else if (job instanceof XCorDIAJobData) {
 				Optional<LibraryInterface> maybeLibrary = ((XCorDIAJobData) job).getLibrary();
 				if (maybeLibrary.isPresent()) {
-					parameterMap.put(job.getDiaFileReader().getOriginalFileName() + " library", maybeLibrary.get().getName());
+					parameterMap.put(job.getOriginalDiaFileName() + " library", maybeLibrary.get().getName());
 				}
-				parameterMap.put(job.getDiaFileReader().getOriginalFileName() + " fasta", ((XCorDIAJobData) job).getFastaFile().getName());
-				parameterMap.put(job.getDiaFileReader().getOriginalFileName() + " used narrow target list", Boolean.toString(((XCorDIAJobData) job).getTargetList().isPresent()));
+				parameterMap.put(job.getOriginalDiaFileName() + " fasta", ((XCorDIAJobData) job).getFastaFile().getName());
+				parameterMap.put(job.getOriginalDiaFileName() + " used narrow target list", Boolean.toString(((XCorDIAJobData) job).getTargetList().isPresent()));
 			}
 		}
 		elib.addMetadata(parameterMap);
@@ -1122,7 +1152,7 @@ public class SearchToBLIB {
 					final ProgressIndicator subProgress = new SubProgressIndicator(progress, increment);
 
 					if (!job.hasBeenRun()) {
-						final String msg = "Skipping incomplete job: " + job.getDiaFileReader().getOriginalFileName();
+						final String msg = "Skipping incomplete job: " + job.getOriginalDiaFileName();
 						subProgress.update(msg, 1f);
 						Logger.errorLine(msg);
 						continue;
@@ -1132,7 +1162,7 @@ public class SearchToBLIB {
 
 					elib.addTIC(job.getDiaFileReader());
 
-					subProgress.update("Done writing job " + job.getDiaFileReader().getOriginalFileName(), 1f);
+					subProgress.update("Done writing job " + job.getOriginalDiaFileName(), 1f);
 				}
 
 				writeElibMetadata(elib, jobs, parameters, true); // align is required for ALIB
@@ -1233,7 +1263,7 @@ public class SearchToBLIB {
 
 		final Set<String> checkedLibraries = Sets.newHashSet();
 		for (SearchJobData job : jobs) {
-			if (!Objects.equals(file, job.getDiaFileReader().getOriginalFileName())) {
+			if (!Objects.equals(file, job.getOriginalDiaFileName())) {
 				// Skip jobs that don't match this peptide ID
 				continue;
 			}
@@ -1533,7 +1563,7 @@ public class SearchToBLIB {
 				for (SearchJobData job : jobs) {
 					final List<AlignmentDataPoint> alignmentData = Lists.newArrayList();
 
-					ps.setString(1, job.getDiaFileReader().getOriginalFileName());
+					ps.setString(1, job.getOriginalDiaFileName());
 					try (ResultSet rs = ps.executeQuery()) {
 						while (rs.next()) {
 							// Must be in _minutes_ to match AlternatePeakLocationInferrer; the values have
@@ -1550,11 +1580,11 @@ public class SearchToBLIB {
 						}
 					}
 
-					Logger.logLine(job.getDiaFileReader().getOriginalFileName() + " alignment points: read " + alignmentData.size() );
+					Logger.logLine(job.getOriginalDiaFileName() + " alignment points: read " + alignmentData.size() );
 
 					if (alignmentData.stream().noneMatch(p -> Objects.nonNull(p.getPeptideModSeq()))) {
 						// "Seed" experiment won't have alignment points and shouldn't be populated in the map.
-						Logger.logLine("Assuming job " + job.getDiaFileReader().getOriginalFileName() + " is the seed; using 1-1 RT mapping.");
+						Logger.logLine("Assuming job " + job.getOriginalDiaFileName() + " is the seed; using 1-1 RT mapping.");
 						continue;
 					}
 
@@ -1741,7 +1771,7 @@ public class SearchToBLIB {
 			for (int i=0; i<jobs.size(); i++) {
 				SearchJobData job = jobs.get(i);
 				if (!job.hasBeenRun()) {
-					Logger.errorLine("Unable to process " + job.getDiaFileReader().getOriginalFileName() + " because its results are missing. Continuing.");
+					Logger.errorLine("Unable to process " + job.getOriginalDiaFileName() + " because its results are missing. Continuing.");
 					continue;
 				}
 				ProgressIndicator subProgress = new SubProgressIndicator(progress, increment);
@@ -1749,7 +1779,7 @@ public class SearchToBLIB {
 				ArrayList<PercolatorPeptide> globalPassingPeptides = passingPeptides.x;
 				Pair<ArrayList<PercolatorPeptide>, Float> localPassingPeptides = PercolatorReader.getPassingPeptidesFromTSV(job.getPercolatorFiles().getPeptideOutputFile(), jobs.get(i).getParameters(), false);
 
-				Logger.logLine(job.getDiaFileReader().getOriginalFileName() + ": Number of global peptides: " + globalPassingPeptides.size() + " vs local peptides: " + localPassingPeptides.x.size());
+				Logger.logLine(job.getOriginalDiaFileName() + ": Number of global peptides: " + globalPassingPeptides.size() + " vs local peptides: " + localPassingPeptides.x.size());
 
 				convertFileElib(subProgress, job, globalPassingPeptides, localPassingPeptides.x, Optional.of(inferrer), elib, jobs.size() > 1, integratePrecursors);
 			}
@@ -1770,7 +1800,7 @@ public class SearchToBLIB {
 				IntensityNormalizer tic = parameters.isNormalizeByTIC()?IntensityNormalizer.tic(ticMap):IntensityNormalizer::identity;
 				LibraryReportExtractor.extractMatrix(
 						elib,
-						jobs.stream().map(j -> j.getDiaFileReader().getOriginalFileName()).collect(Collectors.toList()),
+						jobs.stream().map(j -> j.getOriginalDiaFileName()).collect(Collectors.toList()),
 						proteins,
 						tic,
 						Optional.empty(),

@@ -19,6 +19,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorVe
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.parameters.InstrumentSpecificSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
@@ -178,6 +179,7 @@ public class ThesaurusSearchParameters extends SearchParameters {
 			boolean maskBadIntegrations,
 			boolean adjustInferredRTBoundaries,
 			boolean integratePrecursors,
+			InstrumentSpecificSearchParameters instrument,
 			boolean enableAdvancedOptions
 	) {
 		super(
@@ -222,6 +224,7 @@ public class ThesaurusSearchParameters extends SearchParameters {
 				maskBadIntegrations,
 				adjustInferredRTBoundaries,
 				integratePrecursors,
+				instrument,
 				enableAdvancedOptions
 		);
 		this.considerRearrangement=considerRearrangement;
@@ -278,6 +281,7 @@ public class ThesaurusSearchParameters extends SearchParameters {
 				params.isMaskBadIntegrations(),
 				params.adjustInferredRTBoundaries(), 
 				params.isIntegratePrecursors(),
+				params.getInstrument(),
 				params.isEnableAdvancedOptions()
 		);
 	}

@@ -184,7 +184,7 @@ public class Scribe {
 		}
 		
 		Logger.logLine("Using "+job.getTaskFactory().getName());
-		Logger.logLine("Input File: "+job.getDiaFileReader().getOriginalFileName());
+		Logger.logLine("Input File: "+job.getOriginalDiaFileName());
 		Logger.logLine("Library File: "+job.getLibrary().getName());
 		Logger.logLine("Result File: "+job.getResultLibrary().getName());
 		Logger.logLine("Parameters:");

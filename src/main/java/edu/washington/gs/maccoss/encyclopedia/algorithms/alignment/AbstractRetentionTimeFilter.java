@@ -64,6 +64,10 @@ public class AbstractRetentionTimeFilter implements RetentionTimeAlignmentInterf
 		}
 		plot(rts, saveFileSeed);
 	}
+	
+	public float getRejectionPValue() {
+		return rejectionPValue;
+	}
 
 	public List<AlignmentDataPoint> plot(List<XYPoint> rts, Optional<File> saveFileSeed, String xAxis, String yAxis) {
 		TFloatArrayList rtValues=new TFloatArrayList();
@@ -80,7 +84,7 @@ public class AbstractRetentionTimeFilter implements RetentionTimeAlignmentInterf
 			}
 			
 			float prob=getProbabilityFitsModel((float)xyPoint.y, (float)xyPoint.x);
-			if (prob>=rejectionPValue) {
+			if (prob>=getRejectionPValue()) {
 				selectedRTs.add(xyPoint);
 			} else {
 				removedRTs.add(xyPoint);
@@ -104,7 +108,7 @@ public class AbstractRetentionTimeFilter implements RetentionTimeAlignmentInterf
 		ArrayList<XYPoint> negHist=new ArrayList<XYPoint>();
 		for (XYPoint xyPoint : histogram) {
 			float prob=getProbabilityFitsModel(midRT, (float)xyPoint.x);
-			if (prob>=rejectionPValue) {
+			if (prob>=getRejectionPValue()) {
 				posHist.add(xyPoint);
 				negHist.add(new XYPoint(xyPoint.x, 0.0));
 			} else {
@@ -235,14 +239,17 @@ public class AbstractRetentionTimeFilter implements RetentionTimeAlignmentInterf
 			return 1f;
 		}
 	}
-
+	
+	protected Optional<RTProbabilityModel> getModel() {
+		return model;
+	}
 
 	
 	@Override
 	public boolean passesFilter(ScoredPSM psm) {
 		float modelRT=psm.getLibraryEntry().getScanStartTime()/60f;
 		float actualRT=psm.getMSMS().getScanStartTime()/60f;
-		boolean passes=this.getProbabilityFitsModel(actualRT, modelRT)>=AbstractRetentionTimeFilter.rejectionPValue;
+		boolean passes=this.getProbabilityFitsModel(actualRT, modelRT)>=getRejectionPValue();
 
 		return passes;
 	}

@@ -55,6 +55,10 @@ public class BlibFileTest extends TestCase {
 				return null;
 			}
 			@Override
+			public String getOriginalDiaFileName() {
+				return "Dummy";
+			}
+			@Override
 			public String getPrimaryScoreName() {
 				return "primary";
 			}

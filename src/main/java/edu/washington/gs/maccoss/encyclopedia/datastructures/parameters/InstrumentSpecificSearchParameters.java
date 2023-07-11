@@ -7,15 +7,15 @@ import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassErrorUnitType;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 
 public enum InstrumentSpecificSearchParameters {
 	IontrapIontrap, OrbitrapIontrap, OrbitrapOrbitrap, ToF, OrbitrapAstral;
-	public static final String INSTRUMENT="-instrument"; 
 	
 	public static final InstrumentSpecificSearchParameters[] INSTRUMENTS={OrbitrapOrbitrap, ToF, OrbitrapAstral, IontrapIontrap, OrbitrapIontrap};
 	
 	public static HashMap<String, String> checkParameters(HashMap<String, String> params) {
-		String val=params.get(INSTRUMENT);
+		String val=params.get(SearchParameters.INSTRUMENT);
 		if (val==null) return params;
 		
 		InstrumentSpecificSearchParameters instrument=fromString(val);
@@ -47,7 +47,6 @@ public enum InstrumentSpecificSearchParameters {
 		
 		switch (this) {
 			case OrbitrapOrbitrap:
-				params.put("-frag", FragmentationType.CID.toString());
 				params.put("-ptol", "10");
 				params.put("-ftol", "10");
 				params.put("-ptolunits", MassErrorUnitType.PPM.toString());
@@ -58,7 +57,6 @@ public enum InstrumentSpecificSearchParameters {
 				break;
 				
 			case ToF:
-				params.put("-frag", FragmentationType.CID.toString());
 				params.put("-ptol", "10");
 				params.put("-ftol", "10");
 				params.put("-ptolunits", MassErrorUnitType.PPM.toString());
@@ -69,7 +67,6 @@ public enum InstrumentSpecificSearchParameters {
 				break;
 				
 			case OrbitrapAstral:
-				params.put("-frag", FragmentationType.CID.toString());
 				params.put("-ptol", "10");
 				params.put("-ftol", "10");
 				params.put("-ptolunits", MassErrorUnitType.PPM.toString());
@@ -80,7 +77,6 @@ public enum InstrumentSpecificSearchParameters {
 				break;
 				
 			case IontrapIontrap:
-				params.put("-frag", FragmentationType.CID.toString());
 				params.put("-ptol", "0.4");
 				params.put("-ftol", "0.4");
 				params.put("-ptolunits", MassErrorUnitType.AMU.toString());
@@ -91,7 +87,6 @@ public enum InstrumentSpecificSearchParameters {
 				break;
 
 			case OrbitrapIontrap:
-				params.put("-frag", FragmentationType.CID.toString());
 				params.put("-ptol", "10");
 				params.put("-ftol", "0.4");
 				params.put("-ptolunits", MassErrorUnitType.PPM.toString());
@@ -109,18 +104,30 @@ public enum InstrumentSpecificSearchParameters {
 		return params;
 	}
 	
+	public MassTolerance getPrecursorTolerance() {
+		HashMap<String, String> params=overwriteParameters(new HashMap<>());
+		MassErrorUnitType toleranceType=MassErrorUnitType.getUnitType(params.get("-ptolunits"));
+		return new MassTolerance(Double.parseDouble(params.get("-ptol")), toleranceType);
+	}
+	
+	public MassTolerance getFragmentTolerance() {
+		HashMap<String, String> params=overwriteParameters(new HashMap<>());
+		MassErrorUnitType toleranceType=MassErrorUnitType.getUnitType(params.get("-ftolunits"));
+		return new MassTolerance(Double.parseDouble(params.get("-ftol")), toleranceType);
+	}
+	
 	public String toString() {
 		switch (this) {
 		case OrbitrapOrbitrap:
-			return "OrbiTrap";
+			return "Orbitrap";
 		case ToF:
 			return "ToF";
 		case OrbitrapAstral:
 			return "Astral";
 		case IontrapIontrap:
-			return "IonTrap";
+			return "Iontrap";
 		case OrbitrapIontrap:
-			return "OrbiTrap/IonTrap";
+			return "Orbitrap/Iontrap";
 		default:
 			return "Unknown";
 		}

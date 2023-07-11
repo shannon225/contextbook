@@ -55,7 +55,6 @@ import gnu.trove.map.hash.TCharDoubleHashMap;
 public class ThesaurusParametersPanel extends JPanel implements ParametersPanelInterface {
 	
 	private static final long serialVersionUID=1L;
-	private static final int numberOfCores=Runtime.getRuntime().availableProcessors();
 	
 	public static final MassTolerance[] TOLERANCE_VALUES=new MassTolerance[] {
 			new MassTolerance(5.0, MassErrorUnitType.PPM),  //0
@@ -89,17 +88,13 @@ public class ThesaurusParametersPanel extends JPanel implements ParametersPanelI
 
 	private final FileChooserPanel backgroundFasta=new FileChooserPanel(null, "Background", new SimpleFilenameFilter(".fas", ".fasta"), true);
 	private final FileChooserPanel libraryFileChooser;
-	private final JComboBox<String> enzyme=new JComboBox<String>(new String[] {"Trypsin", "Lys-C", "Lys-N", "Arg-C", "CNBr", "Chymotrypsin", "Pepsin A"});
 	private final JComboBox<String> fragType=new JComboBox<String>(new String[] {FragmentationType.toName(FragmentationType.CID), FragmentationType.toName(FragmentationType.HCD), //FragmentationType.toName(FragmentationType.SILAC), 
 			FragmentationType.toName(FragmentationType.ETD)});
 	private final JComboBox<PercolatorVersion> percolatorVersion=new JComboBox<PercolatorVersion>(PercolatorVersion.VALID_VERSIONS);
 	
 	private final JFormattedTextField precursorWindowWidth=new JFormattedTextField(NumberFormat.getNumberInstance()); // not displayed anymore
 
-	private final JComboBox<MassTolerance> precursorTolerance=new JComboBox<MassTolerance>(TOLERANCE_VALUES);
-	private final JComboBox<MassTolerance> fragmentTolerance=new JComboBox<MassTolerance>(TOLERANCE_VALUES);
 	private final JComboBox<MassTolerance> libraryTolerance=new JComboBox<MassTolerance>(TOLERANCE_VALUES);
-	private final SpinnerModel numberOfJobs=new SpinnerNumberModel(numberOfCores, 1, numberOfCores, 1);
 	private final JComboBox<ScoringBreadthType> searchBreadthType=new JComboBox<>(CASiL_SEARCH_TYPES);
 	private final JComboBox<PeptideModification> modificationType=new JComboBox<>(AminoAcidConstants.getDefaultLocalizationModifications().toArray(new PeptideModification[0]));
 	private final SpinnerModel numberOfQuantitativeIons=new SpinnerNumberModel(5, 1, 100, 1);
@@ -129,16 +124,9 @@ public class ThesaurusParametersPanel extends JPanel implements ParametersPanelI
 		options.add(backgroundFasta);
 		options.add(new LabeledComponent("Modification Type", modificationType));
 		options.add(new LabeledComponent("Localization Strategy", searchBreadthType));
-		options.add(new LabeledComponent("Enzyme", enzyme));
-		options.add(new LabeledComponent("Fragmentation", fragType));
-		options.add(new LabeledComponent("Precursor Mass Tolerance", precursorTolerance));
-		options.add(new LabeledComponent("Fragment Mass Tolerance", fragmentTolerance));
 		options.add(new LabeledComponent("Library Mass Tolerance", libraryTolerance));
-		options.add(new LabeledComponent("Percolator Version", percolatorVersion));
-		options.add(new LabeledComponent("Percolator FDR threshold", new JSpinner(percolatorThreshold)));
 		//options.add(new LabeledComponent("Number of Quantitative Ions", new JSpinner(numberOfQuantitativeIons)));
 		options.add(new LabeledComponent("Minimum Number of Well-Shaped Ions", new JSpinner(minNumOfQuantitativeIons)));
-		options.add(new LabeledComponent("Number of Cores", new JSpinner(numberOfJobs)));
 		options.add(new LabeledComponent("Additonal Command Line Options", additionalCommandLineOptions));
 
 		this.add(options, BorderLayout.CENTER);
@@ -228,13 +216,13 @@ public class ThesaurusParametersPanel extends JPanel implements ParametersPanelI
 
 	public ThesaurusSearchParameters getParameters() {
 		DataAcquisitionType dataAcquisitionType=DataAcquisitionType.DIA;
-		DigestionEnzyme digestionEnzyme=DigestionEnzyme.getEnzyme((String)enzyme.getSelectedItem());
+		DigestionEnzyme digestionEnzyme=searchPanel.getEnzyme();
 		AminoAcidConstants aaConstants=new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
 		FragmentationType fragmentation=FragmentationType.getFragmentationType((String)fragType.getSelectedItem());
-		MassTolerance precursorValue=(MassTolerance)precursorTolerance.getSelectedItem();
-		MassTolerance fragmentValue=(MassTolerance)fragmentTolerance.getSelectedItem();
+		MassTolerance precursorValue=searchPanel.getInstrument().getPrecursorTolerance();
+		MassTolerance fragmentValue=searchPanel.getInstrument().getFragmentTolerance();
 		MassTolerance libraryFragmentValue=(MassTolerance)libraryTolerance.getSelectedItem();
-		int numberOfJobsValue=((Integer)numberOfJobs.getValue());
+		int numberOfJobsValue=searchPanel.getNumberOfJobs();
 		Number value=(Number)precursorWindowWidth.getValue();
 		float precursorWindowWidthValue=value==null?-1.0f:value.floatValue();
 		PercolatorVersion percolator=(PercolatorVersion)percolatorVersion.getSelectedItem();
@@ -290,11 +278,13 @@ public class ThesaurusParametersPanel extends JPanel implements ParametersPanelI
 				false,
 				false,
 				false,
+				searchPanel.getInstrument(),
 				false
 		);
 
 		String cmds=additionalCommandLineOptions.getText();
 		HashMap<String, String> params=parameters.toParameterMap();
+		params=searchPanel.getInstrument().overwriteParameters(params);
 		params.putAll(CommandLineParser.parseArguments(cmds.split(" ")));
 		parameters=ThesaurusSearchParameters.parseParameters(params);
 		
@@ -311,32 +301,7 @@ public class ThesaurusParametersPanel extends JPanel implements ParametersPanelI
 			if (fastaFile.exists()) backgroundFasta.update(fastaFile);
 		}
 		
-		enzyme.setSelectedItem(params.getEnzyme().getName());
-		fragType.setSelectedItem(FragmentationType.toName(params.getFragType()));
-		
 		boolean gotIt=false;
-		MassTolerance pre=params.getPrecursorTolerance();
-		for (int i=0; i<TOLERANCE_VALUES.length; i++) {
-			if (TOLERANCE_VALUES[i].equals(pre)) {
-				precursorTolerance.setSelectedIndex(i);
-				gotIt=true;
-				break;
-			}
-		}
-		if (!gotIt) precursorTolerance.setSelectedIndex(1);
-		
-		gotIt=false;
-		MassTolerance frag=params.getFragmentTolerance();
-		for (int i=0; i<TOLERANCE_VALUES.length; i++) {
-			if (TOLERANCE_VALUES[i].equals(frag)) {
-				fragmentTolerance.setSelectedIndex(i);
-				gotIt=true;
-				break;
-			}
-		}
-		if (!gotIt) fragmentTolerance.setSelectedIndex(1);
-		
-		gotIt=false;
 		MassTolerance lib=params.getLibraryFragmentTolerance();
 		for (int i=0; i<TOLERANCE_VALUES.length; i++) {
 			if (TOLERANCE_VALUES[i].equals(lib)) {
@@ -352,7 +317,6 @@ public class ThesaurusParametersPanel extends JPanel implements ParametersPanelI
 			modificationType.setSelectedItem(params.getLocalizingModification().get());
 		}
 		
-		numberOfJobs.setValue(params.getNumberOfThreadsUsed());
 		if (params.getPrecursorWindowSize()>0) {
 			precursorWindowWidth.setValue(params.getPrecursorWindowSize());
 		} else {
