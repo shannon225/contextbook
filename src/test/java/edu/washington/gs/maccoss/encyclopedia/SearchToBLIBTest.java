@@ -181,7 +181,11 @@ public class SearchToBLIBTest {
 					final RetentionTimeFilter alignment = RetentionTimeFilter.getFilter(points);
 
 					// Generating this data requires writing results to a file due to an old hack.
-					final List<AlignmentDataPoint> alignmentData = alignment.plot(points, Optional.of(Files.createTempFile("test_", ".fake").toFile()), "library", "actual");
+					final List<AlignmentDataPoint> alignmentData = alignment.plot(points,
+							Optional.of(Files.createTempFile("test_", ".fake").toFile()),
+							false,
+							"library",
+							"actual");
 
 					assumeFalse(alignmentData.isEmpty());
 

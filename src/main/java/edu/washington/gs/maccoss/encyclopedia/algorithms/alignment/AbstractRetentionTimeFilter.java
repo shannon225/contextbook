@@ -1,21 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.alignment;
 
-import java.awt.Color;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.util.AbstractList;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-
 import com.google.common.collect.ImmutableList;
-
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ScoredPSM;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
@@ -29,6 +14,11 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.PivotTableGenerator;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RTProbabilityModel;
 import gnu.trove.list.array.TFloatArrayList;
+
+import java.awt.*;
+import java.io.*;
+import java.util.List;
+import java.util.*;
 
 public class AbstractRetentionTimeFilter implements RetentionTimeAlignmentInterface {
 
@@ -70,6 +60,20 @@ public class AbstractRetentionTimeFilter implements RetentionTimeAlignmentInterf
 	}
 
 	public List<AlignmentDataPoint> plot(List<XYPoint> rts, Optional<File> saveFileSeed, String xAxis, String yAxis) {
+		return plot(rts, saveFileSeed, true, xAxis, yAxis);
+	}
+
+	/**
+	 *
+	 * @param saveFileSeed: location to save file, otherwise charts will be launced immediately
+	 * @param writePDFs: whether to write the associated pdfs. pdfs will only be written if saveFileSeed is present
+	 * @return
+	 */
+	public List<AlignmentDataPoint> plot(List<XYPoint> rts,
+										 Optional<File> saveFileSeed,
+										 boolean writePDFs,
+										 String xAxis,
+										 String yAxis) {
 		TFloatArrayList rtValues=new TFloatArrayList();
 		TFloatArrayList deltas=new TFloatArrayList();
 		ArrayList<XYPoint> removedRTs=new ArrayList<XYPoint>();
@@ -157,8 +161,13 @@ public class AbstractRetentionTimeFilter implements RetentionTimeAlignmentInterf
 		
 		if (saveFileSeed.isPresent()) {
 			String saveFilePrefix=saveFileSeed.get().getAbsolutePath();
-			Charter.writeAsPDF(new File(saveFilePrefix+".delta_rt.pdf"), DELTA_RETENTION_TIME_STRING, "Number of Peptides", false, posTrace, posHistTrace, histTrace);
-			Charter.writeAsPDF(new File(saveFilePrefix+".rt_fit.pdf"), xAxis, yAxis, false, median2, selectedTrace, trace);
+
+			if (writePDFs) {
+				Charter.writeAsPDF(new File(saveFilePrefix + ".delta_rt.pdf"), DELTA_RETENTION_TIME_STRING,
+						"Number of Peptides", false, posTrace, posHistTrace, histTrace);
+				Charter.writeAsPDF(new File(saveFilePrefix + ".rt_fit.pdf"), xAxis, yAxis, false, median2,
+						selectedTrace, trace);
+			}
 	
 			try {
 				final File file = new File(saveFilePrefix + ".rt_fit.txt");
