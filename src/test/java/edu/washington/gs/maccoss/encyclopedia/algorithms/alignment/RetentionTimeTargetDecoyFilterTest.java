@@ -1,9 +1,5 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.alignment;
 
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Map;
-
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
@@ -12,12 +8,17 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.MedianInterpolatorTest;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.ProphetMixtureModel;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.SimpleMixtureModel;
 import gnu.trove.list.array.TFloatArrayList;
 import junit.framework.TestCase;
 
-public class RetentionTimeTargetDecoyFilterTest extends TestCase {
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Map;
+
+public class RetentionTimeTargetDecoyFilterTest
+		// extends TestCase  // currently has no tests
+		{
 	//public void testErrors() {
 	public static void main(String[] args) {
 		
