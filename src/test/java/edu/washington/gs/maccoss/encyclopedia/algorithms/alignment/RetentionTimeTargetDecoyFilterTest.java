@@ -17,7 +17,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.SimpleMixtureModel;
 import gnu.trove.list.array.TFloatArrayList;
 import junit.framework.TestCase;
 
-public class RetentionTimeTargetDecoyFilterTest extends TestCase {
+public class RetentionTimeTargetDecoyFilterTest {
 	//public void testErrors() {
 	public static void main(String[] args) {
 		
