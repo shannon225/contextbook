@@ -459,6 +459,106 @@ public class SearchPanelUtilities {
 		}
 	}
 	
+	public static void correctLibraryRTs(Component root, final SearchParameters params, final JobProcessor processor) {
+		final JFrame frame = (JFrame)SwingUtilities.getRoot(root);
+		final JDialog dialog=new JDialog(frame, "Correct Library Retention Times", true);
+
+		final FileChooserPanel alignFileChooser=new FileChooserPanel(null, "Alignment Library File", new SimpleFilenameFilter(".dlib", ".elib"), true, true);
+		final FileChooserPanel saveFileChooser=new FileChooserPanel(null, "New Library File", new SimpleFilenameFilter(".dlib"), true, false);
+
+		final FileChooserList choosers=new FileChooserList("Library File (.dlib or .elib)", new SimpleFilenameFilter(".dlib", ".elib"));
+		
+		JPanel options=new JPanel();
+		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
+		options.add(choosers);
+		options.add(alignFileChooser);
+		options.add(saveFileChooser);
+		
+		choosers.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				ArrayList<File> filelist=choosers.getFiles();
+				if (filelist.size()>0) {
+					// choose the last file's directory to place the new file
+					File directory=filelist.get(filelist.size()-1).getParentFile();
+					
+					String[] names=new String[filelist.size()];
+					for (int i = 0; i < names.length; i++) {
+						names[i]=filelist.get(i).getName();
+					}
+					String filename=StringUtils.getCommonName(names, "_aligned");
+					if (filename.toLowerCase().endsWith(LibraryFile.ELIB)) {
+						filename=filename.substring(0, filename.length()-LibraryFile.ELIB.length())+LibraryFile.DLIB;
+					} else if (!filename.toLowerCase().endsWith(LibraryFile.DLIB)) {
+						filename=filename+LibraryFile.DLIB;
+					}
+					
+					File savefile=new File(directory, filename);
+					saveFileChooser.update(savefile);
+				}
+			}
+		});
+		
+		JPanel buttons=new JPanel();
+		buttons.setLayout(new FlowLayout(FlowLayout.CENTER));
+		JButton okButton=new JButton("OK");
+		okButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				final ArrayList<File> files=new ArrayList<>();
+				for (File f : choosers.getFiles()) {
+					if (f!=null&&f.exists()) {
+						files.add(f);
+					}
+				}
+
+				final File alignFile=alignFileChooser.getFile();
+				final File saveFile=saveFileChooser.getFile();
+				
+				if (files.size()>0&&saveFile!=null) {
+					dialog.setVisible(false);
+					dialog.dispose();
+
+					WorkerJob job=new WorkerJob() {
+						@Override
+						public String getJobTitle() {
+							return "Align library files into "+saveFile.getName();
+						}
+
+						@Override
+						public void runJob(ProgressIndicator progress) throws Exception {
+							LibraryUtilities.correctLibraryRTsVsSingleSource(progress, files, alignFile, saveFile, params);
+						}
+					};
+					processor.addJob(job);
+					
+				} else {
+					JOptionPane.showMessageDialog(frame, "You must specify at least one library file!", "Incomplete options!", JOptionPane.WARNING_MESSAGE, convertDBIcon);
+				}
+			}
+		});
+		buttons.add(okButton);
+		JButton cancelButton=new JButton("Cancel");
+		cancelButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				dialog.setVisible(false);
+				dialog.dispose();
+			}
+		});
+		buttons.add(cancelButton);
+		
+		JPanel mainpane=new JPanel(new BorderLayout());
+		mainpane.add(options, BorderLayout.CENTER);
+		mainpane.add(buttons, BorderLayout.SOUTH);
+		mainpane.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10), BorderFactory.createTitledBorder("Parameters:")));
+		
+		dialog.getContentPane().add(mainpane, BorderLayout.CENTER);
+		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+		dialog.pack(); 
+		dialog.setVisible(true);
+	}
+	
 	public static void combineELIBs(Component root, final SearchParameters params, final JobProcessor processor) {
 		final JFrame frame = (JFrame)SwingUtilities.getRoot(root);
 		final JDialog dialog=new JDialog(frame, "Combine Libraries", true);
@@ -503,7 +603,7 @@ public class SearchPanelUtilities {
 					for (int i = 0; i < names.length; i++) {
 						names[i]=filelist.get(i).getName();
 					}
-					String filename=StringUtils.getCommonName(names, "combined");
+					String filename=StringUtils.getCommonName(names, "_combined");
 					if (filename.toLowerCase().endsWith(LibraryFile.ELIB)) {
 						filename=filename.substring(0, filename.length()-LibraryFile.ELIB.length())+LibraryFile.DLIB;
 					} else if (!filename.toLowerCase().endsWith(LibraryFile.DLIB)) {
@@ -541,7 +641,7 @@ public class SearchPanelUtilities {
 					WorkerJob job=new WorkerJob() {
 						@Override
 						public String getJobTitle() {
-							return "Merge raw files into "+saveFile.getName();
+							return "Merge library files into "+saveFile.getName();
 						}
 
 						@Override

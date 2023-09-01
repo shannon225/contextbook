@@ -11,15 +11,11 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.MedianInterpolatorTest;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.SimpleMixtureModel;
 import gnu.trove.list.array.TFloatArrayList;
 import junit.framework.TestCase;
-
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Map;
 
-public class RetentionTimeTargetDecoyFilterTest
-		// extends TestCase  // currently has no tests
-		{
-	//public void testErrors() {
+public class RetentionTimeTargetDecoyFilterTest	{
 	public static void main(String[] args) {
 		
 		InputStream is=MedianInterpolatorTest.class.getResourceAsStream("/deltart/deltart_example.csv");

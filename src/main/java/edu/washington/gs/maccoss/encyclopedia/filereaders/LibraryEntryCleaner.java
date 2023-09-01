@@ -171,19 +171,29 @@ public class LibraryEntryCleaner {
 		return retEntries;
 	}
 	
-	public static ArrayList<LibraryEntry> correctRTs(HashMap<String, ArrayList<LibraryEntry>> originalEntriesBySourceFile, File libraryFile) {
-		HashMap<String, ArrayList<LibraryEntry>> entriesBySource=new HashMap<>();
+	public static ArrayList<LibraryEntry> correctRTsVsSingleSource(HashMap<String, ArrayList<LibraryEntry>> originalEntriesBySourceFile, ArrayList<LibraryEntry> singleSource, File libraryFile) {
+		Logger.logLine("Comparing alignment with "+singleSource.size()+" data points");
 
-		for (Entry<String, ArrayList<LibraryEntry>> originalEntries : originalEntriesBySourceFile.entrySet()) {
-			for (LibraryEntry entry : originalEntries.getValue()) {
-				ArrayList<LibraryEntry> list=entriesBySource.get(originalEntries.getKey());
-				if (list==null) {
-					list=new ArrayList<>();
-					entriesBySource.put(originalEntries.getKey(), list);
-				}
-				list.add(entry);
+		HashMap<String, ArrayList<LibraryEntry>> entriesBySource = getEntriesBySource(originalEntriesBySourceFile);
+		
+		ArrayList<LibraryEntry> corrected=new ArrayList<>();
+		for (String source : entriesBySource.keySet()) {
+			String sourceName=FilenameUtils.getBaseName(source);
+			
+			ArrayList<LibraryEntry> entries = entriesBySource.get(source);
+			RetentionTimeFilter filter=getFilter(singleSource, entries, new File(libraryFile.getParent(), sourceName));
+			Logger.logLine("Found "+filter.size()+" mutual data points with "+sourceName);
+
+			for (LibraryEntry entry : entries) {
+				LibraryEntry adjusted=entry.updateRetentionTime(filter.getXValue(entry.getScanStartTime()));
+				corrected.add(adjusted);
 			}
 		}
+		return corrected;
+	}
+	
+	public static ArrayList<LibraryEntry> correctRTs(HashMap<String, ArrayList<LibraryEntry>> originalEntriesBySourceFile, File libraryFile) {
+		HashMap<String, ArrayList<LibraryEntry>> entriesBySource = getEntriesBySource(originalEntriesBySourceFile);
 		
 		ArrayList<IndexedObject<String>> sourcesBySize=new ArrayList<>();
 		for (Entry<String, ArrayList<LibraryEntry>> entry : entriesBySource.entrySet()) {
@@ -210,6 +220,23 @@ public class LibraryEntryCleaner {
 			}
 		}
 		return corrected;
+	}
+
+	private static HashMap<String, ArrayList<LibraryEntry>> getEntriesBySource(
+			HashMap<String, ArrayList<LibraryEntry>> originalEntriesBySourceFile) {
+		HashMap<String, ArrayList<LibraryEntry>> entriesBySource=new HashMap<>();
+
+		for (Entry<String, ArrayList<LibraryEntry>> originalEntries : originalEntriesBySourceFile.entrySet()) {
+			for (LibraryEntry entry : originalEntries.getValue()) {
+				ArrayList<LibraryEntry> list=entriesBySource.get(originalEntries.getKey());
+				if (list==null) {
+					list=new ArrayList<>();
+					entriesBySource.put(originalEntries.getKey(), list);
+				}
+				list.add(entry);
+			}
+		}
+		return entriesBySource;
 	}
 
 	/**
