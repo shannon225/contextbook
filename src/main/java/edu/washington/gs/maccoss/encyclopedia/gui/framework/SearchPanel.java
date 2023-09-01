@@ -620,6 +620,18 @@ public class SearchPanel extends JPanel {
 		});
 		convertMenu.add(combineELIB);
 		
+		JMenuItem correctELIBRTs=new JMenuItem("Correct Library Retention Times", convertDBIcon);
+		correctELIBRTs.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				SearchPanelUtilities.correctLibraryRTs(SearchPanel.this, getVisibleTab().getParameters(), getJobProcessor());
+			}
+		});
+		if (enableAdvancedOptions) {
+			correctELIBRTs.setText("HIDDEN: "+correctELIBRTs.getText());
+			convertMenu.add(correctELIBRTs);
+		}
+		
 		JMenuItem subsetELIB=new JMenuItem("Create Subset Library", convertDBIcon);
 		subsetELIB.addActionListener(new ActionListener() {
 			@Override

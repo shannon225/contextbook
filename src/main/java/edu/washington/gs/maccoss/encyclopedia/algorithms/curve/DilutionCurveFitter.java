@@ -223,7 +223,8 @@ public class DilutionCurveFitter {
 				TFloatArrayList actual=new TFloatArrayList();
 				for (ScoredObject<String> scoredObject : expectedConcentrations) {
 					String column=scoredObject.y;
-					float concentration=Float.parseFloat(row.get(column));
+					String value = row.get(column);
+					float concentration=Float.parseFloat(value);
 					actual.add(concentration);
 				}
 				

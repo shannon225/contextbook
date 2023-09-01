@@ -5,7 +5,8 @@ import java.util.Arrays;
 public class StringUtils {
 	public static String getCommonName(String[] names, String insert) {
 		if (insert==null) insert="";
-		if (names==null||names.length<=1) return insert;
+		if (names==null||names.length==0) return insert;
+		if (names.length==1) return names[0]+insert;
 		String standard=names[0];
 		
 		int pre;

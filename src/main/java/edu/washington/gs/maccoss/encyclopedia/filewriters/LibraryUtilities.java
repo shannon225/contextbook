@@ -226,6 +226,52 @@ public class LibraryUtilities {
 		return false;
 	}
 	
+	public static LibraryFile correctLibraryRTsVsSingleSource(ProgressIndicator progress, ArrayList<File> files, File alignmentFile, File saveFile, SearchParameters params) throws IOException, SQLException, DataFormatException {
+		HashMap<String, ArrayList<LibraryEntry>> groupedEntries=new HashMap<>();
+		int totalEntries=0;
+		int count=0;
+		for (File elibFile : files) {
+			count++;
+			LibraryFile library=new LibraryFile();
+			library.openFile(elibFile);
+			ArrayList<LibraryEntry> localEntries = library.getAllEntries(false,  new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
+			//groupedEntries.put(elibFile.getName(), localEntries);
+			for (LibraryEntry entry : localEntries) {
+				ArrayList<LibraryEntry> list=groupedEntries.get(entry.getSource());
+				if (list==null) {
+					list=new ArrayList<>();
+					groupedEntries.put(entry.getSource(), list);
+				}
+				list.add(entry);
+				totalEntries++;
+			}
+			progress.update("Found "+localEntries.size()+" entries from "+elibFile.getName(), count/(files.size()+1.0f));
+			Logger.logLine("Found "+localEntries.size()+" entries from "+elibFile.getName()+", "+totalEntries+" total entries from "+groupedEntries.size()+" sources...");
+			library.close();
+		}
+
+		LibraryFile alignmentLibrary=new LibraryFile();
+		alignmentLibrary.openFile(alignmentFile);
+		ArrayList<LibraryEntry> alignmentLibraryEntries=alignmentLibrary.getAllEntries(false,  new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
+
+		ArrayList<LibraryEntry> allEntries;
+		progress.update("Correcting retention times...");
+		allEntries=LibraryEntryCleaner.correctRTsVsSingleSource(groupedEntries, alignmentLibraryEntries, saveFile);
+
+		LibraryFile saveLibrary=new LibraryFile();
+		saveLibrary.openFile();
+		saveLibrary.dropIndices();
+		saveLibrary.addEntries(allEntries);
+		saveLibrary.addProteinsFromEntries(allEntries);
+		saveLibrary.createIndices();
+		saveLibrary.saveAsFile(saveFile);
+		
+		saveLibrary.close();
+		progress.update("Saved "+saveFile.getName()+", "+allEntries.size()+" total", 1.0f);
+		Logger.logLine("Saved "+saveFile.getName()+", "+allEntries.size()+" total");
+		return saveLibrary;
+	}
+	
 	public static LibraryFile mergeLibraries(ProgressIndicator progress, ArrayList<File> files, File saveFile, boolean rtAlign, boolean removeDuplicates, boolean higherScoresAreBetter, Optional<File> fasta, SearchParameters params) throws IOException, SQLException, DataFormatException {
 		HashMap<String, ArrayList<LibraryEntry>> groupedEntries=new HashMap<>();
 		int totalEntries=0;

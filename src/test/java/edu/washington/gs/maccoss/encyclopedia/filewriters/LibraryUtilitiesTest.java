@@ -9,7 +9,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Optional;
-import java.util.Map.Entry;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeptideXYPoint;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RTAlignmentAcrossELIBsTest;
@@ -21,7 +20,6 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
-import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
@@ -41,20 +39,10 @@ public class LibraryUtilitiesTest {
 		File lib3=new File(dir, "lcmv_6x_GPF_library_400-1000.elib");
 		File lib4=new File(dir, "global_invivo_invitro_pooled_library.elib");
 		
-		String[] targetAccessions = new String[] { "E9PVX6", "O35284", "O54839", "O54890", "O70309", "O88508", "O88713",
-				"O88875", "P01580", "P01590", "P04187", "P05555", "P06876", "P07901", "P08113", "P09055", "P09793",
-				"P10820", "P11499", "P11688", "P11835", "P13864", "P14211", "P14602", "P15379", "P16045", "P16627",
-				"P16872", "P17156", "P17879", "P18337", "P19324", "P20029", "P23611", "P24063", "P26011", "P27782",
-				"P28033", "P31041", "P32972", "P35385", "P37217", "P38647", "P41183", "P43406", "P48722", "P50283",
-				"P55772", "P56528", "P58252", "P58681", "P60843", "P63017", "P63037", "P63038", "P63073", "P86176",
-				"P97303", "Q00417", "Q00651", "Q02242", "Q03347", "Q04683", "Q07763", "Q3TTA7", "Q5EBG6", "Q60636",
-				"Q60765", "Q61024", "Q61316", "Q61696", "Q61699", "Q61735", "Q61739", "Q61790", "Q64131", "Q64433",
-				"Q66JW3", "Q6NZJ6", "Q6ZWX6", "Q8BK58", "Q8BM72", "Q8K0U4", "Q8R180", "Q8VIM0", "Q91VC3", "Q91YW3",
-				"Q921X9", "Q922R8", "Q99M31", "Q99MB1", "Q99P31", "Q99PR8", "Q9CQN1", "Q9CZJ2", "Q9D659", "Q9D6H2",
-				"Q9DAM3", "Q9EQY0", "Q9ET39", "Q9JJK5", "Q9JK92", "Q9JKD8", "Q9JKR6", "Q9JLV1", "Q9QUN7", "Q9QXT0",
-				"Q9QYJ3", "Q9QZ57", "Q9R0G7", "Q9R1E0", "Q9WVS0", "Q9Z0T9", "Q9Z2B5", };
+		File[] filesToBeUpdated = new File[] {lib2, lib3, lib4};
+		File[] files = new File[] {lib1, lib2, lib3, lib4};
 		
-		targetAccessions = new String[] { "A2ALW5", "D3Z6P0", "E9PVX6", "E9Q8D0", "O08583", "O08997", "O35284",
+		String[] targetAccessions = new String[] { "A2ALW5", "D3Z6P0", "E9PVX6", "E9Q8D0", "O08583", "O08997", "O35284",
 				"O35613", "O35723", "O54839", "O54890", "O54946", "O70309", "O70591", "O88396", "O88508", "O88713",
 				"O88875", "O89114", "P01580", "P01590", "P04187", "P04441", "P05555", "P06876", "P07901", "P08113",
 				"P09055", "P09103", "P09793", "P0C7N9", "P10820", "P11499", "P11688", "P11835", "P11983", "P12961",
@@ -84,6 +72,25 @@ public class LibraryUtilitiesTest {
 				"Q9QWF0", "Q9QXT0", "Q9QYI3", "Q9QYI4", "Q9QYI5", "Q9QYI6", "Q9QYI7", "Q9QYI8", "Q9QYJ0", "Q9QYJ3",
 				"Q9QZ57", "Q9R022", "Q9R0G7", "Q9R1E0", "Q9WTZ0", "Q9WU28", "Q9WU84", "Q9WV98", "Q9WVA2", "Q9WVS0",
 				"Q9Z0T9", "Q9Z1R2", "Q9Z2B5", "Q9Z2X2", };
+		
+		String[] progenitorAccessions = new String[] { "Q00417", "Q9ET39", "P27782", "P41183", "P18337", "Q99MB1",
+				"P58681", "P41133", "Q04683", "P15379", "P16872", "Q9R1E0", "P97303", "P31041", "P06876", "P32972",
+				"Q9WVS0" };
+
+		String[] exhaustionAccessions = new String[] { "Q02242", "Q8VIM0", "Q61790", "P55772", "P86176", "Q9D659",
+				"P56528", "Q07763", "P09793", "Q66JW3", "O54839", "Q64131", "O88875", "P23611", "Q60636", "O88508",
+				"Q61735", "Q3TTA7", "P50283" };
+		String[] intermediateAccessions = new String[] { "P13864", "Q9Z0D9", "A8E0Y8", "O88713", "Q9JKD8", "Q9R0G7",
+				"O35284", "Q03347", "P16045", "P10820", "P01580", "P01590", "P37217", "P04187", "E9PVX6" };
+
+		dir=new File("/Volumes/MacOnlySSD/2023_06_29_CD8_TCell_Exhaustion_Data/dia_files/internal_lib_alignment/");
+		lib1=new File(dir, "051622_Mouse_Tcell_pool_clib.elib_aligned.dlib");
+		lib2=new File(dir, "global_invivo_invitro_pooled_library.elib_aligned.dlib");
+		lib3=new File(dir, "lcmv_6x_GPF_library_400-1000.elib_aligned.dlib");
+		
+		filesToBeUpdated = new File[] {lib2};
+		files = new File[] {lib1, lib2};
+		targetAccessions=General.concatenate(progenitorAccessions, exhaustionAccessions, intermediateAccessions);
 
 		AminoAcidConstants aaConstants = new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
 
@@ -107,7 +114,7 @@ public class LibraryUtilitiesTest {
 		library.close();
 		System.out.println(lib1.getName()+" --> "+entriesByPeptideModSeq.size());
 		
-		for (File f : new File[] {lib2, lib3, lib4}) {
+		for (File f : filesToBeUpdated) {
 			TObjectFloatHashMap<String> altRTs=RTAlignmentAcrossELIBsTest.getRTs(f);
 
 			final ArrayList<XYPoint> points=new ArrayList<>();
@@ -147,7 +154,7 @@ public class LibraryUtilitiesTest {
 
 		ArrayList<LibraryEntry> targets=new ArrayList<>(entriesByPeptideModSeq.values());
 		
-		for (File f : new File[] {lib1, lib2, lib3, lib4}) {
+		for (File f : files) {
 			File libFile=new File(dir, "targets_"+f.getName());
 			library=new LibraryFile();
 			library.openFile();
