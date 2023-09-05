@@ -71,6 +71,8 @@ public class MultiResultsBrowserPanel extends JPanel {
 	private final JComboBox<Integer> minimumNumberOfFragments=new JComboBox<Integer>(new Integer[] {0, 1, 2, 3, 4, 5});
 	private final JComboBox<Integer> numberOfColumns=new JComboBox<Integer>(new Integer[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
 	private final JCheckBox simplifyPlots=new JCheckBox("Simplify plots");
+	private final JCheckBox precursorsPlots=new JCheckBox("Precursors");
+	private final JCheckBox fragmentsPlots=new JCheckBox("Fragments");
 	
 	private final int defaultMinimumNumberOfFragmentsIndex=3;
 	private final int defaultNumberOfColumnsIndex=1;
@@ -195,6 +197,26 @@ public class MultiResultsBrowserPanel extends JPanel {
 		checkBoxes.add(simplifyPlots);
 		options.add(checkBoxes);
 		simplifyPlots.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				updateToSelectedPeptide();
+			}
+		});
+		precursorsPlots.setBackground(LabeledComponent.BACKGROUND_COLOR);
+		precursorsPlots.setSelected(true);
+		checkBoxes.add(precursorsPlots);
+		options.add(checkBoxes);
+		precursorsPlots.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				updateToSelectedPeptide();
+			}
+		});
+		fragmentsPlots.setBackground(LabeledComponent.BACKGROUND_COLOR);
+		fragmentsPlots.setSelected(true);
+		checkBoxes.add(fragmentsPlots);
+		options.add(checkBoxes);
+		fragmentsPlots.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				updateToSelectedPeptide();
@@ -373,10 +395,12 @@ public class MultiResultsBrowserPanel extends JPanel {
 		stackedBarChart.setChart(getStackedBarChart(entry, sampleNames, dataArray).getChart());
 		
 		int cols=(Integer)numberOfColumns.getSelectedItem();
-		boolean simplify=simplifyPlots.isSelected();
+		boolean isSimplify=simplifyPlots.isSelected();
+		boolean isPrecursors=precursorsPlots.isSelected();
+		boolean isFragments=fragmentsPlots.isSelected();
 		if (files.size()<cols) cols=files.size();
 		
-		JPanel right=new JPanel(new GridLayout(0, simplify?1:cols));
+		JPanel right=new JPanel(new GridLayout(0, isSimplify?1:cols));
 		right.setBackground(Color.WHITE);
 		FragmentationModel model=PeptideUtils.getPeptideModel(entry.getPeptideModSeq(), parameters.getAAConstants());
 		FragmentIon[] primaryIonObjects=model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge(), false);
@@ -432,7 +456,7 @@ public class MultiResultsBrowserPanel extends JPanel {
 
 			CombinedRangeXYPlot parent=null;
 			for (int i=0; i<sampleNames.length; i++) {
-				if (simplify) {
+				if (isSimplify) {
 					ChartPanel fragmentChart=Charter.getChart("Retention Time (min)", "Intensity", false, globalMaxYFragment, allFragmentTraces.get(i).toArray(new XYTrace[0]));
 					
 					fragmentChart.getChart().getXYPlot().clearAnnotations();
@@ -477,11 +501,13 @@ public class MultiResultsBrowserPanel extends JPanel {
 					}
 				} else {
 					// !simplify
-					ChartPanel panel=ChromatogramCharter.createChart(Optional.ofNullable(allPrecursorTraces.get(i)),
-							Optional.ofNullable(allFragmentTraces.get(i)), globalMaxYPrecursor, 
-							globalMaxYFragment);
+					Optional<ArrayList<XYTrace>> precursors=isPrecursors?Optional.ofNullable(allPrecursorTraces.get(i)):Optional.empty();
+					Optional<ArrayList<XYTrace>> fragments=isFragments?Optional.ofNullable(allFragmentTraces.get(i)):Optional.empty();
+					ChartPanel panel=ChromatogramCharter.createChart(precursors, fragments, globalMaxYPrecursor, globalMaxYFragment);
+					
 					panel.getChart().setTitle(sampleNames[i]);
 					right.add(panel);
+					
 				}
 			}
 	
@@ -580,7 +606,7 @@ public class MultiResultsBrowserPanel extends JPanel {
 					maxY=xy.getY();
 				}
 				double intensity=targetIonObjects.get(ionEntry.getKey());
-				traces.add(new XYTrace(new double[] {xy.x}, new double[] {xy.y}, GraphType.text, trace.getName()+" ("+formatter.format(intensity).toLowerCase()+")"));
+				//traces.add(new XYTrace(new double[] {xy.x}, new double[] {xy.y}, GraphType.text, trace.getName()+" ("+formatter.format(intensity).toLowerCase()+")"));
 			}
 		}
 		
