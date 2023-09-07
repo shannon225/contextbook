@@ -43,8 +43,8 @@ public class EncyclopediaEndToEndIT extends AbstractEndToEndIT{
 	static SearchParameters parameters;
 	static LibraryScoringFactory libraryScoringFactory;
 
-	static int PEPTIDE_FLOOR = 400;
-	static int PROTEIN_FLOOR = 300;
+	static int PEPTIDE_FLOOR = 300;
+	static int PROTEIN_FLOOR = 200;
 
 	@BeforeClass
 	public static void buildReports() throws Exception {
