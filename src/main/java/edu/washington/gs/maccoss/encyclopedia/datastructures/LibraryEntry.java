@@ -27,7 +27,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
 //@Immutable
-public class LibraryEntry implements Comparable<PeptidePrecursor>, Spectrum, PeptidePrecursorWithProteins, XYTraceInterface {
+public class LibraryEntry implements Comparable<PeptidePrecursor>, Spectrum, HasRetentionTime, PeptidePrecursorWithProteins, XYTraceInterface {
 	public static final String SHUFFLE_STRING="SHUFFLE_";
 	public static final String DECOY_STRING="DECOY_";
 
@@ -343,6 +343,11 @@ public class LibraryEntry implements Comparable<PeptidePrecursor>, Spectrum, Pep
 	}
 
 	public float getRetentionTime() {
+		return retentionTime;
+	}
+	
+	@Override
+	public float getRetentionTimeInSec() {
 		return retentionTime;
 	}
 	

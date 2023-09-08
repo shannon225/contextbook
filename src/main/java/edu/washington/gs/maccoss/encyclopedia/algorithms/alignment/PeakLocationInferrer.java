@@ -55,7 +55,7 @@ public class PeakLocationInferrer {
 			}
 		}
 
-		Logger.logLine("Seed experiment: "+bestJob.getDiaFileReader().getOriginalFileName()+" ("+max+" archetypal peptides)");
+		Logger.logLine("Seed experiment: "+bestJob.getOriginalDiaFileName()+" ("+max+" archetypal peptides)");
 		Logger.logLine("Seed Percolator file: "+bestJob.getPercolatorFiles().getPeptideOutputFile().getAbsolutePath());
 		ArrayList<PercolatorPeptide> alignmentSeed=PercolatorReader.getPassingPeptidesFromTSV(bestJob.getPercolatorFiles().getPeptideOutputFile(), bestJob.getParameters(), false).x;
 		TObjectFloatHashMap<String> rtsBySequence=new TObjectFloatHashMap<String>();
@@ -79,7 +79,7 @@ public class PeakLocationInferrer {
 		int count=0;
 		for (SearchJobData job : pecanJobs) {
 			if (job!=bestJob) {
-				subProgress2.update(job.getDiaFileReader().getOriginalFileName()+": RT aligning to seed", count/(float) pecanJobs.size());
+				subProgress2.update(job.getOriginalDiaFileName()+": RT aligning to seed", count/(float) pecanJobs.size());
 				count++;
 
 				ArrayList<XYPoint> points=new ArrayList<XYPoint>();
@@ -94,7 +94,7 @@ public class PeakLocationInferrer {
 					Logger.errorLine("Not enough points ("+points.size()+" out of align:"+peptides.size()+" and best:"+rtsBySequence.size()+") to compute regression between samples, still trying anyways.");
 				}
 				
-				RetentionTimeAlignmentInterface alignment=RetentionTimeFilter.getFilter(points, bestJob.getDiaFileReader().getOriginalFileName(), job.getDiaFileReader().getOriginalFileName());
+				RetentionTimeAlignmentInterface alignment=RetentionTimeFilter.getFilter(points, bestJob.getOriginalDiaFileName(), job.getOriginalDiaFileName());
 				alignmentMap.put(job, alignment);
 				if (job instanceof QuantitativeSearchJobData) {
 					// try reading encyclopedia data directly from results library
@@ -132,7 +132,7 @@ public class PeakLocationInferrer {
 		HashMap<String, SearchJobData> jobsByFile=new HashMap<String, SearchJobData>();
 		HashMap<String, ArrayList<PercolatorPeptide>> peptidesByFile=new HashMap<String, ArrayList<PercolatorPeptide>>();
 		for (SearchJobData job : pecanJobs) {
-			String name=job.getDiaFileReader().getOriginalFileName();
+			String name=job.getOriginalDiaFileName();
 			name=name.substring(0, name.lastIndexOf('.'));
 			jobsByFile.put(name, job);
 			peptidesByFile.put(name, new ArrayList<PercolatorPeptide>());
@@ -203,7 +203,7 @@ public class PeakLocationInferrer {
 					}
 					
 					if (missingPeptides.size()>0) {
-						Logger.logLine("Found "+bestEntries.size()+" archetypal peptides from individual Percolator reports, extracting "+missingPeptides.size()+" additional archetypal peptides from "+job.getDiaFileReader().getOriginalFileName()+"...");
+						Logger.logLine("Found "+bestEntries.size()+" archetypal peptides from individual Percolator reports, extracting "+missingPeptides.size()+" additional archetypal peptides from "+job.getOriginalDiaFileName()+"...");
 						ArrayList<ChromatogramLibraryEntry> extracted=extractFromDIA(subProgress, job, missingPeptides, passingPeptides);
 						for (ChromatogramLibraryEntry chrom : extracted) {
 							String peptideKey=chrom.getPeptideModSeq()+"+"+chrom.getPrecursorCharge();
@@ -244,8 +244,8 @@ public class PeakLocationInferrer {
 			
 			// if we can't read data from a library result file (e.g. Pecan), then read directly from the DIA file
 			if (!readFromLibraryResult) {
-				Logger.logLine("Extracting "+targetPeptides.size()+" Archetypal Peptides from "+job.getDiaFileReader().getOriginalFileName()+"...");
-				subProgress.update(job.getDiaFileReader().getOriginalFileName()+": Extracting "+targetPeptides.size()+" Archetypal Peptides", 0.00001f);
+				Logger.logLine("Extracting "+targetPeptides.size()+" Archetypal Peptides from "+job.getOriginalDiaFileName()+"...");
+				subProgress.update(job.getOriginalDiaFileName()+": Extracting "+targetPeptides.size()+" Archetypal Peptides", 0.00001f);
 				ArrayList<ChromatogramLibraryEntry> extracted=extractFromDIA(subProgress, job, targetPeptides, passingPeptides);
 				archetypalPeptides.put(job, extracted);
 			}

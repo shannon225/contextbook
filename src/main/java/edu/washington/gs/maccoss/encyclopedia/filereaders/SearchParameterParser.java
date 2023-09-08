@@ -66,6 +66,8 @@ public class SearchParameterParser {
 		map.put(SearchParameters.SUBTRACT_BACKGROUND, "true");
 		map.put(SearchParameters.MASK_BAD_INTEGRATIONS, "false");
 		map.put(SearchParameters.INTEGRATE_PRECURSORS, "false");
+		map.put(SearchParameters.ADJUST_INFERRED_RT_BOUNDARIES, "false");
+		map.put(SearchParameters.MIN_NUM_INTEGRATED_RT_POINTS, Integer.toString(SearchParameters.DEFAULT_MIN_NUM_INTEGRATED_RT_POINTS));
 		return map;
 	}
 	
@@ -320,7 +322,7 @@ public class SearchParameterParser {
 		minIntensity=ParsingUtils.getFloat("-minIntensity", parameters, -1.0f);
 		minIntensityNumIons=ParsingUtils.getFloat("-minIntensityNumIons", parameters, -1.0f);
 		rtWindowInMin=ParsingUtils.getFloat("-rtWindowInMin", parameters, -1f);
-		minNumIntegratedRTPoints=ParsingUtils.getInteger("-minNumIntegratedRTPoints", parameters, SearchParameters.DEFAULT_MIN_NUM_INTEGRATED_RT_POINTS);
+		minNumIntegratedRTPoints=ParsingUtils.getInteger(SearchParameters.MIN_NUM_INTEGRATED_RT_POINTS, parameters, SearchParameters.DEFAULT_MIN_NUM_INTEGRATED_RT_POINTS);
 		
 		value=parameters.get("-localizationModification");
 		if (value != null) {
@@ -379,6 +381,9 @@ public class SearchParameterParser {
         integratePrecursors=ParsingUtils.getBoolean(SearchParameters.INTEGRATE_PRECURSORS, parameters, false);
         adjustInferredRTBoundaries=ParsingUtils.getBoolean(SearchParameters.ADJUST_INFERRED_RT_BOUNDARIES, parameters, false);
         enableAdvancedOptions=ParsingUtils.getBoolean(SearchParameters.ENABLE_ADVANCED_OPTIONS, parameters, false);
+        
+        String instrumentValue=parameters.get(SearchParameters.INSTRUMENT);
+        InstrumentSpecificSearchParameters instrument=instrumentValue==null?InstrumentSpecificSearchParameters.OrbitrapOrbitrap:InstrumentSpecificSearchParameters.fromString(instrumentValue);
 
 		return new SearchParameters(
 				aaConstants,
@@ -422,6 +427,7 @@ public class SearchParameterParser {
 				maskBadIntegrations,
 				adjustInferredRTBoundaries,
 				integratePrecursors,
+				instrument,
 				enableAdvancedOptions
 		);
 	}

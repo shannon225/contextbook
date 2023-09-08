@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -22,6 +21,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
@@ -55,7 +55,7 @@ public class AlternatePeakLocationInferrer {
 				max=length;
 				bestJob=entry.getKey();
 			} else if (length==max&&bestJob!=null) {
-				if (bestJob.getDiaFileReader().getOriginalFileName().compareTo(entry.getKey().getDiaFileReader().getOriginalFileName())>0) {
+				if (bestJob.getOriginalDiaFileName().compareTo(entry.getKey().getOriginalDiaFileName())>0) {
 					bestJob=entry.getKey();
 				}
 			}
@@ -63,7 +63,7 @@ public class AlternatePeakLocationInferrer {
 		if (bestJob==null) {
 			throw new EncyclopediaException("No search job produced sufficient peptides to be the seed experiment, failing alignment.");
 		}
-		Logger.logLine("Setting "+bestJob.getDiaFileReader().getOriginalFileName()+" as the seed experiment.");
+		Logger.logLine("Setting "+bestJob.getOriginalDiaFileName()+" as the seed experiment.");
 		TObjectFloatHashMap<String> bestRTInSec=peptideMappings.get(bestJob);
 
 		// construct maps to hold alignments
@@ -85,7 +85,8 @@ public class AlternatePeakLocationInferrer {
 		int count=0;
 		for (SearchJobData job : pecanJobs) {
 			if (job!=bestJob) {
-				subProgress2.update(job.getDiaFileReader().getOriginalFileName()+": RT aligning to seed", count/(float) pecanJobs.size());
+				StripeFileInterface stripeFile = job.getDiaFileReader();
+				subProgress2.update(stripeFile.getOriginalFileName()+": RT aligning to seed", count/(float) pecanJobs.size());
 				count++;
 
 				TObjectFloatHashMap<String> rtInSec=peptideMappings.get(job);
@@ -107,10 +108,10 @@ public class AlternatePeakLocationInferrer {
 					Logger.errorLine("Not enough points ("+points.size()+" out of align:"+rtInSec.size()+" and best:"+bestRTInSec.size()+") to compute regression between samples, still trying anyways.");
 				}
 				
-				RetentionTimeAlignmentInterface alignment=RetentionTimeFilter.getFilter(points, bestJob.getDiaFileReader().getOriginalFileName(), job.getDiaFileReader().getOriginalFileName());
+				RetentionTimeAlignmentInterface alignment=RetentionTimeFilter.getFilter(points, bestJob.getOriginalDiaFileName(), stripeFile.getOriginalFileName());
 				alignmentMap.put(job, alignment);
 
-				File saveFileSeed = new File(job.getPercolatorFiles().getPeptideOutputFile().getParentFile(), job.getDiaFileReader().getOriginalFileName());
+				File saveFileSeed = new File(job.getPercolatorFiles().getPeptideOutputFile().getParentFile(), stripeFile.getOriginalFileName());
 
 				final List<RetentionTimeAlignmentInterface.AlignmentDataPoint> alignmentResults =
 						alignment.plot(points, Optional.ofNullable(saveFileSeed));
@@ -125,6 +126,8 @@ public class AlternatePeakLocationInferrer {
 						return true;
 					}
 				});
+				
+				stripeFile.close();
 			}
 		}
 		
@@ -134,7 +137,7 @@ public class AlternatePeakLocationInferrer {
 				String fileName=pep.getFile();
 
 				for (SearchJobData job : pecanJobs) {
-					if (job.getDiaFileReader().getOriginalFileName().equals(fileName)) {
+					if (job.getOriginalDiaFileName().equals(fileName)) {
 						RetentionTimeAlignmentInterface map = alignmentMap.get(job);
 						float alignedRT=map==null?pep.getRT()/60:map.getXValue(pep.getRT()/60f);
 						

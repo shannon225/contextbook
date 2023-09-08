@@ -11,7 +11,7 @@ public class CosineGaussianTest extends TestCase {
 		for (int i = 0; i < 10; i++) {
 			System.out.println(dist.getPDF(i));
 		}
-		Charter.launchChart(Charter.getChart(dist, range), "cosine");	
+		Charter.launchChart(Charter.getChart(range, dist), "cosine");	
 	}
 	
 	public void testGaussian() {

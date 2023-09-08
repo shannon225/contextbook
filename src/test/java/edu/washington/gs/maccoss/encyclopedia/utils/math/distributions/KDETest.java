@@ -11,7 +11,7 @@ public class KDETest extends TestCase {
 	public static void main(String[] args) {
 		KDE dist=new KDE(getData(), 1);
 		Range range=new Range(-2, 8);
-		Charter.launchChart(Charter.getChart(dist, range), "kde");
+		Charter.launchChart(Charter.getChart(range, dist), "kde");
 	}
 	
 	public void testKDE() {

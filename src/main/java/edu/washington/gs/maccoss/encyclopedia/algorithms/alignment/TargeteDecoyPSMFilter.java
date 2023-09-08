@@ -8,13 +8,13 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.ScoredPSM;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 
-public class ScoredPSMFilter implements ScoredPSMFilterInterface {
-	private final RetentionTimeFilter rtFilter;
+public class TargeteDecoyPSMFilter implements ScoredPSMFilterInterface {
+	private final RetentionTimeTargetDecoyFilter rtFilter;
 	private final MassErrorFilter precursorFilter;
 	private final MassErrorFilter fragmentFilter;
 	private final SearchParameters params;
 
-	public ScoredPSMFilter(SearchParameters params, ArrayList<ScoredPSM> passingPSMs) {
+	public TargeteDecoyPSMFilter(SearchParameters params, ArrayList<ScoredPSM> passingPSMs, ArrayList<ScoredPSM> decoyPSMs) {
 		this.params=params;
 		
 		ArrayList<XYPoint> rtPoints=new ArrayList<XYPoint>();
@@ -26,7 +26,9 @@ public class ScoredPSMFilter implements ScoredPSMFilterInterface {
 			boolean isDecoy=psm.getLibraryEntry().isDecoy();
 			float acquiredRT=psm.getMSMS().getScanStartTime()/60f;
 
-			rtPoints.add(psm.getRTData()); 
+			if (!isDecoy) {
+				rtPoints.add(psm.getRTData());
+			}
 			if (params.getPrecursorTolerance().getToleranceThreshold()!=psm.getDeltaPrecursorMass()) {
 				precursorPoints.add(new PeptideXYPoint(acquiredRT, psm.getDeltaPrecursorMass(), isDecoy, peptideModSeq));
 			}
@@ -34,8 +36,13 @@ public class ScoredPSMFilter implements ScoredPSMFilterInterface {
 				fragmentPoints.add(new PeptideXYPoint(acquiredRT, psm.getDeltaFragmentMass(), isDecoy, peptideModSeq));
 			}
 		}
+
+		ArrayList<XYPoint> decoyRTPoints=new ArrayList<XYPoint>();
+		for (ScoredPSM psm : decoyPSMs) {
+			decoyRTPoints.add(psm.getRTData()); 
+		}
 		
-		rtFilter=RetentionTimeFilter.getFilter(rtPoints);
+		rtFilter=RetentionTimeTargetDecoyFilter.getFilter(rtPoints, decoyRTPoints);
 		precursorFilter=MassErrorFilter.getFilter(params.getPrecursorTolerance(), 1, precursorPoints);
 		fragmentFilter=MassErrorFilter.getFilter(params.getFragmentTolerance(), 2, fragmentPoints);
 	}
@@ -79,6 +86,14 @@ public class ScoredPSMFilter implements ScoredPSMFilterInterface {
 		return passes;
 	}
 	
+	public boolean passesFilter(ScoredPSM psm, float rejectionPValue) {
+		float modelRT=psm.getLibraryEntry().getScanStartTime()/60f;
+		float actualRT=psm.getMSMS().getScanStartTime()/60f;
+		boolean passes=rtFilter.getProbabilityFitsModel(actualRT, modelRT)>=rejectionPValue;
+		
+		return passes;
+	}
+	
 	@Override
 	public float[] getAdditionalScores(ScoredPSM psm) {
 		float modelRT=psm.getLibraryEntry().getScanStartTime()/60f;
@@ -101,7 +116,7 @@ public class ScoredPSMFilter implements ScoredPSMFilterInterface {
 		return new float[] {deltaRT, deltaPrecursor, deltaFragment};
 	}
 
-	public RetentionTimeFilter getRtFilter() {
+	public RetentionTimeTargetDecoyFilter getRtFilter() {
 		return rtFilter;
 	}
 

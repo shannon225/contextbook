@@ -8,7 +8,7 @@ public class CauchyDistributionTest extends TestCase {
 	public static void main(String[] args) {
 		CauchyDistribution dist=new CauchyDistribution(0, 0.2f, 5);
 		Range range=new Range(-5, 5);
-		Charter.launchChart(Charter.getChart(dist, range), "CauchyDistribution");
+		Charter.launchChart(Charter.getChart(range, dist), "CauchyDistribution");
 	}
 
 	public void testGaussian() {

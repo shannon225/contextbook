@@ -22,8 +22,8 @@ import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
 
 import edu.washington.gs.maccoss.encyclopedia.ProgramType;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaScoringFactory;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaTwoJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorVersion;
@@ -43,7 +43,7 @@ import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.JobProcessorTableModel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.LabeledComponent;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
-import edu.washington.gs.maccoss.encyclopedia.jobs.EncyclopediaJob;
+import edu.washington.gs.maccoss.encyclopedia.jobs.EncyclopediaTwoJob;
 import edu.washington.gs.maccoss.encyclopedia.jobs.SearchJob;
 import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
@@ -53,7 +53,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassErrorUnitType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 
-public class EncyclopediaParametersPanel extends JPanel implements ParametersPanelInterface {
+public class EncyclopediaTwoParametersPanel extends JPanel implements ParametersPanelInterface {
 	
 	private static final long serialVersionUID=1L;
 	private static final String[] NUMBER_OF_EXTRA_DECOY_ITEMS=new String[] {"Normal Target/Decoy", "+10% Extra Decoys", "+20% Extra Decoys", "+50% Extra Decoys", "+100% Extra Decoys (2x Time)"};
@@ -76,12 +76,13 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 	
 	private static final ImageIcon smallimage=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/encyclopedia_small_icon.png"));
 	private static final ImageIcon image=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/encyclopedia_icon.png"));
-	private static final String programName="EncyclopeDIA";
+	private static final String programName="EncyclopeDIA 2";
 	private static final String programShortDescription="EncyclopeDIA Library Search";
 	private static final String copy="<html><b><p style=\"font-size:16px; font-family: Helvetica, sans-serif\">EncyclopeDIA: Library Searching Directly from Data-Independent Acquisition (DIA) MS/MS Data<br></p></b>"
 			+ "<p style=\"font-size:10px; font-family: Helvetica, sans-serif\">EncyclopeDIA extracts peptide fragmentation chromatograms from MZML files, matches them to spectra in libraries, and calculates various scoring features. These features are interpreted by Percolator to identify peptides.";
 
 	private final FileChooserPanel backgroundFasta=new FileChooserPanel(null, "Background", new SimpleFilenameFilter(".fas", ".fasta"), true);
+	private final FileChooserPanel prealignmentLibraryFileChooser;
 	private final FileChooserPanel libraryFileChooser;
 	private final JComboBox<String> fragType=new JComboBox<String>(new String[] {FragmentationType.toName(FragmentationType.CID), FragmentationType.toName(FragmentationType.HCD), //FragmentationType.toName(FragmentationType.SILAC), 
 			FragmentationType.toName(FragmentationType.ETD)});
@@ -96,7 +97,7 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 	private final JTextField additionalCommandLineOptions=new JTextField();
 
 	private final SearchPanel searchPanel;
-	public EncyclopediaParametersPanel(SearchPanel searchPanel) {
+	public EncyclopediaTwoParametersPanel(SearchPanel searchPanel) {
 		super(new BorderLayout());
 		this.searchPanel=searchPanel;
 
@@ -112,6 +113,9 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
 		options.add(new LabeledComponent("<p style=\"font-size:12px; font-family: Helvetica, sans-serif\"><b>Parameters", new JLabel()));
 
+		prealignmentLibraryFileChooser=new FileChooserPanel(null, "Prealignment Library", new SimpleFilenameFilter(LibraryFile.DLIB, LibraryFile.ELIB), true);
+		options.add(prealignmentLibraryFileChooser);
+		
 		libraryFileChooser=new FileChooserPanel(null, "Library", new SimpleFilenameFilter(LibraryFile.DLIB, LibraryFile.ELIB), true);
 		options.add(libraryFileChooser);
 		options.add(backgroundFasta);
@@ -168,6 +172,9 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 	 */
 	@Override
 	public Optional<String> canLoadData() {
+		if (prealignmentLibraryFileChooser.getFile()==null) {
+			return Optional.of("Please load a prealignment library file first!");	
+		}
 		if (libraryFileChooser.getFile()==null) {
 			return Optional.of("Please load a library file first!");	
 		}
@@ -183,10 +190,12 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 	@Override
 	public void getJob(File diaFile, JobProcessorTableModel model) {
 		SearchParameters parameters=getParameters();
+		File prealignmentLibraryFile=prealignmentLibraryFileChooser.getFile();
 		File libraryFile=libraryFileChooser.getFile();
 		File fastaFile=getBackgroundFastaFile();
+		if (prealignmentLibraryFile==null) return;
 		if (libraryFile==null) return;
-		SearchJob job=getJob(diaFile, fastaFile, libraryFile, parameters);
+		SearchJob job=getJob(diaFile, fastaFile, prealignmentLibraryFile, libraryFile, parameters);
 
 		if (job!=null) {
 			model.addJob(job);
@@ -194,8 +203,13 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 	}
 
 	private static HashMap<File, LibraryInterface> libraries=new HashMap<File, LibraryInterface>();
-	static SearchJob getJob(File diaFile, File fastaFile, File libraryFile, SearchParameters parameters) {
+	static SearchJob getJob(File diaFile, File fastaFile, File prealignmentLibraryFile, File libraryFile, SearchParameters parameters) {
 		
+		LibraryInterface prelib=libraries.get(prealignmentLibraryFile);
+		if (prelib==null) {
+			prelib=BlibToLibraryConverter.getFile(prealignmentLibraryFile, fastaFile, parameters);
+			libraries.put(prealignmentLibraryFile, prelib);
+		}
 		LibraryInterface library=libraries.get(libraryFile);
 		if (library==null) {
 			library=BlibToLibraryConverter.getFile(libraryFile, fastaFile, parameters);
@@ -203,8 +217,8 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 		}
 
 		LibraryScoringFactory factory=EncyclopediaScoringFactory.getDefaultScoringFactory(parameters);
-		EncyclopediaJobData job=new EncyclopediaJobData(diaFile, fastaFile, library, factory);
-		return new EncyclopediaJob(job);
+		EncyclopediaTwoJobData job=new EncyclopediaTwoJobData(diaFile, fastaFile, prelib, library, factory);
+		return new EncyclopediaTwoJob(job);
 	}
 
 	public SearchParameters getParameters() {
@@ -281,7 +295,11 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 		return parameters;
 	}
 	
-	public void setParameters(SearchParameters params, String libraryFileName, String fastaFileName) {
+	public void setParameters(SearchParameters params, String preLibraryFileName, String libraryFileName, String fastaFileName) {
+		if (preLibraryFileName!=null) {
+			File preLibraryFile=new File(preLibraryFileName);
+			if (preLibraryFile.exists()) prealignmentLibraryFileChooser.update(preLibraryFile);
+		}
 		if (libraryFileName!=null) {
 			File libraryFile=new File(libraryFileName);
 			if (libraryFile.exists()) libraryFileChooser.update(libraryFile);

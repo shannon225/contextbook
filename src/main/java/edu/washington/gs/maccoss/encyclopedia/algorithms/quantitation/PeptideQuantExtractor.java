@@ -301,7 +301,6 @@ public class PeptideQuantExtractor {
 		int rangesFinished=0;
 		float numberOfTasks=2.0f+ranges.size();
 		for (Range range : ranges) {
-
 			boolean used=false;
 			float minRetentionTime=Float.MAX_VALUE;
 			float maxRetentionTime=-Float.MAX_VALUE;

@@ -380,16 +380,21 @@ public class Charter {
 		return chart;
 	}
 
-	public static ExtendedChartPanel getChart(Distribution dist, Range range) {
+	public static ExtendedChartPanel getChart(Range range, Distribution ... dist) {
 		int n=100;
 
-		ArrayList<XYPoint> points=new ArrayList<XYPoint>();
-		for (int i=0; i<n; i++) {
-			float value=(i/(float) n)*range.getRange()+range.getStart();
-			points.add(new XYPoint(value, dist.getProbability(value)));
+		ArrayList<XYTrace> traces=new ArrayList<XYTrace>();
+		
+		for (int d = 0; d < dist.length; d++) {
+			ArrayList<XYPoint> points=new ArrayList<XYPoint>();
+			for (int i=0; i<n; i++) {
+				float value=(i/(float) n)*range.getRange()+range.getStart();
+				points.add(new XYPoint(value, dist[d].getProbability(value)));
+			}
+			traces.add(new XYTrace(points, GraphType.line, dist[d].getName()));
 		}
 
-		return getChart("Value", "Probability", false, new XYTrace(points, GraphType.line, dist.getName()));
+		return getChart("Value", "Probability", true, traces.toArray(new XYTrace[0]));
 	}
 	private static final DecimalFormat MASS_FORMAT = new DecimalFormat(".#");
 	

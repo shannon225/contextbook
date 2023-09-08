@@ -12,6 +12,7 @@ public abstract class AbstractSearchJobData implements SearchJobData {
 	private final PercolatorExecutionData percolatorFiles;
 	private final SearchParameters parameters;
 	private final String version;
+	private String originalDiaFileName=null;
 
 	public AbstractSearchJobData(File diaFile, PercolatorExecutionData percolatorFiles, SearchParameters parameters, String version) {
 		this.diaFile=diaFile;
@@ -32,6 +33,16 @@ public abstract class AbstractSearchJobData implements SearchJobData {
 	@Override
 	public StripeFileInterface getDiaFileReader() {
 		return StripeFileGenerator.getFile(diaFile, getParameters());
+	}
+	
+	@Override
+	public synchronized String getOriginalDiaFileName() {
+		if (originalDiaFileName==null) {
+			StripeFileInterface file=getDiaFileReader();
+			originalDiaFileName=file.getOriginalFileName();
+			file.close();
+		}
+		return originalDiaFileName;
 	}
 	
 	@Override

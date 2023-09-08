@@ -315,6 +315,8 @@ public class PecanParameterParser {
         adjustInferredRTBoundaries=ParsingUtils.getBoolean(SearchParameters.ADJUST_INFERRED_RT_BOUNDARIES, parameters, false);
 		normalizeByTIC = ParsingUtils.getBoolean("-normalizeByTIC", parameters, true);
 		enableAdvancedOptions = ParsingUtils.getBoolean(SearchParameters.ENABLE_ADVANCED_OPTIONS, parameters, false);
+        String instrumentValue=parameters.get(SearchParameters.INSTRUMENT);
+        InstrumentSpecificSearchParameters instrument=instrumentValue==null?InstrumentSpecificSearchParameters.OrbitrapOrbitrap:InstrumentSpecificSearchParameters.fromString(instrumentValue);
 
 		return new PecanSearchParameters(
 				aaConstants,
@@ -365,6 +367,7 @@ public class PecanParameterParser {
 				maskBadIntegrations,
 				adjustInferredRTBoundaries,
 				integratePrecursors,
+				instrument,
 				enableAdvancedOptions
 		);
 	}

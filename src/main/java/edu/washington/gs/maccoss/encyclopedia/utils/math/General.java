@@ -240,6 +240,21 @@ public class General {
 		return toString(i, ",");
 	}
 	
+	public static String toString(char[] i, String delim) {
+		StringBuilder sb=new StringBuilder();
+		for (char g : i) {
+			if (sb.length()>0) {
+				sb.append(delim);
+			}
+			sb.append((int)g);
+		}
+		return sb.toString();
+	}
+	
+	public static String toString(char[] i) {
+		return toString(i, ",");
+	}
+	
 	public static String toString(boolean[] i, String delim) {
 		StringBuilder sb=new StringBuilder();
 		for (boolean g : i) {

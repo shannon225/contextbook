@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.Optional;
 
 public class RetentionTimeFilter extends AbstractRetentionTimeFilter {
+	private final int size;
+	
 	public static RetentionTimeFilter getFilter(List<XYPoint> rts) {
 		return getFilter(rts, RT_STRING, "Retention Time (min)");
 	}
@@ -42,11 +44,16 @@ public class RetentionTimeFilter extends AbstractRetentionTimeFilter {
 				model=Optional.of(generateMixtureModel(rts, rtWarper));
 			}
 		}
-		return new RetentionTimeFilter(rtWarper, model, xAxis, yAxis);
+		return new RetentionTimeFilter(rtWarper, model, xAxis, yAxis, rts.size());
 	}
 	
-	private RetentionTimeFilter(Function rtWarper, Optional<RTProbabilityModel> model, String xAxis, String yAxis) {
+	private RetentionTimeFilter(Function rtWarper, Optional<RTProbabilityModel> model, String xAxis, String yAxis, int size) {
 		super(rtWarper, model, xAxis, yAxis);
+		this.size=size;
+	}
+	
+	public int size() {
+		return size;
 	}
 
 	public static ProphetMixtureModel generateMixtureModel(List<XYPoint> rts, Function warper) {

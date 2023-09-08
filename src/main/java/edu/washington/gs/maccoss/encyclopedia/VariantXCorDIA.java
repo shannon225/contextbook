@@ -223,7 +223,7 @@ public class VariantXCorDIA {
 		int cores=parameters.getNumberOfThreadsUsed();
 		
 		Logger.logLine("Using "+jobData.getTaskFactory().getName());
-		Logger.logLine("Input File: "+jobData.getDiaFileReader().getOriginalFileName());
+		Logger.logLine("Input File: "+jobData.getOriginalDiaFileName());
 		if (jobData.getLibrary().isPresent()) {
 			Logger.logLine("Library File: "+jobData.getLibrary().get().getName());
 		} else {

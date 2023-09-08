@@ -714,7 +714,7 @@ public class SearchToBLIBIT {
 			)) {
 				boolean foundSeed = false;
 				for (SearchJobData job : jobData) {
-					ps.setString(1, job.getDiaFileReader().getOriginalFileName());
+					ps.setString(1, job.getOriginalDiaFileName());
 
 					try (ResultSet rs = ps.executeQuery()) {
 						assertTrue(rs.next());
@@ -722,7 +722,7 @@ public class SearchToBLIBIT {
 						final int nRtPoints = rs.getInt(1);
 
 						if (nRtPoints < 10) {
-							assertFalse("Already found seed job! Not enough RT points (" + nRtPoints + ") for " + job.getDiaFileReader().getOriginalFileName(), foundSeed);
+							assertFalse("Already found seed job! Not enough RT points (" + nRtPoints + ") for " + job.getOriginalDiaFileName(), foundSeed);
 							foundSeed = true;
 						}
 					}
@@ -777,7 +777,7 @@ public class SearchToBLIBIT {
 					assertEquals(
 							String.format("%s in %s",
 									p.getPeptideModSeq(),
-									job.getDiaFileReader().getOriginalFileName()
+									job.getOriginalDiaFileName()
 							),
 							p.getPredictedActual(), // in mins
 							inferrer.getWarpedRTInSec(job, p.getPeptideModSeq()) / 60f, // convert to mins
@@ -792,7 +792,7 @@ public class SearchToBLIBIT {
 						assertEquals(
 								String.format("%s in %s",
 										e.getPeptideModSeq(),
-										job.getDiaFileReader().getOriginalFileName()
+										job.getOriginalDiaFileName()
 								),
 								e.getRetentionTime(), // in sec
 								inferrer.getWarpedRTInSec(job, e.getPeptideModSeq()),
@@ -853,7 +853,7 @@ public class SearchToBLIBIT {
 				assertEquals(
 						String.format("wrong warped RT: %s in %s",
 								modSeq,
-								job.getDiaFileReader().getOriginalFileName()
+								job.getOriginalDiaFileName()
 						),
 						expected.getWarpedRTInSec(job, modSeq),
 						actual.getWarpedRTInSec(job, modSeq),

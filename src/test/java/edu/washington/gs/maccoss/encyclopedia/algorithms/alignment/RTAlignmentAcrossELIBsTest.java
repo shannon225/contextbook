@@ -83,7 +83,7 @@ public class RTAlignmentAcrossELIBsTest {
 		
 		System.out.println(rtsByPeptideModSeq.size()+" vs "+keepers.size());
 	}
-	private static TObjectFloatHashMap<String> getRTs(File selection) throws IOException, SQLException, DataFormatException {
+	public static TObjectFloatHashMap<String> getRTs(File selection) throws IOException, SQLException, DataFormatException {
 		LibraryFile select=new LibraryFile();
 		select.openFile(selection);
 		
