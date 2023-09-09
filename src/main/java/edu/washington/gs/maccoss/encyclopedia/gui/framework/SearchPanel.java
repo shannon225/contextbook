@@ -162,17 +162,17 @@ public class SearchPanel extends JPanel {
 			params=SearchParameterParser.parseParameters(map);
 		}
 		
-		if ((ProgramType.Global==program||ProgramType.EncyclopeDIA==program)&&enableAdvancedOptions) {
-			try {
-				EncyclopediaTwoParametersPanel encyclopedia=new EncyclopediaTwoParametersPanel(this);
-				
-				encyclopedia.setParameters(params, map.get(EncyclopediaTwo.PREALIGNMENT_LIBRARY_TAG), map.get(EncyclopediaTwo.TARGET_LIBRARY_TAG), map.get(EncyclopediaTwo.BACKGROUND_FASTA_TAG));
-				engineSpecificParameters.addTab(encyclopedia.getProgramName(), encyclopedia.getSmallImage(), encyclopedia, encyclopedia.getProgramShortDescription());
-			} catch (Exception e) {
-				Logger.errorLine("Unexpected error reading saved parameters; using default parameters.");
-				Logger.errorException(e);
-			}
-		}
+//		if ((ProgramType.Global==program||ProgramType.EncyclopeDIA==program)&&enableAdvancedOptions) {
+//			try {
+//				EncyclopediaTwoParametersPanel encyclopedia=new EncyclopediaTwoParametersPanel(this);
+//				
+//				encyclopedia.setParameters(params, map.get(EncyclopediaTwo.PREALIGNMENT_LIBRARY_TAG), map.get(EncyclopediaTwo.TARGET_LIBRARY_TAG), map.get(EncyclopediaTwo.BACKGROUND_FASTA_TAG));
+//				engineSpecificParameters.addTab(encyclopedia.getProgramName(), encyclopedia.getSmallImage(), encyclopedia, encyclopedia.getProgramShortDescription());
+//			} catch (Exception e) {
+//				Logger.errorLine("Unexpected error reading saved parameters; using default parameters.");
+//				Logger.errorException(e);
+//			}
+//		}
 		if (ProgramType.Global==program||ProgramType.EncyclopeDIA==program) {
 			try {
 				EncyclopediaParametersPanel encyclopedia;
