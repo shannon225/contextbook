@@ -101,7 +101,7 @@ import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
 
 public class Charter {
-	private static final String BASE_FONT_NAME = "Helvetica";//"News Gothic MT";
+	public static final String BASE_FONT_NAME = "Helvetica";//"News Gothic MT";
 
 	public static void main(String[] args) {
 		XYTraceInterface trace=new XYTrace(
