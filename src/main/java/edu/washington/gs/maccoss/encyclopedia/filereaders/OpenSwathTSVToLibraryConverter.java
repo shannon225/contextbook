@@ -37,10 +37,10 @@ import gnu.trove.procedure.TObjectProcedure;
 
 public class OpenSwathTSVToLibraryConverter {
 	public static final List<String> PEPTIDE_HEADERS = ImmutableList.copyOf(new String[] {
-			"ModifiedPeptideSequence",
-			"FullUniModPeptideName",
-			"FullPeptideName",
 			"ModifiedSequence",
+			"FullPeptideName",
+			"FullUniModPeptideName",
+			"ModifiedPeptideSequence",
 			"PeptideSequence",
 			"Sequence",
 			"StrippedSequence",
@@ -59,13 +59,13 @@ public class OpenSwathTSVToLibraryConverter {
 	public static final List<String> RT_HEADERS = ImmutableList.copyOf(new String[] {
 			"NormalizedRetentionTime",
 			"RetentionTime",
+			"RetentionTimeCalculatorScore",
 			"Tr_recalibrated",
 			"iRT",
-			"RetentionTimeCalculatorScore",
 	});
 	public static final List<String> TRANSITION_GROUP_HEADERS = ImmutableList.copyOf(new String[] {
+			"TransitionGroupId",
 			"transition_group_id",
-			"TransitionGroupId"
 	});
 
 	public static LibraryFile convertOpenSwathTSV(File tsvFile, File fastaFile, SearchParameters parameters) {
