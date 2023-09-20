@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.StringTokenizer;
+import java.util.regex.Pattern;
 import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
@@ -51,8 +52,12 @@ public class OpenSwathTSVToLibraryConverter {
 	
 	static String parseMods(String structuredSequence) {
 		if (structuredSequence.indexOf('(')>=0) {
-			structuredSequence=structuredSequence.replace(".", "");
 			// Unimod: .(UniMod:1)PEPC(UniMod:4)PEPM(UniMod:35)PEPR.(UniMod:2)
+
+			// Replace leading/trailing dots, and pre/post AAs (if given).
+			// Complication: C-terminal mods can be between the trailing dot and post AA,
+			// so we capture it as a group and replace it using a backreference.
+			structuredSequence = Pattern.compile("^.?\\.|\\.(\\([^)]+\\))?.?$").matcher(structuredSequence).replaceAll("$1");
 
 			char[] ca=structuredSequence.toCharArray();
 			

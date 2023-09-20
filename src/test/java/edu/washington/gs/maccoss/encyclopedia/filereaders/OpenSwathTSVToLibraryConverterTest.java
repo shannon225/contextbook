@@ -42,9 +42,21 @@ public class OpenSwathTSVToLibraryConverterTest extends AbstractFileConverterTes
 		String seq=OpenSwathTSVToLibraryConverter.parseMods("n[43]PEPC[160]PEPM[147]PEPRc[16]");
 		assertEquals("[43]PEPC[160]PEPM[147]PEPR[16]", seq);
 
+		// Unimod w/o pre/post AAs: .(UniMod:1)PEPC(UniMod:4)PEPM(UniMod:35)PEPR.(UniMod:2)
+		seq=OpenSwathTSVToLibraryConverter.parseMods(".(UniMod:1)PEPC(UniMod:4)PEPM(UniMod:35)PEPR.(UniMod:2)");
+		assertEquals("P[+42.010565]EPC[+57.021464]PEPM[+15.994915]PEPR[-0.984016]", seq);
+
 		// Unimod: .(UniMod:1)PEPC(UniMod:4)PEPM(UniMod:35)PEPR.(UniMod:2) (but no mods)
 		seq=OpenSwathTSVToLibraryConverter.parseMods(".PEPCPEPMPEPR.");
 		assertEquals("PEPCPEPMPEPR", seq);
+
+		// Unimod with pre/post AAs
+		seq=OpenSwathTSVToLibraryConverter.parseMods("A.VNC(UniMod:4)IQWIC(UniMod:4)K.E");
+		assertEquals("VNC[+57.021464]IQWIC[+57.021464]K", seq);
+
+		// Unimod with pre/post AAs elided
+		seq=OpenSwathTSVToLibraryConverter.parseMods("-.VNC(UniMod:4)IQWIC(UniMod:4)K.-");
+		assertEquals("VNC[+57.021464]IQWIC[+57.021464]K", seq);
 
 		// TPP:    n[43]PEPC[160]PEPM[147]PEPRc[16] (but no mods)
 		seq=OpenSwathTSVToLibraryConverter.parseMods("nPEPCPEPMPEPRc");
