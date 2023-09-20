@@ -58,6 +58,14 @@ public class OpenSwathTSVToLibraryConverterTest extends AbstractFileConverterTes
 		seq=OpenSwathTSVToLibraryConverter.parseMods("-.VNC(UniMod:4)IQWIC(UniMod:4)K.-");
 		assertEquals("VNC[+57.021464]IQWIC[+57.021464]K", seq);
 
+		// Unimod with pre/post AAs (but no mods)
+		seq=OpenSwathTSVToLibraryConverter.parseMods("A.VNCIQWICK.E");
+		assertEquals("VNCIQWICK", seq);
+
+		// Unimod with pre/post AAs elided (but no mods)
+		seq=OpenSwathTSVToLibraryConverter.parseMods("-.VNCIQWICK.-");
+		assertEquals("VNCIQWICK", seq);
+
 		// TPP:    n[43]PEPC[160]PEPM[147]PEPRc[16] (but no mods)
 		seq=OpenSwathTSVToLibraryConverter.parseMods("nPEPCPEPMPEPRc");
 		assertEquals("PEPCPEPMPEPR", seq);
