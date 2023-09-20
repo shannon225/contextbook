@@ -40,13 +40,18 @@ public class OpenSwathTSVToLibraryConverter {
 			"ModifiedSequence",
 			"FullPeptideName",
 			"FullUniModPeptideName",
+			"LabeledSequence",
+			"ModifiedPeptide",
 			"ModifiedPeptideSequence",
 			"PeptideSequence",
 			"Sequence",
 			"StrippedSequence",
+			"modification_sequence",
 	});
 	public static final List<String> CHARGE_HEADERS = ImmutableList.copyOf(new String[] {
 			"PrecursorCharge",
+			"Charge",
+			"prec_z",
 	});
 	public static final List<String> FRAG_MZ_HEADERS = ImmutableList.copyOf(new String[] {
 			"ProductMz",
@@ -54,17 +59,22 @@ public class OpenSwathTSVToLibraryConverter {
 	});
 	public static final List<String> FRAG_INTEN_HEADERS = ImmutableList.copyOf(new String[] {
 			"LibraryIntensity",
+			"RelativeIntensity",
 			"RelativeFragmentIntensity",
+			"RelativeFragmentIonIntensity",
+			"relative_intensity",
 	});
 	public static final List<String> RT_HEADERS = ImmutableList.copyOf(new String[] {
 			"NormalizedRetentionTime",
 			"RetentionTime",
 			"RetentionTimeCalculatorScore",
+			"RT_detected",
 			"Tr_recalibrated",
 			"iRT",
 	});
 	public static final List<String> TRANSITION_GROUP_HEADERS = ImmutableList.copyOf(new String[] {
 			"TransitionGroupId",
+			"ElutionGroup",
 			"transition_group_id",
 	});
 
