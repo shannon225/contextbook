@@ -5,11 +5,14 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.zip.DataFormatException;
 
+import com.google.common.collect.ImmutableList;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
@@ -33,17 +36,46 @@ import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.procedure.TObjectProcedure;
 
 public class OpenSwathTSVToLibraryConverter {
-	private static final String[] PEPTIDE_HEADERS = {"ModifiedPeptideSequence", "FullUniModPeptideName", "FullPeptideName", "ModifiedSequence", "PeptideSequence", "Sequence", "StrippedSequence"};
-	private static final String[] CHARGE_HEADERS = {"PrecursorCharge", "TODO: remove"};
-	private static final String[] FRAG_MZ_HEADERS = {"ProductMz", "FragmentMz"};
-	private static final String[] FRAG_INTEN_HEADERS = {"LibraryIntensity", "RelativeFragmentIntensity"};
-	private static final String[] RT_HEADERS = {"NormalizedRetentionTime", "RetentionTime", "Tr_recalibrated", "iRT", "RetentionTimeCalculatorScore"};
-	private static final String[] TRANSITION_GROUP_HEADERS = {"transition_group_id", "TransitionGroupId"};
+	public static final List<String> PEPTIDE_HEADERS = ImmutableList.copyOf(new String[] {
+			"ModifiedPeptideSequence",
+			"FullUniModPeptideName",
+			"FullPeptideName",
+			"ModifiedSequence",
+			"PeptideSequence",
+			"Sequence",
+			"StrippedSequence",
+	});
+	public static final List<String> CHARGE_HEADERS = ImmutableList.copyOf(new String[] {
+			"PrecursorCharge",
+	});
+	public static final List<String> FRAG_MZ_HEADERS = ImmutableList.copyOf(new String[] {
+			"ProductMz",
+			"FragmentMz",
+	});
+	public static final List<String> FRAG_INTEN_HEADERS = ImmutableList.copyOf(new String[] {
+			"LibraryIntensity",
+			"RelativeFragmentIntensity",
+	});
+	public static final List<String> RT_HEADERS = ImmutableList.copyOf(new String[] {
+			"NormalizedRetentionTime",
+			"RetentionTime",
+			"Tr_recalibrated",
+			"iRT",
+			"RetentionTimeCalculatorScore",
+	});
+	public static final List<String> TRANSITION_GROUP_HEADERS = ImmutableList.copyOf(new String[] {
+			"transition_group_id",
+			"TransitionGroupId"
+	});
 
 	public static LibraryFile convertOpenSwathTSV(File tsvFile, File fastaFile, SearchParameters parameters) {
 		String absolutePath=tsvFile.getAbsolutePath();
 		File libraryFile=new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))+LibraryFile.DLIB);
 		return convertFromOpenSwathTSV(tsvFile, fastaFile, libraryFile, parameters);
+	}
+
+	public static String getFromMap(Map<String, String> row, Collection<? extends String> options) {
+		return getFromMap(row, options.toArray(new String[0]));
 	}
 	
 	public static String getFromMap(Map<String, String> row, String... options) {
