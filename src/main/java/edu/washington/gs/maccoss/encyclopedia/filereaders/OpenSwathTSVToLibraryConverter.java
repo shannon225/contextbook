@@ -33,7 +33,12 @@ import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.procedure.TObjectProcedure;
 
 public class OpenSwathTSVToLibraryConverter {
-
+	private static final String[] PEPTIDE_HEADERS = {"ModifiedPeptideSequence", "FullUniModPeptideName", "FullPeptideName", "ModifiedSequence", "PeptideSequence", "Sequence", "StrippedSequence"};
+	private static final String[] CHARGE_HEADERS = {"PrecursorCharge", "TODO: remove"};
+	private static final String[] FRAG_MZ_HEADERS = {"ProductMz", "FragmentMz"};
+	private static final String[] FRAG_INTEN_HEADERS = {"LibraryIntensity", "RelativeFragmentIntensity"};
+	private static final String[] RT_HEADERS = {"NormalizedRetentionTime", "RetentionTime", "Tr_recalibrated", "iRT", "RetentionTimeCalculatorScore"};
+	private static final String[] TRANSITION_GROUP_HEADERS = {"transition_group_id", "TransitionGroupId"};
 
 	public static LibraryFile convertOpenSwathTSV(File tsvFile, File fastaFile, SearchParameters parameters) {
 		String absolutePath=tsvFile.getAbsolutePath();
@@ -212,13 +217,13 @@ public class OpenSwathTSVToLibraryConverter {
 					String decoy=getFromMap(row, "decoy", "Decoy");
 					if (decoy!=null&&Integer.parseInt(decoy)!=0) return;
 
-					String peptideModSeq=parseMods(getFromMap(row, "ModifiedPeptideSequence", "FullUniModPeptideName", "FullPeptideName", "ModifiedSequence", "PeptideSequence", "Sequence", "StrippedSequence"));
-					byte charge=Byte.parseByte(row.get("PrecursorCharge"));
-					double productMz=Double.parseDouble(getFromMap(row, "ProductMz", "FragmentMz"));
-					float libraryIntensity=Float.parseFloat(getFromMap(row, "LibraryIntensity", "RelativeFragmentIntensity"));
-					float iRT=Float.parseFloat(getFromMap(row, "NormalizedRetentionTime", "RetentionTime", "Tr_recalibrated", "iRT", "RetentionTimeCalculatorScore"));
+					String peptideModSeq=parseMods(getFromMap(row, PEPTIDE_HEADERS));
+					byte charge=Byte.parseByte(getFromMap(row, CHARGE_HEADERS));
+					double productMz=Double.parseDouble(getFromMap(row, FRAG_MZ_HEADERS));
+					float libraryIntensity=Float.parseFloat(getFromMap(row, FRAG_INTEN_HEADERS));
+					float iRT=Float.parseFloat(getFromMap(row, RT_HEADERS));
 
-					final String groupIdString = getFromMap(row, "transition_group_id", "TransitionGroupId");
+					final String groupIdString = getFromMap(row, TRANSITION_GROUP_HEADERS);
 
 					final int group;
 					if (null == groupIdString) {
