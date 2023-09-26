@@ -25,6 +25,9 @@ public class GUIParameters {
 	}
 	
 	public static void requestUpdatedColor() {
-		BASE_COLOR = JColorChooser.showDialog(null, "Choose a base color", BASE_COLOR);	
+		Color c=JColorChooser.showDialog(null, "Choose a base color", BASE_COLOR);
+		if (c!=null) {
+			BASE_COLOR = c;
+		}
 	}
 }
