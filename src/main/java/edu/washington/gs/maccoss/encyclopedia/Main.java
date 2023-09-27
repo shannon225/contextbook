@@ -27,14 +27,14 @@ public class Main {
 	
 	public static boolean isJavaVersionOK() {
 		int javaVersion=getJavaVersion();
-		return javaVersion>=8&&javaVersion<17;
+		return javaVersion>=8&&javaVersion<=17;
 	}
 	
 	public static void main(String[] args) throws IOException {
 		int javaVersion=getJavaVersion();
 		if (!isJavaVersionOK()) {
 			String text=javaVersion<8?"lower":"higher";
-			Logger.errorLine("Java version is "+text+" than expected (8-16), execution may be unstable!");
+			Logger.errorLine("Java version is "+text+" than expected (8-17), execution may be unstable!");
 		}
 		
 		HashMap<String, String> arguments=CommandLineParser.parseArguments(args);
