@@ -15,6 +15,7 @@ import javax.swing.UIManager;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.ParametersPanelInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchPanel;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.FrameRegistry;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.MemoryMonitor;
 import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
@@ -24,6 +25,8 @@ import edu.washington.gs.maccoss.encyclopedia.utils.VersioningDetector;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.Networking;
 
 public class SearchGUIMain {
+	public static FrameRegistry registry=new FrameRegistry();
+	
 	public static void main(String[] args) {
 		HashMap<String, String> arguments=CommandLineParser.parseArguments(args);
 		runGUI(ProgramType.Global, arguments.containsKey(SearchParameters.ENABLE_ADVANCED_OPTIONS));
@@ -106,11 +109,13 @@ public class SearchGUIMain {
 		}
 
 		final JFrame f=new JFrame(name);
+		registry.registerFrame(f);
+		
 		f.setIconImage(image.getImage());
 
 		f.addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent e) {
-				System.exit(0);
+				registry.removeFrameAndQuit(f);
 			}
 		});
 

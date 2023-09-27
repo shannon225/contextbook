@@ -27,6 +27,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.GUIParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
@@ -216,6 +217,7 @@ public class MzmlStructureCharter {
 	}
 
 	private static Color getColor(boolean everyOther) {
-		return everyOther?new Color(0, 0, 200):new Color(100, 100, 255);
+		//return everyOther?new Color(0, 0, 200):new Color(100, 100, 255);
+		return everyOther?GUIParameters.getBaseColor():GUIParameters.getBrighterColor();
 	}
 }
