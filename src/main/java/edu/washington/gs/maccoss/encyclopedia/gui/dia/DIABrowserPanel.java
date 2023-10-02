@@ -50,6 +50,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.GUIParameters;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.LabeledComponent;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingWorkerProgress;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
@@ -397,7 +398,7 @@ public class DIABrowserPanel extends JPanel {
 						if (point.x>maxRT) maxRT=(float)point.x;
 					}
 				}
-				XYTrace basepeak=new XYTrace(basepeaks, GraphType.area, "Precursor Basepeak", new Color(255, 0, 0, 50), 2.0f);
+				XYTrace basepeak=new XYTrace(basepeaks, GraphType.area, "Precursor Basepeak", GUIParameters.getBaseColor(), 2.0f);
 				chromatogram=XYTrace.round(new XYTrace(tics, GraphType.area, "Precursor TIC"), THREE_SECONDS);
 				precursorIntensityHistogram=new XYTrace(precursorIonDistribution, GraphType.area, "Log10 Precursor Intensity Distribution");
 				
