@@ -57,7 +57,7 @@ public class EncyclopediaTwoScoringTask extends AbstractLibraryScoringTask {
 		this.precursorIsolationRange=new Range(precursorIsolationRange.getStart(), precursorIsolationRange.getStop());
 	}
 	
-	private static final int peaksKept=5;
+	private static final int peaksKept=1;
 	private static final int peaksConsidered=7;
 
 	@Override

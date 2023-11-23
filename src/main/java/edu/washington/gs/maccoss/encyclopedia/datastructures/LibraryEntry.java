@@ -136,6 +136,11 @@ public class LibraryEntry implements Comparable<PeptidePrecursor>, Spectrum, Has
 		return massCorrectedPeptideModSeq;
 	}
 	
+	public LibraryEntry sqrt() {
+		float[] sqrt=General.protectedSqrt(intensityArray);
+		return new LibraryEntry(source, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, massCorrectedPeptideModSeq, copies, retentionTime, score, massArray, sqrt, correlationArray, quantifiedIonsArray);
+	}
+	
 	/**
 	 * only use for testing
 	 * @param rtInSec

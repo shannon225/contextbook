@@ -243,9 +243,10 @@ public class LibraryEntryCleaner {
 	 * longer and shorter lists are only for search speed considerations -- it's fine if they're reversed
 	 * @param first preferably the longer list
 	 * @param second preferably the shorter list
+	 * @param libraryFile can be null!
 	 * @return
 	 */
-	protected static RetentionTimeFilter getFilter(ArrayList<LibraryEntry> first, ArrayList<LibraryEntry> second, File libraryFile) {
+	public static RetentionTimeFilter getFilter(ArrayList<LibraryEntry> first, ArrayList<LibraryEntry> second, File libraryFile) {
 		HashMap<String, TFloatArrayList> rtsByPeptideModSeqFirst = getRTsBySeq(first);
 		HashMap<String, TFloatArrayList> rtsByPeptideModSeqSecond = getRTsBySeq(second);
 		String secondSource=second.get(0).getSource();
@@ -264,7 +265,10 @@ public class LibraryEntryCleaner {
 		
 		Logger.logLine("Adding "+secondSource+" with "+points.size()+" matched data points");
 		RetentionTimeFilter filter = RetentionTimeFilter.getFilter(points, "RT (seconds)", secondSource, TwoDimensionalKDE.HIGHER_RESOLUTION);
-		filter.plot(points, Optional.ofNullable(libraryFile), "Global", secondSource);
+		
+		if (libraryFile!=null) {
+			filter.plot(points, Optional.ofNullable(libraryFile), "Global", secondSource);
+		}
 		return filter;
 	}
 
