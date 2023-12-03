@@ -26,6 +26,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -304,6 +305,56 @@ public class LibraryEntryCleaner {
 			}
 			Collections.sort(peaks);
 			Quadruplet<double[], float[], float[], boolean[]> arrays=PeakChromatogram.toChromatogramArrays(peaks);
+			
+			massArray=arrays.x;
+			intensityArray=arrays.y;
+			correlationArray=arrays.z;
+			quantifiedIonsArray=arrays.w;
+			processed.add(entry.updateMS2(massArray, intensityArray, correlationArray, quantifiedIonsArray));
+		}
+		return processed;
+	}
+	
+	/**
+	 * @param entries
+	 * @param nIons
+	 * @return a negative integer, zero, or a positive integer as the
+     *   first argument is less than, equal to, or greater than the
+     *   second.
+	 */
+	public static ArrayList<LibraryEntry> filterIons(ArrayList<LibraryEntry> entries, int nIons, double minimumMz) {
+		ArrayList<LibraryEntry> processed=new ArrayList<>();
+		for (LibraryEntry entry : entries) {
+			double[] massArray=entry.getMassArray();
+			float[] intensityArray=entry.getIntensityArray();
+			float[] correlationArray=entry.getCorrelationArray();
+			boolean[] quantifiedIonsArray=entry.getQuantifiedIonsArray();
+			ArrayList<PeakChromatogram> peaks=new ArrayList<>();
+			int numPeaks=Math.min(massArray.length, correlationArray.length);
+			for (int i=0; i<numPeaks; i++) {
+				if (massArray[i]>minimumMz) {
+					peaks.add(new PeakChromatogram(massArray[i], intensityArray[i], correlationArray[i], quantifiedIonsArray[i]));
+				}
+			}
+			Collections.sort(peaks, new Comparator<PeakChromatogram>() {
+				@Override
+				public int compare(PeakChromatogram o1, PeakChromatogram o2) {
+					if (o1==null&&o2==null) return 0;
+					if (o1==null) return 1;
+					if (o2==null) return -1;
+					int c=Float.compare(o1.getIntensity(), o2.getIntensity());
+					if (c!=0) return c;
+					return o1.compareTo(o2);
+				}
+			});
+			Collections.reverse(peaks);
+
+			ArrayList<PeakChromatogram> trimmed=new ArrayList<>();
+			for (int i=0; i<Math.min(peaks.size(), nIons); i++) {
+				trimmed.add(peaks.get(i));
+			}
+			
+			Quadruplet<double[], float[], float[], boolean[]> arrays=PeakChromatogram.toChromatogramArrays(trimmed);
 			
 			massArray=arrays.x;
 			intensityArray=arrays.y;

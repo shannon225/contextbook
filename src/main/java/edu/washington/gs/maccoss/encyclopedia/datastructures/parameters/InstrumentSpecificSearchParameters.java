@@ -119,13 +119,13 @@ public enum InstrumentSpecificSearchParameters {
 	public String toString() {
 		switch (this) {
 		case OrbitrapOrbitrap:
-			return "Orbitrap";
+			return "Orbitrap/Orbitrap";
 		case ToF:
 			return "ToF";
 		case OrbitrapAstral:
 			return "Astral";
 		case IontrapIontrap:
-			return "Iontrap";
+			return "Iontrap/Iontrap";
 		case OrbitrapIontrap:
 			return "Orbitrap/Iontrap";
 		default:
