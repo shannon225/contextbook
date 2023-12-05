@@ -33,6 +33,7 @@ import java.util.function.Predicate;
 import java.util.zip.DataFormatException;
 
 public class LibraryFile extends SQLFile implements LibraryInterface {
+	private static final AminoAcidConstants SIMPLE_AA_CONSTANTS = new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
 	private static final boolean KEEP_QUIET=false;
 	public static boolean OPEN_IN_PLACE=false;
 
@@ -1046,27 +1047,38 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 	 */
 	@Override
 	public ArrayList<LibraryEntry> getEntries(String peptideModSeq, byte charge, boolean sqrt) throws IOException, SQLException, DataFormatException {
+		SimplePeptidePrecursor precursor=new SimplePeptidePrecursor(peptideModSeq, charge, SIMPLE_AA_CONSTANTS);
+		ArrayList<PeptidePrecursor> precursors=new ArrayList<PeptidePrecursor>();
+		precursors.add(precursor);
+		return getEntries(precursors, sqrt);
+	}
+	
+	public ArrayList<LibraryEntry> getEntries(ArrayList<PeptidePrecursor> peptides, boolean sqrt) throws IOException, SQLException, DataFormatException {
 		try (Connection c=getConnection()) {
+			final ArrayList<LibraryEntry> allEntries=new ArrayList<LibraryEntry>();
 			try (PreparedStatement s=c.prepareStatement("select "+"e.PrecursorMZ, "+"e.PrecursorCharge, "+"e.PeptideModSeq, "+"e.Copies, "+"e.RTInSeconds, "+"e.Score, "+"e.MassEncodedLength, "
 					+"e.MassArray, "+"e.IntensityEncodedLength, "+"e.IntensityArray, "+"e.CorrelationEncodedLength, "+"e.CorrelationArray blob, "+"e.QuantifiedIonsArray, "+"e.RTInSecondsStart," +
 					"e.RTInSecondsStop, "+"e.MedianChromatogramEncodedLength, "+"e.MedianChromatogramArray, "+"group_concat(p.ProteinAccession, '"+PSMData.ACCESSION_TOKEN+"') ProteinAccessions, "+"e.SourceFile "+"from "
 					+"entries e "+"left join peptidetoprotein p "+"on "+"e.PeptideSeq=p.PeptideSeq "+"and not p.isdecoy "+"where e.PeptideModSeq = ? "+"and e.PrecursorCharge = ? "+"group by e.rowid;")) {
-				s.setString(1, peptideModSeq);
-				s.setByte(2, charge);
-				ResultSet rs=s.executeQuery();
+				for (PeptidePrecursor peptidePrecursor : peptides) {
+					s.setString(1, peptidePrecursor.getPeptideModSeq());
+					s.setByte(2, peptidePrecursor.getPrecursorCharge());
+					ResultSet rs=s.executeQuery();
 
-				// Don't bother with modification mass munging
-				final ArrayList<LibraryEntry> libraryEntries = extractEntries(sqrt, rs, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
+					// Don't bother with modification mass munging
+					final ArrayList<LibraryEntry> libraryEntries = extractEntries(sqrt, rs, SIMPLE_AA_CONSTANTS);
 
-				//TODO: what if there's an entry that would have its seq munged to match the query!?!?
+					//TODO: what if there's an entry that would have its seq munged to match the query!?!?
 
-				// Check that mod masses weren't affected (the results have the mod seq that was requested)
-				if (!libraryEntries.stream().map(LibraryEntry::getPeptideModSeq).allMatch(Predicate.isEqual(peptideModSeq))) {
-					throw new IllegalStateException("Result had mismatched modSeq!");
+					// Check that mod masses weren't affected (the results have the mod seq that was requested)
+					if (!libraryEntries.stream().map(LibraryEntry::getPeptideModSeq).allMatch(Predicate.isEqual(peptidePrecursor.getPeptideModSeq()))) {
+						throw new IllegalStateException("Result had mismatched modSeq!");
+					}
+					allEntries.addAll(libraryEntries);
 				}
 
-				return libraryEntries;
 			}
+			return allEntries;
 		}
 	}
 

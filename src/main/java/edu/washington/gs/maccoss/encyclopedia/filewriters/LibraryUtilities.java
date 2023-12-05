@@ -15,14 +15,17 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.zip.DataFormatException;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeFilter;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideAccessionMatchingTrie;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursor;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.InMemoryLibrary;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryEntryCleaner;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
@@ -224,6 +227,25 @@ public class LibraryUtilities {
 			if (targets.contains(accession)) return true;
 		}
 		return false;
+	}
+	
+	public static LibraryInterface getReferenceCorrectedLibrary(LibraryInterface targetLibrary, LibraryInterface referenceLibrary) throws IOException, SQLException, DataFormatException {
+		ArrayList<LibraryEntry> localEntries = targetLibrary.getAllEntries(false,  new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
+		ArrayList<PeptidePrecursor> precursors=new ArrayList<>();
+		for (LibraryEntry entry : localEntries) {
+			precursors.add(entry);
+		}
+		ArrayList<LibraryEntry> referenceEntries=referenceLibrary.getEntries(precursors, false);
+		
+		RetentionTimeFilter filter=LibraryEntryCleaner.getFilter(referenceEntries, localEntries, null);
+		
+		ArrayList<LibraryEntry> adjustedEntries=new ArrayList<LibraryEntry>();
+		for (LibraryEntry entry : localEntries) {
+			// map RT to reference
+			LibraryEntry adjusted=entry.updateRetentionTime(filter.getXValue(entry.getScanStartTime()));
+			adjustedEntries.add(adjusted);
+		}
+		return new InMemoryLibrary(adjustedEntries);
 	}
 	
 	public static LibraryFile correctLibraryRTsVsSingleSource(ProgressIndicator progress, ArrayList<File> files, File alignmentFile, File saveFile, SearchParameters params) throws IOException, SQLException, DataFormatException {

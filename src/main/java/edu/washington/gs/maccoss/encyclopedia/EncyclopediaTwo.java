@@ -56,6 +56,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.LibraryUtilities;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsConsumer;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.SaveResultsConsumer;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.TeeResultsConsumer;
@@ -258,9 +259,13 @@ public class EncyclopediaTwo {
 		LibraryScoringFactory taskFactory=job.getTaskFactory();
 		SearchParameters parameters=taskFactory.getParameters();
 	
-		Logger.logLine("Calculating pre-alignment features for "+job.getLibrary().getName());
 		ProgressIndicator subProgress=new SubProgressIndicator(progress, 0.05f);
-		SaveResultsConsumer saveResultsConsumer=generateFeatureFile(subProgress, job.getPrealignmentLibrary(), job, stripefile, Optional.empty());
+
+		Logger.logLine("Aligning pre-alignment library to "+job.getLibrary().getName());
+		LibraryInterface prealignmentLibrary = LibraryUtilities.getReferenceCorrectedLibrary(job.getPrealignmentLibrary(), job.getLibrary());
+
+		Logger.logLine("Calculating pre-alignment features for "+job.getLibrary().getName());
+		SaveResultsConsumer saveResultsConsumer=generateFeatureFile(subProgress, prealignmentLibrary, job, stripefile, Optional.empty());
 
 		Logger.logLine("Assessing FDR...");
 		Pair<ArrayList<PercolatorPeptide>, TargeteDecoyPSMFilter> percolatorResults=firstPassFDR(subProgress, job, stripefile, saveResultsConsumer);
@@ -482,6 +487,7 @@ public class EncyclopediaTwo {
 		
 		try {
 			progress.update("Running mProphet ("+(parameters.getPercolatorTestThreshold()*100f)+"%)");
+			Logger.logLine("Running mProphet ("+(parameters.getPercolatorTestThreshold()*100f)+"%)");
 
 			MProphetExecutionData mprophetData=new MProphetExecutionData(job.getPercolatorFiles());
 			Pair<ArrayList<PercolatorPeptide>, Float> pair=MProphet.executeMProphetTSV(mprophetData, job.getParameters().getPercolatorTestThreshold(), job.getParameters().getAAConstants(), 1);
