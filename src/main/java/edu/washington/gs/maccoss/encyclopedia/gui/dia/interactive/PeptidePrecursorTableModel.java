@@ -22,12 +22,10 @@ public class PeptidePrecursorTableModel extends AbstractTableModel {
 	}
 	
 	public String copy() {
-		StringBuilder sb=new StringBuilder(General.toString(columns, DELIM));
+		StringBuilder sb=new StringBuilder(InteractivePeptidePrecursor.getHeader());
 		for (int i = 0; i < getRowCount(); i++) {
-			for (int j = 0; j < getColumnCount(); j++) {
-				if (j>0) sb.append(DELIM);
-				sb.append(getValueAt(i, j).toString());
-			}
+			sb.append("\n");
+			sb.append(getSelectedRow(i).toString());
 		}
 		return sb.toString();
 	}
@@ -39,13 +37,7 @@ public class PeptidePrecursorTableModel extends AbstractTableModel {
 		while (scanner.hasNextLine()) {
 		  String line = scanner.nextLine();
 		  if (line.startsWith("#")) continue; // skip header
-		  StringTokenizer st=new StringTokenizer(line);
-		  st.nextToken(); // number
-		  String peptideModSeq=st.nextToken();
-		  float rtMin=Float.parseFloat(st.nextToken());
-		  byte charge=Byte.parseByte(st.nextToken());
-		  byte passes=st.hasMoreTokens()?Byte.parseByte(st.nextToken()):0;
-		  entries.add(new InteractivePeptidePrecursor(peptideModSeq, charge, rtMin*60f, passes));
+		  entries.add(InteractivePeptidePrecursor.parseFromLine(line));
 		}
 		scanner.close();
 		Logger.logLine("Found "+entries.size()+" peptides...");
@@ -82,7 +74,7 @@ public class PeptidePrecursorTableModel extends AbstractTableModel {
 			case 1: return String.class;
 			case 2: return Float.class;
 			case 3: return Integer.class;
-			case 4: return Integer.class;
+			case 4: return String.class;
 		}
 		return Object.class;
 	}
@@ -96,7 +88,14 @@ public class PeptidePrecursorTableModel extends AbstractTableModel {
 			case 1: return entry.getPeptideModSeq();
 			case 2: return entry.getRetentionTimeInSec()/60f;
 			case 3: return entry.getPrecursorCharge();
-			case 4: return entry.getIsPassing();
+			case 4: 
+				if (entry.getIsPassing()==1) {
+					return "yes";
+				} else if (entry.getIsPassing()==-1) {
+					return "no";
+				} else {
+					return "";
+				}
 		}
 		return null;
 	}

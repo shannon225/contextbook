@@ -3,6 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.datastructures.parameters;
 import java.util.HashMap;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
@@ -20,6 +21,10 @@ public enum InstrumentSpecificSearchParameters {
 		
 		InstrumentSpecificSearchParameters instrument=fromString(val);
 		return instrument.underwriteParameters(params);
+	}
+	
+	public SearchParameters getDefaultParameters() {
+		return SearchParameterParser.parseParameters(overwriteParameters(SearchParameterParser.getDefaultParameters()));
 	}
 
 	/**

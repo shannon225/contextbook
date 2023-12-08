@@ -1,5 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.gui.dia.interactive;
 
+import java.util.StringTokenizer;
+
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.HasRetentionTime;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
@@ -18,10 +20,58 @@ public class InteractivePeptidePrecursor extends SimplePeptidePrecursor implemen
 	}
 
 	public InteractivePeptidePrecursor(String peptideModSeq, byte precursorCharge, float rtInSecs, byte isPassing) {
+		this(peptideModSeq, precursorCharge, rtInSecs, isPassing, null);
+	}
+
+	public InteractivePeptidePrecursor(String peptideModSeq, byte precursorCharge, float rtInSecs, byte isPassing, Range rtRangeInSecs) {
 		super(peptideModSeq, precursorCharge, aaConstants);
 		this.rtInSecs=rtInSecs;
 		this.precursorMZ=aaConstants.getChargedMass(peptideModSeq, precursorCharge);
 		this.isPassing=isPassing;
+		this.rtRangeInSecs=rtRangeInSecs;
+	}
+	
+	public static String getHeader() {
+		return "#Peptide\tRT(min)\tCharge\tIsPassing\tRTStart(min)\tRTStop(min)";
+	}
+	
+	public String toString() {
+		StringBuilder sb=new StringBuilder();
+		sb.append(getPeptideModSeq());
+		sb.append('\t');
+		sb.append(rtInSecs/60f);
+		sb.append('\t');
+		sb.append(getPrecursorCharge());
+		sb.append('\t');
+		sb.append(getIsPassing());
+		
+		if (rtRangeInSecs==null) {
+			sb.append('\t');
+			sb.append('\t');
+		} else {
+			sb.append('\t');
+			sb.append(rtRangeInSecs.getStart()/60f);
+			sb.append('\t');
+			sb.append(rtRangeInSecs.getStop()/60f);
+		}
+		return sb.toString();
+	}
+	
+	public static InteractivePeptidePrecursor parseFromLine(String line) {
+		StringTokenizer st = new StringTokenizer(line);
+		String peptideModSeq = st.nextToken();
+		float rtMin = Float.parseFloat(st.nextToken());
+		byte charge = Byte.parseByte(st.nextToken());
+		byte passes = st.hasMoreTokens() ? Byte.parseByte(st.nextToken()) : 0;
+		
+		Range range=null;
+		if (st.hasMoreTokens()) {
+			float first =Float.parseFloat(st.nextToken());
+			float second =Float.parseFloat(st.nextToken());
+			range=new Range(first*60f, second*60f);
+		}
+
+		return new InteractivePeptidePrecursor(peptideModSeq, charge, rtMin * 60f, passes, range);
 	}
 
 	@Override
@@ -55,7 +105,14 @@ public class InteractivePeptidePrecursor extends SimplePeptidePrecursor implemen
 			isPassing=-1;
 		}
 	}
+	public void removeIsPassing() {
+		isPassing=0;
+	}
 	
+	/**
+	 * CAN BE NULL
+	 * @return
+	 */
 	public Range getRTRange() {
 		return rtRangeInSecs;
 	}
