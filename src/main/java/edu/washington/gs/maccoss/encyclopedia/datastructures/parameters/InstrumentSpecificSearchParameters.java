@@ -62,8 +62,8 @@ public enum InstrumentSpecificSearchParameters {
 				break;
 				
 			case ToF:
-				params.put("-ptol", "10");
-				params.put("-ftol", "10");
+				params.put("-ptol", "25");
+				params.put("-ftol", "25");
 				params.put("-ptolunits", MassErrorUnitType.PPM.toString());
 				params.put("-ftolunits", MassErrorUnitType.PPM.toString());
 				params.put(SearchParameters.SUBTRACT_BACKGROUND, Boolean.TRUE.toString());

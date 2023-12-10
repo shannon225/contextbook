@@ -25,6 +25,7 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.zip.DataFormatException;
 
@@ -73,7 +74,6 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.parameters.Instrume
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.FragmentIonConsistencyCharter;
@@ -85,7 +85,7 @@ import edu.washington.gs.maccoss.encyclopedia.gui.massspec.ChromatogramCharter;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
-import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.EditableXYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
@@ -98,8 +98,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.BackgroundSubtractionFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
-import gnu.trove.list.array.TDoubleArrayList;
-import gnu.trove.list.array.TFloatArrayList;
 
 /**
  * click right to approve chromatogram, click left to flag as bad
@@ -120,6 +118,9 @@ public class ChromatogrindrPanel extends JPanel {
 	private final JTextField jtfFilter;
 	private final JCheckBox jtfNotFilter=new JCheckBox("NOT");
 	private final JComboBox<InstrumentSpecificSearchParameters> instrumentCombo=new JComboBox<InstrumentSpecificSearchParameters>(InstrumentSpecificSearchParameters.INSTRUMENTS);
+
+	private final JCheckBox sgSmoothBox;
+	private final JCheckBox backgroundSubtractBox;
 
 	private LibraryInterface reference=null;
 	private StripeFileInterface dia=null;
@@ -388,6 +389,25 @@ public class ChromatogrindrPanel extends JPanel {
 				updateToSelectedPeptide();
 			}
 		});
+
+		sgSmoothBox=new JCheckBox("Smooth");
+		sgSmoothBox.setSelected(true);
+		sgSmoothBox.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				updateToSelectedPeptide();
+			}
+		});
+		backgroundSubtractBox=new JCheckBox("Background Subtract");
+		backgroundSubtractBox.setSelected(true);
+		backgroundSubtractBox.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				updateToSelectedPeptide();
+			}
+		});
+		options.add(sgSmoothBox);
+		options.add(backgroundSubtractBox);
 		
 		JPanel buttons=new JPanel(new FlowLayout());
 		options.add(buttons);
@@ -451,13 +471,10 @@ public class ChromatogrindrPanel extends JPanel {
 				
 				boolean increment=true;
 				if (e.getKeyCode()==KeyEvent.VK_LEFT) {
-					System.out.println("Left");
 					peptide.setIsPassing(false);
 				} else if (e.getKeyCode()==KeyEvent.VK_RIGHT) {
-					System.out.println("Right");
 					peptide.setIsPassing(true);
 				} else if (e.getKeyCode()==KeyEvent.VK_ESCAPE) {
-					System.out.println("Escape");
 					peptide.removeIsPassing();
 					peptide.setRtRangeInSecs(null);
 					updateToSelectedPeptide();
@@ -574,8 +591,9 @@ public class ChromatogrindrPanel extends JPanel {
 		}
 		SearchParameters parameters=getParameters();
 		
-		JPanel right=new JPanel(new GridLayout(0, 2));
-		right.setBackground(Color.WHITE);
+		JPanel dataPanel=new JPanel(new GridLayout(0, 2));
+		dataPanel.setBackground(Color.WHITE);
+		
 		FragmentationModel model=PeptideUtils.getPeptideModel(entry.getPeptideModSeq(), parameters.getAAConstants());
 		FragmentIon[] primaryIonObjects=model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge(), false);
 		Logger.logLine("Graphing "+entry.getPeptideModSeq()+" ("+primaryIonObjects.length+")"+"...");
@@ -583,6 +601,7 @@ public class ChromatogrindrPanel extends JPanel {
 		try {
 			
 			ArrayList<XYTrace> fragmentTraces=new ArrayList<>();
+			ArrayList<XYTrace> fragmentDeltaMassTraces=new ArrayList<>();
 			ArrayList<XYTrace> precursorTraces=new ArrayList<>();
 			
 			float rtInSec=entry.getRetentionTimeInSec();
@@ -614,30 +633,38 @@ public class ChromatogrindrPanel extends JPanel {
 			// get fragment traces
 			ArrayList<FragmentScan> scans=dia.getStripes(entry.getPrecursorMZ(), minRTInSec, maxRTInSec, false);
 			double[][] allMasses=new double[scans.size()][];
+			float[][] allDeltaMasses=new float[scans.size()][];
 			float[][] allIntensities=new float[scans.size()][];
 			float[] retentionTimes=new float[scans.size()];
 			for (int i=0; i<scans.size(); i++) {
 				FragmentScan scan=scans.get(i);
-				Pair<double[], float[]> results=extract(scan, primaryIonObjects, parameters);
+				Triplet<double[], float[], float[]> results=extract(scan, primaryIonObjects, parameters);
 				double[] masses=results.x;
-				float[] intensities=results.y;
+				float[] deltaMasses=results.y;
+				float[] intensities=results.z;
 				
 				allMasses[i]=masses;
+				allDeltaMasses[i]=deltaMasses;
 				allIntensities[i]=intensities;
 				retentionTimes[i]=scan.getScanStartTime();
 			}
 
 			int movingAverageLength=8; // expected points across the peak
 			float[][] chromatograms=General.transposeMatrix(allIntensities);
+			float[][] deltaMassByIon=General.transposeMatrix(allDeltaMasses);
 			ArrayList<float[]> chromatogramList=new ArrayList<float[]>();
+			ArrayList<float[]> deltaMassByIonList=new ArrayList<float[]>();
 			ArrayList<FragmentIon> foundIons=new ArrayList<>();
 			for (int j = 0; j < chromatograms.length; j++) {
 				if (General.sum(chromatograms[j])>0.0f) {
-					chromatograms[j]=SkylineSGFilter.paddedSavitzkyGolaySmooth(chromatograms[j]);
-					if (parameters.isSubtractBackground()) {
+					if (sgSmoothBox.isSelected()) {
+						chromatograms[j]=SkylineSGFilter.paddedSavitzkyGolaySmooth(chromatograms[j]);
+					}
+					if (backgroundSubtractBox.isSelected()) {
 						chromatograms[j]=BackgroundSubtractionFilter.backgroundSubtractMovingMedian(chromatograms[j], movingAverageLength*10);
 					}
 					chromatogramList.add(chromatograms[j]);
+					deltaMassByIonList.add(deltaMassByIon[j]);
 					foundIons.add(primaryIonObjects[j]);
 				}
 			}
@@ -645,114 +672,23 @@ public class ChromatogrindrPanel extends JPanel {
 			
 			TransitionRefinementData data=TransitionRefiner.identifyTransitions(entry.getPeptideModSeq(), entry.getPrecursorCharge(), entry.getRetentionTimeInSec(), 
 					primaryIonObjects, chromatogramList, retentionTimes, false, parameters);
-			fragmentTraces=getTraces(data.getChromatograms(), data.getCorrelationArray(), retentionTimes, data.getRange());
+			fragmentTraces=getTraces(data.getChromatograms(), data.getCorrelationArray(), retentionTimes, data.getRange(), -Float.MAX_VALUE);
+			fragmentDeltaMassTraces=getTraces(deltaMassByIonList, data.getCorrelationArray(), retentionTimes, data.getRange(), -Float.MAX_VALUE);
 			
-			double globalMaxYFragment=0.0;
-			double globalMaxYPrecursor=0.0;
-			for (XYTrace xyTrace : precursorTraces) {
-				if (xyTrace.getType()==GraphType.line) {
-					globalMaxYPrecursor=Math.max(globalMaxYPrecursor, xyTrace.getMaxY());
-				}
-			}
-			for (XYTrace xyTrace : fragmentTraces) {
-				if (xyTrace.getType()==GraphType.boldline) {
-					globalMaxYFragment=Math.max(globalMaxYFragment, xyTrace.getMaxY());
-				}
-			}
+			final ChartPanel chartPanel = getChromatogramChartPanel(entry, fragmentTraces, precursorTraces);
+	        
+			dataPanel.add(chartPanel);
 			
-			final ChartPanel chartPanel=ChromatogramCharter.createChart(Optional.ofNullable(precursorTraces), Optional.ofNullable(fragmentTraces), globalMaxYPrecursor, globalMaxYFragment);
-			chartPanel.setMouseZoomable(false, false);
-
-			CrosshairOverlay crosshairOverlay = new CrosshairOverlay();
-			final Crosshair xCrosshair=new Crosshair(Double.NaN, Color.GRAY, new BasicStroke(0f));
-			final EditableXYPoint zoomPoint=new EditableXYPoint();
-	        xCrosshair.setLabelVisible(true);
-	        crosshairOverlay.addDomainCrosshair(xCrosshair);
-	        chartPanel.addOverlay(crosshairOverlay);
-	        chartPanel.mouseDragged(null);
-	        
-	        chartPanel.addMouseMotionListener(new MouseMotionListener() {
-				@Override
-				public void mouseMoved(MouseEvent e) {
-		            Rectangle2D area=chartPanel.getScreenDataArea(e.getX(), e.getY());
-			        if (area!=null) {
-			        XYPlot plot = (XYPlot) chartPanel.getChart().getPlot();
-			        ValueAxis xAxis = plot.getDomainAxis();
-			        	double x = xAxis.java2DToValue(e.getX(), area, RectangleEdge.BOTTOM);
-			        	xCrosshair.setValue(x);
-			        }
-				}
-				
-				@Override
-				public void mouseDragged(MouseEvent e) {
-		            Rectangle2D area=chartPanel.getScreenDataArea(e.getX(), e.getY());
-			        if (area!=null) {
-				        XYPlot plot = (XYPlot) chartPanel.getChart().getPlot();
-				        ValueAxis xAxis = plot.getDomainAxis();
-				        double x = xAxis.java2DToValue(e.getX(), area, RectangleEdge.BOTTOM);
-				        xCrosshair.setValue(x);
-				        
-				        double prevX=zoomPoint.getX();
-				        double prevY=zoomPoint.getY();
-				        if (!Double.isNaN(prevX)&&!Double.isNaN(prevY)) {
-					        Line2D zoomLine=new Line2D.Double(prevX, prevY, e.getX(), prevY);
-	
-					        Graphics2D g2 = (Graphics2D) chartPanel.getGraphics();
-					        g2.setPaint(Color.gray);
-					        g2.draw(zoomLine);
-				        }
-			        }
-				}
-			});
-	        
-	        chartPanel.addMouseListener(new MouseListener() {
-				@Override
-				public void mouseReleased(MouseEvent e) {
-					double prevX=zoomPoint.getX();
-					if (!Double.isNaN(prevX)) {
-			            Rectangle2D area=chartPanel.getScreenDataArea(e.getX(), e.getY());
-		            	double x=Math.max(area.getMinX(), Math.min(e.getX(), area.getMaxX()));
-		            	
-		            	double first=Math.min(x, prevX);
-		            	double second=Math.max(x, prevX);
-		            	
-				        XYPlot plot = (XYPlot) chartPanel.getChart().getPlot();
-				        ValueAxis xAxis = plot.getDomainAxis();
-				        double plotX1 = xAxis.java2DToValue(first, area, RectangleEdge.BOTTOM);
-				        double plotX2 = xAxis.java2DToValue(second, area, RectangleEdge.BOTTOM);
-				        
-				        entry.setRtRangeInSecs(new Range(plotX1*60.0, plotX2*60.0));
-				        resetPeptide(entry);
-			        }
-				}
-				
-				@Override
-				public void mousePressed(MouseEvent e) {
-		            Rectangle2D area=chartPanel.getScreenDataArea(e.getX(), e.getY());
-		            if (area!=null) {
-		            	zoomPoint.setX(Math.max(area.getMinX(), Math.min(e.getX(), area.getMaxX())));
-		            	zoomPoint.setY(Math.max(area.getMinY(), Math.min(e.getY(), area.getMaxY())));
-		            }
-		            else {
-		            	zoomPoint.setX(null);
-		            	zoomPoint.setY(null);
-		            }
-				}
-				
-				@Override
-				public void mouseExited(MouseEvent e) {
-				}
-				
-				@Override
-				public void mouseEntered(MouseEvent e) {
-				}
-				
-				@Override
-				public void mouseClicked(MouseEvent e) {
-				}
-			});
-	        
-			right.add(chartPanel);
+			JPanel rightInfoPanel=new JPanel(new GridLayout(2, 0));
+			rightInfoPanel.setBackground(Color.WHITE);
+			dataPanel.add(rightInfoPanel);
+			
+			MassTolerance fragmentTolerance = parameters.getFragmentTolerance();
+			String deltaMassAxis=fragmentTolerance.isRelativeTolerance()?"Delta Mass (PPM)":"Delta Mass (AMU)";
+			ChartPanel deltaMassPanel=Charter.getChart("Retention Time (min)", deltaMassAxis, false, fragmentDeltaMassTraces.toArray(new XYTraceInterface[0]));
+			ValueAxis axis=deltaMassPanel.getChart().getXYPlot().getRangeAxis();
+			axis.setRange(-fragmentTolerance.getToleranceThreshold(), fragmentTolerance.getToleranceThreshold());
+			rightInfoPanel.add(deltaMassPanel);
 			
 			if (reference!=null) {
 				ArrayList<LibraryEntry> references=reference.getEntries(entry.getPeptideModSeq(), entry.getPrecursorCharge(), false);
@@ -767,11 +703,11 @@ public class ChromatogrindrPanel extends JPanel {
 					LibraryEntry butterfly=FragmentIonConsistencyCharter.getButterfly(acq, ref);
 					ChartPanel chartPanelButterfly = Charter.getChart(new AnnotatedLibraryEntry(butterfly, parameters, true));
 
-					right.add(chartPanelButterfly);
+					rightInfoPanel.add(chartPanelButterfly);
 				}
 			}
 	
-			mainSplit.setRightComponent(right);
+			mainSplit.setRightComponent(dataPanel);
 
 		} catch (DataFormatException sqle) {
 			Logger.errorLine("Error reading raw files!");
@@ -786,23 +722,135 @@ public class ChromatogrindrPanel extends JPanel {
 		
 		mainSplit.setDividerLocation(location);
 	}
+
+	private ChartPanel getChromatogramChartPanel(final InteractivePeptidePrecursor entry,
+			ArrayList<XYTrace> fragmentTraces, ArrayList<XYTrace> precursorTraces) {
+		double globalMaxYFragment=0.0;
+		double globalMaxYPrecursor=0.0;
+		for (XYTrace xyTrace : precursorTraces) {
+			if (xyTrace.getType()==GraphType.line) {
+				globalMaxYPrecursor=Math.max(globalMaxYPrecursor, xyTrace.getMaxY());
+			}
+		}
+		for (XYTrace xyTrace : fragmentTraces) {
+			if (xyTrace.getType()==GraphType.boldline||xyTrace.getType()==GraphType.bolddashedline) {
+				globalMaxYFragment=Math.max(globalMaxYFragment, xyTrace.getMaxY());
+			}
+		}
+		
+		final ChartPanel chartPanel=ChromatogramCharter.createChart(Optional.ofNullable(precursorTraces), Optional.ofNullable(fragmentTraces), globalMaxYPrecursor, globalMaxYFragment);
+		chartPanel.setMouseZoomable(false, false);
+
+		CrosshairOverlay crosshairOverlay = new CrosshairOverlay();
+		final Crosshair xCrosshair=new Crosshair(Double.NaN, Color.GRAY, new BasicStroke(0f));
+		final EditableXYPoint zoomPoint=new EditableXYPoint();
+		xCrosshair.setLabelVisible(true);
+		crosshairOverlay.addDomainCrosshair(xCrosshair);
+		chartPanel.addOverlay(crosshairOverlay);
+		chartPanel.mouseDragged(null);
+		
+		chartPanel.addMouseMotionListener(new MouseMotionListener() {
+			@Override
+			public void mouseMoved(MouseEvent e) {
+		        Rectangle2D area=chartPanel.getScreenDataArea(e.getX(), e.getY());
+		        if (area!=null) {
+		        XYPlot plot = (XYPlot) chartPanel.getChart().getPlot();
+		        ValueAxis xAxis = plot.getDomainAxis();
+		        	double x = xAxis.java2DToValue(e.getX(), area, RectangleEdge.BOTTOM);
+		        	xCrosshair.setValue(x);
+		        }
+			}
+			
+			@Override
+			public void mouseDragged(MouseEvent e) {
+		        Rectangle2D area=chartPanel.getScreenDataArea(e.getX(), e.getY());
+		        if (area!=null) {
+			        XYPlot plot = (XYPlot) chartPanel.getChart().getPlot();
+			        ValueAxis xAxis = plot.getDomainAxis();
+			        double x = xAxis.java2DToValue(e.getX(), area, RectangleEdge.BOTTOM);
+			        xCrosshair.setValue(x);
+			        
+			        double prevX=zoomPoint.getX();
+			        double prevY=zoomPoint.getY();
+			        if (!Double.isNaN(prevX)&&!Double.isNaN(prevY)) {
+				        Line2D zoomLine=new Line2D.Double(prevX, prevY, e.getX(), prevY);
+
+				        Graphics2D g2 = (Graphics2D) chartPanel.getGraphics();
+				        g2.setPaint(Color.gray);
+				        g2.draw(zoomLine);
+			        }
+		        }
+			}
+		});
+		
+		chartPanel.addMouseListener(new MouseListener() {
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				double prevX=zoomPoint.getX();
+				if (!Double.isNaN(prevX)) {
+		            Rectangle2D area=chartPanel.getScreenDataArea(e.getX(), e.getY());
+		        	double x=Math.max(area.getMinX(), Math.min(e.getX(), area.getMaxX()));
+		        	
+		        	double first=Math.min(x, prevX);
+		        	double second=Math.max(x, prevX);
+		        	
+			        XYPlot plot = (XYPlot) chartPanel.getChart().getPlot();
+			        ValueAxis xAxis = plot.getDomainAxis();
+			        double plotX1 = xAxis.java2DToValue(first, area, RectangleEdge.BOTTOM);
+			        double plotX2 = xAxis.java2DToValue(second, area, RectangleEdge.BOTTOM);
+			        
+			        entry.setRtRangeInSecs(new Range(plotX1*60.0, plotX2*60.0));
+			        resetPeptide(entry);
+		        }
+			}
+			
+			@Override
+			public void mousePressed(MouseEvent e) {
+		        Rectangle2D area=chartPanel.getScreenDataArea(e.getX(), e.getY());
+		        if (area!=null) {
+		        	zoomPoint.setX(Math.max(area.getMinX(), Math.min(e.getX(), area.getMaxX())));
+		        	zoomPoint.setY(Math.max(area.getMinY(), Math.min(e.getY(), area.getMaxY())));
+		        }
+		        else {
+		        	zoomPoint.setX(null);
+		        	zoomPoint.setY(null);
+		        }
+			}
+			
+			@Override
+			public void mouseExited(MouseEvent e) {
+			}
+			
+			@Override
+			public void mouseEntered(MouseEvent e) {
+			}
+			
+			@Override
+			public void mouseClicked(MouseEvent e) {
+			}
+		});
+		return chartPanel;
+	}
 	
 	private static final float RT_EXTRACTION_MARGIN_IN_SEC=45f;
 
-	public Pair<double[], float[]> extract(Spectrum spectrum, FragmentIon[] ions, SearchParameters parameters) {
+	public Triplet<double[], float[], float[]> extract(Spectrum spectrum, FragmentIon[] ions, SearchParameters parameters) {
 		MassTolerance acquiredTolerance=parameters.getFragmentTolerance();
 		
 		double[] acquiredMasses=spectrum.getMassArray();
 		float[] acquiredIntensities=spectrum.getIntensityArray();
 
-		TDoubleArrayList actualTargetMasses=new TDoubleArrayList();
-		TFloatArrayList actualTargetIntensities=new TFloatArrayList();
+		double[] actualTargetMasses=new double[ions.length];
+		float[] actualTargetIntensities=new float[ions.length];
+		float[] actualDeltaMasses=new float[ions.length];
+		Arrays.fill(actualDeltaMasses, Float.NaN);
+		
 		for (int i = 0; i < ions.length; i++) {
 			FragmentIon target=ions[i];
 		
 			int[] indicies=acquiredTolerance.getIndicies(acquiredMasses, target.getMass());
 			float intensity=0.0f;
-			float bestPeakIntensity=0.0f;
+			float bestPeakIntensity=-1.0f;
 			double bestPeakMass=0.0;
 			
 			for (int j=0; j<indicies.length; j++) {
@@ -813,46 +861,58 @@ public class ChromatogrindrPanel extends JPanel {
 					bestPeakMass=acquiredMasses[indicies[j]];
 				}
 			}
-			actualTargetIntensities.add(intensity);
-			actualTargetMasses.add(bestPeakMass);
+			actualTargetIntensities[i]=intensity;
+			actualTargetMasses[i]=bestPeakMass;
+			if (intensity>0.0f&&bestPeakMass>0.0) {
+				if (acquiredTolerance.isRelativeTolerance()) {
+					// PPM
+					actualDeltaMasses[i]=(float)(1000000*(bestPeakMass-target.getMass())/target.getMass());
+				} else {
+					actualDeltaMasses[i]=(float)(bestPeakMass-target.getMass());
+				}
+			}
 		}
-
-		double[] actualTargetMassesRaw=actualTargetMasses.toArray();
-		float[] actualTargetIntensitiesRaw=actualTargetIntensities.toArray();
 		
-		return new Pair<double[], float[]>(actualTargetMassesRaw, actualTargetIntensitiesRaw);
+		return new Triplet<double[], float[], float[]>(actualTargetMasses, actualDeltaMasses, actualTargetIntensities);
 	}
 
-	private static ArrayList<XYTrace> getTraces(ArrayList<float[]> chromatograms, float[] correlationArray, float[] rts, Range rtRange) {
+	private static ArrayList<XYTrace> getTraces(ArrayList<float[]> chromatograms, float[] correlationArray, float[] rts, Range rtRange, float correlationThreshold) {
 		ArrayList<XYTrace> xytraces=new ArrayList<XYTrace>();
 		for (int i=0; i<chromatograms.size(); i++) {
+			if (correlationArray[i]<correlationThreshold) continue;
+			
 			float[] fs=chromatograms.get(i);
 			
 			Color c;
 			GraphType graphtype;
+			GraphType backgroundgraphtype;
 			float thickness;
 			if (correlationArray[i]>TransitionRefiner.quantitativeCorrelationThreshold) {
 				c=new Color(0, 205, 0);
 				graphtype=GraphType.boldline;
+				backgroundgraphtype=GraphType.line;
 				thickness=3.0f;
 			} else if (correlationArray[i]>TransitionRefiner.identificationCorrelationThreshold) {
 				c=new Color(255, 215, 0);
 				graphtype=GraphType.boldline;
+				backgroundgraphtype=GraphType.line;
 				thickness=3.0f;
 			} else if (correlationArray[i]==0.0f) {
-				c=Color.gray;
+				c=new Color(128, 128, 128, 128);
 				graphtype=GraphType.line;
+				backgroundgraphtype=GraphType.line;
 				thickness=1.0f;
 			} else {
 				c=Color.red;
-				graphtype=GraphType.dashedline;
+				graphtype=GraphType.bolddashedline;
+				backgroundgraphtype=GraphType.dashedline;
 				thickness=3.0f;
 			}
 
 			xytraces.add(TransitionRefiner.toXYTrace(fs, rts, ""+i, c, rtRange, graphtype, thickness));
 
 			if (rtRange!=null) {
-				xytraces.add(TransitionRefiner.toXYTrace(fs, rts, ""+i, Color.gray, null, graphtype, thickness));
+				xytraces.add(TransitionRefiner.toXYTrace(fs, rts, ""+i, new Color(128, 128, 128, 128), null, backgroundgraphtype, thickness));
 			}
 		}
 		return xytraces;
