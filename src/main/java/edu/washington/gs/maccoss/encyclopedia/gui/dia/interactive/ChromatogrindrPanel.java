@@ -98,6 +98,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.BackgroundSubtractionFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
+import gnu.trove.list.array.TFloatArrayList;
 
 /**
  * click right to approve chromatogram, click left to flag as bad
@@ -134,7 +135,81 @@ public class ChromatogrindrPanel extends JPanel {
 		
 		browser.updateLibrary(libraryFile);
 		browser.updateRaw(rawFile);
-		browser.pasteTable("ELNVMFIETSAK	75.89	2	\n" + "QHYVLAGASGSPGEEVAIRPSTAPR	53.64	4	\n"
+		
+		browser.pasteTable("KNILLTIGSYK	64.14	2	\n" + "GLGC[+57.021464]SLLFIPLGLVDRR	96.87	3	\n"
+				+ "ATTGTQTLLSSGTR	46.81	2	\n" + "STLDIVLANKDR	57.81	2	\n" + "YETLFQALDR	78.86	2	\n"
+				+ "AYSFAMGC[+57.021464]WPK	72.86	2	\n" + "YAEEELEQVR	48.26	2	\n"
+				+ "RNPDTQWITK	42.77	2	\n" + "RNEFLGELQK	51.95	2	\n"
+				+ "ISEEC[+57.021464]IAQWK	57.02	2	\n" + "GGDFSSSDFQSR	44.43	2	\n"
+				+ "TVLLLADQMISR	81.11	2	\n" + "LWTSC[+57.021464]APLNIR	69.84	2	\n"
+				+ "AGSFITGIDVTSK	66.42	2	\n" + "SMAEDTINAAVK	50.93	2	\n" + "GGGTPDANSLAPPGK	43.07	2	\n"
+				+ "ATSLGRPEEEEDELAHR	42.37	3	\n" + "LWDYIDGILIK	89.78	2	\n"
+				+ "IPNIYAIGDVVAGPM[+15.994915]LAHK	81.20	3	\n" + "QLFHGTPVTIENFLNWK	88.69	3	\n"
+				+ "LPEHC[+57.021464]IEYVR	45.37	2	\n" + "RQESGYLIEEIGDVLLAR	94.88	3	\n"
+				+ "DHGLEVLGLVR	72.62	2	\n" + "ISTLTIEEGNLDIQRPK	64.12	3	\n" + "AVQELVHPVVDR	50.54	2	\n"
+				+ "MSAYSGITDVIIGMPHR	79.54	3	\n" + "MSQVAPSLSALIGEAVGAR	93.61	3	\n"
+				+ "LVTC[+57.021464]TGYHQVR	35.64	2	\n" + "GGPNIITLADIVKDPVSR	84.24	3	\n"
+				+ "SNQLFNGHGGHIMPPTQSQFGEMGGK	60.40	4	\n" + "TVEAEAAHGTVTR	31.26	2	\n"
+				+ "VAPLWHSSSEVISMADR	68.71	3	\n" + "QVTPDGESDEVGVIPSKR	48.04	3	\n"
+				+ "LIETLKPFGVFEEEEELQRR	78.29	4	\n" + "DLEQPSQAAGINLEIIR	80.25	3	\n"
+				+ "AYFDLQTHVIQVPQGK	69.42	3	\n" + "AYWLLEEMLTK	94.64	2	\n" + "VPNSVLWLLR	87.95	2	\n"
+				+ "AQETGHLVMDVR	46.31	2	\n" + "LAQM[+15.994915]FSDMVLK	67.63	2	\n"
+				+ "MLGTEGGEGFVVK	61.23	2	\n" + "QVSGLTVDTEER	46.31	2	\n"
+				+ "LVAFGTSHGFGLFDHQQR	69.63	3	\n" + "SGAGEDPPMPASR	38.16	2	\n"
+				+ "QVSASELHTSGILGPETLR	64.22	3	\n" + "LVIVDGIAFPFR	92.84	2	\n"
+				+ "LIQFC[+57.021464]AIDELGTNYPK	81.94	3	\n" + "SIVEEIEDLVAR	97.14	2	\n"
+				+ "HPDSHQLFIGNLPHEVDKSELKDFFQSYGNVVELR	84.82	6	\n"
+				+ "DVAHWLGC[+57.021464]SATSTFNFHPNVR	77.60	4	\n" + "LLPALQSTITR	67.46	2	\n"
+				+ "DGFVQNVHTPR	44.68	2	\n" + "AEELIQEIQR	59.01	2	\n"
+				+ "ELMC[+57.021464]QIEASAK	54.10	2	\n" + "QSVEADINGLR	54.00	2	\n"
+				+ "AGLSPANC[+57.021464]QSDR	32.31	2	\n" + "EVWALVQAGIR	78.76	2	\n"
+				+ "NFATSLYSMIK	84.59	2	\n" + "IFLYPNAGQLK	69.89	2	\n" + "DLPPVSGSIIWAK	80.74	2	\n"
+				+ "MININILSVC[+57.021464]K	80.29	2	\n" + "SIIEC[+57.021464]VDDFR	67.87	2	\n"
+				+ "ELPDLEDLMK	84.14	2	\n" + "AIPNQGEILVIR	69.13	2	\n" + "DYIWNTLNSGR	73.05	2	\n"
+				+ "GFC[+57.021464]QLVVSSSLR	69.66	2	\n" + "TFQMDDYSLC[+57.021464]GLISHK	77.77	3	\n"
+				+ "EYVEPELHINDLWR	78.19	3	\n" + "VKNEGDDFGWGVVVNFSK	79.71	3	\n"
+				+ "MLAQPLKDSDVEVYNIIK	75.86	3	\n" + "MVEPQYQELK	50.71	2	\n"
+				+ "ATPSENLVPSSAR	46.77	2	\n" + "TESPVLTSSC[+57.021464]R	39.62	2	\n"
+				+ "DPNTQSVGNPQR	29.78	2	\n" + "EVMFTEEDVK	54.97	2	\n" + "LTHYDHVLIELTQAGLK	75.81	3	\n"
+				+ "EAQELSQNSAIKQDAQSLHGDIPQK	51.97	4	\n" + "EMVSDVDLSFNK	65.81	2	\n"
+				+ "VSGVDGYETEGIR	49.14	2	\n" + "ISAFGYLEC[+57.021464]SAK	68.26	2	\n"
+				+ "LAPGFDAELIVK	76.12	2	\n" + "NSC[+57.021464]NVGGGGGGFK	32.43	2	\n"
+				+ "SRPPEERPPGLPLPPPPPSSSAVFR	69.25	4	\n" + "YDYVLTGYTR	60.16	2	\n"
+				+ "DLTPEHLPLLR	71.33	2	\n" + "TSQLLETLNQLSTHTHVVDITR	82.40	4	\n"
+				+ "ALLQQQPEDDSK	40.52	2	\n" + "TFSFYLSNIGR	79.80	2	\n" + "ATQELIPIEDFITPLK	96.14	3	\n"
+				+ "EAAEAEAEVPVVQYVGER	68.63	3	\n" + "EVMSPLQAMSSYTVAGR	81.15	3	\n"
+				+ "IPPLNPGQGPGPNK	49.99	2	\n" + "LVAC[+57.021464]FQGQHGTDAERR	37.40	3	\n"
+				+ "GTGAASFDEFGNSK	52.10	2	\n" + "NLNGTLHELLR	66.91	2	\n" + "LESENDEYER	31.44	2	\n"
+				+ "AQPTPSSSATQSKPTPVKPNYALK	42.12	4	\n" + "GHDLNEDGLVSWEEYK	65.57	3	\n"
+				+ "RLSQIGVENTEENRR	35.68	3	\n" + "APLKPYPVSPSDK	43.30	2	\n" + "NPLVAVYYTNR	62.66	2	\n"
+				+ "NLHVVFTMNPSSEGLKDR	61.51	3	\n" + "GAVYSMVEFNGK	63.09	2	\n"
+				+ "EYVNSTSEESHDEDEIRPVQQQDLHR	44.33	5	\n" + "EPPADVWTPPAR	58.65	2	\n"
+				+ "NADHSMNYQYR	33.96	2	\n" + "NAQEALQAIETK	56.01	2	\n" + "EDLPAENGETK	33.87	2	\n"
+				+ "LLEEENQESLR	45.66	2	\n" + "IVFAAGNFWGR	79.69	2	\n" + "LYQGINQLPNVIQALEK	90.46	3	\n"
+				+ "QVTSSGVSHGGTVSLQDAVTR	50.02	3	\n" + "THSQGGYGSQGYK	25.90	2	\n"
+				+ "MVDENC[+57.021464]VGFDHTVKPVSDMELETPTDKR	60.48	5	\n" + "LAGDPSAGDGAAPR	34.31	2	\n"
+				+ "LFAVLEQLSPVR	87.07	2	\n" + "NTLTNIAM[+15.994915]RPGLEGYALPR	68.67	3	\n"
+				+ "KDPGVPNSAPFK	43.93	2	\n" + "SEIC[+57.021464]TEEPQK	32.30	2	\n"
+				+ "C[+57.021464]DPAGYYC[+57.021464]GFK	53.99	2	\n" + "ALEQQVEEMK	47.84	2	\n"
+				+ "NLTGDVC[+57.021464]AVMR	60.78	2	\n" + "TC[+57.021464]LIC[+57.021464]ADTFR	62.03	2	\n"
+				+ "LAQDGAHVVVSSR	36.45	2	\n" + "LVSWYTLMEGQEPIAR	87.46	3	\n" + "EDLYLKPIQR	52.89	2	\n"
+				+ "VQFAPEKPGPQPSAETTR	44.37	3	\n" + "EQSGTIYLQHADEEREK	39.95	3	\n"
+				+ "TDAEATDTEATET	32.20	2	\n" + "QDLPALEEKPR	46.14	2	\n" + "LVPGGGATEIELAK	59.74	2	\n"
+				+ "VLHMVGDKPVFSFQPR	64.95	3	\n" + "WEEVQSYIR	59.78	2	\n" + "VFEVNASNLEK	56.81	2	\n"
+				+ "LTGTIQNDILK	59.81	2	\n" + "SVSGTDVQEEC[+57.021464]R	31.45	2	\n"
+				+ "LPPNTNDEVDEDPTGNK	42.33	3	\n" + "NVALSGVLEVVR	79.42	2	\n" + "QLQLAQEAAQK	44.98	2	\n"
+				+ "TIEDLDENQLKDEFFK	74.48	3	\n" + "EVWDYVFFK	87.08	2	\n"
+				+ "ISM[+15.994915]PDLDLNLK	67.16	2	\n" + "WDLSAQQIEER	62.26	2	\n"
+				+ "TASSVIELTC[+57.021464]TK	55.26	2	\n" + "QRPGQQVATC[+57.021464]VR	31.39	2	\n"
+				+ "VFSDEVQQQAQLSTIR	61.03	3	\n" + "RLEFPSGETIVMHNPK	58.85	3	\n"
+				+ "FNC[+57.021464]EENQHSDSC[+57.021464]YK	29.61	3	\n" + "VNPYEEVDQEK	45.28	2	\n"
+				+ "SLEDALAEAQR	58.97	2	\n" + "C[+57.021464]HWSDMFTGR	58.77	2	\n"
+				+ "QLDTVNFFLK	80.84	2	\n" + "QQPDTEAVLNGK	44.00	2	\n"
+				+ "ATSITVTGSGSC[+57.021464]R	37.35	2	\n" + "VSNQVAVNMYK	47.48	2	\n"
+				+ "QLGELLTDGVR	65.94	2	\n" + "EADASPASAGIC[+57.021464]R	37.79	2	\n"
+				+ "TPLHMAASEGHASIVEVLLK	74.64	3	\n");
+		
+		/*browser.pasteTable("ELNVMFIETSAK	75.89	2	\n" + "QHYVLAGASGSPGEEVAIRPSTAPR	53.64	4	\n"
 				+ "ALLPILQWHK	81.15	2	\n" + "IATEFNQLQFHAVQSK	62.84	3	\n"
 				+ "EQM[+15.994915]QPTHPIR	24.31	2	\n" + "LDNTTAAVQELGR	53.34	2	\n"
 				+ "EDGTIFHPHSGLC[+57.021464]LSAYR	55.27	3	\n" + "TVTPAMVEGIYK	73.42	2	\n"
@@ -274,7 +349,7 @@ public class ChromatogrindrPanel extends JPanel {
 				+ "KINESTQNWHQLENIGNFIK	76.36	4	\n" + "VLDLIVNGISINSAYTSK	85.03	3	\n"
 				+ "WLISTDLDQPAAIAVNPK	83.56	3	\n"
 				);
-		
+		*/
 	}
 
 	public static void launchBrowserPanel(final ChromatogrindrPanel browser) {
@@ -663,6 +738,7 @@ public class ChromatogrindrPanel extends JPanel {
 					if (backgroundSubtractBox.isSelected()) {
 						chromatograms[j]=BackgroundSubtractionFilter.backgroundSubtractMovingMedian(chromatograms[j], movingAverageLength*10);
 					}
+					deltaMassByIon[j]=BackgroundSubtractionFilter.movingCenteredAverage(deltaMassByIon[j], 3);
 					chromatogramList.add(chromatograms[j]);
 					deltaMassByIonList.add(deltaMassByIon[j]);
 					foundIons.add(primaryIonObjects[j]);
@@ -672,10 +748,10 @@ public class ChromatogrindrPanel extends JPanel {
 			
 			TransitionRefinementData data=TransitionRefiner.identifyTransitions(entry.getPeptideModSeq(), entry.getPrecursorCharge(), entry.getRetentionTimeInSec(), 
 					primaryIonObjects, chromatogramList, retentionTimes, false, parameters);
-			fragmentTraces=getTraces(data.getChromatograms(), data.getCorrelationArray(), retentionTimes, data.getRange(), -Float.MAX_VALUE);
-			fragmentDeltaMassTraces=getTraces(deltaMassByIonList, data.getCorrelationArray(), retentionTimes, data.getRange(), -Float.MAX_VALUE);
+			fragmentTraces=getTraces(primaryIonObjects, data.getChromatograms(), data.getCorrelationArray(), retentionTimes, data.getRange(), -Float.MAX_VALUE);
+			fragmentDeltaMassTraces=getTraces(primaryIonObjects, deltaMassByIonList, data.getCorrelationArray(), retentionTimes, data.getRange(), -Float.MAX_VALUE);
 			
-			final ChartPanel chartPanel = getChromatogramChartPanel(entry, fragmentTraces, precursorTraces);
+			final ChartPanel chartPanel = getChromatogramChartPanel(entry, fragmentTraces, precursorTraces, data.getRange());
 	        
 			dataPanel.add(chartPanel);
 			
@@ -724,7 +800,7 @@ public class ChromatogrindrPanel extends JPanel {
 	}
 
 	private ChartPanel getChromatogramChartPanel(final InteractivePeptidePrecursor entry,
-			ArrayList<XYTrace> fragmentTraces, ArrayList<XYTrace> precursorTraces) {
+			ArrayList<XYTrace> fragmentTraces, ArrayList<XYTrace> precursorTraces, Range rtRange) {
 		double globalMaxYFragment=0.0;
 		double globalMaxYPrecursor=0.0;
 		for (XYTrace xyTrace : precursorTraces) {
@@ -737,6 +813,9 @@ public class ChromatogrindrPanel extends JPanel {
 				globalMaxYFragment=Math.max(globalMaxYFragment, xyTrace.getMaxY());
 			}
 		}
+		
+		fragmentTraces.add(new XYTrace(new float[] {rtRange.getStart()/60f, rtRange.getStop()/60f}, new float[] {(float)globalMaxYFragment, (float)globalMaxYFragment}, GraphType.area, "Boundaries", new Color(102, 204, 255, 50), 4.0f));
+		precursorTraces.add(new XYTrace(new float[] {rtRange.getStart()/60f, rtRange.getStop()/60f}, new float[] {(float)globalMaxYPrecursor, (float)globalMaxYPrecursor}, GraphType.area, "Boundaries", new Color(102, 204, 255, 50), 4.0f));
 		
 		final ChartPanel chartPanel=ChromatogramCharter.createChart(Optional.ofNullable(precursorTraces), Optional.ofNullable(fragmentTraces), globalMaxYPrecursor, globalMaxYFragment);
 		chartPanel.setMouseZoomable(false, false);
@@ -876,40 +955,47 @@ public class ChromatogrindrPanel extends JPanel {
 		return new Triplet<double[], float[], float[]>(actualTargetMasses, actualDeltaMasses, actualTargetIntensities);
 	}
 
-	private static ArrayList<XYTrace> getTraces(ArrayList<float[]> chromatograms, float[] correlationArray, float[] rts, Range rtRange, float correlationThreshold) {
+	private static final int minNumIons=6;
+	private static ArrayList<XYTrace> getTraces(FragmentIon[] ions, ArrayList<float[]> chromatograms, float[] correlationArray, float[] rts, Range rtRange, float correlationThreshold) {
 		ArrayList<XYTrace> xytraces=new ArrayList<XYTrace>();
+		float[] correlationClone=correlationArray.clone();
+		Arrays.sort(correlationClone);
+		float minCorrelation=correlationClone[Math.max(0,correlationClone.length-minNumIons)];
+		
 		for (int i=0; i<chromatograms.size(); i++) {
 			if (correlationArray[i]<correlationThreshold) continue;
 			
 			float[] fs=chromatograms.get(i);
 			
-			Color c;
+			TFloatArrayList rtSelectedIntensities=new TFloatArrayList();
+			TFloatArrayList rtSelectedRTs=new TFloatArrayList();
+			for (int j = 0; j < rts.length; j++) {
+				if (rtRange.contains(rts[j])) {
+					rtSelectedRTs.add(rts[j]);
+					rtSelectedIntensities.add(fs[j]);
+				}
+			}
+			
+			Color c=ions[i].getColor();
 			GraphType graphtype;
 			GraphType backgroundgraphtype;
 			float thickness;
-			if (correlationArray[i]>TransitionRefiner.quantitativeCorrelationThreshold) {
-				c=new Color(0, 205, 0);
+			if (correlationArray[i]>TransitionRefiner.quantitativeCorrelationThreshold||correlationArray[i]>=minCorrelation) {
 				graphtype=GraphType.boldline;
-				backgroundgraphtype=GraphType.line;
-				thickness=3.0f;
-			} else if (correlationArray[i]>TransitionRefiner.identificationCorrelationThreshold) {
-				c=new Color(255, 215, 0);
-				graphtype=GraphType.boldline;
-				backgroundgraphtype=GraphType.line;
-				thickness=3.0f;
-			} else if (correlationArray[i]==0.0f) {
-				c=new Color(128, 128, 128, 128);
-				graphtype=GraphType.line;
-				backgroundgraphtype=GraphType.line;
-				thickness=1.0f;
-			} else {
-				c=Color.red;
-				graphtype=GraphType.bolddashedline;
 				backgroundgraphtype=GraphType.dashedline;
 				thickness=3.0f;
+//			} else if (correlationArray[i]>TransitionRefiner.identificationCorrelationThreshold) {
+//				graphtype=GraphType.boldline;
+//				backgroundgraphtype=GraphType.line;
+//				thickness=3.0f;
+			} else {
+				c=new Color(128, 128, 128, 128);
+				graphtype=GraphType.bolddashedline;
+				backgroundgraphtype=GraphType.dashedline;
+				thickness=2.0f;
 			}
 
-			xytraces.add(TransitionRefiner.toXYTrace(fs, rts, ""+i, c, rtRange, graphtype, thickness));
+			xytraces.add(TransitionRefiner.toXYTrace(rtSelectedIntensities.toArray(), rtSelectedRTs.toArray(), ""+i, c, rtRange, graphtype, thickness));
 
 			if (rtRange!=null) {
 				xytraces.add(TransitionRefiner.toXYTrace(fs, rts, ""+i, new Color(128, 128, 128, 128), null, backgroundgraphtype, thickness));
