@@ -4,6 +4,7 @@ import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.Frame;
 import java.awt.Graphics2D;
 import java.awt.GridLayout;
@@ -55,11 +56,13 @@ import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
 import org.jfree.chart.ChartPanel;
+import org.jfree.chart.annotations.XYTextAnnotation;
 import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.panel.CrosshairOverlay;
 import org.jfree.chart.plot.Crosshair;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.ui.RectangleEdge;
+import org.jfree.ui.TextAnchor;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefinementData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefiner;
@@ -731,7 +734,7 @@ public class ChromatogrindrPanel extends JPanel {
 			ArrayList<float[]> deltaMassByIonList=new ArrayList<float[]>();
 			ArrayList<FragmentIon> foundIons=new ArrayList<>();
 			for (int j = 0; j < chromatograms.length; j++) {
-				if (General.sum(chromatograms[j])>0.0f) {
+				if (primaryIonObjects[j].getIndex()>2&&General.sum(chromatograms[j])>0.0f) {
 					if (sgSmoothBox.isSelected()) {
 						chromatograms[j]=SkylineSGFilter.paddedSavitzkyGolaySmooth(chromatograms[j]);
 					}
@@ -827,6 +830,8 @@ public class ChromatogrindrPanel extends JPanel {
 		crosshairOverlay.addDomainCrosshair(xCrosshair);
 		chartPanel.addOverlay(crosshairOverlay);
 		chartPanel.mouseDragged(null);
+
+		chartPanel.getChart().setTitle(entry.getPeptideSeq());
 		
 		chartPanel.addMouseMotionListener(new MouseMotionListener() {
 			@Override
