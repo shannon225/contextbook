@@ -1,9 +1,5 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.alignment;
 
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Map;
-
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
@@ -12,13 +8,14 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.MedianInterpolatorTest;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.ProphetMixtureModel;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.SimpleMixtureModel;
 import gnu.trove.list.array.TFloatArrayList;
 import junit.framework.TestCase;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Map;
 
-public class RetentionTimeTargetDecoyFilterTest extends TestCase {
-	//public void testErrors() {
+public class RetentionTimeTargetDecoyFilterTest	{
 	public static void main(String[] args) {
 		
 		InputStream is=MedianInterpolatorTest.class.getResourceAsStream("/deltart/deltart_example.csv");

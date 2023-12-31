@@ -15,14 +15,17 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.zip.DataFormatException;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeFilter;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideAccessionMatchingTrie;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursor;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.InMemoryLibrary;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryEntryCleaner;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
@@ -224,6 +227,71 @@ public class LibraryUtilities {
 			if (targets.contains(accession)) return true;
 		}
 		return false;
+	}
+	
+	public static LibraryInterface getReferenceCorrectedLibrary(LibraryInterface targetLibrary, LibraryInterface referenceLibrary) throws IOException, SQLException, DataFormatException {
+		ArrayList<LibraryEntry> localEntries = targetLibrary.getAllEntries(false,  new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
+		ArrayList<PeptidePrecursor> precursors=new ArrayList<>();
+		for (LibraryEntry entry : localEntries) {
+			precursors.add(entry);
+		}
+		ArrayList<LibraryEntry> referenceEntries=referenceLibrary.getEntries(precursors, false);
+		
+		RetentionTimeFilter filter=LibraryEntryCleaner.getFilter(referenceEntries, localEntries, null);
+		
+		ArrayList<LibraryEntry> adjustedEntries=new ArrayList<LibraryEntry>();
+		for (LibraryEntry entry : localEntries) {
+			// map RT to reference
+			LibraryEntry adjusted=entry.updateRetentionTime(filter.getXValue(entry.getScanStartTime()));
+			adjustedEntries.add(adjusted);
+		}
+		return new InMemoryLibrary(adjustedEntries);
+	}
+	
+	public static LibraryFile correctLibraryRTsVsSingleSource(ProgressIndicator progress, ArrayList<File> files, File alignmentFile, File saveFile, SearchParameters params) throws IOException, SQLException, DataFormatException {
+		HashMap<String, ArrayList<LibraryEntry>> groupedEntries=new HashMap<>();
+		int totalEntries=0;
+		int count=0;
+		for (File elibFile : files) {
+			count++;
+			LibraryFile library=new LibraryFile();
+			library.openFile(elibFile);
+			ArrayList<LibraryEntry> localEntries = library.getAllEntries(false,  new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
+			//groupedEntries.put(elibFile.getName(), localEntries);
+			for (LibraryEntry entry : localEntries) {
+				ArrayList<LibraryEntry> list=groupedEntries.get(entry.getSource());
+				if (list==null) {
+					list=new ArrayList<>();
+					groupedEntries.put(entry.getSource(), list);
+				}
+				list.add(entry);
+				totalEntries++;
+			}
+			progress.update("Found "+localEntries.size()+" entries from "+elibFile.getName(), count/(files.size()+1.0f));
+			Logger.logLine("Found "+localEntries.size()+" entries from "+elibFile.getName()+", "+totalEntries+" total entries from "+groupedEntries.size()+" sources...");
+			library.close();
+		}
+
+		LibraryFile alignmentLibrary=new LibraryFile();
+		alignmentLibrary.openFile(alignmentFile);
+		ArrayList<LibraryEntry> alignmentLibraryEntries=alignmentLibrary.getAllEntries(false,  new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
+
+		ArrayList<LibraryEntry> allEntries;
+		progress.update("Correcting retention times...");
+		allEntries=LibraryEntryCleaner.correctRTsVsSingleSource(groupedEntries, alignmentLibraryEntries, saveFile);
+
+		LibraryFile saveLibrary=new LibraryFile();
+		saveLibrary.openFile();
+		saveLibrary.dropIndices();
+		saveLibrary.addEntries(allEntries);
+		saveLibrary.addProteinsFromEntries(allEntries);
+		saveLibrary.createIndices();
+		saveLibrary.saveAsFile(saveFile);
+		
+		saveLibrary.close();
+		progress.update("Saved "+saveFile.getName()+", "+allEntries.size()+" total", 1.0f);
+		Logger.logLine("Saved "+saveFile.getName()+", "+allEntries.size()+" total");
+		return saveLibrary;
 	}
 	
 	public static LibraryFile mergeLibraries(ProgressIndicator progress, ArrayList<File> files, File saveFile, boolean rtAlign, boolean removeDuplicates, boolean higherScoresAreBetter, Optional<File> fasta, SearchParameters params) throws IOException, SQLException, DataFormatException {

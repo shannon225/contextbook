@@ -27,14 +27,14 @@ public class Main {
 	
 	public static boolean isJavaVersionOK() {
 		int javaVersion=getJavaVersion();
-		return javaVersion>=8&&javaVersion<17;
+		return javaVersion>=8&&javaVersion<=17;
 	}
 	
 	public static void main(String[] args) throws IOException {
 		int javaVersion=getJavaVersion();
 		if (!isJavaVersionOK()) {
 			String text=javaVersion<8?"lower":"higher";
-			Logger.errorLine("Java version is "+text+" than expected (8-16), execution may be unstable!");
+			Logger.errorLine("Java version is "+text+" than expected (8-17), execution may be unstable!");
 		}
 		
 		HashMap<String, String> arguments=CommandLineParser.parseArguments(args);
@@ -50,6 +50,18 @@ public class Main {
 			
 		} else if (arguments.size()==1&&arguments.containsKey(SearchParameters.ENABLE_ADVANCED_OPTIONS)) {
 			SearchGUIMain.runGUI(ProgramType.Global, true);
+		
+		} else if (arguments.containsKey("-libexport")) {
+			SearchToBLIB.main(args);
+			
+		} else if (arguments.containsKey("-batch")) {
+			Batch.main(args);
+			
+		} else if (arguments.containsKey("-browser")) {
+			DIABrowser.main(args);
+
+		} else if (arguments.containsKey("-convert")) {
+			CLIConverter.main(args);
 			
 		} else if (arguments.containsKey("-encyclopedia")) {
 			Encyclopedia.main(args);
@@ -60,15 +72,6 @@ public class Main {
 		} else if (arguments.containsKey("-scribe")) {
 			Scribe.main(args);
 			
-		} else if (arguments.containsKey("-browser")) {
-			DIABrowser.main(args);
-		
-		} else if (arguments.containsKey("-libexport")) {
-			SearchToBLIB.main(args);
-
-		} else if (arguments.containsKey("-convert")) {
-			CLIConverter.main(args);
-			
 		} else if (arguments.containsKey("-pecan")) {
 			Pecanpie.main(args);
 			
@@ -77,9 +80,6 @@ public class Main {
 			
 		} else if (arguments.containsKey("-xcordia")) {
 			XCorDIA.main(args);
-			
-		} else if (arguments.containsKey("-batch")) {
-			Batch.main(args);
 			
 		} else if (arguments.containsKey("-h")||arguments.containsKey("-help")||arguments.containsKey("--help")) {
 			Logger.logLine("EncyclopeDIA Help");

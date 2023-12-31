@@ -26,6 +26,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -171,19 +172,29 @@ public class LibraryEntryCleaner {
 		return retEntries;
 	}
 	
-	public static ArrayList<LibraryEntry> correctRTs(HashMap<String, ArrayList<LibraryEntry>> originalEntriesBySourceFile, File libraryFile) {
-		HashMap<String, ArrayList<LibraryEntry>> entriesBySource=new HashMap<>();
+	public static ArrayList<LibraryEntry> correctRTsVsSingleSource(HashMap<String, ArrayList<LibraryEntry>> originalEntriesBySourceFile, ArrayList<LibraryEntry> singleSource, File libraryFile) {
+		Logger.logLine("Comparing alignment with "+singleSource.size()+" data points");
 
-		for (Entry<String, ArrayList<LibraryEntry>> originalEntries : originalEntriesBySourceFile.entrySet()) {
-			for (LibraryEntry entry : originalEntries.getValue()) {
-				ArrayList<LibraryEntry> list=entriesBySource.get(originalEntries.getKey());
-				if (list==null) {
-					list=new ArrayList<>();
-					entriesBySource.put(originalEntries.getKey(), list);
-				}
-				list.add(entry);
+		HashMap<String, ArrayList<LibraryEntry>> entriesBySource = getEntriesBySource(originalEntriesBySourceFile);
+		
+		ArrayList<LibraryEntry> corrected=new ArrayList<>();
+		for (String source : entriesBySource.keySet()) {
+			String sourceName=FilenameUtils.getBaseName(source);
+			
+			ArrayList<LibraryEntry> entries = entriesBySource.get(source);
+			RetentionTimeFilter filter=getFilter(singleSource, entries, new File(libraryFile.getParent(), sourceName));
+			Logger.logLine("Found "+filter.size()+" mutual data points with "+sourceName);
+
+			for (LibraryEntry entry : entries) {
+				LibraryEntry adjusted=entry.updateRetentionTime(filter.getXValue(entry.getScanStartTime()));
+				corrected.add(adjusted);
 			}
 		}
+		return corrected;
+	}
+	
+	public static ArrayList<LibraryEntry> correctRTs(HashMap<String, ArrayList<LibraryEntry>> originalEntriesBySourceFile, File libraryFile) {
+		HashMap<String, ArrayList<LibraryEntry>> entriesBySource = getEntriesBySource(originalEntriesBySourceFile);
 		
 		ArrayList<IndexedObject<String>> sourcesBySize=new ArrayList<>();
 		for (Entry<String, ArrayList<LibraryEntry>> entry : entriesBySource.entrySet()) {
@@ -212,13 +223,31 @@ public class LibraryEntryCleaner {
 		return corrected;
 	}
 
+	private static HashMap<String, ArrayList<LibraryEntry>> getEntriesBySource(
+			HashMap<String, ArrayList<LibraryEntry>> originalEntriesBySourceFile) {
+		HashMap<String, ArrayList<LibraryEntry>> entriesBySource=new HashMap<>();
+
+		for (Entry<String, ArrayList<LibraryEntry>> originalEntries : originalEntriesBySourceFile.entrySet()) {
+			for (LibraryEntry entry : originalEntries.getValue()) {
+				ArrayList<LibraryEntry> list=entriesBySource.get(originalEntries.getKey());
+				if (list==null) {
+					list=new ArrayList<>();
+					entriesBySource.put(originalEntries.getKey(), list);
+				}
+				list.add(entry);
+			}
+		}
+		return entriesBySource;
+	}
+
 	/**
 	 * longer and shorter lists are only for search speed considerations -- it's fine if they're reversed
 	 * @param first preferably the longer list
 	 * @param second preferably the shorter list
+	 * @param libraryFile can be null!
 	 * @return
 	 */
-	protected static RetentionTimeFilter getFilter(ArrayList<LibraryEntry> first, ArrayList<LibraryEntry> second, File libraryFile) {
+	public static RetentionTimeFilter getFilter(ArrayList<LibraryEntry> first, ArrayList<LibraryEntry> second, File libraryFile) {
 		HashMap<String, TFloatArrayList> rtsByPeptideModSeqFirst = getRTsBySeq(first);
 		HashMap<String, TFloatArrayList> rtsByPeptideModSeqSecond = getRTsBySeq(second);
 		String secondSource=second.get(0).getSource();
@@ -237,7 +266,10 @@ public class LibraryEntryCleaner {
 		
 		Logger.logLine("Adding "+secondSource+" with "+points.size()+" matched data points");
 		RetentionTimeFilter filter = RetentionTimeFilter.getFilter(points, "RT (seconds)", secondSource, TwoDimensionalKDE.HIGHER_RESOLUTION);
-		filter.plot(points, Optional.ofNullable(libraryFile), "Global", secondSource);
+		
+		if (libraryFile!=null) {
+			filter.plot(points, Optional.ofNullable(libraryFile), "Global", secondSource);
+		}
 		return filter;
 	}
 
@@ -273,6 +305,56 @@ public class LibraryEntryCleaner {
 			}
 			Collections.sort(peaks);
 			Quadruplet<double[], float[], float[], boolean[]> arrays=PeakChromatogram.toChromatogramArrays(peaks);
+			
+			massArray=arrays.x;
+			intensityArray=arrays.y;
+			correlationArray=arrays.z;
+			quantifiedIonsArray=arrays.w;
+			processed.add(entry.updateMS2(massArray, intensityArray, correlationArray, quantifiedIonsArray));
+		}
+		return processed;
+	}
+	
+	/**
+	 * @param entries
+	 * @param nIons
+	 * @return a negative integer, zero, or a positive integer as the
+     *   first argument is less than, equal to, or greater than the
+     *   second.
+	 */
+	public static ArrayList<LibraryEntry> filterIons(ArrayList<LibraryEntry> entries, int nIons, double minimumMz) {
+		ArrayList<LibraryEntry> processed=new ArrayList<>();
+		for (LibraryEntry entry : entries) {
+			double[] massArray=entry.getMassArray();
+			float[] intensityArray=entry.getIntensityArray();
+			float[] correlationArray=entry.getCorrelationArray();
+			boolean[] quantifiedIonsArray=entry.getQuantifiedIonsArray();
+			ArrayList<PeakChromatogram> peaks=new ArrayList<>();
+			int numPeaks=Math.min(massArray.length, correlationArray.length);
+			for (int i=0; i<numPeaks; i++) {
+				if (massArray[i]>minimumMz) {
+					peaks.add(new PeakChromatogram(massArray[i], intensityArray[i], correlationArray[i], quantifiedIonsArray[i]));
+				}
+			}
+			Collections.sort(peaks, new Comparator<PeakChromatogram>() {
+				@Override
+				public int compare(PeakChromatogram o1, PeakChromatogram o2) {
+					if (o1==null&&o2==null) return 0;
+					if (o1==null) return 1;
+					if (o2==null) return -1;
+					int c=Float.compare(o1.getIntensity(), o2.getIntensity());
+					if (c!=0) return c;
+					return o1.compareTo(o2);
+				}
+			});
+			Collections.reverse(peaks);
+
+			ArrayList<PeakChromatogram> trimmed=new ArrayList<>();
+			for (int i=0; i<Math.min(peaks.size(), nIons); i++) {
+				trimmed.add(peaks.get(i));
+			}
+			
+			Quadruplet<double[], float[], float[], boolean[]> arrays=PeakChromatogram.toChromatogramArrays(trimmed);
 			
 			massArray=arrays.x;
 			intensityArray=arrays.y;

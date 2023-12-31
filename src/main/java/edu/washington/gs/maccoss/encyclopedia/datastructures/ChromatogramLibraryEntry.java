@@ -2,6 +2,8 @@ package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
 import java.util.HashSet;
 
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+
 public class ChromatogramLibraryEntry extends LibraryEntry implements Chromatogram {
 	private final float[] medianChromatogram;
 	private final Range range;
@@ -33,6 +35,13 @@ public class ChromatogramLibraryEntry extends LibraryEntry implements Chromatogr
 		return new ChromatogramLibraryEntry(getSource(), getAccessions(), getSpectrumIndex(), getPrecursorMZ(), getPrecursorCharge(), getPeptideModSeq(), 
 				getPeptideModSeq(), getCopies(), getRetentionTime(), getScore(), newMassArray, newIntensityArray, newCorrelationArray, 
 				newQuantifiedIonsArray, false, getMedianChromatogram(), getRtRange());
+	}
+
+	public LibraryEntry sqrt() {
+		float[] sqrt=General.protectedSqrt(getIntensityArray());
+		return new ChromatogramLibraryEntry(getSource(), getAccessions(), getSpectrumIndex(), getPrecursorMZ(), getPrecursorCharge(), getPeptideModSeq(), 
+				getPeptideModSeq(), getCopies(), getRetentionTime(), getScore(), getMassArray(), sqrt, getCorrelationArray(), 
+				getQuantifiedIonsArray(), false, getMedianChromatogram(), getRtRange());
 	}
 	
 	public Range getRtRange() {

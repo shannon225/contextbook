@@ -101,7 +101,7 @@ import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
 
 public class Charter {
-	private static final String BASE_FONT_NAME = "Helvetica";//"News Gothic MT";
+	public static final String BASE_FONT_NAME = "Helvetica";//"News Gothic MT";
 
 	public static void main(String[] args) {
 		XYTraceInterface trace=new XYTrace(
@@ -703,9 +703,22 @@ public class Charter {
 
 				break;
 
+			case bolddashedline:
+				renderer=new XYLineAndShapeRenderer();
+				Float thickness=trace.getThickness().orElse(5.0f);
+				if (thickness>5) {
+					renderer.setSeriesStroke(0, new BasicStroke(thickness, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10.0f, new float[] {12.0f, 16.0f}, 0.0f));
+				} else {
+					renderer.setSeriesStroke(0, new BasicStroke(thickness, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0.0f, new float[] {3.0f, 5.0f}, 0.0f));
+				}
+				((XYLineAndShapeRenderer) renderer).setDrawSeriesLineAsPath(true);
+				((XYLineAndShapeRenderer) renderer).setBaseShapesVisible(false);
+
+				break;
+
 			case dashedline:
 				renderer=new XYLineAndShapeRenderer();
-				Float thickness=trace.getThickness().orElse(2.0f);
+				thickness=trace.getThickness().orElse(2.0f);
 				if (thickness>5) {
 					renderer.setSeriesStroke(0, new BasicStroke(thickness, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10.0f, new float[] {12.0f, 16.0f}, 0.0f));
 				} else {
@@ -775,6 +788,7 @@ public class Charter {
 			case boldline:
 			case squaredline:
 			case dashedline:
+			case bolddashedline:
 			case bighollowpoint:
 			case bigpoint:
 			case point:

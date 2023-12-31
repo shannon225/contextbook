@@ -1,5 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.math;
 
+import java.util.Random;
+
 import junit.framework.TestCase;
 
 public class SGFilterTest extends TestCase {
@@ -31,6 +33,20 @@ public class SGFilterTest extends TestCase {
 		smooth=SkylineSGFilter.savitzkyGolaySmooth(data);
 		for (int i=0; i<smooth.length; i++) {
 			assertEquals(expected[i], smooth[i], 1);
+		}
+	}
+
+
+	public void testIterativePaddedSavitzkyGolaySmooth() {
+		Random rd = new Random();
+		for (int n = 0; n < 10000; n++) {
+			float[] arr = new float[1000];
+			for (int i = 0; i < arr.length; i++) {
+				arr[i] = rd.nextFloat();
+			}
+
+			float[] smooth=SkylineSGFilter.paddedSavitzkyGolaySmooth(arr);
+			assertTrue(smooth.length==arr.length);
 		}
 	}
 

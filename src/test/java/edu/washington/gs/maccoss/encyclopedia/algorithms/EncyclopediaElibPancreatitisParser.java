@@ -49,16 +49,25 @@ public class EncyclopediaElibPancreatitisParser {
 	
 	//public static int[] tests=new int[] {0, 1};
 	//public static int[] controls=new int[] {2, 4};
+	
+	public static int[] tests=new int[] {1};
+	public static int[] controls=new int[] {0, 2, 3, 4};
+	
+	//public static int[] tests=new int[] {0};
+	//public static int[] controls=new int[] {1, 2, 3, 4};
+	
 	//public static int[] tests=new int[] {1, 4};
 	//public static int[] controls=new int[] {2, 3};
 	public static int[] tests=new int[] {1};
 	public static int[] controls=new int[] {0, 2, 3, 4};
+	//public static int[] controls=new int[] {0, 2, 3};
+	//
 	public static HashMap<String, SampleCoordinate> sampleKey=new HashMap<>();
 
 	public static void main(String[] args) throws IOException, SQLException, DataFormatException {
 		loadMap();
 		
-		File file=new File("/Users/searle.30/Documents/CCIC/maisam/032922_pancreatitis_grant_dataset/032922_pancreatitis_120_quant_reports.elib");
+		File file=new File("/Users/searleb/Documents/OSU/projects/maisam_pancreatitis/presentation/pancreatitis_analysis/032922_pancreatitis_120_quant_reports.elib");
 		//File file=new File("/Users/searleb/Documents/OSU/projects/maisam_pancreatitis/032922_pancreatitis_grant_dataset/032922_pancreatitis_120_quant_reports.elib");
 		//File stub=new File(file.getParent(), "pancreatitis_poster_120_boxplots");
 		File stub=new File(file.getParent(), "ap_versus_others/ap_vs_cp_120_boxplots");
@@ -81,9 +90,12 @@ public class EncyclopediaElibPancreatitisParser {
 		System.out.println(proteinGroups.size()+" total protein groups");
 		File proteinReportFile=LibraryReportExtractor.extractMatrix(library, proteinGroups, true, Optional.ofNullable(null));
 
-		String[] keptAccessions=new String[] {"AMYP_HUMAN"};
+		//String[] keptAccessions=new String[] {"CAYP1_HUMAN","IDHC_HUMAN","S100P_HUMAN"};
+		//String[] keptAccessions=new String[] {"IDHC_HUMAN"};
+		
+		//String[] keptAccessions=new String[] {"AMYP_HUMAN"};
 		//String[] keptAccessions=new String[] {"CEL2A_HUMAN"};
-		//String[] keptAccessions=new String[] {"AMYP_HUMAN", "CRP_HUMAN", "CEL2A_HUMAN"};
+		String[] keptAccessions=new String[] {"AMYP_HUMAN", "CEL2A_HUMAN"};
 		//String[] keptAccessions=new String[] {"AMYP_HUMAN", "POF1B_HUMAN", "REG1A_HUMAN", "CRP_HUMAN", "CEL2A_HUMAN"};
 		//String[] keptAccessions=new String[] {"AMYP_HUMAN", "POF1B_HUMAN", "SH3L1_HUMAN", "REG1A_HUMAN", "CRP_HUMAN", "CEL2A_HUMAN", "CAYP1_HUMAN", "SYUG_HUMAN", "IDHC_HUMAN", "S100P_HUMAN", "S10A6_HUMAN", "GSHR_HUMAN", "FCL_HUMAN", "BAZ1A_HUMAN", "PHS_HUMAN", "PGDH_HUMAN", "GPD1L_HUMAN", "SCRN1_HUMAN", "CRYM_HUMAN", "EMAL2_HUMAN", "AGR2_HUMAN", "NUCKS_HUMAN", "MTPN_HUMAN", "GSH1_HUMAN", "ALDOC_HUMAN"};
 		
@@ -95,6 +107,8 @@ public class EncyclopediaElibPancreatitisParser {
 		
 		//createClassifier(proteinReportFile, new HashSet<String>(Arrays.asList(keptAccessions)));
 		assessProteinSpecificPValues(testDirs, proteinReportFile, new File(stub, "volcano_report.csv"));
+		createClassifier(proteinReportFile, new HashSet<String>(Arrays.asList(keptAccessions)));
+		//assessProteinSpecificPValues(testDirs, proteinReportFile);
 	}
 	
 	private static void createClassifier(File proteinReportFile, HashSet<String> keptAccessions) {
@@ -156,34 +170,59 @@ public class EncyclopediaElibPancreatitisParser {
 			}
 			System.out.println("tests:"+testDataset.size()+" controls:"+controlDataset.size());
 			
-			Pair<double[][], double[][]> testData=getData(testDataset, 0.5f);
-			Pair<double[][], double[][]> controlData=getData(controlDataset, 0.5f);
-			
-			LinearDiscriminantAnalysis model=LinearDiscriminantAnalysis.buildModel(testData.x, controlData.x);
-			
-			ArrayList<ScoredIndex> scores=new ArrayList<>();
-			for (int j = 0; j < testData.y.length; j++) {
-				System.out.println("1\t"+model.getScore(General.toFloatArray(testData.y[j])));
-				scores.add(new ScoredIndex(model.getScore(General.toFloatArray(testData.y[j])), 1));
+			ArrayList<RocPlot> rocs=new ArrayList<>();
+			for (int n = 0; n < 100; n++) {
+				int seed=16807*n;
+				Pair<double[][], double[][]> testData=getData(testDataset, 0.5f, seed);
+				Pair<double[][], double[][]> controlData=getData(controlDataset, 0.5f, seed);
+				
+				LinearDiscriminantAnalysis model=LinearDiscriminantAnalysis.buildModel(testData.x, controlData.x);
+				
+				ArrayList<ScoredIndex> scores=new ArrayList<>();
+				for (int j = 0; j < testData.y.length; j++) {
+					//System.out.println("1\t"+model.getScore(General.toFloatArray(testData.y[j])));
+					scores.add(new ScoredIndex(model.getScore(General.toFloatArray(testData.y[j])), 1));
+				}
+				for (int j = 0; j < controlData.y.length; j++) {
+					//System.out.println("0\t"+model.getScore(General.toFloatArray(controlData.y[j])));
+					scores.add(new ScoredIndex(model.getScore(General.toFloatArray(controlData.y[j])), 0));
+				}
+	
+				Collections.sort(scores);
+				Collections.reverse(scores);
+				
+				RocPlot plot=getRocPlot(scores, testData.y.length, controlData.y.length);
+				//System.out.println(n+") "+plot.getAUC()+"\t"+testData.x.length);
+				rocs.add(plot);
 			}
-			for (int j = 0; j < controlData.y.length; j++) {
-				System.out.println("0\t"+model.getScore(General.toFloatArray(controlData.y[j])));
-				scores.add(new ScoredIndex(model.getScore(General.toFloatArray(controlData.y[j])), 0));
+			
+			for (float fpr = 0.0f; fpr <= 1.0; fpr+=0.01f) {
+				TFloatArrayList tprs=new TFloatArrayList();
+				for (RocPlot roc : rocs) {
+					tprs.add(roc.getTPR(fpr));
+				}
+				float[] tprArray=tprs.toArray();
+				System.out.println(fpr+"\t"+QuickMedian.select(tprArray, 0.25f)+"\t"+QuickMedian.select(tprArray, 0.5f)
+						+"\t"+QuickMedian.select(tprArray, 0.75f));
 			}
 
-			Collections.sort(scores);
-			Collections.reverse(scores);
-			
-			RocPlot plot=getRocPlot(scores, testData.y.length, controlData.y.length);
-			System.out.println(sampleNames[testIndex]+" AUC: "+plot.getAUC()+", eval cases: "+scores.size());
-
-			for (int j = 0; j < accessions.size(); j++) {
-				System.out.println(accessions.get(j)+"\t"+model.getCoefficients()[j]
-						+"\t"+General.mean(MatrixMath.getColumn(testData.x, j))
-						+"\t"+General.mean(MatrixMath.getColumn(controlData.x, j))
-						);
+			TFloatArrayList aucs=new TFloatArrayList();
+			for (RocPlot roc : rocs) {
+				aucs.add(roc.getAUC());
 			}
-			System.out.println("Constant\t"+model.getConstant());
+			float[] aucArray=aucs.toArray();
+			System.out.println("AUC Range:\t"+QuickMedian.select(aucArray, 0.25f)+"\t"+QuickMedian.select(aucArray, 0.5f)
+					+"\t"+QuickMedian.select(aucArray, 0.75f));
+			
+//			System.out.println(sampleNames[testIndex]+" AUC: "+plot.getAUC()+", eval cases: "+scores.size());
+//
+//			for (int j = 0; j < accessions.size(); j++) {
+//				System.out.println(accessions.get(j)+"\t"+model.getCoefficients()[j]
+//						+"\t"+General.mean(MatrixMath.getColumn(testData.x, j))
+//						+"\t"+General.mean(MatrixMath.getColumn(controlData.x, j))
+//						);
+//			}
+//			System.out.println("Constant\t"+model.getConstant());
 		}
 	}
 	
@@ -201,15 +240,14 @@ public class EncyclopediaElibPancreatitisParser {
 			float falsePositiveRate = falsePositives / (float) totalNegatives;
 			float truePositiveRate = truePositives / (float) totalPositives;
 			roc.addData(falsePositiveRate, truePositiveRate);
-			System.out.println(roc.size()+"\t"+roc.getAUC()+"\t"+falsePositives+"\t"+truePositives+"\t"+falsePositiveRate+"\t"+truePositiveRate);
+			//System.out.println(roc.size()+"\t"+roc.getAUC()+"\t"+falsePositives+"\t"+truePositives+"\t"+falsePositiveRate+"\t"+truePositiveRate);
 		}
-		System.out.println("ROC:\n"+roc.toString());
+		//System.out.println("ROC:\n"+roc.toString());
 		return roc;
 	}
 
 	
-	private static Pair<double[][], double[][]> getData(HashMap<String, double[]> dataset, float split) {
-		int seed=16807;
+	private static Pair<double[][], double[][]> getData(HashMap<String, double[]> dataset, float split, int seed) {
 		
 		HashMap<String, double[]> train=new HashMap<>();
 		HashMap<String, double[]> eval=new HashMap<>();

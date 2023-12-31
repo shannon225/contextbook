@@ -181,7 +181,7 @@ public class MProphet implements Runnable {
 				float score=scoredData.getScore();
 				
 				float qValue=qValueFunc.getYValue(score);
-				float posteriorErrorProb=pepValueFunction.getYValue(score);
+				float posteriorErrorProb=1.0f-pepValueFunction.getYValue(score);
 				if (qValue<=peptideFDRThreshold&&!scoredData.y.isDecoy) {
 					if (score<minScore) {
 						minScore=score;

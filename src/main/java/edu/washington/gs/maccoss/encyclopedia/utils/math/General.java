@@ -79,19 +79,20 @@ public class General {
 
 	public static float[][] transposeMatrix(float[][] m) {
 		if (m[0].length==0) {
-			for (int i = 0; i < m.length; i++) {
-				System.out.print("[");
-				for (int j = 0; j < m[i].length; j++) {
-					if (j>0) {
-						System.out.print(", ");
-					}
-					System.out.print(m[i][j]);
-				}
-				System.out.println("]");
-			}
 			throw new ArrayIndexOutOfBoundsException(m[0].length);
 		}
 		float[][] temp = new float[m[0].length][m.length];
+		for (int i = 0; i < m.length; i++)
+			for (int j = 0; j < m[0].length; j++)
+				temp[j][i] = m[i][j];
+		return temp;
+	}
+
+	public static Float[][] transposeMatrix(Float[][] m) {
+		if (m[0].length==0) {
+			throw new ArrayIndexOutOfBoundsException(m[0].length);
+		}
+		Float[][] temp = new Float[m[0].length][m.length];
 		for (int i = 0; i < m.length; i++)
 			for (int j = 0; j < m[0].length; j++)
 				temp[j][i] = m[i][j];

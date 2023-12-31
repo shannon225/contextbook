@@ -270,6 +270,15 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		// no signal of any kind at retention time!
 		if (bestScores==null||bestScores.length==0) return null;
 
+		return extractTransitions(unitEntry, limitToQuantifiable, stripes, wasInferred, params, bestScores, scoreList,
+				retentionTimes, totalIonCurrent, totalIdentifiedIonCurrent, movingAverageLength);
+		
+	}
+
+	private static TransitionRefinementData extractTransitions(AnnotatedLibraryEntry unitEntry,
+			boolean limitToQuantifiable, ArrayList<FragmentScan> stripes, boolean wasInferred, SearchParameters params,
+			PeakScores[] bestScores, ArrayList<PeakScores[]> scoreList, TFloatArrayList retentionTimes,
+			TFloatArrayList totalIonCurrent, TFloatArrayList totalIdentifiedIonCurrent, int movingAverageLength) {
 		// get each scan (fragments by RT)
 		TFloatArrayList[] traces=new TFloatArrayList[bestScores.length];
 		@SuppressWarnings("unchecked")
@@ -290,6 +299,16 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 			}
 		}
 
+		return identifyChromatograms(unitEntry, limitToQuantifiable, stripes, wasInferred, params, bestScores,
+				retentionTimes, totalIonCurrent, totalIdentifiedIonCurrent, movingAverageLength, traces,
+				deltaMassesByRT);
+	}
+
+	private static TransitionRefinementData identifyChromatograms(AnnotatedLibraryEntry unitEntry,
+			boolean limitToQuantifiable, ArrayList<FragmentScan> stripes, boolean wasInferred, SearchParameters params,
+			PeakScores[] bestScores, TFloatArrayList retentionTimes, TFloatArrayList totalIonCurrent,
+			TFloatArrayList totalIdentifiedIonCurrent, int movingAverageLength, TFloatArrayList[] traces,
+			ArrayList<XYZPoint>[] deltaMassesByRT) {
 		// invert each scan into fragment chromatograms (RTs by fragment)
 		ArrayList<PeakScores> bestKeptPeaks=new ArrayList<PeakScores>();
 		ArrayList<float[]> chromatograms=new ArrayList<float[]>();
@@ -309,6 +328,16 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 			}
 		}
 
+		return identifyQuantitativeChromatograms(unitEntry, limitToQuantifiable, stripes, wasInferred, params,
+				retentionTimes, totalIonCurrent, totalIdentifiedIonCurrent, bestKeptPeaks, chromatograms,
+				chromatogramDeltaMassesByRT, fragmentMasses);
+	}
+
+	private static TransitionRefinementData identifyQuantitativeChromatograms(AnnotatedLibraryEntry unitEntry,
+			boolean limitToQuantifiable, ArrayList<FragmentScan> stripes, boolean wasInferred, SearchParameters params,
+			TFloatArrayList retentionTimes, TFloatArrayList totalIonCurrent, TFloatArrayList totalIdentifiedIonCurrent,
+			ArrayList<PeakScores> bestKeptPeaks, ArrayList<float[]> chromatograms,
+			ArrayList<ArrayList<XYZPoint>> chromatogramDeltaMassesByRT, ArrayList<FragmentIon> fragmentMasses) {
 		// identify transitions
 		TransitionRefinementData data=TransitionRefiner.identifyTransitions(unitEntry.getPeptideModSeq(), unitEntry.getPrecursorCharge(), unitEntry.getScanStartTime(), fragmentMasses.toArray(new FragmentIon[fragmentMasses.size()]), chromatograms, retentionTimes.toArray(), wasInferred, params);
 		float[] correlations=data.getCorrelationArray();

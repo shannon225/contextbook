@@ -1,4 +1,4 @@
-package edu.washington.gs.maccoss.encyclopedia.datastructures.mock;
+package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -20,24 +20,31 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 
-/**
- * use for testing, does not SQRT!
- * @author searleb
- *
- */
-public class MockLibrary implements LibraryInterface {
-	private final LibraryEntry[] entries;
+public class InMemoryLibrary implements LibraryInterface {
+	private final ArrayList<LibraryEntry> entries;
 		
-	public MockLibrary(LibraryEntry[] entries) {
+	public InMemoryLibrary(ArrayList<LibraryEntry> entries) {
 		this.entries=entries;
 	}
 	
 	@Override
 	public String getName() {
-		return "Testing library of "+entries.length+" entries";
+		return "Testing library of "+entries.size()+" entries";
 	}
 	public ArrayList<LibraryEntry> getAllEntries(boolean sqrt, AminoAcidConstants aaConstants) throws IOException, SQLException, DataFormatException {
-		return new ArrayList<LibraryEntry>(Arrays.asList(entries));
+		if (sqrt) {
+			return getSqrtEntries(entries);
+		} else {
+			return new ArrayList<LibraryEntry>(entries);
+		}
+	}
+	
+	private static ArrayList<LibraryEntry> getSqrtEntries(ArrayList<LibraryEntry> entries) {
+		ArrayList<LibraryEntry> updated=new ArrayList<LibraryEntry>();
+		for (LibraryEntry entry : entries) {
+			updated.add(entry.sqrt());
+		}
+		return updated;
 	}
 	
 	public HashMap<String, String> getAccessions(Collection<String> peptideSeqs) throws IOException, SQLException, DataFormatException {
@@ -60,18 +67,27 @@ public class MockLibrary implements LibraryInterface {
 		ArrayList<LibraryEntry> returnables=new ArrayList<LibraryEntry>();
 		for (LibraryEntry entry : entries) {
 			if (peptideModSeq.equals(entry.getPeptideModSeq())&&charge==entry.getPrecursorCharge()) {
-				returnables.add(entry);
+				if (sqrt) {
+					returnables.add(entry.sqrt());	
+				} else {
+					returnables.add(entry);
+				}
 			}
 		}
 		return returnables;
 	}
+	
 	@Override
 	public ArrayList<LibraryEntry> getEntries(ArrayList<PeptidePrecursor> peptides, boolean sqrt) throws IOException, SQLException, DataFormatException {
 		ArrayList<LibraryEntry> returnables=new ArrayList<LibraryEntry>();
 		for (LibraryEntry entry : entries) {
 			for (PeptidePrecursor precursor : peptides) {
 				if (entry.compareTo(precursor)==0) {
-					returnables.add(entry);
+					if (sqrt) {
+						returnables.add(entry.sqrt());	
+					} else {
+						returnables.add(entry);
+					}
 				}
 			}
 		}
@@ -83,7 +99,11 @@ public class MockLibrary implements LibraryInterface {
 		ArrayList<LibraryEntry> returnables=new ArrayList<LibraryEntry>();
 		for (LibraryEntry entry : entries) {
 			if (precursorMz.contains((float)entry.getPrecursorMZ())) {
-				returnables.add(entry);
+				if (sqrt) {
+					returnables.add(entry.sqrt());	
+				} else {
+					returnables.add(entry);
+				}
 			}
 		}
 		return returnables;

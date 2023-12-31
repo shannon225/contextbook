@@ -60,16 +60,53 @@ public class DilutionCurveFitterExample {
 	
 	public static void main(String[] args) throws Exception {
 		SearchParameters params=SearchParameterParser.getDefaultParametersObject();
-		final File outputDirectory=new File("/Users/searle.30/Documents/students/ariana/curvefitting_combined_30k_testing_10p/");
-		File dataFile=new File("/Users/searle.30/Documents/students/ariana/dimethyl_combined_library_titration_curve.elib.peptides.txt");
-		File sampleOrganizationFile=new File("/Users/searle.30/Documents/students/ariana/exploris_samples_list.csv");
-		File libraryFile=new File("/Users/searle.30/Documents/students/ariana/v3_library_exploris.elib");
-		File rtAlignFile=new File("/Users/searle.30/Documents/students/ariana/2023_05_22_mouse_tcell_10pt000_FG_90pt000_BG_500ng_16mzst_DIA_50cm_14.mzML.elib");
-		
-		//AbstractDilutionCurveFittingParameters fittingParams=new DilutionCurveFitting4HzDeepParameters();
-		AbstractDilutionCurveFittingParameters fittingParams=new DilutionCurveParameters();
-		
-		DilutionCurveFitter.generateAssayFromCurves(params, outputDirectory, dataFile, sampleOrganizationFile, libraryFile, rtAlignFile, fittingParams);
+		File inputDirectory=new File("/Users/searle.30/Documents/students/ariana/");
+		File outputDirectory=new File("/Users/searle.30/Documents/students/ariana/curvefitting_combined_30k_testing_10p/");
+		File dataFile=new File(inputDirectory, "dimethyl_combined_library_titration_curve.elib.peptides.txt");
+		File sampleOrganizationFile=new File(inputDirectory, "exploris_samples_list.csv");
+		File libraryFile=new File(inputDirectory, "v3_library_exploris.elib");
+		File rtAlignFile=new File(inputDirectory, "2023_05_22_mouse_tcell_10pt000_FG_90pt000_BG_500ng_16mzst_DIA_50cm_14.mzML.elib");
+
+		for(int dataset : new int[] {1,2,3}) {
+			for (boolean isDeepAssay : new boolean [] {true, false}) {
+				AbstractDilutionCurveFittingParameters fittingParams;
+				String outputDirName;
+				if (isDeepAssay) {
+					fittingParams=new DilutionCurveParameters(true, true);
+					outputDirName="curvefitting_combined_60k_testing_10p";
+				} else {
+					fittingParams=new DilutionCurveParameters(true, false);
+					outputDirName="curvefitting_combined_30k_testing_20p";
+				}
+				
+				if (dataset==1) {
+					inputDirectory=new File("/Users/searleb/Downloads/drive-download-20230725T041158Z-001/Exploris_calcurve1_forBCS/");
+					outputDirectory=new File("/Users/searleb/Downloads/drive-download-20230725T041158Z-001/Exploris_calcurve1_forBCS_reports/", outputDirName);
+					dataFile=new File(inputDirectory, "exploris_titration_curve_quant.elib.peptides.txt");
+					sampleOrganizationFile=new File(inputDirectory, "exploris_samples_list.csv");
+					libraryFile=new File(inputDirectory, "exploris_titration_curve_quant.elib");
+					rtAlignFile=libraryFile;
+					
+				} else if (dataset==2) {
+					inputDirectory=new File("/Users/searleb/Downloads/drive-download-20230725T041158Z-001/QE-HF_calcurve_forBCS/");
+					outputDirectory=new File("/Users/searleb/Downloads/drive-download-20230725T041158Z-001/QE-HF_calcurve_forBCS_reports/", outputDirName);
+					dataFile=new File(inputDirectory, "qe_titration_curve_quant.elib.peptides.txt");
+					sampleOrganizationFile=new File(inputDirectory, "samples_list.qehf.csv");
+					libraryFile=new File(inputDirectory, "qe_titration_curve_quant.elib");
+					rtAlignFile=libraryFile;
+
+				} else if (dataset==3) {
+					inputDirectory=new File("/Users/searleb/Downloads/drive-download-20230725T041158Z-001/Exploris_calcurve2_for_BCS/");
+					outputDirectory=new File("/Users/searleb/Downloads/drive-download-20230725T041158Z-001/Exploris_calcurve2_for_BCS_reports/", outputDirName);
+					dataFile=new File(inputDirectory, "mouse_21pt_curve.elib.peptides.txt");
+					sampleOrganizationFile=new File(inputDirectory, "exploris_21pt_curve_samples_list.csv");
+					libraryFile=new File(inputDirectory, "mouse_21pt_curve.elib");
+					rtAlignFile=libraryFile;
+				}
+				
+				DilutionCurveFitter.generateAssayFromCurves(params, outputDirectory, dataFile, sampleOrganizationFile, libraryFile, rtAlignFile, fittingParams);
+			}
+		}
 	}
 	
 	public static String[] targets = new String[] { "A2APV2", "B2RQC6", "E9PVX6", "E9Q394", "O08538", "O08573",
@@ -91,18 +128,31 @@ public class DilutionCurveFitterExample {
 			"Q99KK2", "Q99PA5", "Q9CQE5", "Q9CQU0", "Q9CR75", "Q9D659", "Q9D6F9", "Q9DC29", "Q9EP73", "Q9EPE9",
 			"Q9EPU5", "Q9ERD8", "Q9ES17", "Q9ET39", "Q9JHH5", "Q9JHJ8", "Q9JL26", "Q9JLV6", "Q9QYH9", "Q9R1Q7",
 			"Q9WTK5", "Q9WUL5", "Q9WVS0", "Q9Z0D9", "Q9Z121", };
-	
+
 	public static class DilutionCurveParameters implements AbstractDilutionCurveFittingParameters {
 		final int numberOfRTAnchors=0;
-		final int maxNumberPeptidesPerProtein=5;
+		final int maxNumberPeptidesPerProtein;
 		final int targetTotalNumberOfPeptides=300; // remember to subtract off anchors (total is 160 peptides)
 		final float windowInMin=5f; // in minutes!
 		final float minCVForAnchors=0.05f;
 		final float minCVForBadAnchors=0.75f;
-		final int assayMaxDensity=20;
+		final int assayMaxDensity;
 		final boolean requireAlignmentRT=false; // turn off for fitting against PRM
 		final boolean useLineNoise=true; // newer versions should set this to "true"
-
+		final boolean untargeted;
+		
+		public DilutionCurveParameters(boolean untargeted, boolean isdeep) {
+			super();
+			this.untargeted = untargeted;
+			if (isdeep) {
+				maxNumberPeptidesPerProtein=3;
+				assayMaxDensity=10;
+			} else {
+				maxNumberPeptidesPerProtein=5;
+				assayMaxDensity=20;
+			}
+		}
+		
 		public float getWindowInMin() {
 			return windowInMin;
 		}
@@ -136,6 +186,8 @@ public class DilutionCurveFitterExample {
 
 		@Override
 		public boolean isTargetedProtein(String accession) {
+			if (untargeted) return true;
+			
 			for (int i = 0; i < targets.length; i++) {
 				if (accession.indexOf(targets[i])>=0) return true;
 			}

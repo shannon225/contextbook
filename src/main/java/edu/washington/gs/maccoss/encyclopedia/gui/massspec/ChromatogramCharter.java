@@ -13,15 +13,27 @@ import org.jfree.ui.RectangleInsets;
 
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.ExtendedChartPanel;
+import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 
 public class ChromatogramCharter {
+	private static final int FONT_SIZE = 16;
+
 	public static ExtendedChartPanel createChart(Optional<ArrayList<XYTrace>> precursors, Optional<ArrayList<XYTrace>> fragments) {
 		return createChart(precursors, fragments, 0.0, 0.0);
 	}
 	public static ExtendedChartPanel createChart(Optional<ArrayList<XYTrace>> precursors, Optional<ArrayList<XYTrace>> fragments, double globalMaxYPrecursor, double globalMaxYFragment) {
-		ExtendedChartPanel fragmentPanel=Charter.getChart("Retention Time (min)", "MS2", false, globalMaxYFragment, 10, fragments.get().toArray(new XYTrace[0]));
-		ExtendedChartPanel precursorPanel=Charter.getChart("Retention Time (min)", "MS1", false, globalMaxYPrecursor, 10, precursors.get().toArray(new XYTrace[0]));
+		if (!precursors.isPresent()&&!fragments.isPresent()) {
+			throw new EncyclopediaException("Precursors and fragments can't both be missing!");
+		} else if (!precursors.isPresent()) {
+			ExtendedChartPanel fragmentPanel=Charter.getChart("Retention Time (min)", "MS2", false, globalMaxYFragment, FONT_SIZE, fragments.get().toArray(new XYTrace[0]));
+			return fragmentPanel;
+		} else if (!fragments.isPresent()) {
+			ExtendedChartPanel precursorPanel=Charter.getChart("Retention Time (min)", "MS1", false, globalMaxYPrecursor, FONT_SIZE, precursors.get().toArray(new XYTrace[0]));
+			return precursorPanel;
+		}
+		ExtendedChartPanel fragmentPanel=Charter.getChart("Retention Time (min)", "MS2", false, globalMaxYFragment, FONT_SIZE, fragments.get().toArray(new XYTrace[0]));
+		ExtendedChartPanel precursorPanel=Charter.getChart("Retention Time (min)", "MS1", false, globalMaxYPrecursor, FONT_SIZE, precursors.get().toArray(new XYTrace[0]));
 		precursorPanel.getChart().getXYPlot().getRangeAxis().setInverted(true);
 
 		ValueAxis domainAxis = fragmentPanel.getChart().getXYPlot().getDomainAxis();
@@ -56,8 +68,8 @@ public class ChromatogramCharter {
 	}
 
 	private static void setFonts(ValueAxis axis) {
-		axis.setTickLabelFont(new Font("News Gothic MT", Font.PLAIN, 12));
-		axis.setLabelFont(new Font("News Gothic MT", Font.PLAIN, 12));
+		axis.setTickLabelFont(new Font(Charter.BASE_FONT_NAME, Font.PLAIN, FONT_SIZE));
+		axis.setLabelFont(new Font(Charter.BASE_FONT_NAME, Font.PLAIN, FONT_SIZE));
 	}
 	
 	public static ArrayList<XYTrace> invert(ArrayList<XYTrace> traces) {
