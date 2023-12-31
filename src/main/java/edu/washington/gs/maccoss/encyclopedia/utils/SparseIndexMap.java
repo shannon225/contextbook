@@ -22,23 +22,26 @@ public class SparseIndexMap extends TIntObjectHashMap {
 		for (int i=0; i<_values.length; i++) {
 			if (_values[i]!=null) {
 				Peak peak=(Peak)_values[i];
-				_values[i]=new Peak(peak.mass, peak.intensity*value);
+				_values[i]=new Peak(peak.mass, peak.intensity*value, peak.ionMobility);
 			}
 		}
 	}
 
 	public Peak adjustOrPutValue(int key, double mass, float intensity) {
+		return adjustOrPutValue(key, mass, intensity, null);
+	}
+	public Peak adjustOrPutValue(int key, double mass, float intensity, Float ionmobility) {
 		int index=insertKey(key);
 		final boolean isNewMapping;
 		final Peak oldValue;
 		if (index<0) {
 			index=-index-1;
 			oldValue=(Peak)_values[index];
-			_values[index]=new Peak(oldValue.mass, oldValue.intensity+intensity);
+			_values[index]=new Peak(oldValue.mass, oldValue.intensity+intensity, oldValue.ionMobility);
 			isNewMapping=false;
 		} else {
 			oldValue=(Peak)_values[index];
-			_values[index]=new Peak(mass, intensity);
+			_values[index]=new Peak(mass, intensity, ionmobility);
 			isNewMapping=true;
 		}
 
@@ -49,7 +52,7 @@ public class SparseIndexMap extends TIntObjectHashMap {
 		return oldValue;
 	}
 
-	public Peak putIfGreater(int key, double mass, float intensity) {
+	public Peak putIfGreater(int key, double mass, float intensity, Float ionmobility) {
 		int index=insertKey(key);
 		if (index<0) {
 			Peak peak=(Peak)_values[-index-1];
@@ -57,7 +60,7 @@ public class SparseIndexMap extends TIntObjectHashMap {
 				return peak;
 			}
 		}
-		return doPut(key, new Peak(mass, intensity), index);
+		return doPut(key, new Peak(mass, intensity, ionmobility), index);
 	}
 
 	// copy of private method

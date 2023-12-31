@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
@@ -52,7 +53,7 @@ public class PercolatorReaderTest extends TestCase {
 				7f, 8f, 9f, 10f, 11f, 12f, 13f, 14f, 15f, 16f, 17f, 18f, 19f,
 				20f, 21f, 22f, 23f, 24f, 25f };
 		
-		LibraryEntry entry=new LibraryEntry("", new HashSet<String>(), 518.73841, (byte)2, "PEPT[+79.966331]IDER", 1, 0.0f, 0.0f, massArray, intensityArray, PARAMETERS.getAAConstants());
+		LibraryEntry entry=new LibraryEntry("", new HashSet<String>(), 518.73841, (byte)2, "PEPT[+79.966331]IDER", 1, 0.0f, 0.0f, massArray, intensityArray, Optional.empty(), PARAMETERS.getAAConstants());
 		LibraryEntry reverse=entry.getDecoy(PARAMETERS);
 
 		String psmid=PercolatorPeptide.getPSMID(entry, 11.096461f, DUMMY_DIA_FILE);

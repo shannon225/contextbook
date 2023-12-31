@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
@@ -71,7 +72,7 @@ public class Spectra3dPanelTest {
 			if (truncatedMasses.size()>0) {
 				truncatedStripes.add(new PrecursorScan(precursorScan.getSpectrumName(), precursorScan.getSpectrumIndex(), precursorScan.getScanStartTime(), 
 						precursorScan.getFraction(), precursorScan.getIsolationWindowLower(), precursorScan.getIsolationWindowUpper(), 
-						precursorScan.getIonInjectionTime(), truncatedMasses.toArray(), truncatedIntensities.toArray()));
+						precursorScan.getIonInjectionTime(), truncatedMasses.toArray(), truncatedIntensities.toArray(), Optional.empty()));
 			}
 		}
 		Collections.sort(peaks, new PeakIntensityComparator());

@@ -5,6 +5,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Optional;
 import java.util.Map.Entry;
 import java.util.zip.DataFormatException;
 
@@ -66,7 +67,7 @@ public class DDAPrecursorIntegrator {
 				} else {
 					// create a "fake" scan at this RT if one wasn't collected so that we can quantify the precursor
 					FragmentScan emptyScan=new FragmentScan("N/A", "N/A", 0, psm.getRetentionTimeInSec(), 0, 0.0f, psm.getPrecursorMZ()-1, psm.getPrecursorMZ()+1,
-							new double[0], new float[0]);
+							new double[0], new float[0], Optional.empty());
 					list.add(new PSMScoredSpectrum(psm, emptyScan));
 				}
 				

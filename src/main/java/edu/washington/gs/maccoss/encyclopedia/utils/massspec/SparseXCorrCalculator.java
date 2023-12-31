@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
@@ -88,6 +89,7 @@ public class SparseXCorrCalculator {
 		int[] indicies=spectrum.getIndices();
 		double[] masses=spectrum.getMassArray();
 		float[] intensities=spectrum.getIntensityArray();
+		Optional<float[]> ionmobility=spectrum.getIonMobilityArray();
 		float[] negativeIntensities=new float[intensities.length];
 		for (int i=0; i<negativeIntensities.length; i++) {
 			negativeIntensities[i]=-intensities[i];
@@ -99,7 +101,7 @@ public class SparseXCorrCalculator {
 				int index=indicies[i]+offset;
 
 				if (index>=0&&index<length) {
-					preprocessedSpectrum.adjustOrPutValue(index, masses[i]+offset*spectrum.getFragmentBinSize(), negativeIntensities[i]);
+					preprocessedSpectrum.adjustOrPutValue(index, masses[i]+offset*spectrum.getFragmentBinSize(), negativeIntensities[i], ionmobility.isPresent()?ionmobility.get()[i]:null);
 				}
 			}
 		}
@@ -108,7 +110,7 @@ public class SparseXCorrCalculator {
 		preprocessedSpectrum.multiplyAllValues(1.0f/denominator);
 		
 		for (int i=0; i<indicies.length; i++) {
-			preprocessedSpectrum.adjustOrPutValue(indicies[i], masses[i], intensities[i]);
+			preprocessedSpectrum.adjustOrPutValue(indicies[i], masses[i], intensities[i], ionmobility.isPresent()?ionmobility.get()[i]:null);
 		}
 		
 		return new SparseXCorrSpectrum(preprocessedSpectrum, spectrum.getPrecursorMZ(), spectrum.getFragmentBinSize(), length);
@@ -124,11 +126,12 @@ public class SparseXCorrCalculator {
 		
 		double[] masses=s.getMassArray();
 		float[] intensities=s.getIntensityArray();
+		Optional<float[]> ionmobility=s.getIonMobilityArray();
 		ArrayList<Peak> allPeaks=new ArrayList<Peak>();
 		if (masses.length==0)
 			return getIntensityArray(params, allPeaks, s.getPrecursorMZ(), addIntensityToNeighboringBins);
 		if (masses.length==1) {
-			allPeaks.add(new Peak(masses[0], ArrayXCorrCalculator.primaryIonIntensity));
+			allPeaks.add(new Peak(masses[0], ArrayXCorrCalculator.primaryIonIntensity, ionmobility.isPresent()?ionmobility.get()[0]:null));
 			return getIntensityArray(params, allPeaks, s.getPrecursorMZ(), addIntensityToNeighboringBins);
 		}
 
@@ -172,7 +175,7 @@ public class SparseXCorrCalculator {
 			while (masses[i]>binMaxMass[currentIndex]) {
 				currentIndex++;
 			}
-			allPeaks.add(new Peak(masses[i], intensities[i]/binMaxIntensity[currentIndex]));
+			allPeaks.add(new Peak(masses[i], intensities[i]/binMaxIntensity[currentIndex], ionmobility.isPresent()?ionmobility.get()[i]:null));
 		}
 		
 		return getIntensityArray(params, allPeaks, s.getPrecursorMZ(), addIntensityToNeighboringBins);
@@ -240,11 +243,14 @@ public class SparseXCorrCalculator {
 		
 		return new Pair<>(model, getIntensityArray(params, allPeaks, model.getChargedMass(precursorCharge), true));
 	}
-	
+
 	private static ArrayList<Peak> getPeaks(Ion[] ions, double delta, float intensity) {
+		return getPeaks(ions, delta, intensity, null);
+	}
+	private static ArrayList<Peak> getPeaks(Ion[] ions, double delta, float intensity, Float ionmobility) {
 		ArrayList<Peak> peaks=new ArrayList<Peak>();
 		for (int i=0; i<ions.length; i++) {
-			peaks.add(new Peak(ions[i].getMass()+delta, intensity));
+			peaks.add(new Peak(ions[i].getMass()+delta, intensity, ionmobility));
 		}
 		return peaks;
 	}
@@ -277,17 +283,17 @@ public class SparseXCorrCalculator {
 			if (massIndex<0) massIndex=0;
 			if (massIndex>=arraySize) massIndex=arraySize-1;
 			
-			binnedIntensityArray.putIfGreater(massIndex, peak.mass, peak.intensity);
+			binnedIntensityArray.putIfGreater(massIndex, peak.mass, peak.intensity, peak.ionMobility);
 			
 			// don't do this for low res fragment ions bin boundaries aren't an issue with the 0.4 offset
 			if (fragmentBinSize<=0.5f&&addIntensityToNeighboringBins) {
 				// neighboring intensities are 25 for b/y or 10 (the same) for neutral losses
 				float neighboringIntensity=peak.intensity>ArrayXCorrCalculator.neutralLossIntensity?peak.intensity/2.0f:peak.intensity;
 				if (massIndex>0) {
-					binnedIntensityArray.putIfGreater(massIndex-1, peak.mass-fragmentBinSize, neighboringIntensity);
+					binnedIntensityArray.putIfGreater(massIndex-1, peak.mass-fragmentBinSize, neighboringIntensity, peak.ionMobility);
 				}
 				if (massIndex<arraySizeMinusOne) {
-					binnedIntensityArray.putIfGreater(massIndex+1, peak.mass+fragmentBinSize, neighboringIntensity);
+					binnedIntensityArray.putIfGreater(massIndex+1, peak.mass+fragmentBinSize, neighboringIntensity, peak.ionMobility);
 				}
 			}
 		}

@@ -26,6 +26,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.PTMMap.PostTranslation
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import gnu.trove.map.hash.TCharDoubleHashMap;
@@ -147,6 +148,7 @@ public class MSPReader {
 			float retentionTime=0.0f;
 			float score=0.0f;
 			boolean keepPeptide=true;
+			Float ionmobility=null; // TODO currently MSP doesn't appear to support ion mobility!
 			ArrayList<Peak> peaks=new ArrayList<Peak>();
 			OUTERLOOP: while ((eachline=in.readLine())!=null) {
 				eachline=eachline.trim();
@@ -157,7 +159,7 @@ public class MSPReader {
 				if (eachline.startsWith("Name: ")) {
 					altName = eachline.substring(6);
 					if (peaks.size()>0) {
-						Pair<double[], float[]> peakArrays=Peak.toArrays(peaks);
+						Triplet<double[], float[], Optional<float[]>> peakArrays=Peak.toArrays(peaks);
 						HashSet<String> accessions=new HashSet<String>();
 						if (accession!=null) accessions.add(accession);
 						
@@ -165,7 +167,8 @@ public class MSPReader {
 						if (retentionTime==0.0f) Logger.errorLine("MSP parsing error: expected to find retention time for "+peptideModSeq+" but it was missing."); 
 						if (precursorMZ==0.0) Logger.errorLine("MSP parsing error: expected to find precursor M/Z for "+peptideModSeq+" but it was missing."); 
 						if (precursorCharge==(byte)0) Logger.errorLine("MSP parsing error: expected to find charge for "+peptideModSeq+" but it was missing."); 
-						LibraryEntry entry=new LibraryEntry(fileName, accessions, precursorMZ, precursorCharge, peptideModSeq, 1, retentionTime, score, peakArrays.x, peakArrays.y, aaConstants);
+						LibraryEntry entry=new LibraryEntry(fileName, accessions, precursorMZ, precursorCharge, peptideModSeq, 1, retentionTime, score, peakArrays.x, peakArrays.y, Optional.empty(), // FIXME add ion mobility to parser
+								aaConstants);
 
 						if (keepPeptide) {
 							entryList.add(entry);
@@ -190,7 +193,7 @@ public class MSPReader {
 							// indicates that we didn't get a normal linebreak to finish the entry. Assume that we've started the next entry.
 							altName = eachline.substring(6);
 							if (peaks.size()>0) {
-								Pair<double[], float[]> peakArrays=Peak.toArrays(peaks);
+								Triplet<double[], float[], Optional<float[]>> peakArrays=Peak.toArrays(peaks);
 								HashSet<String> accessions=new HashSet<String>();
 								if (accession!=null) accessions.add(accession);
 
@@ -198,7 +201,8 @@ public class MSPReader {
 								if (retentionTime==0.0f) Logger.errorLine("MSP parsing error: expected to find retention time for "+peptideModSeq+" but it was missing."); 
 								if (precursorMZ==0.0) Logger.errorLine("MSP parsing error: expected to find precursor M/Z for "+peptideModSeq+" but it was missing."); 
 								if (precursorCharge==(byte)0) Logger.errorLine("MSP parsing error: expected to find charge for "+peptideModSeq+" but it was missing."); 
-								LibraryEntry entry=new LibraryEntry(fileName, accessions, precursorMZ, precursorCharge, peptideModSeq, 1, retentionTime, score, peakArrays.x, peakArrays.y, aaConstants);
+								LibraryEntry entry=new LibraryEntry(fileName, accessions, precursorMZ, precursorCharge, peptideModSeq, 1, retentionTime, score, peakArrays.x, peakArrays.y, Optional.empty(), // FIXME add ion mobility to parser
+										aaConstants);
 								
 								if (keepPeptide) {
 									entryList.add(entry);
@@ -220,7 +224,7 @@ public class MSPReader {
 						StringTokenizer st=new StringTokenizer(eachline);
 						double mass=Double.parseDouble(st.nextToken());
 						float intensity=Float.parseFloat(st.nextToken());
-						peaks.add(new Peak(mass, intensity));
+						peaks.add(new Peak(mass, intensity, ionmobility));
 					}
 				} else if (eachline.startsWith("FullName: ")) {
 					fullname=eachline.substring(10);
@@ -383,7 +387,7 @@ public class MSPReader {
 				}
 			}
 			if (peaks.size()>0) {
-				Pair<double[], float[]> peakArrays=Peak.toArrays(peaks);
+				Triplet<double[], float[], Optional<float[]>> peakArrays=Peak.toArrays(peaks);
 				HashSet<String> accessions=new HashSet<String>();
 				if (accession!=null) accessions.add(accession);
 
@@ -391,7 +395,8 @@ public class MSPReader {
 				if (retentionTime==0.0f) Logger.errorLine("MSP parsing error: expected to find retention time for "+peptideModSeq+" but it was missing."); 
 				if (precursorMZ==0.0) Logger.errorLine("MSP parsing error: expected to find precursor M/Z for "+peptideModSeq+" but it was missing."); 
 				if (precursorCharge==(byte)0) Logger.errorLine("MSP parsing error: expected to find charge for "+peptideModSeq+" but it was missing."); 
-				LibraryEntry entry=new LibraryEntry(fileName, accessions, precursorMZ, precursorCharge, peptideModSeq, 1, retentionTime, score, peakArrays.x, peakArrays.y, aaConstants);
+				LibraryEntry entry=new LibraryEntry(fileName, accessions, precursorMZ, precursorCharge, peptideModSeq, 1, retentionTime, score, peakArrays.x, peakArrays.y, Optional.empty(), // FIXME add ion mobility to parser
+						aaConstants);
 
 				if (keepPeptide) {
 					entryList.add(entry);

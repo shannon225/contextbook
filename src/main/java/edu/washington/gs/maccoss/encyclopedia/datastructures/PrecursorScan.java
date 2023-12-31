@@ -1,6 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
 import java.util.ArrayList;
+import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.AcquiredSpectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
@@ -14,21 +15,30 @@ public class PrecursorScan implements AcquiredSpectrum, Comparable<PrecursorScan
 	private final float ionInjectionTime;
 	private final double[] massArray;
 	private final float[] intensityArray;
+	private final Optional<float[]> ionMobilityArray;
 	private final float tic;
 	private final int fraction; 
 	private final double isolationWindowLower; 
 	private final double isolationWindowUpper;
 
-	public PrecursorScan(String spectrumName, int spectrumIndex, float scanStartTime, int fraction, double isolationWindowLower, double isolationWindowUpper, Float ionInjectionTime, double[] massArray, float[] intensityArray) {
-		this(spectrumName, spectrumIndex, scanStartTime, fraction, isolationWindowLower, isolationWindowUpper, null, massArray, intensityArray, null);
+	public PrecursorScan(String spectrumName, int spectrumIndex, float scanStartTime, int fraction, double isolationWindowLower, double isolationWindowUpper, Float ionInjectionTime, double[] massArray, float[] intensityArray, float[] ionMobilityArray) {
+		this(spectrumName, spectrumIndex, scanStartTime, fraction, isolationWindowLower, isolationWindowUpper, ionInjectionTime, massArray, intensityArray, Optional.ofNullable(ionMobilityArray), null);
 	}
 
-	public PrecursorScan(String spectrumName, int spectrumIndex, float scanStartTime, int fraction, double isolationWindowLower, double isolationWindowUpper, Float ionInjectionTime, double[] massArray, float[] intensityArray, Float tic) {
+	public PrecursorScan(String spectrumName, int spectrumIndex, float scanStartTime, int fraction, double isolationWindowLower, double isolationWindowUpper, Float ionInjectionTime, double[] massArray, float[] intensityArray, Optional<float[]> ionMobilityArray) {
+		this(spectrumName, spectrumIndex, scanStartTime, fraction, isolationWindowLower, isolationWindowUpper, ionInjectionTime, massArray, intensityArray, ionMobilityArray, null);
+	}
+	public PrecursorScan(String spectrumName, int spectrumIndex, float scanStartTime, int fraction, double isolationWindowLower, double isolationWindowUpper, Float ionInjectionTime, double[] massArray, float[] intensityArray, float[] ionMobilityArray, Float tic) {
+		this(spectrumName, spectrumIndex, scanStartTime, fraction, isolationWindowLower, isolationWindowUpper, ionInjectionTime, massArray, intensityArray, Optional.ofNullable(ionMobilityArray), tic);
+	}
+
+	public PrecursorScan(String spectrumName, int spectrumIndex, float scanStartTime, int fraction, double isolationWindowLower, double isolationWindowUpper, Float ionInjectionTime, double[] massArray, float[] intensityArray, Optional<float[]> ionMobilityArray, Float tic) {
 		this.spectrumName=spectrumName;
 		this.spectrumIndex=spectrumIndex;
 		this.scanStartTime=scanStartTime;
 		this.massArray=massArray;
 		this.intensityArray=intensityArray;
+		this.ionMobilityArray=ionMobilityArray;
 		this.fraction=fraction;
 		this.isolationWindowLower=isolationWindowLower;
 		this.isolationWindowUpper=isolationWindowUpper;
@@ -46,7 +56,7 @@ public class PrecursorScan implements AcquiredSpectrum, Comparable<PrecursorScan
 	}
 	
 	public PrecursorScan shallowClone(int fraction, int spectrumIndex) {
-		return new PrecursorScan(spectrumName, spectrumIndex, scanStartTime, fraction, isolationWindowLower, isolationWindowUpper, ionInjectionTime, massArray, intensityArray, tic);
+		return new PrecursorScan(spectrumName, spectrumIndex, scanStartTime, fraction, isolationWindowLower, isolationWindowUpper, ionInjectionTime, massArray, intensityArray, ionMobilityArray.orElse(null), tic);
 	}
 	
 	/**
@@ -60,12 +70,16 @@ public class PrecursorScan implements AcquiredSpectrum, Comparable<PrecursorScan
 		double lowerBound=Math.max(precursorIsolationWindow.getStart(), isolationWindowLower);
 		double UpperBound=Math.min(precursorIsolationWindow.getStop(), isolationWindowUpper);
 
-		return new PrecursorScan(spectrumName, spectrumIndex, scanStartTime, fraction, lowerBound, UpperBound, ionInjectionTime, massArray, intensityArray, tic);
+		return new PrecursorScan(spectrumName, spectrumIndex, scanStartTime, fraction, lowerBound, UpperBound, ionInjectionTime, massArray, intensityArray, ionMobilityArray.orElse(null), tic);
 	}
 	
 	@Override
 	public int getFraction() {
 		return fraction;
+	}
+	
+	public Optional<float[]> getIonMobilityArray() {
+		return ionMobilityArray;
 	}
 	
 	public double getIsolationWindowLower() {

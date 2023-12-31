@@ -1,6 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
 import java.util.ArrayList;
+import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.AcquiredSpectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
@@ -18,17 +19,26 @@ public class FragmentScan implements Comparable<FragmentScan>, AcquiredSpectrum 
 	private final double isolationWindowUpper;
 	private final double[] massArray;
 	private final float[] intensityArray;
+	private final Optional<float[]> ionMobilityArray;
 	private final float intensityMagnitude;
 	private final float ionInjectionTime;
 	private final float tic;
 	private final byte charge;
 	private final int fraction; 
 
-	public FragmentScan(String spectrumName, String precursorName, int spectrumIndex, float scanStartTime, int fraction, Float ionInjectionTime, double isolationWindowLower, double isolationWindowUpper, double[] massArray, float[] intensityArray) {
-		this(spectrumName, precursorName, spectrumIndex, scanStartTime, fraction, ionInjectionTime, isolationWindowLower, isolationWindowUpper, massArray, intensityArray, (byte)0);
+	public FragmentScan(String spectrumName, String precursorName, int spectrumIndex, float scanStartTime, int fraction, Float ionInjectionTime, double isolationWindowLower, double isolationWindowUpper, double[] massArray, float[] intensityArray, float[] ionMobilityArray) {
+		this(spectrumName, precursorName, spectrumIndex, scanStartTime, fraction, ionInjectionTime, isolationWindowLower, isolationWindowUpper, massArray, intensityArray, ionMobilityArray, (byte)0);
 	}
 
-	public FragmentScan(String spectrumName, String precursorName, int spectrumIndex, float scanStartTime, int fraction, Float ionInjectionTime, double isolationWindowLower, double isolationWindowUpper, double[] massArray, float[] intensityArray, byte charge) {
+	public FragmentScan(String spectrumName, String precursorName, int spectrumIndex, float scanStartTime, int fraction, Float ionInjectionTime, double isolationWindowLower, double isolationWindowUpper, double[] massArray, float[] intensityArray, Optional<float[]> ionMobilityArray) {
+		this(spectrumName, precursorName, spectrumIndex, scanStartTime, fraction, ionInjectionTime, isolationWindowLower, isolationWindowUpper, massArray, intensityArray, ionMobilityArray, (byte)0);
+	}
+
+	public FragmentScan(String spectrumName, String precursorName, int spectrumIndex, float scanStartTime, int fraction, Float ionInjectionTime, double isolationWindowLower, double isolationWindowUpper, double[] massArray, float[] intensityArray, float[] ionMobilityArray, byte charge) {
+		this(spectrumName, precursorName, spectrumIndex, scanStartTime, fraction, ionInjectionTime, isolationWindowLower, isolationWindowUpper, massArray, intensityArray, Optional.ofNullable(ionMobilityArray), charge);
+	}
+
+	public FragmentScan(String spectrumName, String precursorName, int spectrumIndex, float scanStartTime, int fraction, Float ionInjectionTime, double isolationWindowLower, double isolationWindowUpper, double[] massArray, float[] intensityArray, Optional<float[]> ionMobilityArray, byte charge) {
 		this.spectrumName=spectrumName;
 		this.precursorName=precursorName;
 		this.spectrumIndex=spectrumIndex;
@@ -41,6 +51,7 @@ public class FragmentScan implements Comparable<FragmentScan>, AcquiredSpectrum 
 		this.isolationWindowUpper=isolationWindowUpper;
 		this.massArray=massArray;
 		this.intensityArray=intensityArray;
+		this.ionMobilityArray=ionMobilityArray;
 		this.charge=charge;
 		
 		float thisTic=0.0f;
@@ -59,28 +70,37 @@ public class FragmentScan implements Comparable<FragmentScan>, AcquiredSpectrum 
 	}
 	
 	public FragmentScan shallowClone(int fraction, int spectrumIndex) {
-		return new FragmentScan(spectrumName, precursorName, spectrumIndex, scanStartTime, fraction, ionInjectionTime, isolationWindowLower, isolationWindowUpper, massArray, intensityArray, charge);
+		return new FragmentScan(spectrumName, precursorName, spectrumIndex, scanStartTime, fraction, ionInjectionTime, isolationWindowLower, isolationWindowUpper, massArray, intensityArray, ionMobilityArray.orElse(null), charge);
 	}
 	
 	public FragmentScan sqrt() {
-		return new FragmentScan(spectrumName, precursorName, spectrumIndex, scanStartTime, fraction, ionInjectionTime, isolationWindowLower, isolationWindowUpper, massArray, General.protectedSqrt(intensityArray), charge);
+		return new FragmentScan(spectrumName, precursorName, spectrumIndex, scanStartTime, fraction, ionInjectionTime, isolationWindowLower, isolationWindowUpper, massArray, General.protectedSqrt(intensityArray), ionMobilityArray.orElse(null), charge);
 	}
 	
 	public FragmentScan trimMasses(Range r) {
 		TFloatArrayList ints=new TFloatArrayList();
 		TDoubleArrayList masses=new TDoubleArrayList();
+		TFloatArrayList mobilities=new TFloatArrayList();
 		for (int i = 0; i < massArray.length; i++) {
 			if (r.contains(massArray[i])) {
 				ints.add(intensityArray[i]);
 				masses.add(massArray[i]);
+				if (ionMobilityArray.isPresent()) {
+					mobilities.add(ionMobilityArray.get()[i]);
+				}
 			}
 		}
-		return new FragmentScan(spectrumName, precursorName, spectrumIndex, scanStartTime, fraction, ionInjectionTime, isolationWindowLower, isolationWindowUpper, masses.toArray(), ints.toArray(), charge);
+		float[] mobilitiesArray=ionMobilityArray.isPresent()?mobilities.toArray():null;
+		return new FragmentScan(spectrumName, precursorName, spectrumIndex, scanStartTime, fraction, ionInjectionTime, isolationWindowLower, isolationWindowUpper, masses.toArray(), ints.toArray(), mobilitiesArray, charge);
 	}
 	
 	@Override
 	public float getIonInjectionTime() {
 		return ionInjectionTime;
+	}
+	
+	public Optional<float[]> getIonMobilityArray() {
+		return ionMobilityArray;
 	}
 	
 	/**

@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.StringTokenizer;
 import java.util.zip.DataFormatException;
 
@@ -285,7 +286,8 @@ public class OpenSwathTSVToLibraryConverter {
 				accessions.add(PeptideUtils.getPeptideSeq(peptide.peptideModSeq));
 			}
 			
-			LibraryEntry entry=new LibraryEntry(peptide.sourceFile, accessions, precursorMZ, peptide.charge, peptide.peptideModSeq, 1, peptide.rt, 0.0f, peptide.masses, peptide.intensities, aaConstants);
+			LibraryEntry entry=new LibraryEntry(peptide.sourceFile, accessions, precursorMZ, peptide.charge, peptide.peptideModSeq, 1, peptide.rt, 0.0f, peptide.masses, peptide.intensities, Optional.empty(), // FIXME add ion mobility to parser
+					aaConstants);
 			entries.add(entry);
 		}
 		Logger.logLine("Found "+entries.size()+" total peptide entries");

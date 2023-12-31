@@ -7,10 +7,12 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 
 import javax.swing.event.ChangeEvent;
@@ -35,6 +37,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.ProgressInputStream;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
@@ -148,6 +151,7 @@ public class MzmlSAXToMSMSProducer extends DefaultHandler implements MSMSProduce
 	private double[] massArray=null;
 	private float[] intensityArray=null;
 	private Float tic=null;
+	private Float ionMobility=null;
 	private final StringBuilder dataSB=new StringBuilder();
 	
 	private Double selectedIon=null;
@@ -363,6 +367,7 @@ public class MzmlSAXToMSMSProducer extends DefaultHandler implements MSMSProduce
 				dataSB.setLength(0);
 				massArray=null;
 				intensityArray=null;
+				ionMobility=null;
 				tic=null;
 				
 				selectedIon=null;
@@ -379,6 +384,7 @@ public class MzmlSAXToMSMSProducer extends DefaultHandler implements MSMSProduce
 				// sometimes SCIEX files skip the binary data and don't populate massArray/intensityArray
 				massArray=new double[0];
 				intensityArray=new float[0];
+				ionMobility=null;
 			}
 			
 			if (spectrumRef==null&&msLevel<=1) {
@@ -386,7 +392,18 @@ public class MzmlSAXToMSMSProducer extends DefaultHandler implements MSMSProduce
 					double[] deltaArray=General.multiply(massArray, parameters.getPrecursorOffsetPPM()/1000000.0);
 					massArray=General.subtract(massArray, deltaArray);
 				}
-				precursors.add(new PrecursorScan(spectrumName, spectrumIndex, scanStartTime, fraction, scanWindowLowerLimit, scanWindowUpperLimit, ionInjectTime, checkArray(massArray), checkArray(intensityArray), tic));
+				
+				Optional<float[]> ionMobilityArray;
+				if (ionMobility==null) {
+					ionMobilityArray=Optional.empty();
+				} else {
+					// one ion mobility value for all peaks in the spectrum
+					float[] array=new float[intensityArray.length];
+					Arrays.fill(array, ionMobility.floatValue());
+					
+					ionMobilityArray=Optional.of(array);
+				}
+				precursors.add(new PrecursorScan(spectrumName, spectrumIndex, scanStartTime, fraction, scanWindowLowerLimit, scanWindowUpperLimit, ionInjectTime, checkArray(massArray), checkArray(intensityArray), ionMobilityArray, tic));
 
 			} else {
 				if (spectrumRef==null) spectrumRef="Unknown";
@@ -436,19 +453,30 @@ public class MzmlSAXToMSMSProducer extends DefaultHandler implements MSMSProduce
 						ArrayList<Peak> peaks=new ArrayList<>();
 						for (int i=0; i<intensityArray.length; i++) {
 							if (intensityArray[i]>minIntensity) {
-								peaks.add(new Peak(massArray[i], intensityArray[i]));
+								peaks.add(new Peak(massArray[i], intensityArray[i], ionMobility));
 							}
 						}
-						Pair<double[], float[]> peakArrays=Peak.toArrays(peaks);
+						Triplet<double[], float[], Optional<float[]>> peakArrays=Peak.toArrays(peaks);
 						massArray=peakArrays.x;
 						intensityArray=peakArrays.y;
 					}
 				}
 				
+				Optional<float[]> ionMobilityArray;
+				if (ionMobility==null) {
+					ionMobilityArray=Optional.empty();
+				} else {
+					// one ion mobility value for all peaks in the spectrum
+					float[] array=new float[intensityArray.length];
+					Arrays.fill(array, ionMobility.floatValue());
+					
+					ionMobilityArray=Optional.of(array);
+				}
+				
 				double precursorIsolationMargin = parameters==null?0.0:parameters.getPrecursorIsolationMargin();
 				try {
 					FragmentScan stripe=new FragmentScan(spectrumName, spectrumRef, spectrumIndex, scanStartTime, fraction, ionInjectTime, isolationWindowTarget-isolationWindowLowerOffset+precursorIsolationMargin, isolationWindowTarget+isolationWindowUpperOffset-precursorIsolationMargin,
-							checkArray(massArray), checkArray(intensityArray), charge);
+							checkArray(massArray), checkArray(intensityArray), ionMobilityArray, charge);
 					stripes.add(stripe);
 					
 					Range range=stripe.getRange();
@@ -506,6 +534,7 @@ public class MzmlSAXToMSMSProducer extends DefaultHandler implements MSMSProduce
 			dataSB.setLength(0);
 			massArray=null;
 			intensityArray=null;
+			ionMobility=null;
 			tic=null;
 			
 			selectedIon=null;

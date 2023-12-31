@@ -221,7 +221,8 @@ public class MSMSToDIAConsumerTest {
 					PRECURSOR_RANGE_UPPER, // isolation upper
 					null, // ion inject time
 					generateMasses(nPeaks, 400f, 1000f),
-					generateIntensities(nPeaks)
+					generateIntensities(nPeaks),
+					Optional.empty()
 			);
 		}
 
@@ -245,7 +246,8 @@ public class MSMSToDIAConsumerTest {
 					window.getOne(),
 					window.getTwo(),
 					generateMasses(nPeaks, 400f, 1000f),
-					generateIntensities(nPeaks)
+					generateIntensities(nPeaks),
+					Optional.empty()
 			);
 		}
 

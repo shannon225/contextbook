@@ -207,7 +207,8 @@ public class BlibFile extends SQLFile {
 					retentionTime=retentionTime*60.0f;
 					total++;
 
-					entries.add(new LibraryEntry(sourceFile, new HashSet<String>(), precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, constants));
+					entries.add(new LibraryEntry(sourceFile, new HashSet<String>(), precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, Optional.empty(), // FIXME add ion mobility to parser
+							constants));
 					
 				}
 				if (missing>0) {

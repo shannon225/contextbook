@@ -916,7 +916,7 @@ public class DilutionCurveFitter {
 		}
 
 		public float getAlignedRTInSec(LibraryEntry entry) {
-			return getAlignedRTInSec(entry, false);
+			return getAlignedRTInSec(entry, true);
 		}
 		public boolean isKnown(LibraryEntry entry) {
 			return knownRTInSecs.contains(entry.getPeptideModSeq());

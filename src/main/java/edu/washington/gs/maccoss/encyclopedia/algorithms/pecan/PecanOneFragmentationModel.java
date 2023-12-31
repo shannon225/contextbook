@@ -2,12 +2,14 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.pecan;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import gnu.trove.map.hash.TDoubleFloatHashMap;
@@ -53,7 +55,7 @@ public class PecanOneFragmentationModel extends AbstractPecanFragmentationModel 
 		});
 		
 		Collections.sort(peaks);
-		Pair<double[], float[]> arrays=Peak.toArrays(peaks);
+		Triplet<double[], float[], Optional<float[]>> arrays=Peak.toArrays(peaks);
 		
 		String sequence=getPeptideModSeq();
 		double precursorMZ=params.getAAConstants().getChargedMass(sequence, precursorCharge);

@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -18,6 +19,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserProducer;
@@ -128,7 +130,7 @@ public class XCorrCalculatorTest extends TestCase {
 			System.out.println(Math.round(masses.get(i))+"\t"+intens.get(i));
 		}
 		
-		LibraryEntry entry=new LibraryEntry("", new HashSet<>(), s.getPrecursorMZ(), charge, "DLTSVNILLK", 1, 0, 0, masses.toArray(), intens.toArray(), MAIN_PARAMETERS.getAAConstants());
+		LibraryEntry entry=new LibraryEntry("", new HashSet<>(), s.getPrecursorMZ(), charge, "DLTSVNILLK", 1, 0, 0, masses.toArray(), intens.toArray(), LibraryEntry.getAverageIonMobilityFromArray(s.getIonMobilityArray()), MAIN_PARAMETERS.getAAConstants());
 		return entry;
 	}
 	
@@ -214,7 +216,7 @@ public class XCorrCalculatorTest extends TestCase {
 		
 		InputStream is=XCorrCalculatorTest.class.getResourceAsStream("/DLTSVNILLK.dta.txt");
 		ArrayList<Peak> peaks=getData(is);
-		Pair<double[], float[]> peakArrays=Peak.toArrays(peaks);
+		Triplet<double[], float[], Optional<float[]>> peakArrays=Peak.toArrays(peaks);
 		float[] intensities = sqrt?General.protectedSqrt(peakArrays.y):peakArrays.y;
 		return getSpectrum(peakArrays.x, intensities, General.sum(peakArrays.y), 0.0f, "DLTSVNILLK", chargedMz); 
 	}
@@ -225,7 +227,7 @@ public class XCorrCalculatorTest extends TestCase {
 		
 		InputStream is=XCorrCalculatorTest.class.getResourceAsStream("/DLTSVNILLK_prosit.dta.txt");
 		ArrayList<Peak> peaks=getData(is);
-		Pair<double[], float[]> peakArrays=Peak.toArrays(peaks);
+		Triplet<double[], float[], Optional<float[]>> peakArrays=Peak.toArrays(peaks);
 		float[] intensities = sqrt?General.protectedSqrt(peakArrays.y):peakArrays.y;
 		return getSpectrum(peakArrays.x, intensities, General.sum(peakArrays.y), 0.0f, "DLTSVNILLK", chargedMz); 
 	}
@@ -238,7 +240,7 @@ public class XCorrCalculatorTest extends TestCase {
 		
 		InputStream is=XCorrCalculatorTest.class.getResourceAsStream("/040203_XXX_X1_1_OT_5seq.02.00085.2.dta.txt");
 		ArrayList<Peak> peaks=getData(is);
-		Pair<double[], float[]> peakArrays=Peak.toArrays(peaks);
+		Triplet<double[], float[], Optional<float[]>> peakArrays=Peak.toArrays(peaks);
 		return getSpectrum(peakArrays.x, General.protectedSqrt(peakArrays.y), General.sum(peakArrays.y), 0.0f, "SDFHLFGPPGKK", chargedMz); 
 	}
 
@@ -342,6 +344,10 @@ public class XCorrCalculatorTest extends TestCase {
 			@Override
 			public float[] getIntensityArray() {
 				return intensities;
+			}
+			@Override
+			public Optional<float[]> getIonMobilityArray() {
+				return Optional.empty();
 			}
 		};
 	}

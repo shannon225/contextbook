@@ -1422,6 +1422,7 @@ public class SearchToBLIB {
 				intensities,
 				correlations,
 				quantifiedIons,
+				entry.getIonMobility(),
 				parameters.getAAConstants(),
 				true // force preserving peaks with non-positive intensity (like any we had to add)
 		);
