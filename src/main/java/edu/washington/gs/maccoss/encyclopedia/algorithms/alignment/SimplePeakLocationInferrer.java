@@ -60,7 +60,7 @@ public class SimplePeakLocationInferrer implements PeakLocationInferrerInterface
 			topNMasses=pair.x;
 			float[] topNIntensities=pair.y;
 			float[] topNCorrelations=pair.z;
-			return Optional.of(new QuantitativeDIAData(data.getPeptideModSeq(), data.getPrecursorCharge(), data.getApexRT(), data.getRange(), topNMasses, topNIntensities, topNCorrelations, params.getAAConstants()));
+			return Optional.of(new QuantitativeDIAData(data.getPeptideModSeq(), data.getPrecursorCharge(), data.getApexRT(), data.getRange(), topNMasses, topNIntensities, topNCorrelations, data.getIonMobility(), params.getAAConstants()));
 		}
 		
 		float[] topNIntensities=new float[topNMasses.length];
@@ -76,7 +76,7 @@ public class SimplePeakLocationInferrer implements PeakLocationInferrerInterface
 			topNIntensities[i]=sum;
 			topNCorrelations[i]=maxCorr;
 		}
-		return Optional.of(new QuantitativeDIAData(data.getPeptideModSeq(), data.getPrecursorCharge(), data.getApexRT(), data.getRange(), topNMasses, topNIntensities, topNCorrelations, params.getAAConstants()));
+		return Optional.of(new QuantitativeDIAData(data.getPeptideModSeq(), data.getPrecursorCharge(), data.getApexRT(), data.getRange(), topNMasses, topNIntensities, topNCorrelations, data.getIonMobility(), params.getAAConstants()));
 	}
 
 	/* (non-Javadoc)

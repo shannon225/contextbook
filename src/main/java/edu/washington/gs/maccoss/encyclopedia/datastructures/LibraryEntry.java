@@ -151,7 +151,7 @@ public class LibraryEntry implements Comparable<PeptidePrecursor>, Spectrum, Has
 	
 	public LibraryEntry sqrt() {
 		float[] sqrt=General.protectedSqrt(intensityArray);
-		return new LibraryEntry(source, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, massCorrectedPeptideModSeq, copies, retentionTime, score, massArray, sqrt, correlationArray, quantifiedIonsArray);
+		return new LibraryEntry(source, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, massCorrectedPeptideModSeq, copies, retentionTime, score, massArray, sqrt, correlationArray, quantifiedIonsArray, ionMobility);
 	}
 	
 	/**
@@ -543,7 +543,7 @@ public class LibraryEntry implements Comparable<PeptidePrecursor>, Spectrum, Has
 	}
 	
 	public static Optional<Float> getAverageIonMobilityFromArray(Optional<float[]> ionMobilityArray) {
-		if (ionMobilityArray.isEmpty()) return Optional.empty();
+		if (!ionMobilityArray.isPresent()) return Optional.empty();
 		return Optional.of(General.mean(ionMobilityArray.get()));
 	}
 }

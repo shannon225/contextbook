@@ -165,14 +165,21 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 		try {
 			Statement s=c.createStatement();
 			try {
-				ResultSet rs=s.executeQuery("select Start, Stop, DutyCycle,NumWindows from Ranges");
+				ResultSet rs=s.executeQuery("select Start, Stop, DutyCycle, NumWindows, IonMobilityStart,IonMobilityStop from Ranges");
 
 				while (rs.next()) {
 					float start=rs.getFloat(1);
 					float stop=rs.getFloat(2);
 					float dutyCycle=rs.getFloat(3);
 					int numWindows=rs.getInt(4);
-					ranges.put(new Range(start, stop), new WindowData(dutyCycle, numWindows));
+					Float ionMobilityStart=rs.getFloat(5);
+					if (rs.wasNull()) ionMobilityStart=null;
+					Float ionMobilityStop=rs.getFloat(6);
+					if (rs.wasNull()) ionMobilityStop=null;
+					
+					Optional<Range> range=(ionMobilityStart==null||ionMobilityStop==null)?Optional.empty():Optional.of(new Range(ionMobilityStart, ionMobilityStop));
+					
+					ranges.put(new Range(start, stop), new WindowData(dutyCycle, numWindows, range));
 				}
 			} finally {
 				s.close();
@@ -185,7 +192,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	public void writeRanges() throws IOException, SQLException {
 		Connection c = getConnection();
 		try {
-			PreparedStatement prep=c.prepareStatement("insert into ranges (Start, Stop, DutyCycle, NumWindows) VALUES (?,?,?,?)");
+			PreparedStatement prep=c.prepareStatement("insert into ranges (Start, Stop, DutyCycle, NumWindows, IonMobilityStart, IonMobilityStop) VALUES (?,?,?,?,?,?)");
 			try {
 				int rangeCount=0;
 				for (Entry<Range, WindowData> entry : ranges.entrySet()) {
@@ -198,6 +205,15 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 						prep.setFloat(2, range.getStop());
 						prep.setFloat(3, dutyCycle);
 						prep.setInt(4, numWindows);
+						
+						if (data.getIonMobilityRange().isPresent()) {
+							prep.setFloat(5, data.getIonMobilityRange().get().getStart());
+							prep.setFloat(6, data.getIonMobilityRange().get().getStop());
+						} else {
+							prep.setNull(5, Types.DOUBLE);
+							prep.setNull(6, Types.DOUBLE);
+						}
+						
 						prep.addBatch();
 						rangeCount++;
 					}
@@ -391,7 +407,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 					prep.setInt(7, intensityByteArray.length);
 					prep.setBytes(8, CompressionUtils.compress(intensityByteArray));
 
-					if (precursor.getIonMobilityArray().isEmpty()) {
+					if (!precursor.getIonMobilityArray().isPresent()) {
 						prep.setNull(9, Types.INTEGER);
 						prep.setNull(10, Types.BLOB);
 					} else {
@@ -509,7 +525,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 			byte[] intensityByteArray = ByteConverter.toByteArray(stripe.getIntensityArray());
 			prep.setInt(index++, intensityByteArray.length);
 			prep.setBytes(index++, CompressionUtils.compress(intensityByteArray));
-			if (stripe.getIonMobilityArray().isEmpty()) {
+			if (!stripe.getIonMobilityArray().isPresent()) {
 				prep.setNull(index++, Types.INTEGER);
 				prep.setNull(index++, Types.BLOB);
 			} else {
@@ -806,8 +822,8 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 			s.execute("alter table precursor add column IonMobilityArray blob");
 			s.execute("alter table spectra add column IonMobilityArrayEncodedLength int");
 			s.execute("alter table spectra add column IonMobilityArray blob");
-			s.execute("alter table ranges add column MobilityStart int");
-			s.execute("alter table ranges add column MobilityStop int");
+			s.execute("alter table ranges add column IonMobilityStart int");
+			s.execute("alter table ranges add column IonMobilityStop int");
 		}
 	}
 

@@ -58,8 +58,6 @@ public class EncyclopediaElibPancreatitisParser {
 	
 	//public static int[] tests=new int[] {1, 4};
 	//public static int[] controls=new int[] {2, 3};
-	public static int[] tests=new int[] {1};
-	public static int[] controls=new int[] {0, 2, 3, 4};
 	//public static int[] controls=new int[] {0, 2, 3};
 	//
 	public static HashMap<String, SampleCoordinate> sampleKey=new HashMap<>();

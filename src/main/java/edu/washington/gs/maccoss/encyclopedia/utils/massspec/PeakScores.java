@@ -1,6 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
-public class PeakScores {
+public class PeakScores implements Comparable<PeakScores> {
 	private final float score;
 	private final FragmentIon target;
 	private final float deltaMass;
@@ -36,5 +36,17 @@ public class PeakScores {
 			}
 		}
 		return score;
+	}
+	
+	@Override
+	public int compareTo(PeakScores o) {
+		int c=Float.compare(score, o.score);
+		if (c!=0) return c;
+
+		c=target.compareTo(o.target);
+		if (c!=0) return c;
+		
+		c=Float.compare(deltaMass, o.deltaMass);
+		return c;
 	}
 }

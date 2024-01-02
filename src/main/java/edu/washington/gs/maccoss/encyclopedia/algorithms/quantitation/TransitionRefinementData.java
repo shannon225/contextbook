@@ -298,6 +298,10 @@ public class TransitionRefinementData implements PeptidePrecursor {
 		return identifiedTICRatio;
 	}
 	
+	public Optional<Float> getIonMobility() {
+		return ionMobility;
+	}
+	
 	public float getQuantitativeValue() {
 		ArrayList<PeakChromatogram> peaks=getTopNPeaks(TransitionRefiner.quantitativeCorrelationThreshold, Integer.MAX_VALUE);
 		Quadruplet<double[], float[], float[], boolean[]> pair=PeakChromatogram.toChromatogramArrays(peaks);
