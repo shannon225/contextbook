@@ -50,9 +50,10 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			new Version(0, 1, 5), new Version(0, 1, 6), new Version(0, 1, 7), new Version(0, 1, 8), new Version(0, 1, 9),
 			new Version(0, 1, 10), new Version(0, 1, 11), new Version(0, 1, 12), new Version(0, 1, 13), new Version(0, 1, 14),
 			new Version(0, 1, 15),
-			new Version(0, 1, 16)
+			new Version(0, 1, 16),
+			new Version(0, 1, 17)
 	};
-	public static final Version MOST_RECENT_VERSION=new Version(0, 1, 16);
+	public static final Version MOST_RECENT_VERSION=new Version(0, 1, 17);
 
 	private File userFile=null;
 	private File tempFile;
@@ -1762,7 +1763,11 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 						if (userFile!=null) {
 							if (!KEEP_QUIET) Logger.logLine("Updating library to "+new Version(0, 1, 15));
 						}
-						s.execute("ALTER TABLE entries ADD COLUMN QuantifiedIonsArray blob");
+						try {
+							s.execute("ALTER TABLE entries ADD COLUMN QuantifiedIonsArray blob");
+						} catch (SQLException e) {
+							Logger.errorLine("Attempted to upgrade library to 0.1.15, but already updated! ("+e.getMessage()+")");
+						}
 						updated=true;
 					}
 
@@ -1770,16 +1775,24 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 						if (userFile!=null) {
 							if (!KEEP_QUIET) Logger.logLine("Updating library to "+new Version(0, 1, 16));
 						}
-						s.execute("ALTER TABLE peptidequants ADD COLUMN QuantIonCorrelationLength int");
-						s.execute("ALTER TABLE peptidequants ADD COLUMN QuantIonCorrelationArray blob");
+						try {
+							s.execute("ALTER TABLE peptidequants ADD COLUMN QuantIonCorrelationLength int");
+							s.execute("ALTER TABLE peptidequants ADD COLUMN QuantIonCorrelationArray blob");
+						} catch (SQLException e) {
+							Logger.errorLine("Attempted to upgrade library to 0.1.16, but already updated! ("+e.getMessage()+")");
+						}
 						updated=true;
 					}
 
 					if (new Version(0, 1, 17).amIAbove(version)&&version.amIAbove(new Version(0, 0, 9))) {
 						if (userFile!=null) {
-							if (!KEEP_QUIET) Logger.logLine("Updating library to "+new Version(0, 1, 17));
+							if (!KEEP_QUIET) Logger.logLine("Updating library to "+new Version(0, 1, 17)+" from "+version);
 						}
-						s.execute("ALTER TABLE peptidequants ADD COLUMN IonMobility double");
+						try {
+							s.execute("ALTER TABLE entries ADD COLUMN IonMobility double");
+						} catch (SQLException e) {
+							Logger.errorLine("Attempted to upgrade library to 0.1.17, but already updated! ("+e.getMessage()+")");
+						}
 						updated=true;
 					}
 				}

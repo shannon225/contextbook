@@ -718,13 +718,16 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 					final byte[] massBytes=rs.getBytes(9);
 					final int intensityEncodedLength=rs.getInt(10);
 					final byte[] intensityBytes=rs.getBytes(11);
-					Integer ionMobilityEncodedLength=rs.getInt(12);
+					
+					Integer nullableIonMobilityEncodedLength=rs.getInt(12);
 					final byte[] ionMobilityBytes;
 					if (rs.wasNull()) {
+						nullableIonMobilityEncodedLength=null;
 						ionMobilityBytes=null;
 					} else {
 						ionMobilityBytes=rs.getBytes(13);
 					}
+					
 					Float nullableIonInjectionTime=rs.getFloat(14);
 					if (rs.wasNull()) {
 						nullableIonInjectionTime=null;
@@ -733,7 +736,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 					final int fraction=rs.getInt(15);
 					
 					FragmentScan msms=getStripe(sqrt, spectrumName, precursorName, spectrumIndex, scanStartTime, fraction, ionInjectionTime, isolationWindowLower, isolationWindowUpper, precursorCharge, massEncodedLength, massBytes,
-							intensityEncodedLength, intensityBytes, ionMobilityEncodedLength, ionMobilityBytes);
+							intensityEncodedLength, intensityBytes, nullableIonMobilityEncodedLength, ionMobilityBytes);
 					fragmentScans.add(msms);
 
 					if (FRAGMENT_BLOCK_SIZE>=fragmentScans.size()) {
@@ -762,15 +765,15 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	}
 
 	private FragmentScan getStripe(boolean sqrt, String spectrumName, String precursorName, int spectrumIndex, Float scanStartTime, int fraction, Float ionInjectionTime, double isolationWindowLower,
-			double isolationWindowUpper, int precursorCharge, int massEncodedLength, byte[] massBytes, int intensityEncodedLength, byte[] intensityBytes, Integer ionMobilityArrayEncodedLength, byte[] ionMobilityArrayBytes) throws IOException, DataFormatException {
+			double isolationWindowUpper, int precursorCharge, int massEncodedLength, byte[] massBytes, int intensityEncodedLength, byte[] intensityBytes, Integer nullableIonMobilityEncodedLength, byte[] ionMobilityArrayBytes) throws IOException, DataFormatException {
 		double[] massArray=ByteConverter.toDoubleArray(CompressionUtils.decompress(massBytes, massEncodedLength));
 		float[] intensityArray=ByteConverter.toFloatArray(CompressionUtils.decompress(intensityBytes, intensityEncodedLength));
 		if (sqrt) {
 			intensityArray=General.protectedSqrt(intensityArray);
 		}
 		float[] ionMobilityArray=null;
-		if (ionMobilityArrayEncodedLength!=null) {
-			ionMobilityArray=ByteConverter.toFloatArray(CompressionUtils.decompress(ionMobilityArrayBytes, ionMobilityArrayEncodedLength));
+		if (nullableIonMobilityEncodedLength!=null&&nullableIonMobilityEncodedLength>0) {
+			ionMobilityArray=ByteConverter.toFloatArray(CompressionUtils.decompress(ionMobilityArrayBytes, nullableIonMobilityEncodedLength));
 		}
 		return new FragmentScan(spectrumName, precursorName, spectrumIndex, scanStartTime, fraction, ionInjectionTime, isolationWindowLower, isolationWindowUpper, massArray, intensityArray, ionMobilityArray, (byte)precursorCharge);
 	}
@@ -822,8 +825,8 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 			s.execute("alter table precursor add column IonMobilityArray blob");
 			s.execute("alter table spectra add column IonMobilityArrayEncodedLength int");
 			s.execute("alter table spectra add column IonMobilityArray blob");
-			s.execute("alter table ranges add column IonMobilityStart int");
-			s.execute("alter table ranges add column IonMobilityStop int");
+			s.execute("alter table ranges add column IonMobilityStart float");
+			s.execute("alter table ranges add column IonMobilityStop float");
 		}
 	}
 
@@ -888,7 +891,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 				}
 
 				s.execute("create table if not exists metadata ( Key string not null, Value string not null, primary key (Key) )");
-				s.execute("create table if not exists ranges ( Start float not null, Stop float not null, DutyCycle float not null, NumWindows int )");
+				s.execute("create table if not exists ranges ( Start float not null, Stop float not null, DutyCycle float not null, NumWindows int, IonMobilityStart float, IonMobilityStop float )");
 				s.execute("create table if not exists spectra ( Fraction int not null, SpectrumName string not null, PrecursorName string, SpectrumIndex int not null, ScanStartTime float not null, IonInjectionTime float, IsolationWindowLower float not null, IsolationWindowCenter float not null, IsolationWindowUpper float not null, PrecursorCharge int not null, MassEncodedLength int not null, MassArray blob not null, IntensityEncodedLength int not null, IntensityArray blob not null, IonMobilityArrayEncodedLength int, IonMobilityArray blob, primary key (SpectrumIndex) )");
 				s.execute("create table if not exists precursor ( Fraction int not null, SpectrumName string not null, SpectrumIndex int not null, ScanStartTime float not null, IonInjectionTime float, IsolationWindowLower float not null, IsolationWindowUpper float not null, MassEncodedLength int not null, MassArray blob not null, IntensityEncodedLength int not null, IntensityArray blob not null, IonMobilityArrayEncodedLength int, IonMobilityArray blob, TIC float, primary key (SpectrumIndex) )");
 
