@@ -64,4 +64,14 @@ public class DilutionCurveFitting4HzDeepParameters implements AbstractDilutionCu
 	public boolean isUseLineNoise() {
 		return useLineNoise;
 	}
+	
+	@Override
+	public Float getMinimumIntensity() {
+		return null;
+	}
+	
+	@Override
+	public float getMZOffset() {
+		return 0;
+	}
 }

@@ -1,6 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.gui.dia.curves;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -25,6 +26,9 @@ import javax.swing.JTextArea;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
+import javax.swing.border.TitledBorder;
+import javax.swing.event.CaretEvent;
+import javax.swing.event.CaretListener;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.curve.AbstractDilutionCurveFittingParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.curve.DilutionCurveFitter;
@@ -37,6 +41,9 @@ import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
 
 public class DilutionCurveFitterDialog extends JDialog {
 	private static final long serialVersionUID = 1L;
+	
+	private static final Color PRESENT_TEXT_COLOR = Color.black;
+	private static final Color MISSING_TEXT_COLOR = Color.red;
 	private static final ImageIcon processingIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/processing_icon.png"));
 
 	public static void launchDilutionCurveFitterDialog(Component root) {
@@ -67,20 +74,39 @@ public class DilutionCurveFitterDialog extends JDialog {
 		final JTextArea targetTextArea = new JTextArea(25, 40);
 		targetTextArea.setFont(new Font("Monospaced", Font.PLAIN, 10));
 		JScrollPane targetScrollPane = new JScrollPane(targetTextArea);
-		targetScrollPane.setBorder(BorderFactory.createTitledBorder("Target protein accessions (requires exact matches):"));
+		final TitledBorder targetBorder = BorderFactory.createTitledBorder("Target protein accessions (requires exact matches):");
+		targetBorder.setTitleColor(MISSING_TEXT_COLOR);
+		targetScrollPane.setBorder(targetBorder);
 		targetTextArea.setEditable(true);
+		targetTextArea.addCaretListener(new CaretListener() {
+			@Override
+			public void caretUpdate(CaretEvent e) {
+				int length = targetTextArea.getText().trim().length();
+				if (length>0&&!PRESENT_TEXT_COLOR.equals(targetBorder.getTitleColor())) {
+					targetBorder.setTitleColor(PRESENT_TEXT_COLOR);
+					targetScrollPane.repaint();
+				} else if (length<=0&&!MISSING_TEXT_COLOR.equals(targetBorder.getTitleColor())) {
+					targetBorder.setTitleColor(MISSING_TEXT_COLOR);
+					targetScrollPane.repaint();
+				}
+			}
+		});
 
 		final SpinnerModel maximumPeptidesPerProteinSpinner=new SpinnerNumberModel(3, 1, 100, 1);
-		final SpinnerModel maximumAssayDensitySpinner=new SpinnerNumberModel(10, 1, 100, 1);
-		final SpinnerModel windowSizeInMinSpinner=new SpinnerNumberModel(5.0, 0.1, 100.0, 1.0);
+		final SpinnerModel maximumAssayDensitySpinner=new SpinnerNumberModel(10, 1, 1000, 5);
+		final SpinnerModel windowSizeInMinSpinner=new SpinnerNumberModel(5.0, 0.01, 100.0, 1.0);
+		final SpinnerModel mzOffsetSpinner=new SpinnerNumberModel(0.5, 0.0, 1.0, 0.1);
 
 		JPanel options=new JPanel();
 		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
 		options.add(libraryFileChooser);
 		options.add(singleFileChooser);
+		options.add(titrationCurveFileChooser);
+		options.add(sampleOrganizationFileChooser);
 		options.add(new LabeledComponent("Maximum number of peptides per protein", new JSpinner(maximumPeptidesPerProteinSpinner)));
 		options.add(new LabeledComponent("Maximum assay density (scans/second)", new JSpinner(maximumAssayDensitySpinner)));
 		options.add(new LabeledComponent("Retention time window size (min)", new JSpinner(windowSizeInMinSpinner)));
+		options.add(new LabeledComponent("Isolation target offset (m/z)", new JSpinner(mzOffsetSpinner)));
 		
 		options.add(targetScrollPane);
 		options.add(eliminateScrollPane);
@@ -118,7 +144,8 @@ public class DilutionCurveFitterDialog extends JDialog {
 					dialog.dispose();
 					
 					DilutionCurveParameters fittingParams=new DilutionCurveParameters(((Number)maximumPeptidesPerProteinSpinner.getValue()).intValue(), 
-							((Number)windowSizeInMinSpinner.getValue()).floatValue(), ((Number)maximumAssayDensitySpinner.getValue()).intValue(), targets, eliminatedPeptides);
+							((Number)windowSizeInMinSpinner.getValue()).floatValue(), ((Number)maximumAssayDensitySpinner.getValue()).intValue(), 
+							((Number)mzOffsetSpinner.getValue()).floatValue(), targets, eliminatedPeptides);
 
 					try {
 						DilutionCurveFitter.generateAssayFromCurves(params, saveDir, titrationCurveFile, sampleOrganizationFile, libraryFile, exampleSearchFile, fittingParams);
@@ -174,9 +201,10 @@ public class DilutionCurveFitterDialog extends JDialog {
 		private final boolean useLineNoise=true; // newer versions should set this to "true"
 		private final String[] targets; 
 		private final String[] eliminatedPeptides; 
+		private final float mzOffset;
 		
 		
-		public DilutionCurveParameters(int maxNumberPeptidesPerProtein, float windowInMin, int assayMaxDensity,
+		public DilutionCurveParameters(int maxNumberPeptidesPerProtein, float windowInMin, int assayMaxDensity, float mzOffset,
 				String[] targets, String[] eliminatedPeptides) {
 			super();
 			this.maxNumberPeptidesPerProtein = maxNumberPeptidesPerProtein;
@@ -184,6 +212,7 @@ public class DilutionCurveFitterDialog extends JDialog {
 			this.assayMaxDensity = assayMaxDensity;
 			this.targets = targets;
 			this.eliminatedPeptides = eliminatedPeptides;
+			this.mzOffset=mzOffset;
 		}
 		
 		public float getWindowInMin() {
@@ -239,6 +268,16 @@ public class DilutionCurveFitterDialog extends JDialog {
 
 		public boolean isUseLineNoise() {
 			return useLineNoise;
+		}
+		
+		@Override
+		public Float getMinimumIntensity() {
+			return 1024f;
+		}
+		
+		@Override
+		public float getMZOffset() {
+			return mzOffset;
 		}
 	}
 }

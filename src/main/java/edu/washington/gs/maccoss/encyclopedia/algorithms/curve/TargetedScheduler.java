@@ -250,7 +250,7 @@ public class TargetedScheduler {
 			ArrayList<LibraryEntry> list=targetPeptidesByProtein.get(key);
 			for (LibraryEntry entry : list) {
 				float rtInSec = rtAlignment.getAlignedRTInSec(entry, false);
-				DilutionCurveFitter.addPeptideToAssay(assayWriter, entry, rtInSec, fittingParams.getWindowInMin(rtInSec));
+				DilutionCurveFitter.addPeptideToAssay(assayWriter, entry, rtInSec, fittingParams);
 				targetEntries.add(entry.updateRetentionTime(rtInSec));
 				count++;
 			}

@@ -27,4 +27,8 @@ public interface AbstractDilutionCurveFittingParameters {
 	public boolean isRequireAlignmentRT();
 	
 	public boolean isUseLineNoise();
+	
+	public Float getMinimumIntensity();
+	
+	public float getMZOffset();
 }
