@@ -51,6 +51,11 @@ public class DilutionCurveFitting4HzDeepParameters implements AbstractDilutionCu
 	public boolean isTargetedProtein(String accession) {
 		return accession.indexOf(targetAccessionNumberKeyword)>=0;
 	}
+	
+	@Override
+	public boolean isEliminatedPeptide(String peptideModSeq) {
+		return false;
+	}
 
 	public boolean isRequireAlignmentRT() {
 		return requireAlignmentRT;

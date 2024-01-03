@@ -60,52 +60,22 @@ public class DilutionCurveFitterExample {
 	
 	public static void main(String[] args) throws Exception {
 		SearchParameters params=SearchParameterParser.getDefaultParametersObject();
-		File inputDirectory=new File("/Users/searle.30/Documents/students/ariana/");
-		File outputDirectory=new File("/Users/searle.30/Documents/students/ariana/curvefitting_combined_30k_testing_10p/");
+		File inputDirectory=new File("/Users/searleb/Documents/students/ariana/");
+		File outputDirectory=new File("/Users/searleb/Documents/students/ariana/curvefitting_combined_30k_testing_10p/");
 		File dataFile=new File(inputDirectory, "dimethyl_combined_library_titration_curve.elib.peptides.txt");
-		File sampleOrganizationFile=new File(inputDirectory, "exploris_samples_list.csv");
+		File sampleOrganizationFile=new File(inputDirectory, "exploris_21pt_curve_samples_list.csv");
 		File libraryFile=new File(inputDirectory, "v3_library_exploris.elib");
-		File rtAlignFile=new File(inputDirectory, "2023_05_22_mouse_tcell_10pt000_FG_90pt000_BG_500ng_16mzst_DIA_50cm_14.mzML.elib");
+		File rtAlignFile=new File(inputDirectory, "2024_01_02_mouse_WT_CD8Tcell_250ng_16mzst_DIA_auorora_01.mzML.elib");
 
-		for(int dataset : new int[] {1,2,3}) {
-			for (boolean isDeepAssay : new boolean [] {true, false}) {
-				AbstractDilutionCurveFittingParameters fittingParams;
-				String outputDirName;
-				if (isDeepAssay) {
-					fittingParams=new DilutionCurveParameters(true, true);
-					outputDirName="curvefitting_combined_60k_testing_10p";
-				} else {
-					fittingParams=new DilutionCurveParameters(true, false);
-					outputDirName="curvefitting_combined_30k_testing_20p";
-				}
-				
-				if (dataset==1) {
-					inputDirectory=new File("/Users/searleb/Downloads/drive-download-20230725T041158Z-001/Exploris_calcurve1_forBCS/");
-					outputDirectory=new File("/Users/searleb/Downloads/drive-download-20230725T041158Z-001/Exploris_calcurve1_forBCS_reports/", outputDirName);
-					dataFile=new File(inputDirectory, "exploris_titration_curve_quant.elib.peptides.txt");
-					sampleOrganizationFile=new File(inputDirectory, "exploris_samples_list.csv");
-					libraryFile=new File(inputDirectory, "exploris_titration_curve_quant.elib");
-					rtAlignFile=libraryFile;
-					
-				} else if (dataset==2) {
-					inputDirectory=new File("/Users/searleb/Downloads/drive-download-20230725T041158Z-001/QE-HF_calcurve_forBCS/");
-					outputDirectory=new File("/Users/searleb/Downloads/drive-download-20230725T041158Z-001/QE-HF_calcurve_forBCS_reports/", outputDirName);
-					dataFile=new File(inputDirectory, "qe_titration_curve_quant.elib.peptides.txt");
-					sampleOrganizationFile=new File(inputDirectory, "samples_list.qehf.csv");
-					libraryFile=new File(inputDirectory, "qe_titration_curve_quant.elib");
-					rtAlignFile=libraryFile;
-
-				} else if (dataset==3) {
-					inputDirectory=new File("/Users/searleb/Downloads/drive-download-20230725T041158Z-001/Exploris_calcurve2_for_BCS/");
-					outputDirectory=new File("/Users/searleb/Downloads/drive-download-20230725T041158Z-001/Exploris_calcurve2_for_BCS_reports/", outputDirName);
-					dataFile=new File(inputDirectory, "mouse_21pt_curve.elib.peptides.txt");
-					sampleOrganizationFile=new File(inputDirectory, "exploris_21pt_curve_samples_list.csv");
-					libraryFile=new File(inputDirectory, "mouse_21pt_curve.elib");
-					rtAlignFile=libraryFile;
-				}
-				
-				DilutionCurveFitter.generateAssayFromCurves(params, outputDirectory, dataFile, sampleOrganizationFile, libraryFile, rtAlignFile, fittingParams);
+		for (boolean isDeepAssay : new boolean [] {true}) {
+			AbstractDilutionCurveFittingParameters fittingParams;
+			if (isDeepAssay) {
+				fittingParams=new DilutionCurveParameters(true, true);
+			} else {
+				fittingParams=new DilutionCurveParameters(true, false);
 			}
+			
+			DilutionCurveFitter.generateAssayFromCurves(params, outputDirectory, dataFile, sampleOrganizationFile, libraryFile, rtAlignFile, fittingParams);
 		}
 	}
 	
@@ -191,6 +161,11 @@ public class DilutionCurveFitterExample {
 			for (int i = 0; i < targets.length; i++) {
 				if (accession.indexOf(targets[i])>=0) return true;
 			}
+			return false;
+		}
+		
+		@Override
+		public boolean isEliminatedPeptide(String peptideModSeq) {
 			return false;
 		}
 

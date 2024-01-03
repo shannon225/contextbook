@@ -219,6 +219,10 @@ public class DilutionCurveFitter {
 				if (entry==null) {
 					return;
 				}
+
+				if (fittingParams.isEliminatedPeptide(peptide)) {
+					return;
+				}
 				
 				TFloatArrayList actual=new TFloatArrayList();
 				for (ScoredObject<String> scoredObject : expectedConcentrations) {
@@ -280,6 +284,10 @@ public class DilutionCurveFitter {
 				String protein = getProtein(row);
 				
 				if (requiredAccessionText!=null&&!requiredAccessionText.isTargetedProtein(protein)) {
+					return;
+				}
+
+				if (requiredAccessionText.isEliminatedPeptide(peptide)) {
 					return;
 				}
 				

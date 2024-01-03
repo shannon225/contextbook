@@ -54,6 +54,11 @@ public class Targeted10HzParametersWithWideWindows implements AbstractDilutionCu
 	public boolean isTargetedProtein(String accession) {
 		return true;
 	}
+	
+	@Override
+	public boolean isEliminatedPeptide(String peptideModSeq) {
+		return false;
+	}
 
 	public boolean isRequireAlignmentRT() {
 		return requireAlignmentRT;
