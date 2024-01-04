@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.StringTokenizer;
+import java.util.regex.Pattern;
 import java.util.zip.DataFormatException;
 
 import com.google.common.collect.ImmutableList;
@@ -79,6 +80,17 @@ public class OpenSwathTSVToLibraryConverter {
 			"transition_group_id",
 	});
 
+	private static final Pattern UNIMOD_STRIP_TERM_PATT = Pattern.compile("^.?\\.|\\.(\\([^)]+\\))?.?$");
+
+	/**
+	 * Replace leading/trailing dots, and pre/post AAs (if given).
+	 * Complication: C-terminal mods can be between the trailing dot and post AA,
+	 * so we capture it as a group and replace it using a backreference.
+	 */
+	private static String stripUnimodTermini(String structuredSequence) {
+		return UNIMOD_STRIP_TERM_PATT.matcher(structuredSequence).replaceAll("$1");
+	}
+
 	public static LibraryFile convertOpenSwathTSV(File tsvFile, File fastaFile, SearchParameters parameters) {
 		String absolutePath=tsvFile.getAbsolutePath();
 		File libraryFile=new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))+LibraryFile.DLIB);
@@ -99,8 +111,9 @@ public class OpenSwathTSVToLibraryConverter {
 	
 	static String parseMods(String structuredSequence) {
 		if (structuredSequence.indexOf('(')>=0) {
-			structuredSequence=structuredSequence.replace(".", "");
 			// Unimod: .(UniMod:1)PEPC(UniMod:4)PEPM(UniMod:35)PEPR.(UniMod:2)
+
+			structuredSequence = stripUnimodTermini(structuredSequence);
 
 			char[] ca=structuredSequence.toCharArray();
 			
@@ -147,9 +160,7 @@ public class OpenSwathTSVToLibraryConverter {
 				
 			} else if (structuredSequence.indexOf('.')>=0) {
 				 // Unimod: .(UniMod:1)PEPC(UniMod:4)PEPM(UniMod:35)PEPR.(UniMod:2) (but no mods)
-				StringTokenizer st=new StringTokenizer(structuredSequence, ".");
-				return st.nextToken();
-				
+				return stripUnimodTermini(structuredSequence);
 			} else if (structuredSequence.indexOf(AminoAcidConstants.N_TERM)>=0) {
 				 // TPP:    n[43]PEPC[160]PEPM[147]PEPRc[16] (but no mods)
 				return structuredSequence.replace(AminoAcidConstants.N_TERM, ' ').replace(AminoAcidConstants.C_TERM, ' ').trim();
@@ -159,7 +170,7 @@ public class OpenSwathTSVToLibraryConverter {
 			}
 		}
 	}
-	
+
 	public static void convertToOpenSwathTSV(SearchParameters params, final File elibFile, File tsvFile) throws IOException, SQLException, DataFormatException {
 		LibraryFile library=new LibraryFile();
 		library.openFile(elibFile);
