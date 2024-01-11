@@ -28,6 +28,7 @@ import java.sql.SQLException;
 import java.text.AttributedString;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -79,6 +80,7 @@ import com.itextpdf.text.pdf.PdfTemplate;
 import com.itextpdf.text.pdf.PdfWriter;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedSpectrum;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
@@ -160,15 +162,7 @@ public class Charter {
 		launchChart(trace, trace.getSpectrumName());
 	}
 
-	public static void launchChart(LibraryEntry trace) {
-		launchChart(trace, trace.getSpectrumName());
-	}
-
 	public static void launchChart(Spectrum trace, String title) {
-		launchChart(trace, title, new Dimension(1000, 500));
-	}
-
-	public static void launchChart(LibraryEntry trace, String title) {
 		launchChart(trace, title, new Dimension(1000, 500));
 	}
 
@@ -177,10 +171,6 @@ public class Charter {
 	}
 
 	public static void launchChart(Spectrum trace, String title, Dimension dim) {
-		launchComponent(getChart(trace, title), title, dim);
-	}
-
-	public static void launchChart(LibraryEntry trace, String title, Dimension dim) {
 		launchComponent(getChart(trace, title), title, dim);
 	}
 
@@ -367,14 +357,14 @@ public class Charter {
 		return chart;
 	}
 
-	public static ExtendedChartPanel getChart(LibraryEntry trace, String title) {
-		ExtendedChartPanel chart=getChart("M/Z", "Intensity", false, trace);
-		chart.getChart().setTitle(title);
-		return chart;
-	}
-
 	public static ExtendedChartPanel getChart(Spectrum spec, String title) {
-		XYTrace trace=spec instanceof XYTrace?(XYTrace)spec:new XYTrace(spec);
+		XYTraceInterface trace;
+		if (spec instanceof XYTraceInterface) {
+			trace=(XYTraceInterface)spec;
+		} else {
+			trace=new XYTrace(spec);
+		}
+		
 		ExtendedChartPanel chart=getChart("M/Z", "Intensity", false, trace);
 		chart.getChart().setTitle(title);
 		return chart;
@@ -801,68 +791,56 @@ public class Charter {
 				break;
 
 			case spectrum:
-				double yThreshold=General.max(y)*0.2;
+				double[] intensities=y.clone();
+				Arrays.sort(intensities);
+				
+				// just annotate the top 5 ions that don't already have labels and above 20%
+				double yThreshold=intensities.length>0?intensities[Math.max(0, intensities.length-5)]:0.0;
+				yThreshold=Math.max(General.max(y)*0.2, yThreshold);
+				FragmentIon[] annotations;
+				
 				if (trace instanceof AnnotatedLibraryEntry) {
-					AnnotatedLibraryEntry entry=(AnnotatedLibraryEntry)(Spectrum)trace;
-					FragmentIon[] annotations=entry.getIonAnnotations();
-					
-					for (int i=0; i<x.length; i++) {
-						if (!Double.isNaN(x[i])&&!Double.isNaN(y[i])) {
-							XYSeries peakSeries=new XYSeries(i);
-							peakSeries.add(x[i], 0);
-							peakSeries.add(x[i], y[i]);
-							dataset.addSeries(peakSeries);
-							if (annotations[i]!=null) {
-								Color color=IonType.getColor(annotations[i].getType());
-								renderer.setSeriesStroke(i, IonType.getStroke(annotations[i].getType()));
-								renderer.setSeriesPaint(i, color);
-								
-								
-								boolean aboveThreshold=y[i]<0?y[i]<-yThreshold:y[i]>yThreshold;
-								if (IonType.b==annotations[i].getType()||IonType.y==annotations[i].getType()||aboveThreshold) {
-									XYTextAnnotation xytextannotation = new XYTextAnnotation(annotations[i].toString(), x[i], y[i]);
-									xytextannotation.setPaint(color);
-									
-									xytextannotation.setFont(IonType.getFont(annotations[i].getType()));
-							        xytextannotation.setTextAnchor(y[i]<0?TextAnchor.TOP_CENTER:TextAnchor.BOTTOM_CENTER);
-							        plot.addAnnotation(xytextannotation);
-								}
-							} else {
-								renderer.setSeriesStroke(i, IonType.missingStroke);
-								renderer.setSeriesPaint(i, IonType.missingColor);
-
-								boolean aboveThreshold=y[i]<0?y[i]<-yThreshold:y[i]>yThreshold;
-								if (aboveThreshold) {
-									XYTextAnnotation xytextannotation = new XYTextAnnotation(MASS_FORMAT.format(x[i]), x[i], y[i]);
-									xytextannotation.setPaint(IonType.missingColor);
-							        xytextannotation.setFont(IonType.primaryAnnotationFont);//missingAnnotationFont);
-							        xytextannotation.setTextAnchor(y[i]<0?TextAnchor.TOP_CENTER:TextAnchor.BOTTOM_CENTER);
-							        //plot.addAnnotation(xytextannotation);
-								}
-							}
-						}
-					}
+					annotations=((AnnotatedLibraryEntry)trace).getIonAnnotations();
+				} else if (trace instanceof AnnotatedSpectrum) {
+					annotations=((AnnotatedSpectrum)trace).getAnnotations();
 				} else {
-					for (int i=0; i<x.length; i++) {
-						if (!Double.isNaN(x[i])&&!Double.isNaN(y[i])) {
-							XYSeries peakSeries=new XYSeries(x[i]);
-							peakSeries.add(x[i], 0);
-							peakSeries.add(x[i], y[i]);
-							dataset.addSeries(peakSeries);
+					annotations=new FragmentIon[x.length];;
+				}
+				for (int i=0; i<x.length; i++) {
+					if (!Double.isNaN(x[i])&&!Double.isNaN(y[i])) {
+						XYSeries peakSeries=new XYSeries(i);
+						peakSeries.add(x[i], 0);
+						peakSeries.add(x[i], y[i]);
+						dataset.addSeries(peakSeries);
+						if (annotations[i]!=null) {
+							Color color=IonType.getColor(annotations[i].getType());
+							renderer.setSeriesStroke(i, IonType.getStroke(annotations[i].getType()));
+							renderer.setSeriesPaint(i, color);
+							
+							boolean aboveThreshold=y[i]<0?y[i]<-yThreshold:y[i]>yThreshold;
+							if (IonType.b==annotations[i].getType()||IonType.y==annotations[i].getType()||IonType.annotated==annotations[i].getType()||aboveThreshold) {
+								XYTextAnnotation xytextannotation = new XYTextAnnotation(annotations[i].toString(), x[i], y[i]);
+								xytextannotation.setPaint(color);
+								
+								xytextannotation.setFont(IonType.getFont(annotations[i].getType()));
+						        xytextannotation.setTextAnchor(y[i]<0?TextAnchor.TOP_CENTER:TextAnchor.BOTTOM_CENTER);
+						        plot.addAnnotation(xytextannotation);
+							}
+						} else {
 							renderer.setSeriesStroke(i, IonType.missingStroke);
 							renderer.setSeriesPaint(i, IonType.missingColor);
-							
-							if (y[i]>yThreshold) {
+
+							boolean aboveThreshold=y[i]<0?y[i]<-yThreshold:y[i]>yThreshold;
+							if (aboveThreshold) {
 								XYTextAnnotation xytextannotation = new XYTextAnnotation(MASS_FORMAT.format(x[i]), x[i], y[i]);
 								xytextannotation.setPaint(IonType.missingColor);
 						        xytextannotation.setFont(IonType.missingAnnotationFont);
 						        xytextannotation.setTextAnchor(y[i]<0?TextAnchor.TOP_CENTER:TextAnchor.BOTTOM_CENTER);
-						        //plot.addAnnotation(xytextannotation);
+						        plot.addAnnotation(xytextannotation);
 							}
 						}
 					}
 				}
-
 				
 				double maxX=0.0;
 				double minY=0.0;

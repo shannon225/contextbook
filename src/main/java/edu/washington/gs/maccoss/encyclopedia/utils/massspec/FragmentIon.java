@@ -12,7 +12,7 @@ import com.google.common.collect.Ordering;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 
-public final class FragmentIon implements Comparable<FragmentIon>, Ion {
+public class FragmentIon implements Comparable<FragmentIon>, Ion {
 	private static final String INDEX_DELIMITER = ";";
 	private static final String ARCHIVE_DELIMITER = "|";
 

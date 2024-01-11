@@ -11,6 +11,9 @@ public class MassConstantsTest extends TestCase {
 	public void testGetMass() {
 		String sequence="PEPTIDER";
 		assertEquals(955.46112, PARAMETERS.getAAConstants().getMass(sequence)+18.01042, 0.001);
+		
+		sequence="MQIFVKTLTGKTITLEVEPSDTIENVKAKIQDKEGIPPDQQRLIFAGKQLEDGRTLSDYNIQKESTLHLVLRLRGG";
+		assertEquals(8560.6238, PARAMETERS.getAAConstants().getMass(sequence)+MassConstants.oh2+MassConstants.protonMass, 0.001);
 	}
 	
 	public void testGetModificationMasses() {
