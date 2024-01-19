@@ -477,6 +477,12 @@ public class General {
 		}
 		return r;
 	}
+
+	public static double[] normalizeToL2(double[] y) {
+		double sqrt = Math.sqrt(sum(multiply(y, y)));
+		if (sqrt==0) return new double[y.length];
+		return divide(y, sqrt);
+	}
 	
 	public static float[] normalizeToL2(float[] y) {
 		float sqrt = (float)Math.sqrt(sum(multiply(y, y)));
@@ -657,6 +663,16 @@ public class General {
 		float[] r=new float[v1.length];
 		for (int i=0; i<r.length; i++) {
 			r[i]=v1[i]*m;
+		}
+		return r;
+	}
+
+	public static double[] multiply(double[] v1, double[] v2) {
+		assert(v1.length==v2.length);
+		
+		double[] r=new double[v1.length];
+		for (int i=0; i<r.length; i++) {
+			r[i]=v1[i]*v2[i];
 		}
 		return r;
 	}

@@ -53,6 +53,12 @@ public class Correlation {
 		return getPearsons(arrays.x, arrays.y);
 	}
 	
+	public static double getSpectralAngle(Spectrum predicted, Spectrum acquired, MassTolerance tolerance, Range exclusionRange) {
+		Pair<double[], double[]> arrays=getArrays(predicted, acquired, tolerance, exclusionRange);
+		if (arrays==null) return 0.0;
+		return getSpectralAngle(arrays.x, arrays.y);
+	}
+	
 	public static double getSpearmans(Spectrum predicted, Spectrum acquired, MassTolerance tolerance) {
 		Pair<double[], double[]> arrays=getArrays(predicted, acquired, tolerance);
 		if (arrays==null) return 0.0;
@@ -63,6 +69,12 @@ public class Correlation {
 		Pair<double[], double[]> arrays=getArrays(predicted, acquired, tolerance);
 		if (arrays==null) return 0.0;
 		return getPearsons(arrays.x, arrays.y);
+	}
+	
+	public static double getSpectralAngle(Spectrum predicted, Spectrum acquired, MassTolerance tolerance) {
+		Pair<double[], double[]> arrays=getArrays(predicted, acquired, tolerance);
+		if (arrays==null) return 0.0;
+		return getSpectralAngle(arrays.x, arrays.y);
 	}
 
 	private static Pair<double[], double[]> getArrays(Spectrum predicted, Spectrum acquired, MassTolerance tolerance) {
@@ -158,6 +170,22 @@ public class Correlation {
 		System.arraycopy(x, startIndex, xx, 0, range);
 		System.arraycopy(y, startIndex, yy, 0, range);
 		return getPearsons(xx, yy);
+	}
+
+	public static double getSpectralAngle(double[] x, double[] y) {
+
+		double[] xn=General.normalizeToL2(x);
+		double[] yn=General.normalizeToL2(y);
+		
+		double dotProduct=General.sum(General.multiply(xn, yn));
+
+		if (Double.isNaN(dotProduct)||dotProduct<0.0f) dotProduct=0.0f;
+		double protectedDP=dotProduct;
+		if (protectedDP>=1.0f) protectedDP=0.99999f;
+		if (protectedDP<=0.0f) protectedDP=0.00001f;
+		
+		float contrastAngle=1.0f-(2.0f*(float)Math.acos(protectedDP))/(float)Math.PI;
+		return contrastAngle;
 	}
 	public static double getPearsons(double[] x, double[] y) {
 		

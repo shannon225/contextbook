@@ -7,13 +7,16 @@ import java.awt.Dimension;
 import java.awt.FileDialog;
 import java.awt.Font;
 import java.awt.Frame;
+import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Image;
 import java.awt.Shape;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.font.TextAttribute;
@@ -21,6 +24,7 @@ import java.awt.geom.Arc2D;
 import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -37,9 +41,12 @@ import java.util.Map.Entry;
 
 import javax.swing.JComponent;
 import javax.swing.JFrame;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
+import javax.swing.KeyStroke;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
@@ -139,13 +146,61 @@ public class Charter {
 		// new Dimension(792, 612));
 	}
 
-	public static void launchComponent(JComponent comp, String title, Dimension dim) {
+	public static void launchComponent(final JComponent comp, String title, Dimension dim) {
 		final JFrame f=new JFrame(title);
 		f.addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent e) {
 				System.exit(0);
 			}
 		});
+		
+		JMenuBar bar=new JMenuBar();
+		JMenu fileMenu=new JMenu("File");
+		fileMenu.setMnemonic(KeyEvent.VK_F);
+		bar.add(fileMenu);
+
+		JMenuItem copyImage=new JMenuItem("Copy as image");
+		copyImage.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				BufferedImage image=new BufferedImage(comp.getWidth(), comp.getHeight(), BufferedImage.TYPE_INT_RGB);
+		        Graphics g=image.getGraphics();
+		        comp.paint(g);
+		        g.dispose();
+	            TransferableImage trans = new TransferableImage(image);
+		        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(trans, null);
+			}
+		});
+		copyImage.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+		fileMenu.add(copyImage);
+
+		JMenuItem saveSVG=new JMenuItem("Save as SVG");
+		saveSVG.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				FileDialog dialog=new FileDialog((Frame)null, "Save SVG File", FileDialog.SAVE);
+				dialog.setFile(title+".svg");
+				dialog.setFilenameFilter(new SimpleFilenameFilter(".svg"));
+				
+				dialog.setVisible(true);
+				File[] fs=dialog.getFiles();
+				
+				if (fs.length>0) {
+					File saveFile=fs[0];
+					if (!saveFile.getName().toLowerCase().endsWith(".svg")) {
+						saveFile=new File(saveFile.getParentFile(), saveFile.getName()+".svg");
+					}
+					Logger.logLine("Writing SVG: "+saveFile.getAbsolutePath());
+					Charter.writeAsSVG(comp, saveFile, comp.getSize());
+					Logger.logLine("Finished writing SVG.");
+				}
+			}
+		});
+		saveSVG.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+		fileMenu.add(saveSVG);
+		
+		
+		f.setJMenuBar(bar);
 
 		f.getContentPane().add(comp, BorderLayout.CENTER);
 
@@ -206,7 +261,7 @@ public class Charter {
 		writeAsPDF(chart, f, d);
 	}
 
-	public static void writeAsPDF(JPanel panel, File f, Dimension d) {
+	public static void writeAsPDF(JComponent panel, File f, Dimension d) {
 		try {
 			FontFactory.defaultEmbedding = true;
 			
@@ -277,7 +332,7 @@ public class Charter {
 		
 		writeAsSVG(getChart(xAxis, yAxis, displayLegend, traces).getChart(), f, d);
 	}
-	public static void writeAsSVG(JPanel panel, File f, Dimension d) {
+	public static void writeAsSVG(JComponent panel, File f, Dimension d) {
 		try {
 			SVGGraphics2D g2 = new SVGGraphics2D(d.width, d.height); 
 	        java.awt.Rectangle r = new java.awt.Rectangle(0, 0, d.width, d.height); 
@@ -795,8 +850,8 @@ public class Charter {
 				Arrays.sort(intensities);
 				
 				// just annotate the top 5 ions that don't already have labels and above 20%
-				double yThreshold=intensities.length>0?intensities[Math.max(0, intensities.length-5)]:0.0;
-				yThreshold=Math.max(General.max(y)*0.2, yThreshold);
+				double yThreshold=0;//intensities.length>0?intensities[Math.max(0, intensities.length-5)]:0.0;
+				yThreshold=Math.max(General.max(y)*0.1, yThreshold);
 				FragmentIon[] annotations;
 				
 				if (trace instanceof AnnotatedLibraryEntry) {
