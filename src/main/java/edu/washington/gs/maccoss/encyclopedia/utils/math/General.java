@@ -78,6 +78,8 @@ public class General {
 	}
 
 	public static float[][] transposeMatrix(float[][] m) {
+		if (m.length==0) return m.clone();
+		
 		if (m[0].length==0) {
 			throw new ArrayIndexOutOfBoundsException(m[0].length);
 		}

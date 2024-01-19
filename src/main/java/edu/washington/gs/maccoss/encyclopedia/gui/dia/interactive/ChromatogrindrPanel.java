@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.zip.DataFormatException;
 
@@ -110,6 +111,8 @@ import gnu.trove.list.array.TFloatArrayList;
  */
 public class ChromatogrindrPanel extends JPanel {
 	private static final long serialVersionUID=1L;
+	
+	private static final float RT_EXTRACTION_MARGIN_IN_SEC=45f;
 	
 	private final FileChooserPanel diaFileChooser;
 	private final FileChooserPanel libraryFileChooser;
@@ -674,9 +677,8 @@ public class ChromatogrindrPanel extends JPanel {
 		
 		FragmentationModel model=PeptideUtils.getPeptideModel(entry.getPeptideModSeq(), parameters.getAAConstants());
 		FragmentIon[] primaryIonObjects=model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge(), false);
-		Logger.logLine("Graphing "+entry.getPeptideModSeq()+" ("+primaryIonObjects.length+")"+"...");
 		
-		try {
+		loadDataBlock: try {
 			
 			ArrayList<XYTrace> fragmentTraces=new ArrayList<>();
 			ArrayList<XYTrace> fragmentDeltaMassTraces=new ArrayList<>();
@@ -687,13 +689,15 @@ public class ChromatogrindrPanel extends JPanel {
 			float maxRTInSec = rtInSec+RT_EXTRACTION_MARGIN_IN_SEC;
 
 			Range rtRange=entry.getRTRange();
-			if (rtRange!=null) {
+			if (rtRange!=null&&rtRange.getRange()>0.0f) {
 				minRTInSec=rtRange.getStart();
 				maxRTInSec=rtRange.getStop();
 			}
+			Logger.logLine("Graphing "+entry.getPeptideModSeq()+" ("+primaryIonObjects.length+"), ["+minRTInSec+" to "+maxRTInSec+"]...");
 			
 			// get precursor traces
 			ArrayList<PrecursorScan> precursors=dia.getPrecursors(minRTInSec, maxRTInSec);
+			Collections.sort(precursors);
 			ArrayList<PrecursorScan> trimmedPrecursors=new ArrayList<>();
 			for (PrecursorScan spectrum : precursors) {
 				if (entry.getPrecursorMZ()>spectrum.getIsolationWindowLower()&&entry.getPrecursorMZ()<spectrum.getIsolationWindowUpper()) {
@@ -710,6 +714,11 @@ public class ChromatogrindrPanel extends JPanel {
 			
 			// get fragment traces
 			ArrayList<FragmentScan> scans=dia.getStripes(entry.getPrecursorMZ(), minRTInSec, maxRTInSec, false);
+			if (scans.size()==0) {
+				dataPanel.add(new JLabel("no MSMS found from ["+minRTInSec+" to "+maxRTInSec+"] for "+entry.getPrecursorMZ()+" m/z!"));
+				break loadDataBlock;
+			}
+			Collections.sort(scans);
 			double[][] allMasses=new double[scans.size()][];
 			float[][] allDeltaMasses=new float[scans.size()][];
 			float[][] allIntensities=new float[scans.size()][];
@@ -785,19 +794,22 @@ public class ChromatogrindrPanel extends JPanel {
 					rightInfoPanel.add(chartPanelButterfly);
 				}
 			}
-	
-			mainSplit.setRightComponent(dataPanel);
 
 		} catch (DataFormatException sqle) {
-			Logger.errorLine("Error reading raw files!");
+			Logger.errorLine("Data Format Error reading raw files!");
 			Logger.errorException(sqle);
 		} catch (SQLException sqle) {
-			Logger.errorLine("Error reading raw files!");
+			Logger.errorLine("SQL Error reading raw files!");
 			Logger.errorException(sqle);
 		} catch (IOException ioe) {
-			Logger.errorLine("Error reading raw files!");
+			Logger.errorLine("IO Error reading raw files!");
 			Logger.errorException(ioe);
+		} catch (Exception e) {
+			Logger.errorLine("General Error reading raw files!");
+			Logger.errorException(e);
 		}
+		
+		mainSplit.setRightComponent(dataPanel);
 		
 		mainSplit.setDividerLocation(location);
 	}
@@ -915,8 +927,6 @@ public class ChromatogrindrPanel extends JPanel {
 		});
 		return chartPanel;
 	}
-	
-	private static final float RT_EXTRACTION_MARGIN_IN_SEC=45f;
 
 	public Triplet<double[], float[], float[]> extract(Spectrum spectrum, FragmentIon[] ions, SearchParameters parameters) {
 		MassTolerance acquiredTolerance=parameters.getFragmentTolerance();
