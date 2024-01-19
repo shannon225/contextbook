@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Set;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntRange;
+import gnu.trove.list.array.TFloatArrayList;
 
 public class General {
 	public static String formatCellToWidth(String s, int w) {
@@ -823,5 +824,15 @@ public class General {
 	
 	public static boolean isEven(int x) {
 		return (x&1)==0; // check first bit
+	}
+	
+	public static float[] removeNaNs(float[] f) {
+		TFloatArrayList r=new TFloatArrayList();
+		for (int i = 0; i < f.length; i++) {
+			if (!Float.isNaN(f[i])) {
+				r.add(f[i]);
+			}
+		}
+		return r.toArray();
 	}
 }

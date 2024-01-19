@@ -28,6 +28,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Optional;
 import java.util.zip.DataFormatException;
 
@@ -90,6 +92,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.CategoricalData;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.EditableXYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
@@ -681,7 +684,6 @@ public class ChromatogrindrPanel extends JPanel {
 		loadDataBlock: try {
 			
 			ArrayList<XYTrace> fragmentTraces=new ArrayList<>();
-			ArrayList<XYTrace> fragmentDeltaMassTraces=new ArrayList<>();
 			ArrayList<XYTrace> precursorTraces=new ArrayList<>();
 			
 			float rtInSec=entry.getRetentionTimeInSec();
@@ -740,8 +742,8 @@ public class ChromatogrindrPanel extends JPanel {
 			float[][] chromatograms=General.transposeMatrix(allIntensities);
 			float[][] deltaMassByIon=General.transposeMatrix(allDeltaMasses);
 			ArrayList<float[]> chromatogramList=new ArrayList<float[]>();
-			ArrayList<float[]> deltaMassByIonList=new ArrayList<float[]>();
 			ArrayList<FragmentIon> foundIons=new ArrayList<>();
+			ArrayList<float[]> deltaMassList=new ArrayList<float[]>();
 			for (int j = 0; j < chromatograms.length; j++) {
 				if (primaryIonObjects[j].getIndex()>2&&General.sum(chromatograms[j])>0.0f) {
 					if (sgSmoothBox.isSelected()) {
@@ -750,10 +752,9 @@ public class ChromatogrindrPanel extends JPanel {
 					if (backgroundSubtractBox.isSelected()) {
 						chromatograms[j]=BackgroundSubtractionFilter.backgroundSubtractMovingMedian(chromatograms[j], movingAverageLength*10);
 					}
-					deltaMassByIon[j]=BackgroundSubtractionFilter.movingCenteredAverage(deltaMassByIon[j], 3);
 					chromatogramList.add(chromatograms[j]);
-					deltaMassByIonList.add(deltaMassByIon[j]);
 					foundIons.add(primaryIonObjects[j]);
+					deltaMassList.add(deltaMassByIon[j]);
 				}
 			}
 			primaryIonObjects=foundIons.toArray(new FragmentIon[0]);
@@ -761,7 +762,21 @@ public class ChromatogrindrPanel extends JPanel {
 			TransitionRefinementData data=TransitionRefiner.identifyTransitions(entry.getPeptideModSeq(), entry.getPrecursorCharge(), entry.getRetentionTimeInSec(), 
 					primaryIonObjects, chromatogramList, retentionTimes, false, parameters);
 			fragmentTraces=getTraces(primaryIonObjects, data.getChromatograms(), data.getCorrelationArray(), retentionTimes, data.getRange(), -Float.MAX_VALUE);
-			fragmentDeltaMassTraces=getTraces(primaryIonObjects, deltaMassByIonList, data.getCorrelationArray(), retentionTimes, data.getRange(), -Float.MAX_VALUE);
+			
+			float minCorrelation=getMinimumCorrelation(data.getCorrelationArray());
+			ArrayList<CategoricalData> deltaMassByIonList=new ArrayList<CategoricalData>();
+			for (int j = 0; j < primaryIonObjects.length; j++) {
+				if (data.getCorrelationArray()[j]>=minCorrelation) {
+					TFloatArrayList deltaMasses=new TFloatArrayList();
+					float[] deltaMassArray=deltaMassList.get(j);
+					for (int i = 0; i < deltaMassArray.length; i++) {
+						if (!Float.isNaN(deltaMassArray[i])&&data.getRange().contains(retentionTimes[i])) {
+							deltaMasses.add(deltaMassArray[i]);
+						}
+					}
+					deltaMassByIonList.add(new CategoricalData(foundIons.get(j).toString(), deltaMasses.toArray(), foundIons.get(j).getColor()));
+				}				
+			}
 			
 			final ChartPanel chartPanel = getChromatogramChartPanel(entry, fragmentTraces, precursorTraces, data.getRange());
 	        
@@ -773,8 +788,9 @@ public class ChromatogrindrPanel extends JPanel {
 			
 			MassTolerance fragmentTolerance = parameters.getFragmentTolerance();
 			String deltaMassAxis=fragmentTolerance.isRelativeTolerance()?"Delta Mass (PPM)":"Delta Mass (AMU)";
-			ChartPanel deltaMassPanel=Charter.getChart("Retention Time (min)", deltaMassAxis, false, fragmentDeltaMassTraces.toArray(new XYTraceInterface[0]));
-			ValueAxis axis=deltaMassPanel.getChart().getXYPlot().getRangeAxis();
+			
+			ChartPanel deltaMassPanel=Charter.getBoxplotChart("Delta Mass", "Ions", deltaMassAxis, 16, 16, deltaMassByIonList.toArray(new CategoricalData[0]), true);
+			ValueAxis axis=deltaMassPanel.getChart().getCategoryPlot().getRangeAxis();
 			axis.setRange(-fragmentTolerance.getToleranceThreshold(), fragmentTolerance.getToleranceThreshold());
 			rightInfoPanel.add(deltaMassPanel);
 			
@@ -973,9 +989,7 @@ public class ChromatogrindrPanel extends JPanel {
 	private static final int minNumIons=6;
 	private static ArrayList<XYTrace> getTraces(FragmentIon[] ions, ArrayList<float[]> chromatograms, float[] correlationArray, float[] rts, Range rtRange, float correlationThreshold) {
 		ArrayList<XYTrace> xytraces=new ArrayList<XYTrace>();
-		float[] correlationClone=correlationArray.clone();
-		Arrays.sort(correlationClone);
-		float minCorrelation=correlationClone[Math.max(0,correlationClone.length-minNumIons)];
+		float minCorrelation = getMinimumCorrelation(correlationArray);
 		
 		for (int i=0; i<chromatograms.size(); i++) {
 			if (correlationArray[i]<correlationThreshold) continue;
@@ -995,7 +1009,7 @@ public class ChromatogrindrPanel extends JPanel {
 			GraphType graphtype;
 			GraphType backgroundgraphtype;
 			float thickness;
-			if (correlationArray[i]>TransitionRefiner.quantitativeCorrelationThreshold||correlationArray[i]>=minCorrelation) {
+			if (correlationArray[i]>=minCorrelation) {
 				graphtype=GraphType.boldline;
 				backgroundgraphtype=GraphType.dashedline;
 				thickness=3.0f;
@@ -1017,6 +1031,13 @@ public class ChromatogrindrPanel extends JPanel {
 			}
 		}
 		return xytraces;
+	}
+
+	private static float getMinimumCorrelation(float[] correlationArray) {
+		float[] correlationClone=correlationArray.clone();
+		Arrays.sort(correlationClone);
+		float minCorrelation=correlationClone[Math.max(0,correlationClone.length-minNumIons)];
+		return Math.min(TransitionRefiner.quantitativeCorrelationThreshold, minCorrelation);
 	}
 
 }

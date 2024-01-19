@@ -10,6 +10,7 @@ import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.Paint;
 import java.awt.Shape;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
@@ -66,6 +67,7 @@ import org.jfree.chart.renderer.xy.AbstractXYItemRenderer;
 import org.jfree.chart.renderer.xy.XYAreaRenderer;
 import org.jfree.chart.renderer.xy.XYBlockRenderer;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
+import org.jfree.chart.title.TextTitle;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.statistics.DefaultBoxAndWhiskerCategoryDataset;
 import org.jfree.data.xy.XYSeries;
@@ -95,6 +97,7 @@ import edu.washington.gs.maccoss.encyclopedia.gui.general.Boxplotter.CategoryBox
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.CategoricalData;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
@@ -568,26 +571,45 @@ public class Charter {
 	}
 	public static ExtendedChartPanel getBoxplotChart(String title, String xAxisLabel, String yAxisLabel, String[] categories, TFloatArrayList[] values, boolean requireRangeIncludesZero) {
 		assert (categories.length==values.length);
+		
+		CategoricalData[] dataset=new CategoricalData[categories.length];
+		for (int i = 0; i < values.length; i++) {
+			dataset[i]=new CategoricalData(categories[i], values[i].toArray());
+		}
+		return getBoxplotChart(title, xAxisLabel, yAxisLabel, 14, 10, dataset, requireRangeIncludesZero);
+	}
+	public static ExtendedChartPanel getBoxplotChart(String title, String xAxisLabel, String yAxisLabel, int fontsizeAxes, int fontsizeTicks, final CategoricalData[] values, boolean requireRangeIncludesZero) {
 		boolean displayLegend=false;
 
 		DefaultBoxAndWhiskerCategoryDataset dataset=new DefaultBoxAndWhiskerCategoryDataset();
+		CategoryBoxPlotterRenderer renderer=new CategoryBoxPlotterRenderer() {
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public Paint getItemPaint(int row, int column) {
+				if (column>=0&&column<values.length&&values[column].getColor().isPresent()) {
+					return values[column].getColor().get();
+				} else {
+					return super.getItemPaint(row, column);
+				}
+			}
+		};
 		for (int i=0; i<values.length; i++) {
-			dataset.add(Boxplotter.calculateBoxAndWhiskerStatistics(values[i].toArray()), xAxisLabel, categories[i]);
+			dataset.add(Boxplotter.calculateBoxAndWhiskerStatistics(values[i].getData()), xAxisLabel, values[i].getCategory());
+			if (values[i].getColor().isPresent()) {
+				renderer.setSeriesPaint(i, values[i].getColor().get());
+			}
 		}
 
-		CategoryBoxPlotterRenderer renderer=new CategoryBoxPlotterRenderer();
 		CategoryAxis xAxis=new CategoryAxis(xAxisLabel);
 		NumberAxis yAxis=new NumberAxis(yAxisLabel);
 		yAxis.setAutoRangeIncludesZero(requireRangeIncludesZero);
 		CategoryPlot plot=new CategoryPlot(dataset, xAxis, yAxis, renderer);
 
-		Font font=new Font(BASE_FONT_NAME, Font.PLAIN, 24);
-		Font font2=new Font(BASE_FONT_NAME, Font.PLAIN, 32);
-		Font font3=new Font(BASE_FONT_NAME, Font.PLAIN, 18);
-		font=new Font(BASE_FONT_NAME, Font.PLAIN, 10);
-		font2=new Font(BASE_FONT_NAME, Font.PLAIN, 14);
-		font3=new Font(BASE_FONT_NAME, Font.PLAIN, 14);
-		final JFreeChart chart=new JFreeChart(title, font, plot, true);
+		Font font=new Font(BASE_FONT_NAME, Font.PLAIN, fontsizeTicks);
+		Font font2=new Font(BASE_FONT_NAME, Font.PLAIN, fontsizeAxes);
+		
+		final JFreeChart chart=new JFreeChart(title, font2, plot, true);
 
 		plot.setBackgroundPaint(Color.white);
 		plot.setDomainGridlinePaint(Color.white);//gray);
@@ -613,7 +635,7 @@ public class Charter {
 		if (!displayLegend) {
 			chartPanel.getChart().removeLegend();
 		} else {
-			chartPanel.getChart().getLegend().setItemFont(font3);
+			chartPanel.getChart().getLegend().setItemFont(font2);
 		}
 
 		chartPanel.setMinimumDrawWidth(0);
