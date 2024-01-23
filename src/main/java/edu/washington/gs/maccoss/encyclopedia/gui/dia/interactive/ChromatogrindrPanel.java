@@ -20,6 +20,8 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 import java.io.File;
@@ -43,6 +45,7 @@ import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
@@ -83,6 +86,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.FragmentIonConsistencyCharter;
+import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
@@ -386,6 +390,13 @@ public class ChromatogrindrPanel extends JPanel {
 		dialog.pack(); 
 		dialog.setSize(1900, 1030);
 		dialog.setVisible(true);
+
+		dialog.addWindowListener(new WindowAdapter() {
+			public void windowClosing(WindowEvent e) {
+				browser.copyTable();
+				JOptionPane.showMessageDialog(dialog, "Data copied, remember to paste into spreadsheet!");
+			}
+		});
 	}
 
 	public ChromatogrindrPanel() {
@@ -500,10 +511,7 @@ public class ChromatogrindrPanel extends JPanel {
 		copyButton.addActionListener(new ActionListener() {	
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				String copyString=peptideModel.copy();
-				StringSelection stringSelection = new StringSelection(copyString);
-				Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-				clipboard.setContents(stringSelection, null);
+				copyTable();
 			}
 		});
 		buttons.add(copyButton);
@@ -614,6 +622,13 @@ public class ChromatogrindrPanel extends JPanel {
 			peptideTable.setRowSelectionInterval(0, 0);
 		}
 		peptideTable.requestFocus();
+	}
+
+	private void copyTable() {
+		String copyString=peptideModel.copy();
+		StringSelection stringSelection = new StringSelection(copyString);
+		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+		clipboard.setContents(stringSelection, null);
 	}
 	
 	public void updateLibrary(final File f) {
@@ -1034,6 +1049,8 @@ public class ChromatogrindrPanel extends JPanel {
 	}
 
 	private static float getMinimumCorrelation(float[] correlationArray) {
+		if (correlationArray.length==0) return TransitionRefiner.quantitativeCorrelationThreshold;
+		
 		float[] correlationClone=correlationArray.clone();
 		Arrays.sort(correlationClone);
 		float minCorrelation=correlationClone[Math.max(0,correlationClone.length-minNumIons)];

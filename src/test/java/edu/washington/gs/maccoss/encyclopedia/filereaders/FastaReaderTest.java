@@ -63,8 +63,21 @@ public class FastaReaderTest extends TestCase {
 			}
 		}
 	}
-	
+
 	public static void main(String[] args) throws Exception {
+		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
+		File f=new File("/Users/searleb/Downloads/UP000005640_9606.fasta");
+		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f, parameters);
+		for (FastaEntryInterface entry : entries) {
+			
+			int index = Math.max(entry.getSequence().indexOf("TGELNSR"), entry.getSequence().indexOf("TGEINSR"));
+			if (index>=0) {
+				System.out.println(entry.getAccession()+" --> "+entry.getSequence().substring(index-1,  index+10));
+			}
+		}
+	}
+	
+	public static void main10(String[] args) throws Exception {
 		PecanSearchParameters parameters=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"), false, true, false);
 		
 		LibraryFile library=new LibraryFile();
