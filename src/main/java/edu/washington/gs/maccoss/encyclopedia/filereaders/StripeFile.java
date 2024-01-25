@@ -794,8 +794,8 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	protected void applyPatches(Version currentVersion, Statement s) throws IOException, SQLException {
 		if (currentVersion.amIAbove(getMostRecentVersion())) {
 			// this is a dia file from a more recent version of EncyclopeDIA
-			Logger.errorLine("Dia file "+this.getOriginalFileName()+" is from a more recent version of Encyclopedia. " +
-					"Attempting to open anyway, but this may cause unpredictable results.");
+			Logger.errorLine("WARNING: Dia file "+this.getOriginalFileName()+" is from a more recent version of EncyclopeDIA. " +
+					"Attempting to open, but this may cause unpredictable results.");
 
 			return;
 		}
