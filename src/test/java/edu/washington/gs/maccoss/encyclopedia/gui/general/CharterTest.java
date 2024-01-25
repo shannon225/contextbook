@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -277,7 +278,7 @@ public class CharterTest {
 		paramsMap.put("-lftolunits", "AMU");
 		SearchParameters params = SearchParameterParser.parseParameters(paramsMap);
 		LibraryEntry entry = new LibraryEntry("", new HashSet<>(), 1229.74, (byte) 2, "ELVISLIVESK", 1, 0, 0, masses,
-				intensities, params.getAAConstants());
+				intensities, Optional.empty(), params.getAAConstants());
 		AnnotatedLibraryEntry annotatedEntry = new AnnotatedLibraryEntry(entry, params);
 		Charter.launchChart(annotatedEntry, "ELVISLIVESK");
 	}
@@ -442,7 +443,7 @@ public class CharterTest {
 		boolean[] quantifiedIons = new boolean[intensities.length];
 
 		LibraryEntry trace = new LibraryEntry("Massbank", new HashSet<>(), 1, 150.0583, (byte) 1, "M", "M", 1, 3791.84f,
-				0, masses, intensities, correlations, quantifiedIons, true);
+				0, masses, intensities, correlations, quantifiedIons, Optional.empty(), true);
 
 		System.out.println("CHECK: " + General.toString(trace.getIntensityArray()));
 		System.out.println("VS: " + General.toString(intensities));

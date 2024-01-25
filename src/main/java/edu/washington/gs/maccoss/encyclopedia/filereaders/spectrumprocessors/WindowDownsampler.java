@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Map.Entry;
 import java.util.concurrent.BlockingQueue;
 
@@ -136,6 +137,7 @@ public class WindowDownsampler implements SpectrumProcessor {
 						double isolationWindowUpper=target.getStop();
 						double[] massArray=downsampled.getMassArray();
 						float[] intensityArray=downsampled.getIntensityArray();
+						Optional<float[]> ionMobilityArray=downsampled.getIonMobilityArray();
 						
 						// data aggregated-
 						float scanStartTime=0.0f; // average
@@ -146,7 +148,7 @@ public class WindowDownsampler implements SpectrumProcessor {
 						}
 						scanStartTime=scanStartTime/spectrumList.size();
 						
-						FragmentScan newScan=new FragmentScan(spectrumName, precursorName, spectrumIndex, scanStartTime, fraction, ionInjectionTime, isolationWindowLower, isolationWindowUpper, massArray, intensityArray, charge);
+						FragmentScan newScan=new FragmentScan(spectrumName, precursorName, spectrumIndex, scanStartTime, fraction, ionInjectionTime, isolationWindowLower, isolationWindowUpper, massArray, intensityArray, ionMobilityArray, charge);
 						addRetentionTime(newScan);
 						downsampledStripes.add(newScan);
 					}

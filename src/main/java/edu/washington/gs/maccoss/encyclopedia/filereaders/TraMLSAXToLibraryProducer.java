@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Map.Entry;
 
 import javax.swing.event.ChangeEvent;
@@ -22,6 +23,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.ProgressInputStream;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
@@ -194,13 +196,14 @@ public class TraMLSAXToLibraryProducer extends DefaultHandler implements Runnabl
 				continue;
 			}
 
-			Pair<double[], float[]> peakArrays=Peak.toArrays(transitionList);
+			Triplet<double[], float[], Optional<float[]>> peakArrays=Peak.toArrays(transitionList);
 			
 			double precursorMZ=aaConstants.getChargedMass(precursor.peptideModSeq, precursor.chargeState);
 
 			HashSet<String> accessions=new HashSet<>();
 			accessions.add(precursor.proteinReference);
-			LibraryEntry libEntry=new LibraryEntry(sourceFile, accessions, precursorMZ, precursor.chargeState, precursor.peptideModSeq, 1, precursor.retentionTime, 0.0f, peakArrays.x, peakArrays.y, aaConstants);
+			LibraryEntry libEntry=new LibraryEntry(sourceFile, accessions, precursorMZ, precursor.chargeState, precursor.peptideModSeq, 1, precursor.retentionTime, 0.0f, peakArrays.x, peakArrays.y, Optional.empty(), // FIXME add ion mobility to parser
+					aaConstants);
 			entries.add(libEntry);
 		}
 	}

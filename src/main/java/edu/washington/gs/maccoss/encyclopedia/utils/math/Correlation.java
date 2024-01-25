@@ -3,6 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.utils.math;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
@@ -40,6 +41,18 @@ public class Correlation {
 		return sum;
 	}
 	
+	public static double getSpearmans(Spectrum predicted, Spectrum acquired, MassTolerance tolerance, Range exclusionRange) {
+		Pair<double[], double[]> arrays=getArrays(predicted, acquired, tolerance, exclusionRange);
+		if (arrays==null) return 0.0;
+		return getSpearmans(arrays.x, arrays.y);
+	}
+	
+	public static double getPearsons(Spectrum predicted, Spectrum acquired, MassTolerance tolerance, Range exclusionRange) {
+		Pair<double[], double[]> arrays=getArrays(predicted, acquired, tolerance, exclusionRange);
+		if (arrays==null) return 0.0;
+		return getPearsons(arrays.x, arrays.y);
+	}
+	
 	public static double getSpearmans(Spectrum predicted, Spectrum acquired, MassTolerance tolerance) {
 		Pair<double[], double[]> arrays=getArrays(predicted, acquired, tolerance);
 		if (arrays==null) return 0.0;
@@ -53,6 +66,9 @@ public class Correlation {
 	}
 
 	private static Pair<double[], double[]> getArrays(Spectrum predicted, Spectrum acquired, MassTolerance tolerance) {
+		return getArrays(predicted, acquired, tolerance, null);
+	}
+	private static Pair<double[], double[]> getArrays(Spectrum predicted, Spectrum acquired, MassTolerance tolerance, Range exclusionRange) {
 		double[] libraryMasses=predicted.getMassArray();
 		float[] libraryIntensities=predicted.getIntensityArray();
 		
@@ -67,26 +83,36 @@ public class Correlation {
 		while (true) {
 			int compare=tolerance.compareTo(libraryMasses[libraryIndex], spectrumMasses[spectrumIndex]);
 			if (compare==0) {
-				points.add(new XYPoint(libraryIntensities[libraryIndex], spectrumIntensities[spectrumIndex]));
+				if (exclusionRange==null||(!exclusionRange.contains(libraryMasses[libraryIndex])&&!exclusionRange.contains(spectrumMasses[spectrumIndex]))) {
+					points.add(new XYPoint(libraryIntensities[libraryIndex], spectrumIntensities[spectrumIndex]));
+				}
 				libraryIndex++;
 				spectrumIndex++;
 			} else if (compare>0) {
-				points.add(new XYPoint(0.0, spectrumIntensities[spectrumIndex]));
+				if (exclusionRange==null||!exclusionRange.contains(spectrumMasses[spectrumIndex])) {
+					points.add(new XYPoint(0.0, spectrumIntensities[spectrumIndex]));
+				}
 				spectrumIndex++;
 			} else {
-				points.add(new XYPoint(libraryIntensities[libraryIndex], 0.0));
+				if (exclusionRange==null||!exclusionRange.contains(libraryMasses[libraryIndex])) {
+					points.add(new XYPoint(libraryIntensities[libraryIndex], 0.0));
+				}
 				libraryIndex++;
 			}
 			if (libraryIndex>=libraryMasses.length) {
 				for (int i=spectrumIndex; i<spectrumIntensities.length; i++) {
-					points.add(new XYPoint(0.0, spectrumIntensities[spectrumIndex]));
+					if (exclusionRange==null||!exclusionRange.contains(spectrumMasses[spectrumIndex])) {
+						points.add(new XYPoint(0.0, spectrumIntensities[spectrumIndex]));
+					}
 				}
 				break;
 			}
 			if (spectrumIndex>=spectrumMasses.length) {
 
 				for (int i=libraryIndex; i<libraryIntensities.length; i++) {
-					points.add(new XYPoint(0.0, libraryIntensities[libraryIndex]));
+					if (exclusionRange==null||!exclusionRange.contains(libraryMasses[libraryIndex])) {
+						points.add(new XYPoint(0.0, libraryIntensities[libraryIndex]));
+					}
 				}
 				break;
 			}

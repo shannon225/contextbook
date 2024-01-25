@@ -3,6 +3,8 @@
 import java.awt.Dimension;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,9 +43,10 @@ import gnu.trove.list.array.TFloatArrayList;
 
 public class EncyclopediaElibPancreatitisParser {
 	private static final float pvalueThreshold = 0.05f;
-	public static boolean combineControls=false;
+	public static boolean combineControls=true;
 	//public static String[] sampleNames=new String[] {"CP", "AP", "Cont", "Frac"};
-	public static String[] sampleNames=combineControls?new String[] {"Chronic", "Acute", "Control"}:new String[] {"CP", "AP", "Cont 1", "Cont 2", "Frac"};
+	public static String[] sampleNames=combineControls?new String[] {"Chronic", "Acute", "Control", "Fracture"}:new String[] {"CP", "AP", "Cont 1", "Cont 2", "Frac"};
+	
 	//public static int[] tests=new int[] {0, 1};
 	//public static int[] controls=new int[] {2, 4};
 	
@@ -54,7 +57,9 @@ public class EncyclopediaElibPancreatitisParser {
 	//public static int[] controls=new int[] {1, 2, 3, 4};
 	
 	//public static int[] tests=new int[] {1, 4};
+	//public static int[] controls=new int[] {2, 3};
 	//public static int[] controls=new int[] {0, 2, 3};
+	//
 	public static HashMap<String, SampleCoordinate> sampleKey=new HashMap<>();
 
 	public static void main(String[] args) throws IOException, SQLException, DataFormatException {
@@ -63,7 +68,7 @@ public class EncyclopediaElibPancreatitisParser {
 		File file=new File("/Users/searleb/Documents/OSU/projects/maisam_pancreatitis/presentation/pancreatitis_analysis/032922_pancreatitis_120_quant_reports.elib");
 		//File file=new File("/Users/searleb/Documents/OSU/projects/maisam_pancreatitis/032922_pancreatitis_grant_dataset/032922_pancreatitis_120_quant_reports.elib");
 		//File stub=new File(file.getParent(), "pancreatitis_poster_120_boxplots");
-		File stub=new File(file.getParent(), "pain_120_boxplots");
+		File stub=new File(file.getParent(), "ap_versus_others/ap_vs_cp_120_boxplots");
 		//File stub=new File(file.getParent(), "fracture_120_boxplots");
 		FileUtils.deleteDirectory(stub);
 		
@@ -72,7 +77,6 @@ public class EncyclopediaElibPancreatitisParser {
 		for (int j = 0; j < tests.length; j++) {
 			testDirs[j]=new File(stub, sampleNames[tests[j]]+"_boxplots");
 			testDirs[j].mkdirs();
-
 		}
 		
 		//CoefficientOfVariationCalculator cvCalculator=new CoefficientOfVariationCalculator(sampleKey, sampleNames, 0.2f);
@@ -99,6 +103,8 @@ public class EncyclopediaElibPancreatitisParser {
 		//String[] keptAccessions=new String[] {"LV218_HUMAN"};
 		//String[] keptAccessions=new String[] {"FETUA_HUMAN", "CYTM_HUMAN", "A1AG1_HUMAN", "LV218_HUMAN"};
 		
+		//createClassifier(proteinReportFile, new HashSet<String>(Arrays.asList(keptAccessions)));
+		assessProteinSpecificPValues(testDirs, proteinReportFile, new File(stub, "volcano_report.csv"));
 		createClassifier(proteinReportFile, new HashSet<String>(Arrays.asList(keptAccessions)));
 		//assessProteinSpecificPValues(testDirs, proteinReportFile);
 	}
@@ -259,11 +265,14 @@ public class EncyclopediaElibPancreatitisParser {
 		return new Pair<>(train.values().toArray(new double[0][]), eval.values().toArray(new double[0][]));
 	}
 
-	private static void assessProteinSpecificPValues(File[] testDirs, File proteinReportFile) {
+	private static void assessProteinSpecificPValues(File[] testDirs, File proteinReportFile, File volcanoReportFile) throws IOException {
 		ArrayList<String> accessions=new ArrayList<String>();
 		TDoubleArrayList pvalues=new TDoubleArrayList();
 		ArrayList<TFloatArrayList[]> datasets=new ArrayList<TFloatArrayList[]>();
 		ArrayList<TDoubleArrayList[]> loggeddatasets=new ArrayList<TDoubleArrayList[]>();
+
+
+		PrintWriter out=new PrintWriter(volcanoReportFile);
 		
 		TableParser.parseTSV(proteinReportFile, new TableParserMuscle() {
 			
@@ -305,9 +314,11 @@ public class EncyclopediaElibPancreatitisParser {
 		
 		double[] fdrs=BenjaminiHochberg.calculateAdjustedPValues(pvalues.toArray());
 		for (int i = 0; i < fdrs.length; i++) {
-			if (fdrs[i]>pvalueThreshold) {
-				continue;
-			}
+//			if (fdrs[i]>pvalueThreshold) {
+//				continue;
+//			}
+			System.out.println(accessions.get(i).split(";")[0]+"\t"+fdrs[i]);
+			if (true) continue;
 			
 			TFloatArrayList[] rawdata=datasets.get(i);
 			
@@ -351,22 +362,23 @@ public class EncyclopediaElibPancreatitisParser {
 			}
 			
 			for (int j = 0; j < worstPValues.length; j++) {
-				if (worstPValues[j]<pvalueThreshold) {
-					String accession=accessions.get(i).split(";")[0];
-					
-					String adjective="Flat";
-					double shortestDistance=0;
-					if (direction[j]==-1) {
-						adjective="Down";
-						shortestDistance=greatestDistance[j];
-					} else if (direction[j]==1) {
-						adjective="Up";
-						shortestDistance=smallestDistance[j];
-					} else if (direction[j]==-2) {
-						// mixed
-						continue;
-					}
-					
+				String accession=accessions.get(i).split(";")[0];
+
+				String adjective="Flat";
+				double shortestDistance=0;
+				if (direction[j]==-1) {
+					adjective="Down";
+					shortestDistance=greatestDistance[j];
+				} else if (direction[j]==1) {
+					adjective="Up";
+					shortestDistance=smallestDistance[j];
+				} else if (direction[j]==-2) {
+					// mixed
+					//continue;
+				}
+				out.println(accession+","+shortestDistance+","+-Log.log10(fdrs[i]));
+				
+				if (worstPValues[j]<=pvalueThreshold&&fdrs[i]<=pvalueThreshold&&direction[j]!=-2) {
 					System.out.println(sampleNames[tests[j]]+"\t"+adjective+"\t"+accession+"\t"+fdrs[i]+"\t"+worstPValues[j]+"\t"+shortestDistance);	
 					ExtendedChartPanel panel=Charter.getBoxplotChart(accession, "", "Log2 Intensity", sampleNames, loggedrawdata);
 					
@@ -376,6 +388,8 @@ public class EncyclopediaElibPancreatitisParser {
 				}
 			}
 		}
+		out.flush();
+		out.close();
 	}
 
 	public static double[] log2(double[] v) {
@@ -444,26 +458,26 @@ public class EncyclopediaElibPancreatitisParser {
 			sampleKey.put("032922_pancreatitis_1ug_DIA_UPC_019_Cont_M_01.mzML", new SampleCoordinate(18,2));
 			sampleKey.put("032922_pancreatitis_1ug_DIA_UPC_023_Cont_F_01.mzML", new SampleCoordinate(19,2));
 			sampleKey.put("032922_pancreatitis_1ug_DIA_UPC_025_Cont_F_01.mzML", new SampleCoordinate(20,2));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPC026_Cont2_F_01.mzML", new SampleCoordinate(0,5));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPC027_Cont2_M_01.mzML", new SampleCoordinate(1,5));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPC029_Cont2_M_01.mzML", new SampleCoordinate(2,5));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPC_001_Cont2_F_01.mzML", new SampleCoordinate(3,5));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPC_002_Cont2_F_01.mzML", new SampleCoordinate(4,5));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPC_004_Cont2_F_01.mzML", new SampleCoordinate(5,5));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPC_005_Cont2_M_01.mzML", new SampleCoordinate(6,5));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPC_007_Cont2_F_01.mzML", new SampleCoordinate(7,5));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPC_008_Cont2_F_01.mzML", new SampleCoordinate(8,5));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPC_009_Cont2_M_01.mzML", new SampleCoordinate(9,5));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPC_011_Cont2_M_01.mzML", new SampleCoordinate(10,5));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPC_012_Cont2_F_01.mzML", new SampleCoordinate(11,5));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPC_013_Cont2_M_01.mzML", new SampleCoordinate(12,5));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPC_014_Cont2_M_01.mzML", new SampleCoordinate(13,5));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPC_015_Cont2_M_01.mzML", new SampleCoordinate(14,5));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPC_016_Cont2_F_01.mzML", new SampleCoordinate(15,5));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPC_017_Cont2_F_01.mzML", new SampleCoordinate(16,5));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPC_019_Cont2_M_01.mzML", new SampleCoordinate(17,5));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPC_023_Cont2_F_01.mzML", new SampleCoordinate(18,5));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPC_025_Cont2_F_01.mzML", new SampleCoordinate(19,5));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPC026_Cont2_F_01.mzML", new SampleCoordinate(0,2));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPC027_Cont2_M_01.mzML", new SampleCoordinate(1,2));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPC029_Cont2_M_01.mzML", new SampleCoordinate(2,2));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPC_001_Cont2_F_01.mzML", new SampleCoordinate(3,2));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPC_002_Cont2_F_01.mzML", new SampleCoordinate(4,2));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPC_004_Cont2_F_01.mzML", new SampleCoordinate(5,2));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPC_005_Cont2_M_01.mzML", new SampleCoordinate(6,2));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPC_007_Cont2_F_01.mzML", new SampleCoordinate(7,2));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPC_008_Cont2_F_01.mzML", new SampleCoordinate(8,2));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPC_009_Cont2_M_01.mzML", new SampleCoordinate(9,2));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPC_011_Cont2_M_01.mzML", new SampleCoordinate(10,2));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPC_012_Cont2_F_01.mzML", new SampleCoordinate(11,2));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPC_013_Cont2_M_01.mzML", new SampleCoordinate(12,2));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPC_014_Cont2_M_01.mzML", new SampleCoordinate(13,2));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPC_015_Cont2_M_01.mzML", new SampleCoordinate(14,2));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPC_016_Cont2_F_01.mzML", new SampleCoordinate(15,2));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPC_017_Cont2_F_01.mzML", new SampleCoordinate(16,2));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPC_019_Cont2_M_01.mzML", new SampleCoordinate(17,2));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPC_023_Cont2_F_01.mzML", new SampleCoordinate(18,2));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPC_025_Cont2_F_01.mzML", new SampleCoordinate(19,2));
 			sampleKey.put("032922_pancreatitis_1ug_DIA_2016_9510_003_CP_M_01.mzML", new SampleCoordinate(0,0));
 			sampleKey.put("032922_pancreatitis_1ug_DIA_2016_9510_004_CP_F_01.mzML", new SampleCoordinate(1,0));
 			sampleKey.put("032922_pancreatitis_1ug_DIA_2016_9510_006_CP_F_01.mzML", new SampleCoordinate(2,0));
@@ -514,37 +528,37 @@ public class EncyclopediaElibPancreatitisParser {
 			sampleKey.put("032922_pancreatitis_1ug_DIA_2016_9510_092_CP_M_01.mzML", new SampleCoordinate(47,0));
 			sampleKey.put("032922_pancreatitis_1ug_DIA_2016_9510_095_CP_F_01.mzML", new SampleCoordinate(48,0));
 			sampleKey.put("032922_pancreatitis_1ug_DIA_2016_9510_096_CP_M_01.mzML", new SampleCoordinate(49,0));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF050_Frac_M_01.mzML", new SampleCoordinate(0,2));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF051_Frac_F_01.mzML", new SampleCoordinate(1,2));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF054_Frac_F_01.mzML", new SampleCoordinate(2,2));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF057_Frac_M_01.mzML", new SampleCoordinate(3,2));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF058_Frac_M_01.mzML", new SampleCoordinate(4,2));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF060_Frac_F_01.mzML", new SampleCoordinate(5,2));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_002_Frac_F_01.mzML", new SampleCoordinate(6,2));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_003_Frac_F_01.mzML", new SampleCoordinate(7,2));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_005_Frac_F_01.mzML", new SampleCoordinate(8,2));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_006_Frac_F_01.mzML", new SampleCoordinate(9,2));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_008_Frac_M_01.mzML", new SampleCoordinate(10,2));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_009_Frac_M_01.mzML", new SampleCoordinate(11,2));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_011_Frac_F_01.mzML", new SampleCoordinate(12,2));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_012_Frac_M_01.mzML", new SampleCoordinate(13,2));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_013_Frac_F_01.mzML", new SampleCoordinate(14,2));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_015_Frac_M_01.mzML", new SampleCoordinate(15,2));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_016_Frac_M_01.mzML", new SampleCoordinate(16,2));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_018_Frac_M_01.mzML", new SampleCoordinate(17,2));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_019_Frac_M_01.mzML", new SampleCoordinate(18,2));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_020_Frac_M_01.mzML", new SampleCoordinate(19,2));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_021_Frac_F_01.mzML", new SampleCoordinate(20,2));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_022_Frac_F_01.mzML", new SampleCoordinate(21,2));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_029_Frac_F_01.mzML", new SampleCoordinate(22,2));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_030_Frac_M_01.mzML", new SampleCoordinate(23,2));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_031_Frac_M_01.mzML", new SampleCoordinate(24,2));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_033_Frac_F_01.mzML", new SampleCoordinate(25,2));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_038_Frac_M_01.mzML", new SampleCoordinate(26,2));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_039_Frac_F_01.mzML", new SampleCoordinate(27,2));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_040_Frac_M_01.mzML", new SampleCoordinate(28,2));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_045_Frac_M_01.mzML", new SampleCoordinate(29,2));
-			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_047_Frac_F_01.mzML", new SampleCoordinate(30,2));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF050_Frac_M_01.mzML", new SampleCoordinate(0,3));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF051_Frac_F_01.mzML", new SampleCoordinate(1,3));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF054_Frac_F_01.mzML", new SampleCoordinate(2,3));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF057_Frac_M_01.mzML", new SampleCoordinate(3,3));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF058_Frac_M_01.mzML", new SampleCoordinate(4,3));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF060_Frac_F_01.mzML", new SampleCoordinate(5,3));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_002_Frac_F_01.mzML", new SampleCoordinate(6,3));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_003_Frac_F_01.mzML", new SampleCoordinate(7,3));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_005_Frac_F_01.mzML", new SampleCoordinate(8,3));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_006_Frac_F_01.mzML", new SampleCoordinate(9,3));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_008_Frac_M_01.mzML", new SampleCoordinate(10,3));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_009_Frac_M_01.mzML", new SampleCoordinate(11,3));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_011_Frac_F_01.mzML", new SampleCoordinate(12,3));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_012_Frac_M_01.mzML", new SampleCoordinate(13,3));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_013_Frac_F_01.mzML", new SampleCoordinate(14,3));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_015_Frac_M_01.mzML", new SampleCoordinate(15,3));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_016_Frac_M_01.mzML", new SampleCoordinate(16,3));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_018_Frac_M_01.mzML", new SampleCoordinate(17,3));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_019_Frac_M_01.mzML", new SampleCoordinate(18,3));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_020_Frac_M_01.mzML", new SampleCoordinate(19,3));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_021_Frac_F_01.mzML", new SampleCoordinate(20,3));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_022_Frac_F_01.mzML", new SampleCoordinate(21,3));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_029_Frac_F_01.mzML", new SampleCoordinate(22,3));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_030_Frac_M_01.mzML", new SampleCoordinate(23,3));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_031_Frac_M_01.mzML", new SampleCoordinate(24,3));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_033_Frac_F_01.mzML", new SampleCoordinate(25,3));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_038_Frac_M_01.mzML", new SampleCoordinate(26,3));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_039_Frac_F_01.mzML", new SampleCoordinate(27,3));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_040_Frac_M_01.mzML", new SampleCoordinate(28,3));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_045_Frac_M_01.mzML", new SampleCoordinate(29,3));
+			sampleKey.put("032922_pancreatitis_1ug_DIA_UPF_047_Frac_F_01.mzML", new SampleCoordinate(30,3));
 		} else {
 			sampleKey.put("032922_pancreatitis_1ug_DIA_5156_AP_F_01.mzML", new SampleCoordinate(0,1));
 			sampleKey.put("032922_pancreatitis_1ug_DIA_5157_AP_M_01.mzML", new SampleCoordinate(1,1));

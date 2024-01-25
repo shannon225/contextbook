@@ -4,6 +4,7 @@ import java.awt.Dimension;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
@@ -29,7 +30,7 @@ public class LibraryEntryTest extends TestCase {
 
 		final AminoAcidConstants aaConstants = new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
 
-		LibraryEntry entry=new LibraryEntry("", new HashSet<String>(), 518.73841, (byte)2, "PEPT[+80]IDER", 1, 0.0f, 0.0f, massArray, intensityArray, aaConstants);
+		LibraryEntry entry=new LibraryEntry("", new HashSet<String>(), 518.73841, (byte)2, "PEPT[+80]IDER", 1, 0.0f, 0.0f, massArray, intensityArray, Optional.empty(), aaConstants);
 		LibraryEntry reverse=entry.getDecoy(PARAMETERS);
 		assertEquals("PEDIT[+79.966331]PER", reverse.getPeptideModSeq());
 		
@@ -84,7 +85,7 @@ public class LibraryEntryTest extends TestCase {
 				1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
 		boolean[] quantifiedIons=new boolean[correlationArray.length]; Arrays.fill(quantifiedIons, true);
 		LibraryEntry entry=new LibraryEntry("VillenJ_Exactive_HumanPhosphoproteome.blib", new HashSet<String>(), 1, 641.280032, (byte) 3, "NTPS[+79.966331]QHSHSIQHSPER", 2, 33.986168f, 2.04E-4f, massArray, intensityArray,
-				correlationArray, quantifiedIons, parameters.getAAConstants());
+				correlationArray, quantifiedIons, Optional.empty(), parameters.getAAConstants());
 		
 		AnnotatedLibraryEntry annotated=new AnnotatedLibraryEntry(entry, parameters);
 		for (int ion=0; ion<annotated.getIonAnnotations().length; ion++) {

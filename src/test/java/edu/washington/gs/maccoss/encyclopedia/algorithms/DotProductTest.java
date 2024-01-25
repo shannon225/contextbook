@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
@@ -40,9 +41,9 @@ public class DotProductTest extends TestCase {
 	}
 	
 	public LibraryEntry getEntry(double[] masses, float[] intensities) {
-		return new LibraryEntry("", new HashSet<String>(), 1, (byte)1, "", 1, 1, 1, masses, intensities, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
+		return new LibraryEntry("", new HashSet<String>(), 1, (byte)1, "", 1, 1, 1, masses, intensities, Optional.empty(), new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
 	}
 	public FragmentScan getStripe(double[] masses, float[] intensities) {
-		return new FragmentScan("", "", 1, 1, 0, 0f, 1, 1, masses, intensities);
+		return new FragmentScan("", "", 1, 1, 0, 0f, 1, 1, masses, intensities, Optional.empty());
 	}
 }

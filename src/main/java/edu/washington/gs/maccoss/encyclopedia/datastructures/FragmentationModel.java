@@ -95,7 +95,7 @@ public class FragmentationModel {
 		boolean[] unitQuantitativeIons=new boolean[masses.length];
 		Arrays.fill(unitQuantitativeIons, true);
 
-		return new AnnotatedLibraryEntry(filename, accessions, 1, precursorMZ, precursorCharge, sequence, 1, retentionTime, 0.0f, masses, unitIntensities, unitCorrelation, unitQuantitativeIons, annotationList.toArray(new FragmentIon[annotationList.size()]), isDecoy, params.getAAConstants());
+		return new AnnotatedLibraryEntry(filename, accessions, 1, precursorMZ, precursorCharge, sequence, 1, retentionTime, 0.0f, masses, unitIntensities, unitCorrelation, unitQuantitativeIons, annotationList.toArray(new FragmentIon[annotationList.size()]), Optional.empty(), isDecoy, params.getAAConstants());
 	}
 	public double[] getMasses() {
 		return masses;

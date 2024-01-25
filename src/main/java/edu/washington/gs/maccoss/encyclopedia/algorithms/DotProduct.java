@@ -1,6 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
 import java.util.ArrayList;
+import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
@@ -10,6 +11,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.IonType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakScores;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakScoresWithIonData;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 
 //@Immutable
@@ -78,6 +80,7 @@ public class DotProduct implements PSMPeakScorer {
 		
 		double[] acquiredMasses=spectrum.getMassArray();
 		float[] acquiredIntensities=spectrum.getIntensityArray();
+		Optional<float[]> ionMobilityArray=spectrum.getIonMobilityArray();
 
 		ArrayList<PeakScores> scoredPeaks=new ArrayList<PeakScores>();
 		for (FragmentIon targetIon : ions) {
@@ -100,6 +103,9 @@ public class DotProduct implements PSMPeakScorer {
 				float intensity=0.0f;
 				float bestPeakIntensity=0.0f;
 				float deltaMass=0.0f;
+				boolean hasIMS=false;
+				float ionMobility=0.0f;
+				
 				for (int j=0; j<indicies.length; j++) {
 					intensity+=acquiredIntensities[indicies[j]];
 					
@@ -107,11 +113,16 @@ public class DotProduct implements PSMPeakScorer {
 						bestPeakIntensity=acquiredIntensities[indicies[j]];
 
 						deltaMass=(float)acquiredTolerance.getDeltaScore(target, acquiredMasses[indicies[j]]);
+						if (ionMobilityArray.isPresent()) {
+							hasIMS=true;
+							ionMobility=ionMobilityArray.get()[indicies[j]];
+						}
 					}
 				}
 				float peakScore=predictedIntensity*intensity*maxCorrelation;
 				if (intensity>0.0f) {
-					scoredPeaks.add(new PeakScores(peakScore, targetIon, deltaMass));
+					Optional<Float> maybeIonMobility=hasIMS?Optional.of(ionMobility/intensity):Optional.empty();
+					scoredPeaks.add(new PeakScoresWithIonData(peakScore, targetIon, deltaMass, maybeIonMobility));
 				} else {
 					scoredPeaks.add(null);
 				}

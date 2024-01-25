@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Optional;
 import java.util.StringTokenizer;
 import java.util.concurrent.BlockingQueue;
 
@@ -14,6 +15,7 @@ import javax.swing.event.ChangeListener;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.ProgressInputStream;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 
@@ -62,8 +64,8 @@ public class MGFtoMSMSProducer implements MSMSProducer {
 					if (peaks.size()>0) {
 						// add spectrum
 						count++;
-						Pair<double[], float[]> arrays=Peak.toArrays(peaks);
-						FragmentScan scan=new FragmentScan(title, "", count, rtInSecs, 1, null, mz-0.01, mz+0.01, arrays.x, arrays.y, charge);
+						Triplet<double[], float[], Optional<float[]>> arrays=Peak.toArrays(peaks);
+						FragmentScan scan=new FragmentScan(title, "", count, rtInSecs, 1, null, mz-0.01, mz+0.01, arrays.x, arrays.y, arrays.z, charge);
 						spectra.add(scan);
 						
 						if (spectra.size()>1000) {

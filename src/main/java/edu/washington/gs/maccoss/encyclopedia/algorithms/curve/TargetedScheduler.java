@@ -218,7 +218,7 @@ public class TargetedScheduler {
 			if (count<fittingParams.getTargetTotalNumberOfPeptides()) {
 				if (list.size()<fittingParams.getMaxNumberPeptidesPerProtein()) {
 
-					float rtInSec = rtAlignment.getAlignedRTInSec(entry, false);
+					float rtInSec = rtAlignment.getAlignedRTInSec(entry, true);
 					float[] testDensity=DilutionCurveFitter.incrementDensity(rtInSec, fittingParams.getWindowInMin(rtInSec), assayDensity);
 					for (int i = 0; i < testDensity.length; i++) {
 						if (testDensity[i]>fittingParams.getAssayMaxDensity()) {
@@ -250,7 +250,7 @@ public class TargetedScheduler {
 			ArrayList<LibraryEntry> list=targetPeptidesByProtein.get(key);
 			for (LibraryEntry entry : list) {
 				float rtInSec = rtAlignment.getAlignedRTInSec(entry, false);
-				DilutionCurveFitter.addPeptideToAssay(assayWriter, entry, rtInSec, fittingParams.getWindowInMin(rtInSec));
+				DilutionCurveFitter.addPeptideToAssay(assayWriter, entry, rtInSec, fittingParams);
 				targetEntries.add(entry.updateRetentionTime(rtInSec));
 				count++;
 			}

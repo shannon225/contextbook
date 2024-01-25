@@ -51,6 +51,11 @@ public class DilutionCurveFitting8HzWideParameters implements AbstractDilutionCu
 	public boolean isTargetedProtein(String accession) {
 		return accession.indexOf(targetAccessionNumberKeyword)>=0;
 	}
+	
+	@Override
+	public boolean isEliminatedPeptide(String peptideModSeq) {
+		return false;
+	}
 
 	public boolean isRequireAlignmentRT() {
 		return requireAlignmentRT;
@@ -58,5 +63,15 @@ public class DilutionCurveFitting8HzWideParameters implements AbstractDilutionCu
 
 	public boolean isUseLineNoise() {
 		return useLineNoise;
+	}
+	
+	@Override
+	public Float getMinimumIntensity() {
+		return null;
+	}
+	
+	@Override
+	public float getMZOffset() {
+		return 0;
 	}
 }

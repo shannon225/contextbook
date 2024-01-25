@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.precursor;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.IsotopicDistributionCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
@@ -126,12 +127,20 @@ public class IntegratedPeptide implements HasRetentionTime {
 	public ArrayList<IntegratedLibraryEntry> integrate(SearchParameters params) {
 		ArrayList<PeakTrace<PrecursorIon>> traces=getTraces(false, false);
 		TFloatArrayList rts=new TFloatArrayList();
+		boolean hasIMS=false;
+		TFloatArrayList imsValues=new TFloatArrayList();
 		for (PSMScoredSpectrum pep : psms) {
 			rts.add(pep.getRetentionTimeInSec());
+			if (pep.getMsms().getIonMobilityArray().isPresent()) {
+				hasIMS=true;
+				imsValues.add(QuickMedian.median(pep.getMsms().getIonMobilityArray().get()));
+			}
 		}
 		
+		Optional<Float> ionMobility=hasIMS?Optional.of(QuickMedian.median(imsValues.toArray())):Optional.empty();
+		
 		float[] isotopicDistribution=IsotopicDistributionCalculator.getIsotopeDistribution(peptideModSeq, params.getAAConstants());
-		ArrayList<TransitionRefinementData> trd=PrecursorIntegrator.integratePeptide(peptideModSeq, isotopicDistribution, rts.toArray(), traces, params);
+		ArrayList<TransitionRefinementData> trd=PrecursorIntegrator.integratePeptide(peptideModSeq, isotopicDistribution, rts.toArray(), ionMobility, traces, params);
 		
 		ArrayList<IntegratedLibraryEntry> entries=new ArrayList<>();
 		for (TransitionRefinementData data : trd) {

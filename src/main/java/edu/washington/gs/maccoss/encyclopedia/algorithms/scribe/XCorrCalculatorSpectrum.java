@@ -14,7 +14,7 @@ public class XCorrCalculatorSpectrum extends FragmentScan {
 	private final int numPeaks;
 	
 	public XCorrCalculatorSpectrum(FragmentScan stripe, SearchParameters params) {
-		super(stripe.getSpectrumName(), stripe.getPrecursorName(), stripe.getSpectrumIndex(), stripe.getScanStartTime(), stripe.getFraction(), stripe.getIonInjectionTime(), stripe.getIsolationWindowLower(), stripe.getIsolationWindowUpper(), stripe.getMassArray(), stripe.getIntensityArray());
+		super(stripe.getSpectrumName(), stripe.getPrecursorName(), stripe.getSpectrumIndex(), stripe.getScanStartTime(), stripe.getFraction(), stripe.getIonInjectionTime(), stripe.getIsolationWindowLower(), stripe.getIsolationWindowUpper(), stripe.getMassArray(), stripe.getIntensityArray(), stripe.getIonMobilityArray());
 
 		SparseXCorrSpectrum xcorrSpectrum=SparseXCorrCalculator.normalize(stripe, new Range(stripe.getIsolationWindowLower(), stripe.getIsolationWindowUpper()), false, params);
 		numPeaks=xcorrSpectrum.getIndices().length;

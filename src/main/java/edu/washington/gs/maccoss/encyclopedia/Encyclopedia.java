@@ -379,6 +379,7 @@ public class Encyclopedia {
 
 				ArrayList<FragmentScan> stripes = stripefile.getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, true);
 				Collections.sort(stripes);
+				Logger.logLine("Found "+stripes.size()+" total MS/MS in this window");
 
 				if (stripes.size() < 10) {
 					// A stripe with very few scans indicates that either

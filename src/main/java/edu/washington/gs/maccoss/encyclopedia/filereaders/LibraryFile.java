@@ -50,9 +50,10 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			new Version(0, 1, 5), new Version(0, 1, 6), new Version(0, 1, 7), new Version(0, 1, 8), new Version(0, 1, 9),
 			new Version(0, 1, 10), new Version(0, 1, 11), new Version(0, 1, 12), new Version(0, 1, 13), new Version(0, 1, 14),
 			new Version(0, 1, 15),
-			new Version(0, 1, 16)
+			new Version(0, 1, 16),
+			new Version(0, 1, 17)
 	};
-	public static final Version MOST_RECENT_VERSION=new Version(0, 1, 16);
+	public static final Version MOST_RECENT_VERSION=new Version(0, 1, 17);
 
 	private File userFile=null;
 	private File tempFile;
@@ -650,7 +651,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			double[] topNMasses=pair.x;
 			float[] topNIntensities=pair.y;
 			float[] topNCorrelations=pair.z;
-			topN=new QuantitativeDIAData(data.getPeptideModSeq(), data.getPrecursorCharge(), data.getApexRT(), data.getRange(), topNMasses, topNIntensities, topNCorrelations, params.getAAConstants());
+			topN=new QuantitativeDIAData(data.getPeptideModSeq(), data.getPrecursorCharge(), data.getApexRT(), data.getRange(), topNMasses, topNIntensities, topNCorrelations, data.getIonMobility(), params.getAAConstants());
 		}
 
 		float[] correlationArray=data.getCorrelationArray();
@@ -945,7 +946,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		Connection c=getConnection();
 		try {
 			PreparedStatement prep=c.prepareStatement(
-					"INSERT INTO entries (PrecursorMZ, PrecursorCharge, PeptideModSeq, PeptideSeq, Copies, RTInSeconds, Score, MassEncodedLength, MassArray, IntensityEncodedLength, IntensityArray, QuantifiedIonsArray, CorrelationEncodedLength, CorrelationArray, RTInSecondsStart, RTInSecondsStop, MedianChromatogramEncodedLength, MedianChromatogramArray, SourceFile) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+					"INSERT INTO entries (PrecursorMZ, PrecursorCharge, PeptideModSeq, PeptideSeq, Copies, RTInSeconds, Score, MassEncodedLength, MassArray, IntensityEncodedLength, IntensityArray, QuantifiedIonsArray, CorrelationEncodedLength, CorrelationArray, RTInSecondsStart, RTInSecondsStop, MedianChromatogramEncodedLength, MedianChromatogramArray, IonMobility, SourceFile) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 			try {
 				for (LibraryEntry entry : entries) {
 					if (requireAccessions&&entry.getAccessions().size()==0)
@@ -998,8 +999,15 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 						prep.setNull(17, Types.INTEGER);
 						prep.setNull(18, Types.BLOB);
 					}
+					
+					Optional<Float> imsObject=entry.getIonMobility();
+					if (imsObject.isPresent()) {
+						prep.setFloat(19, imsObject.get());	
+					} else {
+						prep.setNull(19, Types.FLOAT);
+					}
 
-					prep.setString(19, entry.getSource());
+					prep.setString(20, entry.getSource());
 					prep.addBatch();
 				}
 				prep.executeBatch();
@@ -1058,7 +1066,8 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			final ArrayList<LibraryEntry> allEntries=new ArrayList<LibraryEntry>();
 			try (PreparedStatement s=c.prepareStatement("select "+"e.PrecursorMZ, "+"e.PrecursorCharge, "+"e.PeptideModSeq, "+"e.Copies, "+"e.RTInSeconds, "+"e.Score, "+"e.MassEncodedLength, "
 					+"e.MassArray, "+"e.IntensityEncodedLength, "+"e.IntensityArray, "+"e.CorrelationEncodedLength, "+"e.CorrelationArray blob, "+"e.QuantifiedIonsArray, "+"e.RTInSecondsStart," +
-					"e.RTInSecondsStop, "+"e.MedianChromatogramEncodedLength, "+"e.MedianChromatogramArray, "+"group_concat(p.ProteinAccession, '"+PSMData.ACCESSION_TOKEN+"') ProteinAccessions, "+"e.SourceFile "+"from "
+					"e.RTInSecondsStop, "+"e.MedianChromatogramEncodedLength, "+"e.MedianChromatogramArray, "+"group_concat(p.ProteinAccession, '"+PSMData.ACCESSION_TOKEN+"') ProteinAccessions, "+"e.SourceFile, "+"e.IonMobility "
+					+"from "
 					+"entries e "+"left join peptidetoprotein p "+"on "+"e.PeptideSeq=p.PeptideSeq "+"and not p.isdecoy "+"where e.PeptideModSeq = ? "+"and e.PrecursorCharge = ? "+"group by e.rowid;")) {
 				for (PeptidePrecursor peptidePrecursor : peptides) {
 					s.setString(1, peptidePrecursor.getPeptideModSeq());
@@ -1141,11 +1150,20 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 
 			HashSet<String> accessions=PSMData.stringToAccessions(rs.getString(18));
 			String sourceFile=rs.getString(19);
+			
+			Optional<Float> ionMobility;
+			float ims=rs.getFloat(20);
+			if (rs.wasNull()) {
+				ionMobility=Optional.empty();
+			} else {
+				ionMobility=Optional.of(ims);
+			}
+			
 			if (correlationEncodedLength==0) {
-				entry.add(new LibraryEntry(sourceFile, accessions, 1, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, aaConstants));
+				entry.add(new LibraryEntry(sourceFile, accessions, 1, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, ionMobility, aaConstants));
 			} else {
 				entry.add(new ChromatogramLibraryEntry(sourceFile, accessions, 1, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray,
-						correlationArray, quantifiedIonsArray, medianChromatogramArray, new Range(rtInSecondsStart, rtInSecondsStop), aaConstants));
+						correlationArray, quantifiedIonsArray, medianChromatogramArray, new Range(rtInSecondsStart, rtInSecondsStop), ionMobility, aaConstants));
 			}
 		}
 		return entry;
@@ -1230,7 +1248,8 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					+ "e.IntensityEncodedLength, " 
 					+ "e.IntensityArray, "
 					+ "e.QuantifiedIonsArray, "
-					+ "e.SourceFile "
+					+ "e.SourceFile, "
+					+ "e.IonMobility "
 					+ "from " 
 					+ "entries e "
 					+ "where e.PrecursorMz between ? and ?;")) {
@@ -1256,7 +1275,16 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 						intensityArray=General.protectedSqrt(intensityArray);
 					}
 					String sourceFile=rs.getString(12);
-					entry.add(new UnlinkedLibraryEntry(sourceFile, 1, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, aaConstants, false, false, false, peptideSeq, this));
+					
+					Optional<Float> ionMobility;
+					float ims=rs.getFloat(13);
+					if (rs.wasNull()) {
+						ionMobility=Optional.empty();
+					} else {
+						ionMobility=Optional.of(ims);
+					}
+					
+					entry.add(new UnlinkedLibraryEntry(sourceFile, 1, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, ionMobility, aaConstants, false, false, false, peptideSeq, this));
 				}
 
 				return entry;
@@ -1277,7 +1305,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		try (Connection c=getConnection()) {
 			try (PreparedStatement s=c.prepareStatement("select "+"e.PrecursorMZ, "+"e.PrecursorCharge, "+"e.PeptideModSeq, "+"e.Copies, "+"e.RTInSeconds, "+"e.Score, "+"e.MassEncodedLength, "
 					+"e.MassArray, "+"e.IntensityEncodedLength, "+"e.IntensityArray, "+"e.CorrelationEncodedLength, "+"e.CorrelationArray blob, "+"e.QuantifiedIonsArray blob, "+"e.RTInSecondsStart, "+"e.RTInSecondsStop, "
-					+"e.MedianChromatogramEncodedLength, "+"e.MedianChromatogramArray, "+"group_concat(p.ProteinAccession, '"+PSMData.ACCESSION_TOKEN+"') ProteinAccessions, "+"e.SourceFile "+"from "
+					+"e.MedianChromatogramEncodedLength, "+"e.MedianChromatogramArray, "+"group_concat(p.ProteinAccession, '"+PSMData.ACCESSION_TOKEN+"') ProteinAccessions, "+"e.SourceFile, "+"e.IonMobility "+"from "
 					+"entries e "+"left join peptidetoprotein p "+"on "+"e.PeptideSeq=p.PeptideSeq "+"and not p.isdecoy "+"where e.PrecursorMz between ? and ? "+"group by e.rowid;")) {
 				s.setFloat(1, precursorMz.getStart());
 				s.setFloat(2, precursorMz.getStop());
@@ -1333,11 +1361,20 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					String proteinToken=rs.getString(18);
 					HashSet<String> accessions=PSMData.stringToAccessions(proteinToken);
 					String sourceFile=rs.getString(19);
+					
+					Optional<Float> ionMobility;
+					float ims=rs.getFloat(20);
+					if (rs.wasNull()) {
+						ionMobility=Optional.empty();
+					} else {
+						ionMobility=Optional.of(ims);
+					}
+					
 					if (correlationEncodedLength==0) {
-						entry.add(new LibraryEntry(sourceFile, accessions, 1, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, aaConstants));
+						entry.add(new LibraryEntry(sourceFile, accessions, 1, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, ionMobility, aaConstants));
 					} else {
 						entry.add(new ChromatogramLibraryEntry(sourceFile, accessions, 1, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray,
-								correlationArray, quantifiedIonsArray, medianChromatogramArray, new Range(rtInSecondsStart, rtInSecondsStop), aaConstants));
+								correlationArray, quantifiedIonsArray, medianChromatogramArray, new Range(rtInSecondsStart, rtInSecondsStop), ionMobility, aaConstants));
 					}
 				}
 
@@ -1370,7 +1407,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 		try (Connection c=getConnection()) {
 			try (PreparedStatement s=c.prepareStatement("select "+"e.PrecursorMZ, "+"e.PrecursorCharge, "+"e.PeptideModSeq, "+"e.Copies, "+"e.RTInSeconds, "+"e.Score, "+"e.MassEncodedLength, "
 					+"e.MassArray, "+"e.IntensityEncodedLength, "+"e.IntensityArray, "+"e.CorrelationEncodedLength, "+"e.CorrelationArray blob, "+"e.QuantifiedIonsArray blob, "+"e.RTInSecondsStart, "+"e.RTInSecondsStop, "
-					+"e.MedianChromatogramEncodedLength, "+"e.MedianChromatogramArray, "+"group_concat(p.ProteinAccession, '"+PSMData.ACCESSION_TOKEN+"') ProteinAccessions, "+"e.SourceFile "+"from "
+					+"e.MedianChromatogramEncodedLength, "+"e.MedianChromatogramArray, "+"group_concat(p.ProteinAccession, '"+PSMData.ACCESSION_TOKEN+"') ProteinAccessions, "+"e.SourceFile, "+"e.IonMobility "+"from "
 					+"entries e "+"left join peptidetoprotein p "+"on "+"e.PeptideSeq=p.PeptideSeq "+"and not p.isdecoy "+"group by e.rowid")) {
 
 				ResultSet rs=s.executeQuery();
@@ -1424,11 +1461,20 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 
 					HashSet<String> accessions=PSMData.stringToAccessions(rs.getString(18));
 					String sourceFile=rs.getString(19);
+					
+					Optional<Float> ionMobility;
+					float ims=rs.getFloat(20);
+					if (rs.wasNull()) {
+						ionMobility=Optional.empty();
+					} else {
+						ionMobility=Optional.of(ims);
+					}
+					
 					if (correlationEncodedLength==0) {
-						entry.add(new LibraryEntry(sourceFile, accessions, 1, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, aaConstants));
+						entry.add(new LibraryEntry(sourceFile, accessions, 1, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, ionMobility, aaConstants));
 					} else {
 						entry.add(new ChromatogramLibraryEntry(sourceFile, accessions, 1, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray,
-								correlationArray, quantifiedIonsArray, medianChromatogramArray, new Range(rtInSecondsStart, rtInSecondsStop), aaConstants));
+								correlationArray, quantifiedIonsArray, medianChromatogramArray, new Range(rtInSecondsStart, rtInSecondsStop), ionMobility, aaConstants));
 					}
 				}
 
@@ -1464,7 +1510,8 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
                 "l.LocalizationIons, " +
                 "l.NumberOfMods, " +
                 "l.NumberOfModifiableResidues, " +
-                "l.isSiteSpecific "+
+                "l.isSiteSpecific, "+
+                "e.IonMobility "+
                 "from " +
                 "peptidelocalizations l, " +
                 "entries e " +
@@ -1540,11 +1587,19 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 					int numberOfMods=rs.getInt(23);
 					int numberOfModifiableResidues=rs.getInt(24);
 					boolean isSiteSpecific=rs.getBoolean(25);
+					
+					Optional<Float> ionMobility;
+					float ims=rs.getFloat(26);
+					if (rs.wasNull()) {
+						ionMobility=Optional.empty();
+					} else {
+						ionMobility=Optional.of(ims);
+					}
 
 					if (correlationEncodedLength!=0) {
 						entry.add(new LocalizedLibraryEntry(sourceFile, accessions, 1, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray,
 								correlationArray, quantifiedIonsArray, medianChromatogramArray, new Range(rtInSecondsStart, rtInSecondsStop), peptideAnnotation, localizationScore, localizationIons,
-								numberOfModifiableResidues, numberOfMods, isSiteSpecific, aaConstants));
+								numberOfModifiableResidues, numberOfMods, isSiteSpecific, ionMobility, aaConstants));
 					}
 				}
 
@@ -1708,7 +1763,11 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 						if (userFile!=null) {
 							if (!KEEP_QUIET) Logger.logLine("Updating library to "+new Version(0, 1, 15));
 						}
-						s.execute("ALTER TABLE entries ADD COLUMN QuantifiedIonsArray blob");
+						try {
+							s.execute("ALTER TABLE entries ADD COLUMN QuantifiedIonsArray blob");
+						} catch (SQLException e) {
+							Logger.errorLine("Attempted to upgrade library to 0.1.15, but already updated! ("+e.getMessage()+")");
+						}
 						updated=true;
 					}
 
@@ -1716,8 +1775,24 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 						if (userFile!=null) {
 							if (!KEEP_QUIET) Logger.logLine("Updating library to "+new Version(0, 1, 16));
 						}
-						s.execute("ALTER TABLE peptidequants ADD COLUMN QuantIonCorrelationLength int");
-						s.execute("ALTER TABLE peptidequants ADD COLUMN QuantIonCorrelationArray blob");
+						try {
+							s.execute("ALTER TABLE peptidequants ADD COLUMN QuantIonCorrelationLength int");
+							s.execute("ALTER TABLE peptidequants ADD COLUMN QuantIonCorrelationArray blob");
+						} catch (SQLException e) {
+							Logger.errorLine("Attempted to upgrade library to 0.1.16, but already updated! ("+e.getMessage()+")");
+						}
+						updated=true;
+					}
+
+					if (new Version(0, 1, 17).amIAbove(version)&&version.amIAbove(new Version(0, 0, 9))) {
+						if (userFile!=null) {
+							if (!KEEP_QUIET) Logger.logLine("Updating library to "+new Version(0, 1, 17)+" from "+version);
+						}
+						try {
+							s.execute("ALTER TABLE entries ADD COLUMN IonMobility double");
+						} catch (SQLException e) {
+							Logger.errorLine("Attempted to upgrade library to 0.1.17, but already updated! ("+e.getMessage()+")");
+						}
 						updated=true;
 					}
 				}
@@ -1730,7 +1805,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 																														// )");
 
 				s.execute("CREATE TABLE IF NOT EXISTS entries ( "
-						+"PrecursorMz double not null, PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, Copies int not null, RTInSeconds double not null, Score double not null, MassEncodedLength int not null, MassArray blob not null, IntensityEncodedLength int not null, IntensityArray blob not null, CorrelationEncodedLength int, CorrelationArray blob, QuantifiedIonsArray blob, RTInSecondsStart double, RTInSecondsStop double, MedianChromatogramEncodedLength int, MedianChromatogramArray blob, SourceFile string not null "
+						+"PrecursorMz double not null, PrecursorCharge int not null, PeptideModSeq string not null, PeptideSeq string not null, Copies int not null, RTInSeconds double not null, Score double not null, MassEncodedLength int not null, MassArray blob not null, IntensityEncodedLength int not null, IntensityArray blob not null, CorrelationEncodedLength int, CorrelationArray blob, QuantifiedIonsArray blob, RTInSecondsStart double, RTInSecondsStop double, IonMobility double, MedianChromatogramEncodedLength int, MedianChromatogramArray blob, SourceFile string not null "
 						+")"); // +"UNIQUE (PrecursorCharge, PeptideModSeq,
 								// SourceFile) )");
 
@@ -1827,6 +1902,7 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 				s.execute("create index if not exists 'PeptideModSeq_PrecursorCharge_SourceFile_Entries_index' on 'entries' ('PeptideModSeq' ASC, 'PrecursorCharge' ASC, 'SourceFile' ASC)");
 				s.execute("create index if not exists 'PeptideSeq_Entries_index' on 'entries' ('PeptideSeq' ASC)");
 				s.execute("create index if not exists 'PrecursorMz_Entries_index' on 'entries' ('PrecursorMz' ASC)");
+				s.execute("create index if not exists 'IonMobility_Entries_index' on 'entries' ('IonMobility' ASC)");
 
 				s.execute("create index if not exists 'PeptideModSeq_PrecursorCharge_SourceFile_Peptides_index' on 'peptidequants' ('PeptideModSeq' ASC, 'PrecursorCharge' ASC, 'SourceFile' ASC)");
 				s.execute("create index if not exists 'PeptideSeq_Peptides_index' on 'peptidequants' ('PeptideSeq' ASC)");

@@ -436,38 +436,4 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 		
 		return new FloatPair(xTandem, scribe);
 	}
-
-	static Spectrum getSpectrum(final double[] masses, final float[] intensities, final float scanStartTime, final double mz) {
-		return new Spectrum() {
-			@Override
-			public float getTIC() {
-				return General.sum(intensities);
-			}
-
-			@Override
-			public String getSpectrumName() {
-				return Double.toString(mz)+","+Float.toString(scanStartTime);
-			}
-
-			@Override
-			public float getScanStartTime() {
-				return scanStartTime;
-			}
-
-			@Override
-			public double getPrecursorMZ() {
-				return mz;
-			}
-
-			@Override
-			public double[] getMassArray() {
-				return masses;
-			}
-
-			@Override
-			public float[] getIntensityArray() {
-				return intensities;
-			}
-		};
-	}
 }

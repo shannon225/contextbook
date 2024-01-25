@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.StringTokenizer;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
@@ -231,7 +232,8 @@ public class MaxquantMSMSConverter {
 				accessions.add(PeptideUtils.getPeptideSeq(peptide.peptideModSeq));
 			}
 			
-			LibraryEntry entry=new LibraryEntry(peptide.sourceFile, accessions, precursorMZ, peptide.charge, peptide.peptideModSeq, 1, peptide.rt, (float)Math.pow(10, -scoredObj.x), peptide.masses, peptide.intensities, aaConstants);
+			LibraryEntry entry=new LibraryEntry(peptide.sourceFile, accessions, precursorMZ, peptide.charge, peptide.peptideModSeq, 1, peptide.rt, (float)Math.pow(10, -scoredObj.x), peptide.masses, peptide.intensities, Optional.empty(), // FIXME add ion mobility to parser
+					aaConstants);
 			entries.add(entry);
 		}
 

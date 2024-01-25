@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.SparseIndexMap;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
@@ -12,6 +13,7 @@ public class SparseXCorrSpectrum implements Spectrum {
 	private final int[] indices;
 	private final double[] masses;
 	private final float[] intensities;
+	private final float[] ionMobility;
 	private final int length;
 	private final double precursorMz;
 	
@@ -26,7 +28,7 @@ public class SparseXCorrSpectrum implements Spectrum {
 			@Override
 			public boolean execute(int a, Object b) {
 				Peak peak=(Peak)b;
-				peaks.add(new SortablePeak(a, peak.mass, peak.intensity));
+				peaks.add(new SortablePeak(a, peak.mass, peak.intensity, peak.ionMobility));
 				return true;
 			}
 		});
@@ -35,12 +37,20 @@ public class SparseXCorrSpectrum implements Spectrum {
 		indices=new int[peaks.size()];
 		masses=new double[peaks.size()];
 		intensities=new float[peaks.size()];
+		float[] ionMobilityArray=new float[peaks.size()];
+		
 		for (int i=0; i<indices.length; i++) {
 			SortablePeak peak=peaks.get(i);
 			indices[i]=peak.index;
 			masses[i]=peak.mass;
 			intensities[i]=peak.intensity;
+			if (peak.ionmobility==null) {
+				ionMobilityArray=null;
+			} else if (ionMobilityArray!=null) {
+				ionMobilityArray[i]=peak.ionmobility;
+			}
 		}
+		ionMobility=ionMobilityArray;
 	}
 	@Override
 	public float getScanStartTime() {
@@ -75,6 +85,11 @@ public class SparseXCorrSpectrum implements Spectrum {
 		return masses;
 	}
 	
+	@Override
+	public Optional<float[]> getIonMobilityArray() {
+		return Optional.ofNullable(ionMobility);
+	}
+	
 	public int length() {
 		return length;
 	}
@@ -91,10 +106,12 @@ public class SparseXCorrSpectrum implements Spectrum {
 		private final int index;
 		private final double mass;
 		private final float intensity;
-		public SortablePeak(int index, double mass, float intensity) {
+		private final Float ionmobility;
+		public SortablePeak(int index, double mass, float intensity, Float ionmobility) {
 			this.index=index;
 			this.mass=mass;
 			this.intensity=intensity;
+			this.ionmobility=ionmobility;
 		}
 		
 		@Override

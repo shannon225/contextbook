@@ -20,7 +20,7 @@ public class XCorrLibraryEntry extends LibraryEntry {
 
 	public XCorrLibraryEntry(boolean isDecoy, String peptideModSeq, FastaPeptideEntry peptide, byte precursorCharge, SparseXCorrSpectrum spectrum, SearchParameters params) {
 		super(peptide.getFilename(), peptide.getAccessions(), spectrum.getPrecursorMZ(), precursorCharge, peptideModSeq, 1, 0.0f, // (float)SSRCalc.getHydrophobicity(peptideModSeq)
-				0.0f, spectrum.getMassArray(), spectrum.getIntensityArray(), params.getAAConstants());
+				0.0f, spectrum.getMassArray(), spectrum.getIntensityArray(), LibraryEntry.getAverageIonMobilityFromArray(spectrum.getIonMobilityArray()), params.getAAConstants());
 		this.peptide=peptide;
 		this.isDecoy=isDecoy;
 		this.spectrum=spectrum;
@@ -29,7 +29,7 @@ public class XCorrLibraryEntry extends LibraryEntry {
 
 	public XCorrLibraryEntry(boolean isDecoy, String peptideModSeq, FastaPeptideEntry peptide, byte precursorCharge, SparseXCorrSpectrum spectrum, float retentionTime, SearchParameters params) {
 		super(peptide.getFilename(), peptide.getAccessions(), spectrum.getPrecursorMZ(), precursorCharge, peptideModSeq, 1, retentionTime,
-				0.0f, spectrum.getMassArray(), spectrum.getIntensityArray(), params.getAAConstants());
+				0.0f, spectrum.getMassArray(), spectrum.getIntensityArray(), LibraryEntry.getAverageIonMobilityFromArray(spectrum.getIonMobilityArray()), params.getAAConstants());
 		this.peptide=peptide;
 		this.isDecoy=isDecoy;
 		this.spectrum=spectrum;

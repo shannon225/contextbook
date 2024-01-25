@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
@@ -138,11 +139,12 @@ public class ArrayXCorrCalculator {
 		
 		double[] masses=s.getMassArray();
 		float[] intensities=s.getIntensityArray();
+		Optional<float[]> ionmobility=s.getIonMobilityArray();
 		ArrayList<Peak> allPeaks=new ArrayList<Peak>();
 		if (masses.length==0)
 			return getIntensityArray(params, allPeaks, massPlusOne, addIntensityToNeighboringBins);
 		if (masses.length==1) {
-			allPeaks.add(new Peak(masses[0], primaryIonIntensity));
+			allPeaks.add(new Peak(masses[0], primaryIonIntensity, ionmobility.isPresent()?ionmobility.get()[0]:null));
 			return getIntensityArray(params, allPeaks, massPlusOne, addIntensityToNeighboringBins);
 		}
 
@@ -186,7 +188,7 @@ public class ArrayXCorrCalculator {
 			while (masses[i]>binMaxMass[currentIndex]) {
 				currentIndex++;
 			}
-			allPeaks.add(new Peak(masses[i], intensities[i]/binMaxIntensity[currentIndex]));
+			allPeaks.add(new Peak(masses[i], intensities[i]/binMaxIntensity[currentIndex], ionmobility.isPresent()?ionmobility.get()[i]:null));
 		}
 		
 		return getIntensityArray(params, allPeaks, massPlusOne, addIntensityToNeighboringBins);
@@ -251,11 +253,14 @@ public class ArrayXCorrCalculator {
 		
 		return getIntensityArray(params, allPeaks, massPlusOne, true);
 	}
-	
+
 	private static ArrayList<Peak> getPeaks(Ion[] ions, double delta, float intensity) {
+		return getPeaks(ions, delta, intensity, null);
+	}
+	private static ArrayList<Peak> getPeaks(Ion[] ions, double delta, float intensity, Float ionmobility) {
 		ArrayList<Peak> peaks=new ArrayList<Peak>();
 		for (int i=0; i<ions.length; i++) {
-			peaks.add(new Peak(ions[i].getMass()+delta, intensity));
+			peaks.add(new Peak(ions[i].getMass()+delta, intensity, ionmobility));
 		}
 		return peaks;
 	}

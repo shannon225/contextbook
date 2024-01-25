@@ -5,11 +5,16 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.StringTokenizer;
+import java.util.regex.Pattern;
 import java.util.zip.DataFormatException;
 
+import com.google.common.collect.ImmutableList;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
@@ -33,12 +38,67 @@ import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.procedure.TObjectProcedure;
 
 public class OpenSwathTSVToLibraryConverter {
+	public static final List<String> PEPTIDE_HEADERS = ImmutableList.copyOf(new String[] {
+			"ModifiedSequence",
+			"FullPeptideName",
+			"FullUniModPeptideName",
+			"LabeledSequence",
+			"ModifiedPeptide",
+			"ModifiedPeptideSequence",
+			"PeptideSequence",
+			"Sequence",
+			"StrippedSequence",
+			"modification_sequence",
+	});
+	public static final List<String> CHARGE_HEADERS = ImmutableList.copyOf(new String[] {
+			"PrecursorCharge",
+			"Charge",
+			"prec_z",
+	});
+	public static final List<String> FRAG_MZ_HEADERS = ImmutableList.copyOf(new String[] {
+			"ProductMz",
+			"FragmentMz",
+	});
+	public static final List<String> FRAG_INTEN_HEADERS = ImmutableList.copyOf(new String[] {
+			"LibraryIntensity",
+			"RelativeIntensity",
+			"RelativeFragmentIntensity",
+			"RelativeFragmentIonIntensity",
+			"relative_intensity",
+	});
+	public static final List<String> RT_HEADERS = ImmutableList.copyOf(new String[] {
+			"NormalizedRetentionTime",
+			"RetentionTime",
+			"RetentionTimeCalculatorScore",
+			"RT_detected",
+			"Tr_recalibrated",
+			"iRT",
+	});
+	public static final List<String> TRANSITION_GROUP_HEADERS = ImmutableList.copyOf(new String[] {
+			"TransitionGroupId",
+			"ElutionGroup",
+			"transition_group_id",
+	});
 
+	private static final Pattern UNIMOD_STRIP_TERM_PATT = Pattern.compile("^.?\\.|\\.(\\([^)]+\\))?.?$");
+
+	/**
+	 * Replace leading/trailing dots, and pre/post AAs (if given).
+	 * Complication: C-terminal mods can be between the trailing dot and post AA,
+	 * so we capture it as a group and replace it using a backreference.
+	 */
+	private static String stripUnimodTermini(String structuredSequence) {
+		return UNIMOD_STRIP_TERM_PATT.matcher(structuredSequence).replaceAll("$1");
+	}
 
 	public static LibraryFile convertOpenSwathTSV(File tsvFile, File fastaFile, SearchParameters parameters) {
 		String absolutePath=tsvFile.getAbsolutePath();
 		File libraryFile=new File(absolutePath.substring(0, absolutePath.lastIndexOf('.'))+LibraryFile.DLIB);
 		return convertFromOpenSwathTSV(tsvFile, fastaFile, libraryFile, parameters);
+	}
+
+	public static String getFromMap(Map<String, String> row, Collection<? extends String> options) {
+		return getFromMap(row, options.toArray(new String[0]));
 	}
 	
 	public static String getFromMap(Map<String, String> row, String... options) {
@@ -51,8 +111,9 @@ public class OpenSwathTSVToLibraryConverter {
 	
 	static String parseMods(String structuredSequence) {
 		if (structuredSequence.indexOf('(')>=0) {
-			structuredSequence=structuredSequence.replace(".", "");
 			// Unimod: .(UniMod:1)PEPC(UniMod:4)PEPM(UniMod:35)PEPR.(UniMod:2)
+
+			structuredSequence = stripUnimodTermini(structuredSequence);
 
 			char[] ca=structuredSequence.toCharArray();
 			
@@ -99,9 +160,7 @@ public class OpenSwathTSVToLibraryConverter {
 				
 			} else if (structuredSequence.indexOf('.')>=0) {
 				 // Unimod: .(UniMod:1)PEPC(UniMod:4)PEPM(UniMod:35)PEPR.(UniMod:2) (but no mods)
-				StringTokenizer st=new StringTokenizer(structuredSequence, ".");
-				return st.nextToken();
-				
+				return stripUnimodTermini(structuredSequence);
 			} else if (structuredSequence.indexOf(AminoAcidConstants.N_TERM)>=0) {
 				 // TPP:    n[43]PEPC[160]PEPM[147]PEPRc[16] (but no mods)
 				return structuredSequence.replace(AminoAcidConstants.N_TERM, ' ').replace(AminoAcidConstants.C_TERM, ' ').trim();
@@ -111,7 +170,7 @@ public class OpenSwathTSVToLibraryConverter {
 			}
 		}
 	}
-	
+
 	public static void convertToOpenSwathTSV(SearchParameters params, final File elibFile, File tsvFile) throws IOException, SQLException, DataFormatException {
 		LibraryFile library=new LibraryFile();
 		library.openFile(elibFile);
@@ -212,13 +271,13 @@ public class OpenSwathTSVToLibraryConverter {
 					String decoy=getFromMap(row, "decoy", "Decoy");
 					if (decoy!=null&&Integer.parseInt(decoy)!=0) return;
 
-					String peptideModSeq=parseMods(getFromMap(row, "ModifiedPeptideSequence", "FullUniModPeptideName", "FullPeptideName", "ModifiedSequence", "PeptideSequence", "Sequence", "StrippedSequence"));
-					byte charge=Byte.parseByte(row.get("PrecursorCharge"));
-					double productMz=Double.parseDouble(getFromMap(row, "ProductMz", "FragmentMz"));
-					float libraryIntensity=Float.parseFloat(getFromMap(row, "LibraryIntensity", "RelativeFragmentIntensity"));
-					float iRT=Float.parseFloat(getFromMap(row, "NormalizedRetentionTime", "RetentionTime", "Tr_recalibrated", "iRT", "RetentionTimeCalculatorScore"));
+					String peptideModSeq=parseMods(getFromMap(row, PEPTIDE_HEADERS));
+					byte charge=Byte.parseByte(getFromMap(row, CHARGE_HEADERS));
+					double productMz=Double.parseDouble(getFromMap(row, FRAG_MZ_HEADERS));
+					float libraryIntensity=Float.parseFloat(getFromMap(row, FRAG_INTEN_HEADERS));
+					float iRT=Float.parseFloat(getFromMap(row, RT_HEADERS));
 
-					final String groupIdString = getFromMap(row, "transition_group_id", "TransitionGroupId");
+					final String groupIdString = getFromMap(row, TRANSITION_GROUP_HEADERS);
 
 					final int group;
 					if (null == groupIdString) {
@@ -285,7 +344,8 @@ public class OpenSwathTSVToLibraryConverter {
 				accessions.add(PeptideUtils.getPeptideSeq(peptide.peptideModSeq));
 			}
 			
-			LibraryEntry entry=new LibraryEntry(peptide.sourceFile, accessions, precursorMZ, peptide.charge, peptide.peptideModSeq, 1, peptide.rt, 0.0f, peptide.masses, peptide.intensities, aaConstants);
+			LibraryEntry entry=new LibraryEntry(peptide.sourceFile, accessions, precursorMZ, peptide.charge, peptide.peptideModSeq, 1, peptide.rt, 0.0f, peptide.masses, peptide.intensities, Optional.empty(), // FIXME add ion mobility to parser
+					aaConstants);
 			entries.add(entry);
 		}
 		Logger.logLine("Found "+entries.size()+" total peptide entries");

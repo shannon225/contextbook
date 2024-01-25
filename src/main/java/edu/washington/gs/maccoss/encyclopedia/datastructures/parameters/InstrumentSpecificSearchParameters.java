@@ -3,6 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.datastructures.parameters;
 import java.util.HashMap;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
@@ -20,6 +21,10 @@ public enum InstrumentSpecificSearchParameters {
 		
 		InstrumentSpecificSearchParameters instrument=fromString(val);
 		return instrument.underwriteParameters(params);
+	}
+	
+	public SearchParameters getDefaultParameters() {
+		return SearchParameterParser.parseParameters(overwriteParameters(SearchParameterParser.getDefaultParameters()));
 	}
 
 	/**
@@ -57,8 +62,8 @@ public enum InstrumentSpecificSearchParameters {
 				break;
 				
 			case ToF:
-				params.put("-ptol", "10");
-				params.put("-ftol", "10");
+				params.put("-ptol", "25");
+				params.put("-ftol", "25");
 				params.put("-ptolunits", MassErrorUnitType.PPM.toString());
 				params.put("-ftolunits", MassErrorUnitType.PPM.toString());
 				params.put(SearchParameters.SUBTRACT_BACKGROUND, Boolean.TRUE.toString());
@@ -119,13 +124,13 @@ public enum InstrumentSpecificSearchParameters {
 	public String toString() {
 		switch (this) {
 		case OrbitrapOrbitrap:
-			return "Orbitrap";
+			return "Orbitrap/Orbitrap";
 		case ToF:
 			return "ToF";
 		case OrbitrapAstral:
 			return "Astral";
 		case IontrapIontrap:
-			return "Iontrap";
+			return "Iontrap/Iontrap";
 		case OrbitrapIontrap:
 			return "Orbitrap/Iontrap";
 		default:
