@@ -68,6 +68,16 @@ public class MassTolerance implements Comparable<MassTolerance> {
 		}
 	}
 	
+	public boolean isRelativeTolerance() {
+		if (MassErrorUnitType.PPM==type) {
+			return true;
+		} else if (MassErrorUnitType.RESOLUTION==type) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
 	public double getPpmTolerance() {
 		return ppmTolerance;
 	}

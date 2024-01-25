@@ -10,6 +10,7 @@ import java.util.TreeSet;
 
 import edu.washington.gs.maccoss.encyclopedia.ProgramType;
 import edu.washington.gs.maccoss.encyclopedia.SearchGUIMain;
+import edu.washington.gs.maccoss.encyclopedia.gui.dia.interactive.ChromatogrindrPanel;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 
 public class BackgroundKeyboardListener implements KeyListener, ContainerListener {
@@ -95,6 +96,13 @@ public class BackgroundKeyboardListener implements KeyListener, ContainerListene
 				Logger.logLine("Changing default color");
 				GUIParameters.requestUpdatedColor();
 				Logger.logLine("Default color set to "+GUIParameters.getBaseColor().toString());
+			}
+		});
+		
+		registerEasterEgg(new EasterEgg(KeyEvent.VK_G, "Launch Interactive Chromatogram Visualizer") {
+			@Override void run() {
+				Logger.logLine("Launching Interactive Chromatogram Visualizer");
+				ChromatogrindrPanel.launchBrowserPanel(new ChromatogrindrPanel());
 			}
 		});
 	}

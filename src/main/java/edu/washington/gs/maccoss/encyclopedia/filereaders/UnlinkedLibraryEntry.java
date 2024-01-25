@@ -3,6 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.filereaders;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
@@ -18,11 +19,11 @@ public class UnlinkedLibraryEntry extends LibraryEntry {
 	private final boolean markAsDecoy;
 	private final String originalSequence;
 
-	public UnlinkedLibraryEntry(String source, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray, AminoAcidConstants aaConstants, boolean isShuffle, boolean isDecoy, boolean markAsDecoy, String originalSequence, LibraryFile file) {
-		this(source, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, new float[massArray.length], new boolean[massArray.length], aaConstants, isShuffle, isDecoy, markAsDecoy, originalSequence, file);
+	public UnlinkedLibraryEntry(String source, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray, Optional<Float> ionMobility, AminoAcidConstants aaConstants, boolean isShuffle, boolean isDecoy, boolean markAsDecoy, String originalSequence, LibraryFile file) {
+		this(source, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, new float[massArray.length], new boolean[massArray.length], ionMobility, aaConstants, isShuffle, isDecoy, markAsDecoy, originalSequence, file);
 	}
-	public UnlinkedLibraryEntry(String source, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray, float[] correlationArray, boolean[] quantifiedIonsArray, AminoAcidConstants aaConstants, boolean isShuffle, boolean isDecoy, boolean markAsDecoy, String originalSequence, LibraryFile file) {
-		super(source, UNLOADED_ACCESSIONS, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, correlationArray, quantifiedIonsArray, aaConstants);
+	public UnlinkedLibraryEntry(String source, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray, float[] correlationArray, boolean[] quantifiedIonsArray, Optional<Float> ionMobility, AminoAcidConstants aaConstants, boolean isShuffle, boolean isDecoy, boolean markAsDecoy, String originalSequence, LibraryFile file) {
+		super(source, UNLOADED_ACCESSIONS, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, correlationArray, quantifiedIonsArray, ionMobility, aaConstants);
 		this.file=file;
 		this.isShuffle=isShuffle;
 		this.isDecoy=isDecoy;
@@ -68,8 +69,8 @@ public class UnlinkedLibraryEntry extends LibraryEntry {
 	}
 
 	@Override
-	protected LibraryEntry updatePeaks(AminoAcidConstants aaConstants, double newPrecursorMz, String newPeptideModSeq, double[] trimmedMasses, float[] trimmedIntensities, float[] trimmedCorrelations, boolean[] trimmedQuantifiedIons, boolean isShuffle, boolean isDecoy, boolean markAsDecoy) {
+	protected LibraryEntry updatePeaks(AminoAcidConstants aaConstants, double newPrecursorMz, String newPeptideModSeq, double[] trimmedMasses, float[] trimmedIntensities, float[] trimmedCorrelations, boolean[] trimmedQuantifiedIons, Optional<Float> ionMobility, boolean isShuffle, boolean isDecoy, boolean markAsDecoy) {
 		return new UnlinkedLibraryEntry(getSource(), getSpectrumIndex(), newPrecursorMz, getPrecursorCharge(), newPeptideModSeq, getCopies(), getRetentionTime(), getScore(), 
-				trimmedMasses, trimmedIntensities, trimmedCorrelations, trimmedQuantifiedIons, aaConstants, isShuffle, isDecoy, markAsDecoy, getPeptideSeq(), file);
+				trimmedMasses, trimmedIntensities, trimmedCorrelations, trimmedQuantifiedIons, ionMobility, aaConstants, isShuffle, isDecoy, markAsDecoy, getPeptideSeq(), file);
 	}
 }

@@ -1,9 +1,12 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
+import java.util.Optional;
+
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
@@ -32,7 +35,7 @@ public abstract class AuxillaryPSMScorer {
 			return new float[] {maxPPMError, 0.0f, maxPPMError};
 		}
 		
-		Pair<double[], float[]> pair=Peak.toArrays(precursorPacket);
+		Triplet<double[], float[], Optional<float[]>> pair=Peak.toArrays(precursorPacket);
 		double[] masses=pair.x;
 		float[] intensities=pair.y;
 		

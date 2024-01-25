@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.precursor;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefinementData;
@@ -26,7 +27,7 @@ public class PrecursorIntegrator {
 	private static final float REQUIRED_ION_PERCENTAGE_OF_DISTRIBUTION = 0.5f;
 	
 	@SuppressWarnings("unchecked")
-	public static ArrayList<TransitionRefinementData> integratePeptide(String peptideModSeq, float[] expectedIsotopicDistribution, float[] psmRTsInSec, ArrayList<PeakTrace<PrecursorIon>> traces, SearchParameters params) {
+	public static ArrayList<TransitionRefinementData> integratePeptide(String peptideModSeq, float[] expectedIsotopicDistribution, float[] psmRTsInSec, Optional<Float> ionMobility, ArrayList<PeakTrace<PrecursorIon>> traces, SearchParameters params) {
 		TByteObjectHashMap<PeakTrace<PrecursorIon>[]> tracesByCharge = getTracesByCharge(traces);
 
 		ArrayList<PeakTrace<PrecursorIon>> distributionCorrectedTraces = new ArrayList<>();
@@ -131,7 +132,7 @@ public class PrecursorIntegrator {
 					quantitativeIonsArray[i]=correlationArray.get(i)>TransitionRefiner.quantitativeCorrelationThreshold;
 				}
 				TransitionRefinementData trd=new TransitionRefinementData(peptideModSeq, charge, ions.toArray(new Ion[ions.size()]), chromatograms, 
-						correlationArray.toArray(), quantitativeIonsArray, integrationArray.toArray(), backgroundArray.toArray(), medianIntensityArray, finalBoundary, 
+						correlationArray.toArray(), quantitativeIonsArray, integrationArray.toArray(), backgroundArray.toArray(), medianIntensityArray, ionMobility, finalBoundary, 
 						deltaMassArray.toArray(), fragmentMasses.toArray(), integrationArray.toArray(), rtArray, null, null, 0.0f, 
 						params.getAAConstants());
 				data.add(trd);

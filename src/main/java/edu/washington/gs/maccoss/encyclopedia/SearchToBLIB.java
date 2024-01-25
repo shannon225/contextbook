@@ -59,6 +59,8 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.precursor.DDAPrecursorI
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.IntensityNormalizer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.LibraryReportExtractor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.PeptideQuantExtractor;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.scribe.ScribeJobData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.scribe.ScribeScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.VariantXCorDIAJobData;
@@ -171,6 +173,9 @@ public class SearchToBLIB {
 				} else if (arguments.containsKey("-xcordia")) {
 					VersioningDetector.checkVersionCLI(ProgramType.XCorDIA);
 					convertXCorDIA(diaFiles, arguments);
+				} else if (arguments.containsKey("-scribe")) {
+					convertScribe(diaFiles, arguments);
+
 				} else {
 					VersioningDetector.checkVersionCLI(ProgramType.EncyclopeDIA);
 					convertEncyclopedia(diaFiles, arguments);
@@ -202,6 +207,140 @@ public class SearchToBLIB {
 			} finally {
 				Logger.close();
 			}
+		}
+	}
+
+	public static void convertScribe(List<File> diaFiles, HashMap<String, String> arguments) {
+		if (!arguments.containsKey("-l")||!arguments.containsKey("-o")||!arguments.containsKey("-f")) {
+			Logger.errorLine("You are required to specify an input file or directory (-i), an input library file (-l), a fasta database (-f), and an output library file (-o)");
+			System.exit(1);
+		}
+
+		arguments=InstrumentSpecificSearchParameters.checkParameters(arguments);
+
+		File fastaFile=new File(arguments.get("-f"));
+		File libraryFile=new File(arguments.get("-l"));
+		File outputFile=new File(arguments.get("-o"));
+
+		final boolean alignBetweenFiles=ParsingUtils.getBoolean("-a", arguments, true);
+		final boolean writeBlib=ParsingUtils.getBoolean("-blib", arguments, false);
+		final boolean alignOnly = ParsingUtils.getBoolean("-alignOnly", arguments, false);
+
+		final SearchParameters parameters=SearchParameterParser.parseParameters(arguments);
+
+		final OutputFormat outputFormat;
+
+		if (!alignOnly) {
+			outputFormat = writeBlib ? OutputFormat.BLIB : OutputFormat.ELIB;
+		} else {
+			if (!alignBetweenFiles) {
+				Logger.errorLine("-alignOnly requires alignment to be enabled; try running with `-a true`");
+				System.exit(1);
+			}
+
+			if (!parameters.isQuantifySameFragmentsAcrossSamples()) {
+				Logger.errorLine("-alignOnly requires -quantifyAcrossSamples true");
+				System.exit(1);
+			}
+
+			if (writeBlib) {
+				Logger.errorLine("-alignOnly requires ELIB output; try running with `-blib false`");
+				System.exit(1);
+			}
+
+			if (arguments.containsKey("-alignmentFrom")) {
+				Logger.errorLine("Error: -alignOnly and -alignmentFrom are incompatible");
+				System.exit(1);
+			}
+
+			outputFormat = OutputFormat.ALIB;
+		}
+
+		ScribeScoringFactory factory = new ScribeScoringFactory(parameters);
+		Logger.timelessLogLine("SearchToLIB EncyclopeDIA version "+ProgramType.getGlobalVersion().toString());
+
+		Logger.timelessLogLine("Parameters:");
+		for (File diaFile : diaFiles) {
+			Logger.timelessLogLine(" -i " + diaFile.getAbsolutePath());
+		}
+		Logger.timelessLogLine(" -f "+fastaFile.getAbsolutePath());
+		Logger.timelessLogLine(" -l "+libraryFile.getAbsolutePath());
+		Logger.timelessLogLine(" -o "+outputFile.getAbsolutePath());
+		Logger.timelessLogLine(" -a "+alignBetweenFiles);
+		Logger.timelessLogLine(" -blib "+writeBlib);
+		Logger.timelessLogLine(" -alignOnly " + alignOnly);
+		Logger.timelessLogLine(parameters.toString());
+
+		if (arguments.containsKey(QUIET_MODE_ARG)) {
+			Logger.PRINT_TO_SCREEN = false;
+		}
+
+		try {
+			LibraryInterface library=BlibToLibraryConverter.getFile(libraryFile);
+			
+			ArrayList<SearchJobData> pecanJobs=new ArrayList<SearchJobData>();
+			for (File diaFile: diaFiles) {
+				if (diaFile.isDirectory()) {
+					File[] files = diaFile.listFiles(StripeFileGenerator.getFilenameFilter());
+					if (files.length == 0) {
+						Logger.errorLine("Your specified input (-i) directory didn't contain any .RAW files: " + diaFile.getAbsolutePath());
+						System.exit(1);
+					}
+
+					if (files.length == 0) {
+						Logger.errorLine("Your specified input (-i) directory didn't contain any .RAW files!");
+						System.exit(1);
+					}
+					for (File file : files) {
+						ScribeJobData job = new ScribeJobData(file, fastaFile, library, factory);
+						pecanJobs.add(job);
+					}
+				} else if (alignOnly && !diaFile.exists()) {
+					// Special case -- when running alignment-only we may not have the .DIA available but want
+					// to handle the job using Percolator/ELIB results only.
+					//pecanJobs.add(EncyclopediaJobData.getDummyFor(diaFile, fastaFile, library, factory));
+					
+					// FIXME: this edge case does not work! Throw error instead
+					Logger.errorLine("Unexpected mode running Scribe quantification with alignment-only data without .DIA files available! DIA files are required for Scribe quant.");
+					System.exit(1);
+				} else {
+					ScribeJobData job = new ScribeJobData(diaFile, fastaFile, library, factory);
+					pecanJobs.add(job);
+				}
+			}
+			Logger.logLine("Attempting to process "+pecanJobs.size()+" searches...");
+
+			if (!arguments.containsKey("-alignmentFrom")) {
+				// Main program: convert to appropriate format
+				convert(new EmptyProgressIndicator(), pecanJobs, outputFile, outputFormat, alignBetweenFiles, parameters);
+			} else {
+				// Sub-program: quantify from previously-computed alignment/transition refinement
+
+				if (!alignBetweenFiles) {
+					Logger.errorLine("-alignmentFrom requires alignment to be enabled; try running with `-a true`");
+					System.exit(1);
+				}
+
+				if (!parameters.isQuantifySameFragmentsAcrossSamples()) {
+					Logger.errorLine("-alignmentFrom requires -quantifyAcrossSamples true");
+					System.exit(1);
+				}
+
+				if (writeBlib) {
+					Logger.errorLine("-alignmentFrom requires ELIB output; try running with `-blib false`");
+					System.exit(1);
+				}
+
+				if (alignOnly) {
+					Logger.errorLine("Error: -alignOnly and -alignmentFrom are incompatible");
+					System.exit(1);
+				}
+
+				convertElibQuantOnly(new EmptyProgressIndicator(), pecanJobs, outputFile, new File(arguments.get("-alignmentFrom")), parameters);
+			}
+		} catch (Exception e) {
+			Logger.errorLine("Encountered Fatal Error!");
+			Logger.errorException(e);
 		}
 	}
 
@@ -1422,6 +1561,7 @@ public class SearchToBLIB {
 				intensities,
 				correlations,
 				quantifiedIons,
+				entry.getIonMobility(),
 				parameters.getAAConstants(),
 				true // force preserving peaks with non-positive intensity (like any we had to add)
 		);

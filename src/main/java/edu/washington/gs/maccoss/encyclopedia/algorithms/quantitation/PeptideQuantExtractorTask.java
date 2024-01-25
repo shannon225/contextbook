@@ -24,9 +24,12 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYZPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakScores;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakScoresWithIonData;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.BackgroundSubtractionFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ThreadableTask;
 import gnu.trove.list.array.TDoubleArrayList;
@@ -282,17 +285,17 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		// get each scan (fragments by RT)
 		TFloatArrayList[] traces=new TFloatArrayList[bestScores.length];
 		@SuppressWarnings("unchecked")
-		ArrayList<XYZPoint>[] deltaMassesByRT=new ArrayList[bestScores.length];
+		ArrayList<ScoredObject<PeakScores>>[] deltaMassesByRT=new ArrayList[bestScores.length];
 		for (int i=0; i<traces.length; i++) {
 			traces[i]=new TFloatArrayList();
-			deltaMassesByRT[i]=new ArrayList<XYZPoint>();
+			deltaMassesByRT[i]=new ArrayList<ScoredObject<PeakScores>>();
 		}
 		for (int index=0; index<scoreList.size(); index++) {
 			PeakScores[] peakScores=scoreList.get(index);
 			for (int i=0; i<peakScores.length; i++) {
 				if (peakScores[i]!=null) {
 					traces[i].add(peakScores[i].getScore());
-					deltaMassesByRT[i].add(new XYZPoint(retentionTimes.get(index), peakScores[i].getDeltaMass(), peakScores[i].getScore()));
+					deltaMassesByRT[i].add(new ScoredObject<PeakScores>(retentionTimes.get(index), peakScores[i]));
 				} else {
 					traces[i].add(0.0f);
 				}
@@ -308,11 +311,11 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 			boolean limitToQuantifiable, ArrayList<FragmentScan> stripes, boolean wasInferred, SearchParameters params,
 			PeakScores[] bestScores, TFloatArrayList retentionTimes, TFloatArrayList totalIonCurrent,
 			TFloatArrayList totalIdentifiedIonCurrent, int movingAverageLength, TFloatArrayList[] traces,
-			ArrayList<XYZPoint>[] deltaMassesByRT) {
+			ArrayList<ScoredObject<PeakScores>>[] deltaMassesByRT) {
 		// invert each scan into fragment chromatograms (RTs by fragment)
 		ArrayList<PeakScores> bestKeptPeaks=new ArrayList<PeakScores>();
 		ArrayList<float[]> chromatograms=new ArrayList<float[]>();
-		ArrayList<ArrayList<XYZPoint>> chromatogramDeltaMassesByRT=new ArrayList<ArrayList<XYZPoint>>();
+		ArrayList<ArrayList<ScoredObject<PeakScores>>> chromatogramDeltaMassesByRT=new ArrayList<ArrayList<ScoredObject<PeakScores>>>();
 		ArrayList<FragmentIon> fragmentMasses=new ArrayList<FragmentIon>();
 		for (int i=0; i<bestScores.length; i++) {
 			if (bestScores[i]!=null&&bestScores[i].getScore()>0) {
@@ -337,7 +340,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 			boolean limitToQuantifiable, ArrayList<FragmentScan> stripes, boolean wasInferred, SearchParameters params,
 			TFloatArrayList retentionTimes, TFloatArrayList totalIonCurrent, TFloatArrayList totalIdentifiedIonCurrent,
 			ArrayList<PeakScores> bestKeptPeaks, ArrayList<float[]> chromatograms,
-			ArrayList<ArrayList<XYZPoint>> chromatogramDeltaMassesByRT, ArrayList<FragmentIon> fragmentMasses) {
+			ArrayList<ArrayList<ScoredObject<PeakScores>>> chromatogramDeltaMassesByRT, ArrayList<FragmentIon> fragmentMasses) {
 		// identify transitions
 		TransitionRefinementData data=TransitionRefiner.identifyTransitions(unitEntry.getPeptideModSeq(), unitEntry.getPrecursorCharge(), unitEntry.getScanStartTime(), fragmentMasses.toArray(new FragmentIon[fragmentMasses.size()]), chromatograms, retentionTimes.toArray(), wasInferred, params);
 		float[] correlations=data.getCorrelationArray();
@@ -347,6 +350,8 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		TDoubleArrayList mzs=new TDoubleArrayList();
 		TFloatArrayList intens=new TFloatArrayList();
 		TFloatArrayList deltaMasses=new TFloatArrayList(); // will ultimately be the length of the correlations array
+		TFloatArrayList ionMobilityArray=new TFloatArrayList();
+		boolean hasIonMobility=false;
 
 		float correlationThreshold=limitToQuantifiable?TransitionRefiner.quantitativeCorrelationThreshold:-1f;
 		for (int i=0; i<bestKeptPeaks.size(); i++) {
@@ -354,10 +359,10 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 			
 			float totalDeltaMasses=0.0f;
 			float totalIntensities=0.0f;
-			for (XYZPoint point : chromatogramDeltaMassesByRT.get(i)) {
+			for (ScoredObject<PeakScores> point : chromatogramDeltaMassesByRT.get(i)) {
 				if (rtRange.contains((float)point.getX())) {
-					totalDeltaMasses+=point.getY();
-					totalIntensities+=point.getZ();
+					totalDeltaMasses+=point.getY().getDeltaMass();
+					totalIntensities+=point.getY().getScore();
 				}
 			}
 			
@@ -375,6 +380,13 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 				if (peakScore>0) {
 					mzs.add(bestScore.getTargetMass());
 					intens.add(integrations[i]);
+				}
+				if (bestScore instanceof PeakScoresWithIonData) {
+					Optional<Float> ims=((PeakScoresWithIonData) bestScore).getIonMobility();
+					if (ims.isPresent()&&ims.get()!=null) {
+						hasIonMobility=true;
+						ionMobilityArray.add(ims.get());
+					}
 				}
 			}
 		}
@@ -395,6 +407,8 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		double[] massArray=mzs.toArray();
 		float[] intensityArray=intens.toArray();
 		float[] deltaMassArray=deltaMasses.toArray();
-		return data.addPeakData(deltaMassArray, massArray, intensityArray, retentionTimes.toArray(), identifiedTICRatio, params.getFragmentTolerance());
+		
+		Optional<Float> ionMobility=hasIonMobility?Optional.of(QuickMedian.median(ionMobilityArray.toArray())):Optional.empty();
+		return data.addPeakData(deltaMassArray, massArray, intensityArray, retentionTimes.toArray(), ionMobility, identifiedTICRatio, params.getFragmentTolerance());
 	}
 }

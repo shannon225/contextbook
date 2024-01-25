@@ -23,7 +23,7 @@ public class SpectrumPeakFilter {
 		Quadruplet<double[], float[], float[], boolean[]> arrays=PeakChromatogram.toChromatogramArrays(peaks);
 
 		return new FragmentScan(stripe.getSpectrumName(), stripe.getPrecursorName(), stripe.getSpectrumIndex(), stripe.getScanStartTime(), stripe.getFraction(), stripe.getIonInjectionTime(), stripe.getIsolationWindowLower(), stripe.getIsolationWindowUpper(),
-				arrays.x, arrays.y, stripe.getCharge());
+				arrays.x, arrays.y, arrays.z, stripe.getCharge());
 	}
 
 	public static LibraryEntry filterPeaks(LibraryEntry entry, AminoAcidConstants aaConstants) {
@@ -32,7 +32,7 @@ public class SpectrumPeakFilter {
 		Quadruplet<double[], float[], float[], boolean[]> arrays=PeakChromatogram.toChromatogramArrays(peaks);
 
 		return new LibraryEntry(entry.getSource(), entry.getAccessions(), entry.getSpectrumIndex(), entry.getPrecursorMZ(), entry.getPrecursorCharge(), entry.getPeptideModSeq(), entry.getCopies(),
-				entry.getRetentionTime(), entry.getScore(), arrays.x, arrays.y, arrays.z, arrays.w, aaConstants);
+				entry.getRetentionTime(), entry.getScore(), arrays.x, arrays.y, arrays.z, arrays.w, entry.getIonMobility(), aaConstants);
 	}
 
 	public static ArrayList<PeakChromatogram> filterPeaks(ArrayList<PeakChromatogram> peaks) {

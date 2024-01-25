@@ -1,8 +1,9 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
 import java.util.Collections;
+import java.util.Optional;
 
-import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 
 public class ImmutablePeptideEntry implements Comparable<ImmutablePeptideEntry> {
@@ -20,7 +21,7 @@ public class ImmutablePeptideEntry implements Comparable<ImmutablePeptideEntry> 
 		sourceFile=entry.sourceFile;
 		
 		Collections.sort(entry.peaks);
-		Pair<double[], float[]> peakArrays=Peak.toArrays(entry.peaks);
+		Triplet<double[], float[], Optional<float[]>> peakArrays=Peak.toArrays(entry.peaks);
 		masses=peakArrays.x;
 		intensities=peakArrays.y;
 	}

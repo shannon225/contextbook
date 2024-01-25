@@ -1,13 +1,24 @@
 package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
+import java.util.Optional;
+
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+
 public class WindowData {
 
 	private final float averageDutyCycle;
 	private final int numberOfMSMS;
+	private final Optional<Range> ionMobilityRange;
 
 	public WindowData(float averageDutyCycle, int numberOfMSMS) {
 		this.averageDutyCycle = averageDutyCycle;
 		this.numberOfMSMS = numberOfMSMS;
+		this.ionMobilityRange=Optional.empty();
+	}
+	public WindowData(float averageDutyCycle, int numberOfMSMS, Optional<Range> ionMobilityRange) {
+		this.averageDutyCycle = averageDutyCycle;
+		this.numberOfMSMS = numberOfMSMS;
+		this.ionMobilityRange=ionMobilityRange;
 	}
 
 	public float getAverageDutyCycle() {
@@ -16,5 +27,9 @@ public class WindowData {
 
 	public int getNumberOfMSMS() {
 		return numberOfMSMS;
+	}
+	
+	public Optional<Range> getIonMobilityRange() {
+		return ionMobilityRange;
 	}
 }

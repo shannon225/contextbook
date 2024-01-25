@@ -488,7 +488,11 @@ public class LibraryReportExtractor {
 					} else {
 						quantIonCorrelation=new float[] {};
 					}
-					QuantitativeDIAData quantData=new QuantitativeDIAData(peptideModSeq, precursorCharge, scanStartTime, rtScanRange, quantIonMasses, quantIonIntensities, quantIonCorrelation, aaConstants);
+					
+					// FIXME does not read IMS out of database, currently not used so not necessary for report extracting, but would need to join with Entries table if read
+					Optional<Float> ionMobility=Optional.empty();
+					
+					QuantitativeDIAData quantData=new QuantitativeDIAData(peptideModSeq, precursorCharge, scanStartTime, rtScanRange, quantIonMasses, quantIonIntensities, quantIonCorrelation, ionMobility, aaConstants);
 					data.addQuantitativeDIAData(sourceFile, quantData);
 				}
 				Logger.logLine("Finished processing "+count+" records, found "+intensitiesByPeptideModSeq.size()+" quantitative unique peptides. Writing reports...");

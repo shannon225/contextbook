@@ -3,6 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.filereaders.spectrumprocessors;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
@@ -12,6 +13,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.MSMSBlock;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 import gnu.trove.list.array.TFloatArrayList;
@@ -241,10 +243,10 @@ public class OverlapDeconvoluter implements SpectrumProcessor {
 	}
 
 	private static FragmentScan getDeconvolutedStripe(FragmentScan center, Range lowerRange, ArrayList<Peak> lowerPeaks, boolean useNegativeScanNumber) {
-		Pair<double[], float[]> arrays=Peak.toArrays(lowerPeaks);
+		Triplet<double[], float[], Optional<float[]>> arrays=Peak.toArrays(lowerPeaks);
 		int scanNumber=useNegativeScanNumber?(Integer.MAX_VALUE-center.getSpectrumIndex()):center.getSpectrumIndex();
 		
-		FragmentScan lowerStripe=new FragmentScan(center.getSpectrumName(), center.getPrecursorName(), scanNumber, center.getScanStartTime(), center.getFraction(), center.getIonInjectionTime(), lowerRange.getStart(), lowerRange.getStop(), arrays.x, arrays.y);
+		FragmentScan lowerStripe=new FragmentScan(center.getSpectrumName(), center.getPrecursorName(), scanNumber, center.getScanStartTime(), center.getFraction(), center.getIonInjectionTime(), lowerRange.getStart(), lowerRange.getStop(), arrays.x, arrays.y, arrays.z);
 		return lowerStripe;
 	}
 

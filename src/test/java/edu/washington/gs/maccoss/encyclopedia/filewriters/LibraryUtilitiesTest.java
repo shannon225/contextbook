@@ -17,12 +17,16 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryEntryCleaner;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.Quadruplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakChromatogram;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.PivotTableGenerator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
@@ -32,6 +36,26 @@ import gnu.trove.map.hash.TObjectFloatHashMap;
 import gnu.trove.procedure.TObjectFloatProcedure;
 
 public class LibraryUtilitiesTest {
+	public static void main10(String[] args) throws Exception {
+		File dir=new File("/Users/searleb/Documents/encyclopedia/encyclopedia/src/main/resources/libraries");
+		for (File f : dir.listFiles(new SimpleFilenameFilter(".dlib"))) {
+			LibraryFile lib=new LibraryFile();
+			lib.openFile(f);
+			
+			ArrayList<LibraryEntry> newList=LibraryEntryCleaner.filterIons(lib.getAllEntries(false, new AminoAcidConstants()), 6, 300);
+
+			LibraryFile saveLibrary=new LibraryFile();
+			saveLibrary.openFile();
+			saveLibrary.dropIndices();
+			saveLibrary.addEntries(newList);
+			saveLibrary.addProteinsFromEntries(newList);
+			saveLibrary.createIndices();
+			saveLibrary.saveAsFile(new File(f.getParentFile(), "trimmed_"+f.getName()));
+			
+			saveLibrary.close();
+		}
+	}
+	
 	public static void main(String[] args) throws Exception {
 		File dir=new File("/Volumes/MacOnlySSD/2023_06_29_CD8_TCell_Exhaustion_Data/dia_files/libraries/");
 		File lib1=new File(dir, "051622_Mouse_Tcell_pool_clib.elib");

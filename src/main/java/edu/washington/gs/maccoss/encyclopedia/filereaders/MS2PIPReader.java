@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
@@ -98,7 +99,8 @@ public class MS2PIPReader {
 			}
 			
 			ImmutablePeptideEntry peptide=new ImmutablePeptideEntry(pe);
-			LibraryEntry entry=new LibraryEntry(peptide.sourceFile, accessions, precursorMZ, peptide.charge, peptide.peptideModSeq, 1, peptide.rt, 0.0f, peptide.masses, peptide.intensities, emptyAAConstants);
+			LibraryEntry entry=new LibraryEntry(peptide.sourceFile, accessions, precursorMZ, peptide.charge, peptide.peptideModSeq, 1, peptide.rt, 0.0f, peptide.masses, peptide.intensities, Optional.empty(), // FIXME add ion mobility to parser
+					emptyAAConstants);
 			entries.add(entry);
 		}
 		Logger.logLine("Found "+entries.size()+" total peptide entries");

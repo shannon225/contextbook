@@ -21,8 +21,14 @@ public interface AbstractDilutionCurveFittingParameters {
 	//public String getTargetAccessionNumberKeyword();
 	
 	public boolean isTargetedProtein(String accession);
+	
+	public boolean isEliminatedPeptide(String peptideModSeq);
 
 	public boolean isRequireAlignmentRT();
 	
 	public boolean isUseLineNoise();
+	
+	public Float getMinimumIntensity();
+	
+	public float getMZOffset();
 }

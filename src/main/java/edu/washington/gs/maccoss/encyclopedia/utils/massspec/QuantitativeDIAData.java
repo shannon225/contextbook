@@ -1,7 +1,9 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursor;
@@ -21,8 +23,9 @@ public class QuantitativeDIAData implements PeptidePrecursor, Spectrum {
 	private final double[] massArray;
 	private final float[] intensityArray;
 	private final float[] correlationArray;
+	private final Optional<Float> ionMobility;
 
-	public QuantitativeDIAData(String peptideModSeq, byte precursorCharge, float scanStartTime, Range rtScanRange, double[] massArray, float[] intensityArray, float[] correlationArray, AminoAcidConstants aaConstants) {
+	public QuantitativeDIAData(String peptideModSeq, byte precursorCharge, float scanStartTime, Range rtScanRange, double[] massArray, float[] intensityArray, float[] correlationArray, Optional<Float> ionMobility, AminoAcidConstants aaConstants) {
 		this.peptideModSeq=peptideModSeq;
 		this.massCorrectedPeptideModSeq=PeptideUtils.getCorrectedMasses(peptideModSeq, aaConstants);
 		this.precursorMZ=aaConstants.getChargedMass(massCorrectedPeptideModSeq, precursorCharge);
@@ -41,6 +44,21 @@ public class QuantitativeDIAData implements PeptidePrecursor, Spectrum {
 		this.correlationArray=arrays.z;
 		
 		this.rtScanRange=rtScanRange;
+		this.ionMobility=ionMobility;
+	}
+	
+	public Optional<Float> getIonMobility() {
+		return ionMobility;
+	}
+	
+	@Override
+	public Optional<float[]> getIonMobilityArray() {
+		if (ionMobility.isPresent()) {
+			float[] unit=new float[massArray.length];
+			Arrays.fill(unit, ionMobility.get().floatValue());
+			return Optional.of(unit);
+		}
+		return Optional.empty();
 	}
 	
 	@Override

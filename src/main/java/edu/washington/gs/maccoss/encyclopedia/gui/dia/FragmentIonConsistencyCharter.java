@@ -131,7 +131,7 @@ public class FragmentIonConsistencyCharter {
 		LibraryEntry trace = new LibraryEntry(top.getSource(), top.getAccessions(), top.getSpectrumIndex(),
 				top.getPrecursorMZ(), top.getPrecursorCharge(), top.getLegacyPeptideModSeq(), top.getPeptideModSeq(),
 				top.getCopies(), top.getRetentionTime(), top.getScore(), masses, intensities, correlations,
-				quantifiedIons, true);
+				quantifiedIons, top.getIonMobility(), true);
 		return trace;
 	}
 

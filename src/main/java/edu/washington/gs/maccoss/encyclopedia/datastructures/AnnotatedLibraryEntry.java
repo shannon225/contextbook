@@ -3,6 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.datastructures;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Ion;
@@ -16,15 +17,15 @@ public class AnnotatedLibraryEntry extends LibraryEntry {
 	private final boolean isDecoy;
 
 	public AnnotatedLibraryEntry(String sourceFile, HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime,
-			float score, double[] massArray, float[] intensityArray, float[] correlationArray, boolean[] quantifiedIonsArray, FragmentIon[] ionAnnotations, boolean isDecoy, AminoAcidConstants aaConstants) {
-		super(sourceFile, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, correlationArray, quantifiedIonsArray, aaConstants);
+			float score, double[] massArray, float[] intensityArray, float[] correlationArray, boolean[] quantifiedIonsArray, FragmentIon[] ionAnnotations, Optional<Float> ionMobility, boolean isDecoy, AminoAcidConstants aaConstants) {
+		super(sourceFile, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, correlationArray, quantifiedIonsArray, ionMobility, aaConstants);
 		this.ionAnnotations=ionAnnotations;
 		this.isDecoy=isDecoy;
 	}
 
 	public AnnotatedLibraryEntry(String sourceFile, HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime,
-			float score, double[] massArray, float[] intensityArray, float[] correlationArray, boolean[] quantifiedIonsArray, FragmentIon[] ionAnnotations, AminoAcidConstants aaConstants) {
-		super(sourceFile, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, correlationArray, quantifiedIonsArray, aaConstants);
+			float score, double[] massArray, float[] intensityArray, float[] correlationArray, boolean[] quantifiedIonsArray, FragmentIon[] ionAnnotations, Optional<Float> ionMobility, AminoAcidConstants aaConstants) {
+		super(sourceFile, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, correlationArray, quantifiedIonsArray, ionMobility, aaConstants);
 		this.ionAnnotations=ionAnnotations;
 		this.isDecoy=false;
 	}
@@ -34,7 +35,7 @@ public class AnnotatedLibraryEntry extends LibraryEntry {
 	}
 	public AnnotatedLibraryEntry(LibraryEntry entry, SearchParameters parameters, boolean keepNegativeIntensities) {
 		super(entry.getSource(), entry.getAccessions(), entry.getSpectrumIndex(), entry.getPrecursorMZ(), entry.getPrecursorCharge(), entry.getPeptideModSeq(), entry.getCopies(),
-				entry.getRetentionTime(), entry.getScore(), entry.getMassArray(), entry.getIntensityArray(), entry.getCorrelationArray(), entry.getQuantifiedIonsArray(), parameters.getAAConstants(), keepNegativeIntensities);
+				entry.getRetentionTime(), entry.getScore(), entry.getMassArray(), entry.getIntensityArray(), entry.getCorrelationArray(), entry.getQuantifiedIonsArray(), entry.getIonMobility(), parameters.getAAConstants(), keepNegativeIntensities);
 
 		double[] massArray=entry.getMassArray();
 		this.ionAnnotations=new FragmentIon[massArray.length];
@@ -51,7 +52,7 @@ public class AnnotatedLibraryEntry extends LibraryEntry {
 
 	public AnnotatedLibraryEntry(PeptidePrecursor entry, Spectrum spectrum, SearchParameters parameters) {
 		super(spectrum.getSpectrumName(), new HashSet<String>(), 1, parameters.getAAConstants().getChargedMass(entry.getPeptideModSeq(), entry.getPrecursorCharge()), entry.getPrecursorCharge(),
-				entry.getPeptideModSeq(), 1, spectrum.getScanStartTime(), 0.0f, spectrum.getMassArray(), spectrum.getIntensityArray(), new float[spectrum.getMassArray().length], new boolean[spectrum.getMassArray().length], parameters.getAAConstants());
+				entry.getPeptideModSeq(), 1, spectrum.getScanStartTime(), 0.0f, spectrum.getMassArray(), spectrum.getIntensityArray(), new float[spectrum.getMassArray().length], new boolean[spectrum.getMassArray().length], LibraryEntry.getAverageIonMobilityFromArray(spectrum.getIonMobilityArray()), parameters.getAAConstants());
 
 		double[] massArray=spectrum.getMassArray();
 		this.ionAnnotations=new FragmentIon[massArray.length];
@@ -92,7 +93,7 @@ public class AnnotatedLibraryEntry extends LibraryEntry {
 		}
 		
 		LibraryEntry newEntry=new LibraryEntry(entry.getSource(), entry.getAccessions(), entry.getSpectrumIndex(), entry.getPrecursorMZ(), entry.getPrecursorCharge(), entry.getPeptideModSeq(), entry.getCopies(),
-				entry.getRetentionTime(), entry.getScore(), newMasses.toArray(), newIntensities.toArray(), newCorrelations.toArray(), newQuantifiedIonsArray, parameters.getAAConstants());
+				entry.getRetentionTime(), entry.getScore(), newMasses.toArray(), newIntensities.toArray(), newCorrelations.toArray(), newQuantifiedIonsArray, entry.getIonMobility(), parameters.getAAConstants());
 
 		return new AnnotatedLibraryEntry(newEntry, parameters);
 	}

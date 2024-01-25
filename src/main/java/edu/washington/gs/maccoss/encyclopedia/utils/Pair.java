@@ -9,6 +9,13 @@ public class Pair<X, Y> {
 		this.y = y;
 	}
 	
+	public X getX() {
+		return x;
+	}
+	public Y getY() {
+		return y;
+	}
+	
 	@Override
 	public String toString() {
 		return x+" and "+y;

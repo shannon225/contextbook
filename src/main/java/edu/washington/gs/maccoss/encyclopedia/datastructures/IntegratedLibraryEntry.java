@@ -15,7 +15,7 @@ public class IntegratedLibraryEntry extends ChromatogramLibraryEntry {
 
 	public IntegratedLibraryEntry(String sourceFile, HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, float integrationScore, double[] massArray,
 			float[] intensityArray, float[] correlationArray, boolean[] quantifiedIonsArray, TransitionRefinementData refinementData) {
-		super(sourceFile, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, correlationArray, quantifiedIonsArray, refinementData.getMedianChromatogram(), refinementData.getRange(), refinementData.getAaConstants());
+		super(sourceFile, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, correlationArray, quantifiedIonsArray, refinementData.getMedianChromatogram(), refinementData.getRange(), refinementData.getIonMobility(), refinementData.getAaConstants());
 		this.refinementData=refinementData;
 		this.integrationScore=integrationScore;
 	}
