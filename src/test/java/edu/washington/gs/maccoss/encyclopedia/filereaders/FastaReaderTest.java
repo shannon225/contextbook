@@ -66,15 +66,26 @@ public class FastaReaderTest extends TestCase {
 
 	public static void main(String[] args) throws Exception {
 		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
-		File f=new File("/Users/searleb/Downloads/UP000005640_9606.fasta");
+		String fastaFilePath = "/Users/searleb/Downloads/uniprot_sprot.fasta";
+		DigestionEnzyme enzyme = DigestionEnzyme.getEnzyme("Trypsin");
+		
+		File f=new File(fastaFilePath);
+
+		int proteinCount=0;
+		int previousDec=0;
+		int counter=0;
 		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f, parameters);
 		for (FastaEntryInterface entry : entries) {
-			
-			int index = Math.max(entry.getSequence().indexOf("TGELNSR"), entry.getSequence().indexOf("TGEINSR"));
-			if (index>=0) {
-				System.out.println(entry.getAccession()+" --> "+entry.getSequence().substring(index-1,  index+10));
+			proteinCount++;
+			int thisDec = Math.round(100f*proteinCount/(entries.size()));
+			if (thisDec>previousDec) {
+				previousDec=thisDec;
+				System.out.println(thisDec*1+"%");
 			}
+			ArrayList<FastaPeptideEntry> peptides=enzyme.digestProtein(entry, 7, 40, 2, parameters.getAAConstants(), false);
+			counter+=peptides.size();
 		}
+		System.out.println(counter);
 	}
 	
 	public static void main10(String[] args) throws Exception {

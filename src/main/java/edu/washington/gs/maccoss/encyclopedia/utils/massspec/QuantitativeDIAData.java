@@ -9,10 +9,9 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursor;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.utils.Quadruplet;
-import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
-public class QuantitativeDIAData implements PeptidePrecursor, Spectrum {
+public class QuantitativeDIAData implements PeptidePrecursor, SpectrumWithCharge {
 
 	private final String peptideModSeq;
 	private final String massCorrectedPeptideModSeq;

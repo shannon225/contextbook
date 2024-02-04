@@ -28,4 +28,8 @@ public class SimpleFilenameFilter implements FilenameFilter {
 		return accept(null, name);
 	}
 
+	public boolean accept(File f) {
+		return accept(f.getParentFile(), f.getName());
+	}
+
 }

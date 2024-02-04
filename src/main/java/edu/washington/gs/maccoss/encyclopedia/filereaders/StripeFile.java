@@ -518,7 +518,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 			prep.setDouble(index++, stripe.getIsolationWindowLower());
 			prep.setDouble(index++, stripe.getIsolationWindowCenter());
 			prep.setDouble(index++, stripe.getIsolationWindowUpper());
-			prep.setInt(index++, stripe.getCharge());
+			prep.setInt(index++, stripe.getPrecursorCharge());
 			byte[] massByteArray = ByteConverter.toByteArray(stripe.getMassArray());
 			prep.setInt(index++, massByteArray.length);
 			prep.setBytes(index++, CompressionUtils.compress(massByteArray));
