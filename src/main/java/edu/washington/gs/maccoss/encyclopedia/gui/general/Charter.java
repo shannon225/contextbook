@@ -174,7 +174,7 @@ public class Charter {
 		        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(trans, null);
 			}
 		});
-		copyImage.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+		copyImage.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 		fileMenu.add(copyImage);
 
 		JMenuItem saveSVG=new JMenuItem("Save as SVG");

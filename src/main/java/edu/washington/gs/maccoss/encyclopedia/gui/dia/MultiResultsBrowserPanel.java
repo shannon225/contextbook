@@ -73,6 +73,8 @@ public class MultiResultsBrowserPanel extends JPanel {
 	private final JCheckBox simplifyPlots=new JCheckBox("Simplify plots");
 	private final JCheckBox precursorsPlots=new JCheckBox("Precursors");
 	private final JCheckBox fragmentsPlots=new JCheckBox("Fragments");
+	private final JCheckBox sgSmoothBox=new JCheckBox("Smooth");
+	private final JCheckBox backgroundSubtractBox=new JCheckBox("Background Subtract");
 	
 	private final int defaultMinimumNumberOfFragmentsIndex=3;
 	private final int defaultNumberOfColumnsIndex=1;
@@ -215,6 +217,25 @@ public class MultiResultsBrowserPanel extends JPanel {
 		fragmentsPlots.setBackground(LabeledComponent.BACKGROUND_COLOR);
 		fragmentsPlots.setSelected(true);
 		checkBoxes.add(fragmentsPlots);
+		
+		sgSmoothBox.setSelected(true);
+		sgSmoothBox.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				updateToSelectedPeptide();
+			}
+		});
+
+		backgroundSubtractBox.setSelected(true);
+		backgroundSubtractBox.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				updateToSelectedPeptide();
+			}
+		});
+		checkBoxes.add(sgSmoothBox);
+		checkBoxes.add(backgroundSubtractBox);
+		
 		options.add(checkBoxes);
 		fragmentsPlots.addActionListener(new ActionListener() {
 			@Override
@@ -539,7 +560,7 @@ public class MultiResultsBrowserPanel extends JPanel {
 			}
 		}
 		precursors=trimmedPrecursors;
-		XYTraceInterface[] traceArray=ChromatogramExtractor.extractPrecursorChromatograms(parameters.getPrecursorTolerance(), quantitativeData.getPrecursorMZ(), quantitativeData.getPrecursorCharge(), precursors, true, false);
+		XYTraceInterface[] traceArray=ChromatogramExtractor.extractPrecursorChromatograms(parameters.getPrecursorTolerance(), quantitativeData.getPrecursorMZ(), quantitativeData.getPrecursorCharge(), precursors, sgSmoothBox.isSelected(), backgroundSubtractBox.isSelected());
 
 		double maxY=0.0;
 		for (int i = 0; i < traceArray.length; i++) {
@@ -591,9 +612,9 @@ public class MultiResultsBrowserPanel extends JPanel {
 		ArrayList<Spectrum> downcastedSpectra=FragmentScan.downcastStripeToSpectrum(stripes);
 
 		HashMap<FragmentIon, XYTrace> targetFragmentTraceMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), targetIonArray, downcastedSpectra, null,
-				GraphType.boldline, true, false);
+				GraphType.boldline, sgSmoothBox.isSelected(), backgroundSubtractBox.isSelected());
 		HashMap<FragmentIon, XYTrace> offTargetFragmentTraceMap=ChromatogramExtractor.extractFragmentChromatograms(parameters.getFragmentTolerance(), offTargetIonArray, downcastedSpectra,
-				null, GraphType.dashedline, true, false);
+				null, GraphType.dashedline, sgSmoothBox.isSelected(), backgroundSubtractBox.isSelected());
 
 		traces.addAll(targetFragmentTraceMap.values());
 		double maxY=0.1;
