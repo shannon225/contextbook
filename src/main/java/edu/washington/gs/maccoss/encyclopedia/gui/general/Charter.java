@@ -199,7 +199,7 @@ public class Charter {
 				}
 			}
 		});
-		saveSVG.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
+		saveSVG.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 		fileMenu.add(saveSVG);
 		
 		
