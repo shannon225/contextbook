@@ -35,8 +35,10 @@ public class EValueCalculator {
 		this(scoreMap, minScore, estimateBinSize(scoreMap));
 	}
 	private static float estimateBinSize(TFloatFloatHashMap scoreMap) {
+		return estimateBinSize(scoreMap.values());
+	}
 
-		float[] scoreArray=scoreMap.values();
+	public static float estimateBinSize(float[] scoreArray) {
 		float stdev=General.stdev(scoreArray);
 		if (scoreArray.length==0||stdev==0.0f) {
 			return 1;
@@ -137,6 +139,84 @@ public class EValueCalculator {
 			}
 		}
 	}
+	
+	public EValueCalculator(float[] rawScores, float bestRT, float minScore) {
+		this(rawScores, bestRT, minScore, estimateBinSize(rawScores));
+	}
+	
+	/**
+	 * 
+	 * @param scoreMap keys are RT or index, values are scores
+	 * @param minScore
+	 * @param binSize
+	 */
+	public EValueCalculator(float[] rawScores, float bestRT, float minScore, float binSize) {
+		this.minScore=minScore;
+		this.binSize=binSize;
+		
+		maxScore=General.max(rawScores);
+		maxRT=bestRT;
+		
+		for (int i = 0; i < rawScores.length; i++) {
+			if (rawScores[i]>=minScore) {
+				int index=Math.round((rawScores[i]-minScore)/binSize);
+				if (index>=counts.length) {
+					index=counts.length-1;
+				}
+				if (index>=0) {
+					counts[index]++;
+				}
+			}
+		}
+		
+		int totalCounts=General.sum(counts);
+		int target=Math.round(totalCounts/2f);
+		
+		int targetIndex=0;
+		int currentTotal=0;
+		for (int i = counts.length-1; i>=0; i--) {
+			currentTotal+=counts[i];
+			if (currentTotal>target) {
+				targetIndex=i;
+				break;
+			}
+		}
+		
+		TFloatArrayList scores=new TFloatArrayList();
+		TFloatArrayList lnCounts=new TFloatArrayList();
+		for (int i = targetIndex; i < counts.length; i++) {
+			if (counts[i]>3) {
+				// don't count singletons, there are a ton and they throw off the extrapolation
+				scores.add(getScore(i));
+				lnCounts.add((float)Math.log(counts[i]));
+				
+				//System.out.println(getScore(i)+"\t"+Math.log(counts[i]));
+			}
+		}
+		
+		if (scores.size()<3) {
+			// use default values if the statistics in the survival function is too meager
+			// these are defaults from X!Tandem
+			n=scores.size();
+			m=-0.25f;
+			b=3.5f;
+		} else {
+			float[] scoreArray = scores.toArray();
+			float[] countArray = lnCounts.toArray();
+			Pair<Float, Float> equation=LinearRegression.getRegression(scoreArray, countArray);
+			n=scores.size();
+			
+			if (equation.x>=0f) {
+				// if the slope is off (or non-negative) then revert back to X!Tandem defaults
+				m=-0.25f;
+				b=3.5f;
+			} else {
+				m=equation.x;
+				b=equation.y;
+			}
+		}
+	}
+	
 	public float getNegLnEValue(float score) {
 		if (m>0) return FAILURE_STATE;
 		float e=-(score*m+b);

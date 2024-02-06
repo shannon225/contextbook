@@ -11,7 +11,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassErrorUnitType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 
 public enum InstrumentSpecificSearchParameters {
-	IontrapIontrap, OrbitrapIontrap, OrbitrapOrbitrap, ToF, OrbitrapAstral;
+	IontrapIontrap, OrbitrapIontrap, OrbitrapOrbitrap, ToF, OrbitrapAstral, IontrapOrbitrap;
 	
 	public static final InstrumentSpecificSearchParameters[] INSTRUMENTS={OrbitrapOrbitrap, ToF, OrbitrapAstral, IontrapIontrap, OrbitrapIontrap};
 	
@@ -100,6 +100,16 @@ public enum InstrumentSpecificSearchParameters {
 				params.put("-minIntensity", "-1");
 				params.put("-filterPeaklists", Boolean.TRUE.toString());
 				break;
+
+			case IontrapOrbitrap:
+				params.put("-ptol", "0.4");
+				params.put("-ftol", "10");
+				params.put("-ptolunits", MassErrorUnitType.AMU.toString());
+				params.put("-ftolunits", MassErrorUnitType.PPM.toString());
+				params.put(SearchParameters.SUBTRACT_BACKGROUND, Boolean.TRUE.toString());
+				params.put("-minIntensity", "-1");
+				params.put("-filterPeaklists", Boolean.TRUE.toString());
+				break;
 	
 			default:
 				Logger.errorLine("Unknown parameters for instrument type: "+this);
@@ -133,6 +143,8 @@ public enum InstrumentSpecificSearchParameters {
 			return "Iontrap/Iontrap";
 		case OrbitrapIontrap:
 			return "Orbitrap/Iontrap";
+		case IontrapOrbitrap:
+			return "Iontrap/Orbitrap";
 		default:
 			return "Unknown";
 		}
@@ -167,6 +179,8 @@ public enum InstrumentSpecificSearchParameters {
 			return OrbitrapIontrap;
 		} else if (s.equals("OT/IT".toLowerCase())) {
 			return OrbitrapIontrap;
+		} else if (s.equals("IontrapOrbitrap".toLowerCase())) {
+			return IontrapOrbitrap;
 		}
 
 		throw new EncyclopediaException("Unknown instrument type: "+s);
