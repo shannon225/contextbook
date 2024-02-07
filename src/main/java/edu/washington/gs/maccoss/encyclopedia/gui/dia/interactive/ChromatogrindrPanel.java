@@ -774,8 +774,14 @@ public class ChromatogrindrPanel extends JPanel {
 			}
 			primaryIonObjects=foundIons.toArray(new FragmentIon[0]);
 			
-			TransitionRefinementData data=TransitionRefiner.identifyTransitions(entry.getPeptideModSeq(), entry.getPrecursorCharge(), entry.getRetentionTimeInSec(), 
-					primaryIonObjects, chromatogramList, retentionTimes, false, parameters);
+			TransitionRefinementData data;
+			if (rtRange!=null&&rtRange.getRange()>0.0f) {
+				data=TransitionRefiner.identifyTransitionsFromRTRange(entry.getPeptideModSeq(), entry.getPrecursorCharge(), entry.getRetentionTimeInSec(), 
+						primaryIonObjects, chromatogramList, retentionTimes, rtRange, parameters);
+			} else {
+				data=TransitionRefiner.identifyTransitions(entry.getPeptideModSeq(), entry.getPrecursorCharge(), entry.getRetentionTimeInSec(), 
+						primaryIonObjects, chromatogramList, retentionTimes, false, parameters);
+			}
 			fragmentTraces=getTraces(primaryIonObjects, data.getChromatograms(), data.getCorrelationArray(), retentionTimes, data.getRange(), -Float.MAX_VALUE);
 			
 			float minCorrelation=getMinimumCorrelation(data.getCorrelationArray());
