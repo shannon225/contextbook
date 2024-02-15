@@ -62,10 +62,13 @@ import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
 import org.jfree.chart.ChartPanel;
+import org.jfree.chart.annotations.XYAnnotation;
 import org.jfree.chart.annotations.XYTextAnnotation;
 import org.jfree.chart.axis.ValueAxis;
+import org.jfree.chart.event.AnnotationChangeListener;
 import org.jfree.chart.panel.CrosshairOverlay;
 import org.jfree.chart.plot.Crosshair;
+import org.jfree.chart.plot.PlotRenderingInfo;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.ui.RectangleEdge;
 import org.jfree.ui.TextAnchor;
@@ -103,6 +106,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.ChromatogramExtractor;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.IonType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
@@ -827,6 +831,18 @@ public class ChromatogrindrPanel extends JPanel {
 	
 					LibraryEntry butterfly=FragmentIonConsistencyCharter.getButterfly(acq, ref);
 					ChartPanel chartPanelButterfly = Charter.getChart(new AnnotatedLibraryEntry(butterfly, parameters, true));
+
+					Font font=new Font(Charter.BASE_FONT_NAME, Font.PLAIN, 18);
+					XYTextAnnotation acquiredAnnotation = new XYTextAnnotation("Acquired", 10.0, 1.0);
+					XYTextAnnotation libraryAnnotation = new XYTextAnnotation("Library", 10.0, -1.0);
+					acquiredAnnotation.setTextAnchor(TextAnchor.TOP_LEFT);
+					libraryAnnotation.setTextAnchor(TextAnchor.CENTER_LEFT);
+					acquiredAnnotation.setPaint(Color.black);
+					acquiredAnnotation.setFont(font);
+					libraryAnnotation.setPaint(Color.black);
+					libraryAnnotation.setFont(font);
+					chartPanelButterfly.getChart().getXYPlot().addAnnotation(acquiredAnnotation);
+					chartPanelButterfly.getChart().getXYPlot().addAnnotation(libraryAnnotation);
 
 					rightInfoPanel.add(chartPanelButterfly);
 				}

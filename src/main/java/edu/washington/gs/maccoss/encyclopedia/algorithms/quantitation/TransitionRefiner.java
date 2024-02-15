@@ -224,6 +224,8 @@ public class TransitionRefiner {
 				break;
 			}
 		}
+		min=Math.min(retentionTimes.length-1, min);
+		max=Math.max(0, max);
 		IntRange indices=new IntRange(min, max);
 
 		// start across the entire width

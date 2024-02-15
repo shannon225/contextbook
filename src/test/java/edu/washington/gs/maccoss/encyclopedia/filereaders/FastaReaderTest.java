@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.math3.util.CombinatoricsUtils;
@@ -34,7 +35,9 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TCharDoubleHashMap;
+import gnu.trove.map.hash.TCharIntHashMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
+import gnu.trove.procedure.TCharIntProcedure;
 import gnu.trove.set.hash.TIntHashSet;
 import junit.framework.TestCase;
 
@@ -66,7 +69,7 @@ public class FastaReaderTest extends TestCase {
 
 	public static void main(String[] args) throws Exception {
 		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
-		String fastaFilePath = "/Users/searleb/Downloads/uniprot_sprot.fasta";
+		String fastaFilePath = "/Users/searleb/Documents/OSU/teaching/proteomics_class/homework/homework3/UP000000625_83333.fasta";
 		DigestionEnzyme enzyme = DigestionEnzyme.getEnzyme("Trypsin");
 		
 		File f=new File(fastaFilePath);
@@ -74,18 +77,38 @@ public class FastaReaderTest extends TestCase {
 		int proteinCount=0;
 		int previousDec=0;
 		int counter=0;
+		TCharIntHashMap aaGlobalMap=new TCharIntHashMap();
 		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f, parameters);
 		for (FastaEntryInterface entry : entries) {
 			proteinCount++;
 			int thisDec = Math.round(100f*proteinCount/(entries.size()));
 			if (thisDec>previousDec) {
 				previousDec=thisDec;
-				System.out.println(thisDec*1+"%");
+				//System.out.println(thisDec*1+"%");
 			}
 			ArrayList<FastaPeptideEntry> peptides=enzyme.digestProtein(entry, 7, 40, 2, parameters.getAAConstants(), false);
 			counter+=peptides.size();
+
+			TCharIntHashMap aaMap=new TCharIntHashMap();
+			
+			for (char c : entry.getSequence().toCharArray()) {
+				aaMap.adjustOrPutValue(c, 1, 1);
+				aaGlobalMap.adjustOrPutValue(c, 1, 1);
+			}
+
+
+//			System.out.print(entry.getAccession());
+//			for (char c : AminoAcidConstants.AAs) {
+//				System.out.print("\t"+aaMap.get(c));
+//			}
+//			System.out.println();
 		}
-		System.out.println(counter);
+		//System.out.println(counter);
+		
+
+		for (char c : AminoAcidConstants.AAs) {
+			System.out.print("\t"+aaGlobalMap.get(c));
+		}
 	}
 	
 	public static void main10(String[] args) throws Exception {
