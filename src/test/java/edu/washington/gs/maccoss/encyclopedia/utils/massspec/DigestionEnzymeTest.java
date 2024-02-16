@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.TreeSet;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntry;
@@ -31,6 +33,24 @@ import junit.framework.TestCase;
 public class DigestionEnzymeTest extends TestCase {
 	
 	public static void main(String[] args) {
+		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
+		DigestionEnzyme enzyme = DigestionEnzyme.getEnzyme("Trypsin");
+		File f=new File("/Users/searleb/Downloads/mus_musculus_reviewed_uniprot.fasta");
+		//File f=new File("/Users/searleb/Downloads/homo_sapiens_reviewed_uniprot.fasta");
+
+		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f, parameters);
+		for (FastaEntryInterface entry : entries) {
+			ArrayList<FastaPeptideEntry> peptides=enzyme.digestProtein(entry, 7, 25, 0, parameters.getAAConstants(), false);
+			for (FastaPeptideEntry peptide : peptides) {
+				if (peptide.getSequence().indexOf('X')>=0||peptide.getSequence().indexOf('B')>=0||peptide.getSequence().indexOf('Z')>=0||peptide.getSequence().indexOf('U')>=0) {
+					continue;
+				}
+				System.out.println(peptide.getSequence());
+			}
+		}
+	}
+	
+	public static void mainq(String[] args) {
 		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
 		File f=new File("/Users/searleb/Downloads/uniprotkb_proteome_UP000005640_2024_01_07.fasta");
 
