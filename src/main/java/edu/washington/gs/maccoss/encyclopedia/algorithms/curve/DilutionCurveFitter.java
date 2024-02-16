@@ -713,6 +713,7 @@ public class DilutionCurveFitter {
 
 			// calculate equations
 			Pair<Float, Float> equation=LinearRegression.getRegression(linearX.toArray(), linearY.toArray());
+			equation=new Pair<Float, Float>(1f, 0f);
 			
 			// calculate deviation to find the best fit
 			float rsquared=0;
@@ -743,11 +744,11 @@ public class DilutionCurveFitter {
 				Charter.launchComponent(panel, "Iteration "+crossOver, new Dimension(300, 300));
 			}
 			
-			if(crossOver>0&&fit.getLOD()<loggedExpected.get(crossOver-1)) {
-				// if the point where it hits noiseMean is less than the crossOver point, forcing intercept at noiseMean crossOver point
-				equation=LinearRegression.getRegressionWithFixedIntercept(linearX.toArray(), linearY.toArray(), new XYPoint(loggedExpected.get(crossOver), noiseMean));
-				fit=new DilutionFit(noiseMean, noiseMax, noiseStdev, linearStdev, equation.x, equation.y, lastZero, firstNonZero, maxMeasuredValue, rsquared);
-			}
+//			if(crossOver>0&&fit.getLOD()<loggedExpected.get(crossOver-1)) {
+//				// if the point where it hits noiseMean is less than the crossOver point, forcing intercept at noiseMean crossOver point
+//				equation=LinearRegression.getRegressionWithFixedIntercept(linearX.toArray(), linearY.toArray(), new XYPoint(loggedExpected.get(crossOver), noiseMean));
+//				fit=new DilutionFit(noiseMean, noiseMax, noiseStdev, linearStdev, equation.x, equation.y, lastZero, firstNonZero, maxMeasuredValue, rsquared);
+//			}
 //			if (peptide.equals("AGVLGALALGR")) {
 //				System.out.println(crossOver+") "+rsquared+" ("+noise.size()+"/"+linearX.size()+") --> m:"+equation.x+", b:"+equation.y+", lastZero:"+lastZero); // FIXME
 //			}
