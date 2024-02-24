@@ -14,11 +14,15 @@ public class PeptidePrecursorTableModel extends AbstractTableModel {
 	private static final long serialVersionUID=1L;
 	private final String[] columns=new String[] {"#", "Peptide", "RT (min)", "Charge", "Passes"};
 
-	ArrayList<InteractivePeptidePrecursor> allEntries=new ArrayList<InteractivePeptidePrecursor>();
+	private final ArrayList<InteractivePeptidePrecursor> allEntries=new ArrayList<InteractivePeptidePrecursor>();
 
 	public void updateEntries(ArrayList<InteractivePeptidePrecursor> newEntries) {
 		allEntries.clear();
 		allEntries.addAll(newEntries);
+	}
+	
+	public ArrayList<InteractivePeptidePrecursor> getAllEntries() {
+		return allEntries;
 	}
 	
 	public String copy() {
