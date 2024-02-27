@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -20,13 +21,48 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.StringUtils;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.map.hash.TCharDoubleHashMap;
+import gnu.trove.map.hash.TObjectIntHashMap;
+import gnu.trove.procedure.TObjectIntProcedure;
 import gnu.trove.set.hash.TCharHashSet;
 import junit.framework.TestCase;
 
 public class DigestionEnzymeTest extends TestCase {
 	
 	public static void main(String[] args) {
+		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
+		File f=new File("/Users/searleb/Downloads/uniprotkb_proteome_UP000005640_2024_01_07.fasta");
+
+		//File f=new File("/Users/searleb/Downloads/uniprotkb_reviewed_true_AND_model_organ_2024_01_13.fasta");
+		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f, parameters);
+
+		TObjectIntHashMap<String> map=new TObjectIntHashMap<String>();
+		for (FastaEntryInterface entry : entries) {
+			ArrayList<FastaPeptideEntry> peptides=DigestionEnzyme.getEnzyme("Trypsin").digestProtein(entry, 7, 35, 0, parameters.getAAConstants(), false);
+			for (FastaPeptideEntry peptide : peptides) {
+				String sequence = peptide.getSequence().replace('I', 'L');
+				map.put(sequence, map.get(sequence)+1);
+			}
+		}
+		
+		final int[] counts=new int[11];
+		map.forEachEntry(new TObjectIntProcedure<String>() {
+			@Override
+			public boolean execute(String a, int b) {
+				if (b>=counts.length) b=counts.length-1;
+				counts[b]++;
+				return true;
+			}
+		});
+		
+		for (int i = 0; i < counts.length; i++) {
+			System.out.println(i+"\t"+counts[i]);
+		}
+		System.out.println(1.0f-(counts[1]/(float)General.sum(counts)));
+	}
+	
+	public static void main2(String[] args) {
 		String cdk1="MAEAPASPAPLSPLEVELDPEFEPQSRPRSCTWPLQRPELQASPAKPSGETAADSMIPEE" + 
 				"EDDEDDEDGGGRAGSAMAIGGGGGSGTLGSGLLLEDSARVLAPGGQDPGSGPATAAGGLS" + 
 				"GGTQALLQPQQPLPPPQPGAAGGSGQPRKCSSRRNAWGNLSYADLITRAIESSPDKRLTL" + 

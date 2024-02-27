@@ -130,7 +130,7 @@ public class WindowDownsampler implements SpectrumProcessor {
 						String precursorName="Merged_"+representative.getPrecursorName();
 						int spectrumIndex=representative.getSpectrumIndex();
 						int fraction=representative.getFraction();
-						byte charge=representative.getCharge();
+						byte charge=representative.getPrecursorCharge();
 
 						// data taken from overall range
 						double isolationWindowLower=target.getStart();

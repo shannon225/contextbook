@@ -231,6 +231,18 @@ public class PeptideUtils {
 				aas.set(masses.size()-1, aaString+(modificationMass>=0?"[+":"[")+modificationMass+"]");
 			} else {
 				masses.add(aaConstants.getMass(ca[i]));
+//				if (ca[i]=='D') {
+//					neutralLosses.add(MassConstants.oh2);
+//				} else if (ca[i]=='E') {
+//					neutralLosses.add(MassConstants.oh2);
+//				} else if (ca[i]=='N') {
+//					neutralLosses.add(MassConstants.nh3);
+//				} else if (ca[i]=='Q') {
+//					neutralLosses.add(MassConstants.nh3);
+//				} else {
+//					neutralLosses.add(0.0);
+//				}
+
 				neutralLosses.add(0.0);
 				modifications.add(0.0);
 				aas.add(Character.toString(ca[i]));

@@ -104,4 +104,40 @@ public class StringUtils {
 		}
 		return sb.toString();
 	}
+	
+	public static String scientificNotation(double v, int precision) {
+		assert(precision>=0);
+		String s=String.format("%."+precision+"E", v);
+		int e=s.indexOf('E');
+		String first=s.substring(0, e);
+		String second=s.substring(e+1);
+		
+		int power=Integer.parseInt(second);
+		char[] powerChars=Integer.toString(power).toCharArray();
+		StringBuilder sb=new StringBuilder(first);
+		sb.append("x10");
+		for (char c : powerChars) {
+			char unicode = getSubscriptNumber(c);
+			sb.append(unicode);
+		}
+		return sb.toString();
+	}
+	
+	public static char getSubscriptNumber(char c) {
+		char unicode;
+		switch (c) {
+		case 0+48: unicode='\u2070'; break;
+		case 1+48: unicode='\u00B9'; break;
+		case 2+48: unicode='\u00B2'; break;
+		case 3+48: unicode='\u00B3'; break;
+		case 4+48: unicode='\u2074'; break;
+		case 5+48: unicode='\u2075'; break;
+		case 6+48: unicode='\u2076'; break;
+		case 7+48: unicode='\u2077'; break;
+		case 8+48: unicode='\u2078'; break;
+		case 9+48: unicode='\u2079'; break;
+		default: unicode=c; break;
+		}
+		return unicode;
+	}
 }

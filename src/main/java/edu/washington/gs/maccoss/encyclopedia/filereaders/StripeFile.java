@@ -257,6 +257,10 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 
 	public void setFileVersion() throws IOException, SQLException {
 		HashMap<String, String> map=new HashMap<String, String>();
+		if (getVersion().amIAbove(getMostRecentVersion())) {
+			// don't write over a higher version number
+			return;
+		}
 		map.put(VERSION_STRING, getMostRecentVersion().toString());
 		addMetadata(map);
 	}
@@ -518,7 +522,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 			prep.setDouble(index++, stripe.getIsolationWindowLower());
 			prep.setDouble(index++, stripe.getIsolationWindowCenter());
 			prep.setDouble(index++, stripe.getIsolationWindowUpper());
-			prep.setInt(index++, stripe.getCharge());
+			prep.setInt(index++, stripe.getPrecursorCharge());
 			byte[] massByteArray = ByteConverter.toByteArray(stripe.getMassArray());
 			prep.setInt(index++, massByteArray.length);
 			prep.setBytes(index++, CompressionUtils.compress(massByteArray));
@@ -788,6 +792,14 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	}
 
 	protected void applyPatches(Version currentVersion, Statement s) throws IOException, SQLException {
+		if (currentVersion.amIAbove(getMostRecentVersion())) {
+			// this is a dia file from a more recent version of EncyclopeDIA
+			Logger.errorLine("WARNING: Dia file "+this.getOriginalFileName()+" is from a more recent version of EncyclopeDIA. " +
+					"Attempting to open, but this may cause unpredictable results.");
+
+			return;
+		}
+
 		if (new Version(0, 1, 0).amIAbove(currentVersion)) {
 			Logger.logLine("Updating to DIA file to save TIC data...");
 			s.execute("alter table precursor add column TIC float");

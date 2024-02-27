@@ -77,7 +77,7 @@ public class TargetedScheduler {
 	}
 
 
-	private final static PeakIntensityComparator intensityComparator=new PeakIntensityComparator();
+	private final static PeakIntensityComparator intensityComparator=PeakIntensityComparator.DEFAULT_INTENSITY_COMPARATOR;
 
 	public static void generateAssay(SearchParameters params, final File outputDirectory, File libraryFile, File rtAlignFile, File targetFastaFile, HashSet<String> keyAccessionNumbers, AbstractDilutionCurveFittingParameters fittingParams) throws IOException, SQLException, DataFormatException, FileNotFoundException, UnsupportedEncodingException {
 		final File exportLibraryFile=new File(outputDirectory, "target_library.dlib");

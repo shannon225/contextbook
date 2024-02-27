@@ -60,12 +60,12 @@ public class DilutionCurveFitterExample {
 	
 	public static void main(String[] args) throws Exception {
 		SearchParameters params=SearchParameterParser.getDefaultParametersObject();
-		File inputDirectory=new File("/Users/searleb/Documents/students/ariana/");
-		File outputDirectory=new File("/Users/searleb/Documents/students/ariana/curvefitting_combined_30k_testing_10p/");
-		File dataFile=new File(inputDirectory, "dimethyl_combined_library_titration_curve.elib.peptides.txt");
-		File sampleOrganizationFile=new File(inputDirectory, "exploris_21pt_curve_samples_list.csv");
-		File libraryFile=new File(inputDirectory, "v3_library_exploris.elib");
-		File rtAlignFile=new File(inputDirectory, "2024_01_02_mouse_WT_CD8Tcell_250ng_16mzst_DIA_auorora_01.mzML.elib");
+		File inputDirectory=new File("/Users/searleb/Downloads/ariana_curve/");
+		File outputDirectory=new File(inputDirectory, "curvefitting_combined_30k/");
+		File dataFile=new File(inputDirectory, "aurora_calcurve_quant.elib.peptides.txt");
+		File sampleOrganizationFile=new File(inputDirectory, "calcurve_20pt_samples.csv");
+		File libraryFile=new File(inputDirectory, "cd8AuroraLibrary.elib");
+		File rtAlignFile=new File(inputDirectory, "2024_02_06_CalCurve_100Percent_CD8+_1ug_16mzst_aurora_01.mzML.elib");
 
 		for (boolean isDeepAssay : new boolean [] {true}) {
 			AbstractDilutionCurveFittingParameters fittingParams;

@@ -18,7 +18,9 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedSpectrum;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
@@ -28,12 +30,412 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassErrorUnitType;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 import gnu.trove.list.array.TFloatArrayList;
+import gnu.trove.map.hash.TDoubleObjectHashMap;
 import gnu.trove.map.hash.TFloatFloatHashMap;
 
 public class CharterTest {
+
+	public static void main9(String[] args) {
+		double[] masses = new double[] { 832.3259888, 832.6026001, 842.5114136, 844.5179443, 846.4545288, 856.5249634,
+				860.4672241, 860.6345825, 870.5395508, 876.6275024, 887.4075928, 892.6012573, 904.4334717, 904.6616211,
+				918.4483032, 920.6558228, 924.4689331, 948.6893311, 964.6808472, 968.4403687, 991.5236816, 1005.532654,
+				1014.437134, 1030.42981, 1035.448242, 1036.738037, 1046.446655, 1080.765625, 1122.552246, 1131.188477,
+				1147.623047, 1155.495483, 1160.560669, 1161.576172, 1178.575806, 1248.616943, 1249.583496, 1256.856445,
+				1262.633179, 1279.679565, 1320.601074, 1365.641602, 1378.740845, 1409.830933, 1427.785645, 1472.732422,
+				1475.758179, 1512.693115, 1516.366455, 1532.799438, 1565.029297, 1585.692627, 1597.780273, 1599.747925,
+				1601.550903, 1603.701294, 1617.715088, 1650.160522, 1688.794312, 1702.80896, 1788.899658, 1802.933594,
+				1832.946899, 1847.895386, 1899.037842, 1950.91333, 1967.937622, 1968.939331, 2012.111084, 2062.085449,
+				2078.05542, 2082.989502, 2086.086426, 2211.104004, 2221.122314, 2225.136475, 2226.119873, 2238.293701,
+				2342.969238, 2362.188721, 2379.212891 };
+		float[] intensities = new float[] { 1556.406128f, 3411.959473f, 8507.539063f, 1604.961914f, 33122.5625f,
+				2420.893066f, 1467.801514f, 6271.79834f, 6567.290527f, 3002.865967f, 5696.026367f, 1541.818848f,
+				6490.942871f, 5695.30957f, 1593.912842f, 2568.719971f, 1927.428589f, 5110.972656f, 2092.415771f,
+				3503.826416f, 21916.51367f, 3457.04541f, 4836.897461f, 13834.57813f, 3498.672852f, 3211.645508f,
+				2145.870117f, 2502.585938f, 5504.606445f, 2289.549072f, 22997.44141f, 2097.917236f, 2948.42749f,
+				2597.709229f, 29954.00586f, 1171.921143f, 1446.780762f, 504.890686f, 980.2712402f, 700.9439087f,
+				632.0109863f, 1080.595337f, 618.8185425f, 893.1099243f, 831.0289307f, 661.9447021f, 679.1530762f,
+				971.8303223f, 595.7111816f, 5092.851563f, 1037.408203f, 2601.007813f, 1697.249268f, 1667.56958f,
+				2019.52063f, 21696.37109f, 9676.923828f, 1447.783936f, 12597.71582f, 8970.025391f, 428.4316406f,
+				354.4243774f, 2128.278076f, 469.57901f, 3804.846191f, 585.619751f, 737.0495605f, 863.3626709f,
+				583.3383789f, 508.3078003f, 244.3909607f, 217.7755737f, 659.9209595f, 574.0935059f, 196.0771942f,
+				326.0794373f, 395.5783081f, 1489.118774f, 178.8942261f, 204.647583f, 2848.884521f };
+
+		TDoubleObjectHashMap<String> map = new TDoubleObjectHashMap<String>();
+		
+//		map.put(1146.61+1, "RGEFIQEIR");
+//		map.put(1177.56+1, "THFNTAQGFR");
+//		map.put(1584.69+1, "EGEFSTCFTELQR+PyroGlu");
+//		map.put(1602.7+1, "EGEFSTCFTELQR");
+//		map.put(1687.79+1, "FIEDYLLPDTCFR");
+//		map.put(2378.21+1, "SDADLVVFLSPLTTFQDQLNR");
+
+		PrecursorScan ms = new PrecursorScan("2',5'-oligoadenylate synthetase 1 isoform E16 ", 0, 0.0f, 0, 0.0, 10000.0,
+				null, masses, intensities, Optional.empty());
+		AnnotatedSpectrum anno = new AnnotatedSpectrum(ms, map, new MassTolerance(0.25, MassErrorUnitType.AMU));
+
+		Charter.launchChart(anno);
+	}
+
+	public static void main10(String[] args) {
+		double[] masses = new double[] { 101.070915222167, 104.052513122558, 110.070915222167, 129.065002441406,
+				129.101776123046, 136.075164794921, 137.078247070312, 147.112167358398, 160.078491210937,
+				175.11863708496, 178.085327148437, 183.111877441406, 199.179489135742, 200.13914489746,
+				213.158157348632, 216.097091674804, 223.106842041015, 226.117279052734, 228.133483886718,
+				233.091247558593, 244.128799438476, 251.101898193359, 261.154907226562, 304.882232666015,
+				315.165069580078, 324.190673828125, 359.155059814453, 361.149047851562, 376.180480957031,
+				379.159271240234, 400.178283691406, 450.23599243164, 478.227142333984, 489.265991210937,
+				527.287780761718, 527.783630371093, 546.286743164062, 547.287292480468, 548.270568847656,
+				597.360534667968, 643.305908203125, 644.323120117187, 660.329040527343, 660.536437988281,
+				660.739868164062, 660.938049316406, 661.1396484375, 661.342224121093, 683.000732421875,
+				683.344482421875, 714.34765625, 731.365295410156, 732.362365722656, 764.87255859375, 765.123718261718,
+				827.421813964843, 844.449523925781, 845.448608398437, 926.484191894531, 943.514953613281,
+				944.515380859375, 1054.5478515625, 1071.58959960937, 1072.56726074218, 1158.61401367187,
+				1159.60791015625 };
+		float[] intensities = new float[] { 345490.03125f, 21481.234375f, 23465.357421875f, 20975.517578125f,
+				88940.6640625f, 414756.4375f, 25790.798828125f, 44260.3984375f, 22252.05078125f, 53408.984375f,
+				24894.125f, 22055.40625f, 25910.033203125f, 62175.59375f, 51086.01171875f, 105598.8359375f,
+				104216.7734375f, 38247.6640625f, 48756.19140625f, 33320.4140625f, 20114.796875f, 60186.9375f,
+				128956.953125f, 22041.72265625f, 73922.53125f, 25061.578125f, 23825.55078125f, 169087.984375f,
+				99188.078125f, 154789.90625f, 23081.447265625f, 43776.20703125f, 75326.4140625f, 31087.158203125f,
+				47426.39453125f, 40249.46875f, 143819.078125f, 26903.884765625f, 38938.2109375f, 37781.1640625f,
+				45835.62890625f, 21934.6015625f, 166787.46875f, 44855.375f, 129669.28125f, 76485.921875f,
+				98456.3984375f, 214630.40625f, 20492.71875f, 23794.93359375f, 35835.92578125f, 338364.125f,
+				151106.734375f, 44884.91796875f, 27612.765625f, 41487.8671875f, 448976.4375f, 205161.296875f,
+				23955.349609375f, 214581.859375f, 131559.109375f, 38685.3203125f, 38547.03515625f, 25851.3515625f,
+				48959.94921875f, 31920.373046875f };
+
+		TDoubleObjectHashMap<String> map = new TDoubleObjectHashMap<String>();
+		map.put(962.473754882812, "962.5");
+		map.put(943.469665527343, "943.5");
+		map.put(934.459289550781, "934.5");
+		map.put(924.4501953125, "924.5");
+		map.put(863.412841796875, "863.4");
+		map.put(810.40576171875, "810.4");
+		map.put(748.385925292968, "748.4");
+		map.put(723.368225097656, "723.4");
+		map.put(649.311584472656, "649.3");
+		map.put(610.278259277343, "610.3");
+		map.put(520.275573730468, "520.3");
+		map.put(481.240478515625, "481.2");
+		map.put(419.228363037109, "419.2");
+		map.put(380.192352294921, "380.2");
+		map.put(291.164428710937, "291.2");
+		map.put(267.1083984375, "267.1");
+		map.put(204.134628295898, "204.1");
+		map.put(1619.80102539062, "1619.8");
+		map.put(1506.71923828125, "1506.7");
+		map.put(147.112884521484, "147.1");
+		map.put(1467.70275878906, "1467.7");
+		map.put(1405.6806640625, "1405.7");
+		map.put(1276.63732910156, "1276.6");
+		map.put(1237.60424804687, "1237.6");
+		map.put(1163.55395507812, "1163.6");
+		map.put(1138.5458984375, "1138.5");
+		map.put(1076.52307128906, "1076.5");
+		map.put(1023.51434326171, "1023.5");
+
+		PrecursorScan ms = new PrecursorScan("943.46 m/z", 0, 0.0f, 0, 0.0, 10000.0, null, masses, intensities,
+				Optional.empty());
+		AnnotatedSpectrum anno = new AnnotatedSpectrum(ms, map, new MassTolerance(10, MassErrorUnitType.PPM));
+
+		HashMap<String, String> paramsMap = SearchParameterParser.getDefaultParameters();
+		paramsMap.put("-ptol", "20");
+		paramsMap.put("-ptolunits", "PPM");
+		paramsMap.put("-ftol", "20");
+		paramsMap.put("-ftolunits", "PPM");
+		paramsMap.put("-lftol", "20");
+		paramsMap.put("-lftolunits", "PPM");
+		SearchParameters params = SearchParameterParser.parseParameters(paramsMap);
+		LibraryEntry entry = new LibraryEntry("", new HashSet<>(), 661.34101, (byte) 2, "YSQVLANGLDNK", 1, 0, 0,
+				masses, intensities, Optional.empty(), params.getAAConstants());
+		AnnotatedLibraryEntry annotatedEntry = new AnnotatedLibraryEntry(entry, params);
+
+		Charter.launchChart(anno);
+		Charter.launchChart(annotatedEntry);
+	}
+
+	public static void main(String[] args) {
+		double[] masses = new double[] { 130.09, 147.11, 183.66, 204.13, 221.10, 239.11, 249.10, 267.11, 291.16, 296.48,
+				304.88, 322.19, 362.18, 380.19, 402.20, 419.23, 439.16, 463.23, 481.24, 520.28, 592.27, 610.28, 649.31,
+				695.37, 723.37, 748.39, 810.41, 863.41, 924.45, 926.45, 934.46, 962.47, 1023.51, 1076.52, 1138.55,
+				1163.55, 1237.60, 1276.64, 1298.62, 1405.68, 1450.74, 1467.70, 1506.72, 1508.72, 1619.80 };
+		float[] intensities = General.toFloatArray(new double[] { 4977.0, 5816.1, 4660.0, 9940.3, 5604.4, 31797.1,
+				21872.5, 128489.5, 34083.3, 5283.5, 10479.2, 8743.9, 46755.3, 39560.5, 5182.9, 7716.1, 5017.9, 11143.2,
+				10153.8, 45374.6, 9498.7, 53161.8, 42469.9, 7337.5, 48555.8, 29821.2, 10799.5, 38602.8, 7684.1, 21049.9,
+				39395.7, 11133.6, 19690.2, 25272.7, 27930.7, 74982.1, 10679.8, 37540.7, 5738.4, 21377.9, 5497.0, 9944.6,
+				36270.1, 7378.1, 40099.0 });
+
+		TDoubleObjectHashMap<String> map = new TDoubleObjectHashMap<String>();
+		map.put(962.473754882812, "962.5");
+		map.put(943.469665527343, "943.5");
+		map.put(934.459289550781, "934.5");
+		map.put(924.4501953125, "924.5");
+		map.put(863.412841796875, "863.4");
+		map.put(810.40576171875, "810.4");
+		map.put(748.385925292968, "748.4");
+		map.put(723.368225097656, "723.4");
+		map.put(649.311584472656, "649.3");
+		map.put(610.278259277343, "610.3");
+		map.put(520.275573730468, "520.3");
+		map.put(481.240478515625, "481.2");
+		map.put(419.228363037109, "419.2");
+		map.put(380.192352294921, "380.2");
+		map.put(291.164428710937, "291.2");
+		map.put(267.1083984375, "267.1");
+		map.put(204.134628295898, "204.1");
+		map.put(1619.80102539062, "1619.8");
+		map.put(1506.71923828125, "1506.7");
+		map.put(147.112884521484, "147.1");
+		map.put(1467.70275878906, "1467.7");
+		map.put(1405.6806640625, "1405.7");
+		map.put(1276.63732910156, "1276.6");
+		map.put(1237.60424804687, "1237.6");
+		map.put(1163.55395507812, "1163.6");
+		map.put(1138.5458984375, "1138.5");
+		map.put(1076.52307128906, "1076.5");
+		map.put(1023.51434326171, "1023.5");
+
+		PrecursorScan ms = new PrecursorScan("943.46 m/z", 0, 0.0f, 0, 0.0, 10000.0, null, masses, intensities,
+				Optional.empty());
+		AnnotatedSpectrum anno = new AnnotatedSpectrum(ms, map, new MassTolerance(30, MassErrorUnitType.PPM));
+
+		HashMap<String, String> paramMap=SearchParameterParser.getDefaultParameters();
+		paramMap.put("-ftol", "30");
+		SearchParameters params=SearchParameterParser.parseParameters(paramMap);
+		
+		LibraryEntry entry = new LibraryEntry("", new HashSet<>(), 943.46, (byte) 2, "HELTEISNVDVETQSGK", 1, 0, 0,
+				masses, intensities, Optional.empty(), params.getAAConstants());
+		AnnotatedLibraryEntry annotatedEntry = new AnnotatedLibraryEntry(entry, params);
+
+		Charter.launchChart(anno);
+		Charter.launchChart(annotatedEntry);
+	}
+
+	public static void main8(String[] args) {
+		double[] masses = new double[] { 842.5107422, 852.4483643, 856.5245972, 870.5310059, 881.2785034, 914.4558105,
+				916.4552002, 923.6161499, 930.4614868, 954.5733032, 993.5565796, 1069.57373, 1115.58313, 1131.577026,
+				1150.668457, 1246.572998, 1257.703857, 1357.746948, 1370.808472, 1403.668945, 1405.679321, 1408.695557,
+				1417.679443, 1419.669189, 1424.683228, 1473.795654, 1489.791016, 1505.780151, 1612.762573, 1628.758911,
+				1635.790771, 1666.827393, 1671.895752, 1684.848999, 1940.905884, 1941.961792, 1945.9823, 1978.909302,
+				1987.896484, 1993.059326, 1994.949707, 2003.858032, 2010.895752, 2018.133423, 2038.968994, 2055.000977,
+				2070.978027, 2108.040283, 2122.052246, 2174.205566, 2211.095947, 2225.138184, 2239.130859, 2281.112793,
+				2347.171631, 2393.037109, 2405.313477, 2409.07666, 2451.151855, 2458.231445, 2467.179932, 2691.256104,
+				2807.319336, 2911.521484, 2922.304199, 3346.595947, 3349.592773 };
+		float[] intensities = new float[] { 2577.587158f, 690.7288208f, 873.4833374f, 1504.843262f, 1166.330566f,
+				5908.662109f, 1862.487061f, 1020.998413f, 814.0632324f, 4421.460938f, 808.62854f, 538.5441895f,
+				1132.609863f, 1645.198242f, 864.1124878f, 437.87146f, 748.4477539f, 2583.086914f, 24559.36914f,
+				7414.428711f, 3847.700195f, 14493.09766f, 1553.642334f, 5800.40625f, 1381.345581f, 9316.614258f,
+				1745.999268f, 983.0281982f, 1369.224609f, 2775.032715f, 778.3311157f, 476.6226807f, 771.9141846f,
+				2868.087158f, 485.2591248f, 887.6340942f, 536.526123f, 9283.731445f, 761.0150146f, 1097.437744f,
+				1594.649536f, 1216.381104f, 588.5967407f, 587.4246216f, 1523.919922f, 1729.31958f, 493.0017395f,
+				5633.766113f, 488.6300659f, 1474.863037f, 582.4077759f, 487.9393921f, 793.3061523f, 621.4824829f,
+				1694.978271f, 1988.319458f, 1249.435791f, 3110.935791f, 3160.983887f, 1430.599731f, 2369.842773f,
+				167.6747131f, 716.5432129f, 123.256134f, 262.6426392f, 112.6488037f, 305.2186279f };
+
+		TDoubleObjectHashMap<String> map = new TDoubleObjectHashMap<String>();
+//		map.put(1115.59, "1115.6");
+//		map.put(1131.58, "1131.6");
+//		map.put(1370.81, "1370.8");
+//		map.put(1408.7, "1408.7");
+//		map.put(1419.78, "1419.8");
+//		map.put(1612.77, "1612.8");
+//		map.put(1612.9, "1612.9");
+//		map.put(1628.89, "1628.9");
+//		map.put(1684.85, "1684.9");
+//		map.put(1684.99, "1685.0");
+//		map.put(1978.91, "1978.9");
+//		map.put(2108.04, "2108.0");
+//		map.put(2393.27, "2393.3");
+//		map.put(2467.18, "2467.2");
+
+		map.put(1034.5629, "GSPGGYLGAKK");
+		map.put(1045.5636, "KEKPNSGGTK");
+		map.put(1053.5435, "NIDEAAKHR");
+		map.put(1104.6411, "LYRLPDVTK");
+		map.put(1115.5877, "TSGLRPMEPK");
+		map.put(1122.5758, "NMTLQRTMK");
+		map.put(1131.5826, "TSGLRPMEPK (Mox)");
+		map.put(1138.7418, "SKRVAPVLIR");
+		map.put(1154.5656, "NMTLQRTMK (Mox)");
+		map.put(1162.6578, "GSPGGYLGAKKK");
+		map.put(1166.5171, "SDSASDSQEIK");
+		map.put(1173.6586, "KKEKPNSGGTK");
+		map.put(1228.6334, "YWHRSLNPR");
+		map.put(1266.7892, "VAPVLIREITR");
+		map.put(1282.7841, "SLNPRKLVEVK");
+		map.put(1314.7528, "LVEVKFSHLSR");
+		map.put(1335.763, "SVRELINTYLK");
+		map.put(1348.6752, "MVEINFLCVHK (Mox)");
+		map.put(1356.7283, "YWHRSLNPRK");
+		map.put(1362.6504, "AMELLSACQGPAR (Mox)");
+		map.put(1370.8154, "LVGFISAIPANIR");
+		map.put(1389.7017, "MVEINFLCVHK (Cam)");
+		map.put(1403.6769, "AMELLSACQGPAR (Cam)");
+		map.put(1403.7174, "MVEINFLCVHK (Cacr)");
+		map.put(1408.6895, "YQFWDTQPVPK");
+		map.put(1417.6926, "AMELLSACQGPAR (Cacr)");
+		map.put(1422.8903, "RVAPVLIREITR");
+		map.put(1422.8903, "VAPVLIREITRR");
+		map.put(1442.8478, "KLVEVKFSHLSR");
+		map.put(1464.8243, "TMKLYRLPDVTK");
+		map.put(1471.7937, "TSGLRPMEPKDIK");
+		map.put(1476.7701, "KMVEINFLCVHK (Mox)");
+		map.put(1476.7701, "MVEINFLCVHKK (Mox)");
+		map.put(1480.8192, "TMKLYRLPDVTK (Mox)");
+		map.put(1487.7886, "TSGLRPMEPKDIK (Mox)");
+		map.put(1489.7692, "FSHLSRNMTLQR");
+		map.put(1498.9104, "KLVGFISAIPANIR");
+		map.put(1502.7519, "CPGTDSEKVGLVLQ (Cam)");
+		map.put(1505.7641, "FSHLSRNMTLQR (Mox)");
+		map.put(1516.7675, "CPGTDSEKVGLVLQ (Cacr)");
+		map.put(1517.7967, "KMVEINFLCVHK (Cam)");
+		map.put(1517.7967, "MVEINFLCVHKK (Cam)");
+		map.put(1531.8123, "KMVEINFLCVHK (Cacr)");
+		map.put(1531.8123, "MVEINFLCVHKK (Cacr)");
+		map.put(1554.8243, "NMTLQRTMKLYR");
+		map.put(1581.8417, "IQQPSKNPSVPMQK");
+		map.put(1586.8141, "NMTLQRTMKLYR (Mox)");
+		map.put(1597.8366, "IQQPSKNPSVPMQK (Mox)");
+		map.put(1604.8651, "KMVEINFLCVHKK (Mox)");
+		map.put(1612.7675, "GFDVFNALDLMENK");
+		map.put(1623.8224, "LDEVITSHGAIEPDK");
+		map.put(1628.7624, "GFDVFNALDLMENK (Mox)");
+		map.put(1645.8916, "KMVEINFLCVHKK (Cam)");
+		map.put(1653.8741, "NPSVPMQKLQDIQR");
+		map.put(1659.9073, "KMVEINFLCVHKK (Cacr)");
+		map.put(1669.869, "NPSVPMQKLQDIQR (Mox)");
+		map.put(1684.854, "EHIIDTFVVESPNGK");
+		map.put(1691.969, "DIKSVRELINTYLK");
+		map.put(1701.8496, "HRYQFWDTQPVPK");
+		map.put(1745.9553, "MVEINFLCVHKKLR (Mox)");
+		map.put(1768.9625, "LPDVTKTSGLRPMEPK");
+		map.put(1784.9574, "LPDVTKTSGLRPMEPK (Mox)");
+		map.put(1786.9818, "MVEINFLCVHKKLR (Cam)");
+		map.put(1800.9975, "MVEINFLCVHKKLR (Cacr)");
+		map.put(1813.9952, "TSGLRPMEPKDIKSVR");
+		map.put(1827.8945, "SKGFDVFNALDLMENK");
+		map.put(1829.9901, "TSGLRPMEPKDIKSVR (Mox)");
+		map.put(1843.8894, "SKGFDVFNALDLMENK (Mox)");
+		map.put(1847.8981, "SDSASDSQEIKIQQPSK");
+		map.put(1849.9524, "FSHLSRNMTLQRTMK");
+		map.put(1881.9422, "FSHLSRNMTLQRTMK (Mox)");
+		map.put(1978.9446, "FGIGDGNLQYYLYNWR");
+		map.put(2014.1807, "VSSNKKLVGFISAIPANIR");
+		map.put(2058.1277, "LVEVKFSHLSRNMTLQR");
+		map.put(2064.968, "EKPNSGGTKSDSASDSQEIK");
+		map.put(2074.1226, "LVEVKFSHLSRNMTLQR (Mox)");
+		map.put(2076.1851, "LVGFISAIPANIRIYDSVK");
+		map.put(2104.0161, "AMELLSACQGPARNIDEAAK (Mox)");
+		map.put(2108.0618, "LDEVITSHGAIEPDKDNVR");
+		map.put(2116.0637, "LQDIQRAMELLSACQGPAR (Mox)");
+		map.put(2125.1685, "LPDVTKTSGLRPMEPKDIK");
+		map.put(2141.1634, "LPDVTKTSGLRPMEPKDIK (Mox)");
+		map.put(2145.0426, "AMELLSACQGPARNIDEAAK (Cam)");
+		map.put(2157.0903, "LQDIQRAMELLSACQGPAR (Cam)");
+		map.put(2159.0583, "AMELLSACQGPARNIDEAAK (Cacr)");
+		map.put(2171.1059, "LQDIQRAMELLSACQGPAR (Cacr)");
+		map.put(2182.1398, "IYDSVKKMVEINFLCVHK (Mox)");
+		map.put(2193.0629, "KEKPNSGGTKSDSASDSQEI K");
+		map.put(2201.211, "LYRLPDVTKTSGLRPMEPK");
+		map.put(2204.2801, "KLVGFISAIPANIRIYDSVK");
+		map.put(2204.2801, "LVGFISAIPANIRIYDSVKK");
+		map.put(2217.2059, "LYRLPDVTKTSGLRPMEPK (Mox)");
+		map.put(2220.1236, "LKFGIGDGNLQYYLYNWR");
+		map.put(2223.1664, "IYDSVKKMVEINFLCVHK (Cam)");
+		map.put(2231.1052, "GFDVFNALDLMENKTFLEK");
+		map.put(2237.1821, "IYDSVKKMVEINFLCVHK (Cacr)");
+		map.put(2247.1001, "GFDVFNALDLMENKTFLEK (Mox)");
+		map.put(2335.255, "IQQPSKNPSVPMQKLQDIQR");
+		map.put(2351.25, "IQQPSKNPSVPMQKLQDIQR (Mox)");
+		map.put(2393.0601, "ELYTLLNENYVEDDDNMFR");
+		map.put(2397.1761, "AMELLSACQGPARNIDEAAK HR (Mox)");
+		map.put(2409.0551, "ELYTLLNENYVEDDDNMFR (Mox)");
+		map.put(2438.2027, "AMELLSACQGPARNIDEAAK HR (Cam)");
+		map.put(2442.2274, "LTDFLSFYTLPSTVMHHPAH K");
+		map.put(2443.2153, "NIDEAAKHRYQFWDTQPVPK");
+		map.put(2446.2322, "SKGFDVFNALDLMENKTFLE K");
+		map.put(2451.1913, "QFHLAPVMDEEEVAHWFLPR");
+		map.put(2452.2183, "AMELLSACQGPARNIDEAAK HR (Cacr)");
+		map.put(2458.2223, "LTDFLSFYTLPSTVMHHPAH K (Mox)");
+		map.put(2462.2271, "SKGFDVFNALDLMENKTFLE K (Mox)");
+		map.put(2467.1863, "QFHLAPVMDEEEVAHWFLPR (Mox)");
+		map.put(2472.2842, "GFDVFNALDLMENKTFLEKL K");
+		map.put(2488.2792, "GFDVFNALDLMENKTFLEKL K (Mox)");
+		map.put(2716.4854, "VNLEGIFQAVYTAGVVLPKP IATCR (Cam)");
+		map.put(2729.341, "SDSASDSQEIKIQQPSKNPS VPMQK");
+		map.put(2730.5011, "VNLEGIFQAVYTAGVVLPKP IATCR (Cacr)");
+		map.put(2745.3359, "SDSASDSQEIKIQQPSKNPS VPMQK (Mox)");
+		map.put(2746.3489, "EKPNSGGTKSDSASDSQEIK IQQPSK");
+		map.put(2770.4385, "LTDFLSFYTLPSTVMHHPAH KSLK");
+		map.put(2782.328, "QEPYSLPQGFMWDTLDLSDA EVLK");
+		map.put(2786.4334, "LTDFLSFYTLPSTVMHHPAH KSLK (Mox)");
+		map.put(2798.3229, "QEPYSLPQGFMWDTLDLSDA EVLK (Mox)");
+		map.put(2838.4613, "TFLEKLKFGIGDGNLQYYLY NWR");
+		map.put(2853.2937, "FGIGDGNLQYYLYNWRCPGT DSEK (Cam)");
+		map.put(2857.4294, "LQDIQRAMELLSACQGPARN IDEAAK (Mox)");
+		map.put(2867.3093, "FGIGDGNLQYYLYNWRCPGT DSEK (Cacr)");
+		map.put(2872.5865, "RVNLEGIFQAVYTAGVVLPK PIATCR (Cam)");
+		map.put(2886.6022, "RVNLEGIFQAVYTAGVVLPK PIATCR (Cacr)");
+		map.put(2898.456, "LQDIQRAMELLSACQGPARN IDEAAK (Cam)");
+		map.put(2910.4957, "AAYSFYNIHTETPLLDLMSD ALILAK");
+		map.put(2912.4716, "LQDIQRAMELLSACQGPARN IDEAAK (Cacr)");
+		map.put(2926.4906, "AAYSFYNIHTETPLLDLMSD ALILAK (Mox)");
+		map.put(3013.5016, "NPSVPMQKLQDIQRAMELLS ACQGPAR (Mox)");
+		map.put(3038.5332, "NPSVPMQKLQDIQRAMELLS ACQGPAR (Cam)");
+		map.put(3052.5489, "NPSVPMQKLQDIQRAMELLS ACQGPAR (Cacr)");
+		map.put(503.2572, "DNVR");
+		map.put(503.33, "LRSK");
+		map.put(518.2933, "EITR");
+		map.put(531.3613, "KKQK");
+		map.put(534.2882, "VSSNK");
+		map.put(559.3674, "KQKR");
+		map.put(559.3674, "QKRK");
+		map.put(586.3307, "SLNPR");
+		map.put(587.3763, "LVEVK");
+		map.put(628.4028, "VGLVLQ");
+		map.put(631.4249, "KLRSK");
+		map.put(637.3555, "TFLEK");
+		map.put(659.4311, "LRSKR");
+		map.put(661.3205, "YWHR");
+		map.put(662.3831, "VSSNKK");
+		map.put(672.3926, "LPDVTK");
+		map.put(674.3944, "EITRR");
+		map.put(700.3988, "IQQPSK");
+		map.put(714.4257, "SLNPRK");
+		map.put(715.4712, "KLVEVK");
+		map.put(717.4253, "DIKSVR");
+		map.put(724.3876, "IYDSVK");
+		map.put(746.3944, "FSHLSR");
+		map.put(760.3835, "NIDEAAK");
+		map.put(762.3927, "NMTLQR");
+		map.put(767.5137, "VAPVLIR");
+		map.put(772.4312, "LQDIQR");
+		map.put(778.3876, "NMTLQR (Mox)");
+		map.put(811.4495, "TMKLYR");
+		map.put(827.4444, "TMKLYR (Mox)");
+		map.put(852.4825, "IYDSVKK");
+		map.put(878.5345, "TFLEKLK");
+		map.put(893.3669, "CPGTDSEK (Cam)");
+		map.put(900.4607, "NPSVPMQK");
+		map.put(906.4679, "GSPGGYLGAK");
+		map.put(907.3826, "CPGTDSEK (Cacr)");
+		map.put(916.4557, "NPSVPMQK (Mox)");
+		map.put(917.4687, "EKPNSGGTK");
+		map.put(923.6149, "RVAPVLIR");
+		map.put(993.5615, "ELINTYLK");
+
+		PrecursorScan ms = new PrecursorScan("Glycylpeptide N-tetradecanoyltransferase 2", 0, 0.0f, 0, 0.0, 10000.0,
+				null, masses, intensities, Optional.empty());
+		AnnotatedSpectrum anno = new AnnotatedSpectrum(ms, map, new MassTolerance(0.25, MassErrorUnitType.AMU));
+
+		Charter.launchChart(anno);
+	}
+
 	public static void main3(String[] args) {
 		double[] masses = new double[] { 68.6871, 68.7309, 69.0631, 71.0826, 71.7839, 72.0778, 73.0807, 73.5243,
 				74.1006, 82.3521, 82.4109, 84.0695, 85.0655, 86.0933, 86.384, 86.4551, 86.6412, 86.9153, 86.9976,
@@ -321,25 +723,23 @@ public class CharterTest {
 
 	}
 
-	public static void main(String[] args) {
+	public static void main5(String[] args) {
 		// BOXPLOTTING
 		File f = new File("/Users/searle.30/Documents/CCIC/yi/rna_vs_protein/full_tcell_rna_vs_protein.txt");
 		File dir = new File(f.getParentFile(), "plots_combined");
 		dir.mkdir();
 
-		String[] columns = new String[] {
-				"polyT_ac_1","polyT_ac_2","polyT_ac_3","polyT_chr_1","polyT_chr_2","polyT_chr_3",
-				"051622_Mouse_Tcell_DIA_naive_rep01.dia",
-				"051622_Mouse_Tcell_DIA_naive_rep02.dia", "051622_Mouse_Tcell_DIA_naive_rep03.dia",
-				"051622_Mouse_Tcell_DIA_naive_rep04.dia", "051622_Mouse_Tcell_DIA_naive_rep05.dia",
-				"051622_Mouse_Tcell_DIA_acuteD3_rep01.dia", "051622_Mouse_Tcell_DIA_acuteD3_rep02.dia",
-				"051622_Mouse_Tcell_DIA_acuteD3_rep03.dia", "051622_Mouse_Tcell_DIA_acuteD3_rep04.dia",
-				"051622_Mouse_Tcell_DIA_acuteD3_rep05.dia", "051622_Mouse_Tcell_DIA_chronicD3_rep01.dia",
-				"051622_Mouse_Tcell_DIA_chronicD3_rep02.dia", "051622_Mouse_Tcell_DIA_chronicD3_rep03.dia",
-				"051622_Mouse_Tcell_DIA_chronicD3_rep04.dia", "051622_Mouse_Tcell_DIA_chronicD3_rep05.dia",
-				"051622_Mouse_Tcell_DIA_chronicD7_rep01.dia", "051622_Mouse_Tcell_DIA_chronicD7_rep02.dia",
-				"051622_Mouse_Tcell_DIA_chronicD7_rep03.dia", "051622_Mouse_Tcell_DIA_chronicD7_rep04.dia",
-				"051622_Mouse_Tcell_DIA_chronicD7_rep05.dia" };
+		String[] columns = new String[] { "polyT_ac_1", "polyT_ac_2", "polyT_ac_3", "polyT_chr_1", "polyT_chr_2",
+				"polyT_chr_3", "051622_Mouse_Tcell_DIA_naive_rep01.dia", "051622_Mouse_Tcell_DIA_naive_rep02.dia",
+				"051622_Mouse_Tcell_DIA_naive_rep03.dia", "051622_Mouse_Tcell_DIA_naive_rep04.dia",
+				"051622_Mouse_Tcell_DIA_naive_rep05.dia", "051622_Mouse_Tcell_DIA_acuteD3_rep01.dia",
+				"051622_Mouse_Tcell_DIA_acuteD3_rep02.dia", "051622_Mouse_Tcell_DIA_acuteD3_rep03.dia",
+				"051622_Mouse_Tcell_DIA_acuteD3_rep04.dia", "051622_Mouse_Tcell_DIA_acuteD3_rep05.dia",
+				"051622_Mouse_Tcell_DIA_chronicD3_rep01.dia", "051622_Mouse_Tcell_DIA_chronicD3_rep02.dia",
+				"051622_Mouse_Tcell_DIA_chronicD3_rep03.dia", "051622_Mouse_Tcell_DIA_chronicD3_rep04.dia",
+				"051622_Mouse_Tcell_DIA_chronicD3_rep05.dia", "051622_Mouse_Tcell_DIA_chronicD7_rep01.dia",
+				"051622_Mouse_Tcell_DIA_chronicD7_rep02.dia", "051622_Mouse_Tcell_DIA_chronicD7_rep03.dia",
+				"051622_Mouse_Tcell_DIA_chronicD7_rep04.dia", "051622_Mouse_Tcell_DIA_chronicD7_rep05.dia" };
 
 		int[] groups = new int[] { 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6 };
 		String[] sampleNames = new String[] { "Acute D8", "Chronic D8", "Naive", "Acute D3", "Chronic D3",
@@ -477,11 +877,11 @@ public class CharterTest {
 
 		Charter.launchChart(new AnnotatedLibraryEntry(actual.get(peptide), params, true),
 				actual.get(peptide).getPeptideSeq(), new Dimension(500, 350));
-		Charter.launchChart(
-				new AnnotatedLibraryEntry(FragmentIonConsistencyCharter.getButterfly(actual.get(peptide), predicted.get(peptide)), params, true),
+		Charter.launchChart(new AnnotatedLibraryEntry(
+				FragmentIonConsistencyCharter.getButterfly(actual.get(peptide), predicted.get(peptide)), params, true),
 				actual.get(peptide).getPeptideSeq(), new Dimension(500, 350));
-		Charter.launchChart(
-				new AnnotatedLibraryEntry(FragmentIonConsistencyCharter.getButterfly(actual.get(peptide), altpredicted.get(0)), params, true),
+		Charter.launchChart(new AnnotatedLibraryEntry(
+				FragmentIonConsistencyCharter.getButterfly(actual.get(peptide), altpredicted.get(0)), params, true),
 				actual.get(peptide).getPeptideSeq(), new Dimension(500, 350));
 	}
 }

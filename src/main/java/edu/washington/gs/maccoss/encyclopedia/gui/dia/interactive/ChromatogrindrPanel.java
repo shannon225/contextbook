@@ -20,6 +20,8 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 import java.io.File;
@@ -27,6 +29,9 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Optional;
 import java.util.zip.DataFormatException;
 
@@ -40,6 +45,7 @@ import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
@@ -56,10 +62,13 @@ import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
 import org.jfree.chart.ChartPanel;
+import org.jfree.chart.annotations.XYAnnotation;
 import org.jfree.chart.annotations.XYTextAnnotation;
 import org.jfree.chart.axis.ValueAxis;
+import org.jfree.chart.event.AnnotationChangeListener;
 import org.jfree.chart.panel.CrosshairOverlay;
 import org.jfree.chart.plot.Crosshair;
+import org.jfree.chart.plot.PlotRenderingInfo;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.ui.RectangleEdge;
 import org.jfree.ui.TextAnchor;
@@ -80,6 +89,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.FragmentIonConsistencyCharter;
+import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
@@ -89,12 +99,14 @@ import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.CategoricalData;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.EditableXYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.ChromatogramExtractor;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.IonType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
@@ -110,6 +122,8 @@ import gnu.trove.list.array.TFloatArrayList;
  */
 public class ChromatogrindrPanel extends JPanel {
 	private static final long serialVersionUID=1L;
+	
+	private static final float RT_EXTRACTION_MARGIN_IN_SEC=45f;
 	
 	private final FileChooserPanel diaFileChooser;
 	private final FileChooserPanel libraryFileChooser;
@@ -380,6 +394,13 @@ public class ChromatogrindrPanel extends JPanel {
 		dialog.pack(); 
 		dialog.setSize(1900, 1030);
 		dialog.setVisible(true);
+
+		dialog.addWindowListener(new WindowAdapter() {
+			public void windowClosing(WindowEvent e) {
+				browser.copyTable();
+				JOptionPane.showMessageDialog(dialog, "Data copied, remember to paste into spreadsheet!");
+			}
+		});
 	}
 
 	public ChromatogrindrPanel() {
@@ -494,10 +515,7 @@ public class ChromatogrindrPanel extends JPanel {
 		copyButton.addActionListener(new ActionListener() {	
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				String copyString=peptideModel.copy();
-				StringSelection stringSelection = new StringSelection(copyString);
-				Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-				clipboard.setContents(stringSelection, null);
+				copyTable();
 			}
 		});
 		buttons.add(copyButton);
@@ -609,6 +627,13 @@ public class ChromatogrindrPanel extends JPanel {
 		}
 		peptideTable.requestFocus();
 	}
+
+	private void copyTable() {
+		String copyString=peptideModel.copy();
+		StringSelection stringSelection = new StringSelection(copyString);
+		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+		clipboard.setContents(stringSelection, null);
+	}
 	
 	public void updateLibrary(final File f) {
 		SwingWorkerProgress<LibraryFile> worker=new SwingWorkerProgress<LibraryFile>((Frame)SwingUtilities.getWindowAncestor(this), "Please wait...", "Reading Library") {
@@ -674,12 +699,10 @@ public class ChromatogrindrPanel extends JPanel {
 		
 		FragmentationModel model=PeptideUtils.getPeptideModel(entry.getPeptideModSeq(), parameters.getAAConstants());
 		FragmentIon[] primaryIonObjects=model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge(), false);
-		Logger.logLine("Graphing "+entry.getPeptideModSeq()+" ("+primaryIonObjects.length+")"+"...");
 		
-		try {
+		loadDataBlock: try {
 			
 			ArrayList<XYTrace> fragmentTraces=new ArrayList<>();
-			ArrayList<XYTrace> fragmentDeltaMassTraces=new ArrayList<>();
 			ArrayList<XYTrace> precursorTraces=new ArrayList<>();
 			
 			float rtInSec=entry.getRetentionTimeInSec();
@@ -687,13 +710,15 @@ public class ChromatogrindrPanel extends JPanel {
 			float maxRTInSec = rtInSec+RT_EXTRACTION_MARGIN_IN_SEC;
 
 			Range rtRange=entry.getRTRange();
-			if (rtRange!=null) {
+			if (rtRange!=null&&rtRange.getRange()>0.0f) {
 				minRTInSec=rtRange.getStart();
 				maxRTInSec=rtRange.getStop();
 			}
+			Logger.logLine("Graphing "+entry.getPeptideModSeq()+" ("+primaryIonObjects.length+"), ["+minRTInSec+" to "+maxRTInSec+"]...");
 			
 			// get precursor traces
 			ArrayList<PrecursorScan> precursors=dia.getPrecursors(minRTInSec, maxRTInSec);
+			Collections.sort(precursors);
 			ArrayList<PrecursorScan> trimmedPrecursors=new ArrayList<>();
 			for (PrecursorScan spectrum : precursors) {
 				if (entry.getPrecursorMZ()>spectrum.getIsolationWindowLower()&&entry.getPrecursorMZ()<spectrum.getIsolationWindowUpper()) {
@@ -710,6 +735,11 @@ public class ChromatogrindrPanel extends JPanel {
 			
 			// get fragment traces
 			ArrayList<FragmentScan> scans=dia.getStripes(entry.getPrecursorMZ(), minRTInSec, maxRTInSec, false);
+			if (scans.size()==0) {
+				dataPanel.add(new JLabel("no MSMS found from ["+minRTInSec+" to "+maxRTInSec+"] for "+entry.getPrecursorMZ()+" m/z!"));
+				break loadDataBlock;
+			}
+			Collections.sort(scans);
 			double[][] allMasses=new double[scans.size()][];
 			float[][] allDeltaMasses=new float[scans.size()][];
 			float[][] allIntensities=new float[scans.size()][];
@@ -731,8 +761,8 @@ public class ChromatogrindrPanel extends JPanel {
 			float[][] chromatograms=General.transposeMatrix(allIntensities);
 			float[][] deltaMassByIon=General.transposeMatrix(allDeltaMasses);
 			ArrayList<float[]> chromatogramList=new ArrayList<float[]>();
-			ArrayList<float[]> deltaMassByIonList=new ArrayList<float[]>();
 			ArrayList<FragmentIon> foundIons=new ArrayList<>();
+			ArrayList<float[]> deltaMassList=new ArrayList<float[]>();
 			for (int j = 0; j < chromatograms.length; j++) {
 				if (primaryIonObjects[j].getIndex()>2&&General.sum(chromatograms[j])>0.0f) {
 					if (sgSmoothBox.isSelected()) {
@@ -741,18 +771,37 @@ public class ChromatogrindrPanel extends JPanel {
 					if (backgroundSubtractBox.isSelected()) {
 						chromatograms[j]=BackgroundSubtractionFilter.backgroundSubtractMovingMedian(chromatograms[j], movingAverageLength*10);
 					}
-					deltaMassByIon[j]=BackgroundSubtractionFilter.movingCenteredAverage(deltaMassByIon[j], 3);
 					chromatogramList.add(chromatograms[j]);
-					deltaMassByIonList.add(deltaMassByIon[j]);
 					foundIons.add(primaryIonObjects[j]);
+					deltaMassList.add(deltaMassByIon[j]);
 				}
 			}
 			primaryIonObjects=foundIons.toArray(new FragmentIon[0]);
 			
-			TransitionRefinementData data=TransitionRefiner.identifyTransitions(entry.getPeptideModSeq(), entry.getPrecursorCharge(), entry.getRetentionTimeInSec(), 
-					primaryIonObjects, chromatogramList, retentionTimes, false, parameters);
+			TransitionRefinementData data;
+			if (rtRange!=null&&rtRange.getRange()>0.0f) {
+				data=TransitionRefiner.identifyTransitionsFromRTRange(entry.getPeptideModSeq(), entry.getPrecursorCharge(), entry.getRetentionTimeInSec(), 
+						primaryIonObjects, chromatogramList, retentionTimes, rtRange, parameters);
+			} else {
+				data=TransitionRefiner.identifyTransitions(entry.getPeptideModSeq(), entry.getPrecursorCharge(), entry.getRetentionTimeInSec(), 
+						primaryIonObjects, chromatogramList, retentionTimes, false, parameters);
+			}
 			fragmentTraces=getTraces(primaryIonObjects, data.getChromatograms(), data.getCorrelationArray(), retentionTimes, data.getRange(), -Float.MAX_VALUE);
-			fragmentDeltaMassTraces=getTraces(primaryIonObjects, deltaMassByIonList, data.getCorrelationArray(), retentionTimes, data.getRange(), -Float.MAX_VALUE);
+			
+			float minCorrelation=getMinimumCorrelation(data.getCorrelationArray());
+			ArrayList<CategoricalData> deltaMassByIonList=new ArrayList<CategoricalData>();
+			for (int j = 0; j < primaryIonObjects.length; j++) {
+				if (data.getCorrelationArray()[j]>=minCorrelation) {
+					TFloatArrayList deltaMasses=new TFloatArrayList();
+					float[] deltaMassArray=deltaMassList.get(j);
+					for (int i = 0; i < deltaMassArray.length; i++) {
+						if (!Float.isNaN(deltaMassArray[i])&&data.getRange().contains(retentionTimes[i])) {
+							deltaMasses.add(deltaMassArray[i]);
+						}
+					}
+					deltaMassByIonList.add(new CategoricalData(foundIons.get(j).toString(), deltaMasses.toArray(), foundIons.get(j).getColor()));
+				}				
+			}
 			
 			final ChartPanel chartPanel = getChromatogramChartPanel(entry, fragmentTraces, precursorTraces, data.getRange());
 	        
@@ -764,8 +813,9 @@ public class ChromatogrindrPanel extends JPanel {
 			
 			MassTolerance fragmentTolerance = parameters.getFragmentTolerance();
 			String deltaMassAxis=fragmentTolerance.isRelativeTolerance()?"Delta Mass (PPM)":"Delta Mass (AMU)";
-			ChartPanel deltaMassPanel=Charter.getChart("Retention Time (min)", deltaMassAxis, false, fragmentDeltaMassTraces.toArray(new XYTraceInterface[0]));
-			ValueAxis axis=deltaMassPanel.getChart().getXYPlot().getRangeAxis();
+			
+			ChartPanel deltaMassPanel=Charter.getBoxplotChart("Delta Mass", "Ions", deltaMassAxis, 16, 16, deltaMassByIonList.toArray(new CategoricalData[0]), true);
+			ValueAxis axis=deltaMassPanel.getChart().getCategoryPlot().getRangeAxis();
 			axis.setRange(-fragmentTolerance.getToleranceThreshold(), fragmentTolerance.getToleranceThreshold());
 			rightInfoPanel.add(deltaMassPanel);
 			
@@ -782,22 +832,37 @@ public class ChromatogrindrPanel extends JPanel {
 					LibraryEntry butterfly=FragmentIonConsistencyCharter.getButterfly(acq, ref);
 					ChartPanel chartPanelButterfly = Charter.getChart(new AnnotatedLibraryEntry(butterfly, parameters, true));
 
+					Font font=new Font(Charter.BASE_FONT_NAME, Font.PLAIN, 18);
+					XYTextAnnotation acquiredAnnotation = new XYTextAnnotation("Acquired", 10.0, 1.0);
+					XYTextAnnotation libraryAnnotation = new XYTextAnnotation("Library", 10.0, -1.0);
+					acquiredAnnotation.setTextAnchor(TextAnchor.TOP_LEFT);
+					libraryAnnotation.setTextAnchor(TextAnchor.CENTER_LEFT);
+					acquiredAnnotation.setPaint(Color.black);
+					acquiredAnnotation.setFont(font);
+					libraryAnnotation.setPaint(Color.black);
+					libraryAnnotation.setFont(font);
+					chartPanelButterfly.getChart().getXYPlot().addAnnotation(acquiredAnnotation);
+					chartPanelButterfly.getChart().getXYPlot().addAnnotation(libraryAnnotation);
+
 					rightInfoPanel.add(chartPanelButterfly);
 				}
 			}
-	
-			mainSplit.setRightComponent(dataPanel);
 
 		} catch (DataFormatException sqle) {
-			Logger.errorLine("Error reading raw files!");
+			Logger.errorLine("Data Format Error reading raw files!");
 			Logger.errorException(sqle);
 		} catch (SQLException sqle) {
-			Logger.errorLine("Error reading raw files!");
+			Logger.errorLine("SQL Error reading raw files!");
 			Logger.errorException(sqle);
 		} catch (IOException ioe) {
-			Logger.errorLine("Error reading raw files!");
+			Logger.errorLine("IO Error reading raw files!");
 			Logger.errorException(ioe);
+		} catch (Exception e) {
+			Logger.errorLine("General Error reading raw files!");
+			Logger.errorException(e);
 		}
+		
+		mainSplit.setRightComponent(dataPanel);
 		
 		mainSplit.setDividerLocation(location);
 	}
@@ -915,8 +980,6 @@ public class ChromatogrindrPanel extends JPanel {
 		});
 		return chartPanel;
 	}
-	
-	private static final float RT_EXTRACTION_MARGIN_IN_SEC=45f;
 
 	public Triplet<double[], float[], float[]> extract(Spectrum spectrum, FragmentIon[] ions, SearchParameters parameters) {
 		MassTolerance acquiredTolerance=parameters.getFragmentTolerance();
@@ -963,9 +1026,7 @@ public class ChromatogrindrPanel extends JPanel {
 	private static final int minNumIons=6;
 	private static ArrayList<XYTrace> getTraces(FragmentIon[] ions, ArrayList<float[]> chromatograms, float[] correlationArray, float[] rts, Range rtRange, float correlationThreshold) {
 		ArrayList<XYTrace> xytraces=new ArrayList<XYTrace>();
-		float[] correlationClone=correlationArray.clone();
-		Arrays.sort(correlationClone);
-		float minCorrelation=correlationClone[Math.max(0,correlationClone.length-minNumIons)];
+		float minCorrelation = getMinimumCorrelation(correlationArray);
 		
 		for (int i=0; i<chromatograms.size(); i++) {
 			if (correlationArray[i]<correlationThreshold) continue;
@@ -985,7 +1046,7 @@ public class ChromatogrindrPanel extends JPanel {
 			GraphType graphtype;
 			GraphType backgroundgraphtype;
 			float thickness;
-			if (correlationArray[i]>TransitionRefiner.quantitativeCorrelationThreshold||correlationArray[i]>=minCorrelation) {
+			if (correlationArray[i]>=minCorrelation) {
 				graphtype=GraphType.boldline;
 				backgroundgraphtype=GraphType.dashedline;
 				thickness=3.0f;
@@ -1007,6 +1068,15 @@ public class ChromatogrindrPanel extends JPanel {
 			}
 		}
 		return xytraces;
+	}
+
+	private static float getMinimumCorrelation(float[] correlationArray) {
+		if (correlationArray.length==0) return TransitionRefiner.quantitativeCorrelationThreshold;
+		
+		float[] correlationClone=correlationArray.clone();
+		Arrays.sort(correlationClone);
+		float minCorrelation=correlationClone[Math.max(0,correlationClone.length-minNumIons)];
+		return Math.min(TransitionRefiner.quantitativeCorrelationThreshold, minCorrelation);
 	}
 
 }

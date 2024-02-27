@@ -3,6 +3,15 @@ package edu.washington.gs.maccoss.encyclopedia.utils;
 import junit.framework.TestCase;
 
 public class StringUtilsTest extends TestCase {
+	public void testScientificNotation() {
+		assertEquals("3.142x10⁰", StringUtils.scientificNotation(Math.PI, 3));
+		assertEquals("3.142x10⁵", StringUtils.scientificNotation(Math.PI*100000, 3));
+		assertEquals("3x10⁵", StringUtils.scientificNotation(Math.PI*100000, 0));
+		assertEquals("3.1x10⁵", StringUtils.scientificNotation(Math.PI*100000, 1));
+		assertEquals("3.1x10¹", StringUtils.scientificNotation(Math.PI*10, 1));
+		assertEquals("3.1x10²", StringUtils.scientificNotation(Math.PI*100, 1));
+		assertEquals("3.1x10³", StringUtils.scientificNotation(Math.PI*1000, 1));
+	}
 	public void testCommon() {
 		String[] names=new String[] {"bcs_20161109_yeast_1_to_0_3mz_rep1.mzML", "bcs_20161109_yeast_1_to_0_3mz_rep2.mzML", "bcs_20161109_yeast_1_to_0_3mz_rep3.mzML",
 				"bcs_20161109_yeast_1_to_1_3mz_rep1.mzML", "bcs_20161109_yeast_1_to_1_3mz_rep2.mzML", "bcs_20161109_yeast_1_to_1_3mz_rep3.mzML", "bcs_20161109_yeast_1_to_4_3mz_rep1.mzML",

@@ -62,7 +62,7 @@ public class DotProduct implements PSMPeakScorer {
 			double[] mzs=entry.getMassArray();
 			FragmentIon[] ions=new FragmentIon[mzs.length];
 			for (byte i=0; i<ions.length; i++) {
-				ions[i]=new FragmentIon(mzs[i], (byte)(i+1), IonType.unknown);
+				ions[i]=new FragmentIon(mzs[i], (byte)(i+1), IonType.annotated);
 			}
 			
 			return getIndividualPeakScores(entry, spectrum, normalize, ions);

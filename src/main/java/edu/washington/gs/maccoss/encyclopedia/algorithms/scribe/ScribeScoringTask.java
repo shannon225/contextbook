@@ -95,7 +95,7 @@ public class ScribeScoringTask extends AbstractLibraryScoringTask {
 					
 					//float score=xcorrMSMS.score(xcorrEntry);
 					//xcorrs[i]=score;
-					float[] scores=score(entry, msms);
+					float[] scores=score(entry, msms, parameters);
 					float score=scores[1]+0.03f*scores[0];
 					if (Float.isNaN(score)) continue;
 					
@@ -149,7 +149,7 @@ public class ScribeScoringTask extends AbstractLibraryScoringTask {
 				float deltaScore=(maxScore+SCORE_CONSTANT<=0.0f||secondMaxScore+SCORE_CONSTANT<=0.0f)?-1.0f:((score-secondMaxScore)/(maxScore+SCORE_CONSTANT));
 
 				LibraryEntry entry=super.entries.get(index);
-				int chargeMatch=(msms.getCharge()==0||msms.getCharge()==entry.getPrecursorCharge())?1:0;
+				int chargeMatch=(msms.getPrecursorCharge()==0||msms.getPrecursorCharge()==entry.getPrecursorCharge())?1:0;
 					
 				float[] predictedIsotopeDistribution=getIsotopeDistribution(entry);
 				float[] auxScoreArray=scorerFunction.auxScore(entry, msms, predictedIsotopeDistribution, precursors);
@@ -192,7 +192,7 @@ public class ScribeScoringTask extends AbstractLibraryScoringTask {
 	}
 
 
-	public float[] score(LibraryEntry entry, Spectrum spectrum) {
+	public static float[] score(LibraryEntry entry, Spectrum spectrum, SearchParameters parameters) {
 		MassTolerance acquiredTolerance=parameters.getFragmentTolerance();
 		MassTolerance libraryTolerance=parameters.getLibraryFragmentTolerance();
 		FragmentationModel model=PeptideUtils.getPeptideModel(entry.getPeptideModSeq(), parameters.getAAConstants());

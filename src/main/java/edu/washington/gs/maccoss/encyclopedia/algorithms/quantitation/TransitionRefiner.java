@@ -122,6 +122,37 @@ public class TransitionRefiner {
 		}
 		Charter.launchCharts("TITLE", getChartPanels(data));
 	}
+	
+	public static TransitionRefinementData identifyTransitionsFromRTRange(String peptideModSeq, byte precursorCharge, float retentionTimeInSec, FragmentIon[] fragmentMasses, ArrayList<float[]> chromatograms, float[] retentionTimes, Range rtRange, SearchParameters params) {
+		if (chromatograms.size()==0) return new TransitionRefinementData(peptideModSeq, precursorCharge, new FragmentIon[0], chromatograms, new float[0], new boolean[0], new float[0], new float[0], new float[0], new Range(retentionTimes[0], retentionTimes[retentionTimes.length-1]), params.getAAConstants());
+		
+		MedianChromatogramData medianData = extractMedianChromatogramFromFixedBoundaries(retentionTimeInSec, chromatograms, retentionTimes, rtRange);
+
+		float medianMean=General.mean(medianData.getMedianChromatogram(), medianData.getIndices().getStart(), medianData.getIndices().getStop());
+		float[] correlationArray=new float[medianData.getNormalizedChromatograms().size()];
+		boolean[] quantitativeIonsArray=new boolean[correlationArray.length];
+		
+		float[] integrationArray=new float[correlationArray.length];
+		float[] backgroundArray=new float[correlationArray.length];
+		for (int i=0; i<medianData.getNormalizedChromatograms().size(); i++) {
+			float[] normalizedChromatogram=medianData.getNormalizedChromatograms().get(i);
+			float correlation=calculateCorrelation(medianMean, medianData.getIndices(), medianData.getMedianChromatogram(), normalizedChromatogram);
+			correlationArray[i]=correlation;
+			quantitativeIonsArray[i]=correlation>=quantitativeCorrelationThreshold;
+
+			FloatPair intensity=integrate(medianData.getIndices(), retentionTimes, chromatograms.get(i));
+
+			integrationArray[i]=intensity.getOne();
+			backgroundArray[i]=intensity.getTwo();
+			
+			// calculate trapezoidal background area
+			integrationArray[i]=integrationArray[i]-backgroundArray[i];
+		}
+
+		Range range=new Range(retentionTimes[medianData.getIndices().getStart()], retentionTimes[medianData.getIndices().getStop()]);
+		
+		return new TransitionRefinementData(peptideModSeq, precursorCharge, fragmentMasses, chromatograms, correlationArray, quantitativeIonsArray, integrationArray, backgroundArray, medianData.getMedianChromatogram(), range, params.getAAConstants());
+	}
 
 	public static TransitionRefinementData identifyTransitions(String peptideModSeq, byte precursorCharge, float retentionTimeInSec, FragmentIon[] fragmentMasses, ArrayList<float[]> chromatograms, float[] retentionTimes, boolean wasInferred, SearchParameters params) {
 		return identifyTransitions(peptideModSeq, precursorCharge, retentionTimeInSec, fragmentMasses, chromatograms, retentionTimes, Optional.ofNullable((float[])null), wasInferred, false, params);
@@ -174,6 +205,50 @@ public class TransitionRefiner {
 		}
 		
 		return new TransitionRefinementData(peptideModSeq, precursorCharge, fragmentMasses, chromatograms, correlationArray, quantitativeIonsArray, integrationArray, backgroundArray, medianData.getMedianChromatogram(), range, params.getAAConstants());
+	}
+
+	public static MedianChromatogramData extractMedianChromatogramFromFixedBoundaries(float retentionTimeInSec, ArrayList<float[]> chromatograms, float[] retentionTimes, Range rtRange) {
+		if (chromatograms.size()==0) return new MedianChromatogramData(new ArrayList<>(), new IntRange(0, 0), new float[0]);
+
+		int min=retentionTimes.length-1;
+		int max=0;
+		for (int i = 0; i < retentionTimes.length; i++) {
+			if (rtRange.contains(retentionTimes[i])) {
+				min=i+1;
+				break;
+			}
+		}
+		for (int i = retentionTimes.length-1; i >=0; i--) {
+			if (rtRange.contains(retentionTimes[i])) {
+				max=i-1;
+				break;
+			}
+		}
+		min=Math.min(retentionTimes.length-1, min);
+		max=Math.max(0, max);
+		IntRange indices=new IntRange(min, max);
+
+		// start across the entire width
+		ArrayList<float[]> normalizedChromatograms=normalizeAndBackgroundSubtract(chromatograms, indices);
+		
+		// find the maximum point
+		float[] medianChromatogram=new float[chromatograms.get(0).length];
+		for (int i=0; i<medianChromatogram.length; i++) {
+			TFloatArrayList list=new TFloatArrayList();
+			for (float[] chromatogram : normalizedChromatograms) {
+				if (chromatogram.length>i) {
+					list.add(chromatogram[i]);
+				} else {
+					list.add(0.0f);
+				}
+			}
+			float[] array=list.toArray();
+			Arrays.sort(array);
+			medianChromatogram[i]=aggregate(array);
+		}
+		
+		MedianChromatogramData medianData=new MedianChromatogramData(normalizedChromatograms, indices, medianChromatogram);
+		return medianData;
 	}
 
 	public static MedianChromatogramData extractMedianChromatogram(float retentionTimeInSec, ArrayList<float[]> chromatograms, float[] retentionTimes, Optional<float[]> maybeMedianChromatogram, boolean adjustPeakBoundaries, 
