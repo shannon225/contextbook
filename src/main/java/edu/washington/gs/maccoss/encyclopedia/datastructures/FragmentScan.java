@@ -4,13 +4,16 @@ import java.util.ArrayList;
 import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.AcquiredSpectrum;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.SpectrumPeakFilter;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.SpectrumWithCharge;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
 
 //@Immutable
-public class FragmentScan implements Comparable<FragmentScan>, AcquiredSpectrum {
+public class FragmentScan implements Comparable<FragmentScan>, AcquiredSpectrum, SpectrumWithCharge {
 	private final String spectrumName;
 	private final String precursorName;
 	private final int spectrumIndex;
@@ -77,6 +80,16 @@ public class FragmentScan implements Comparable<FragmentScan>, AcquiredSpectrum 
 		return new FragmentScan(spectrumName, precursorName, spectrumIndex, scanStartTime, fraction, ionInjectionTime, isolationWindowLower, isolationWindowUpper, massArray, General.protectedSqrt(intensityArray), ionMobilityArray.orElse(null), charge);
 	}
 	
+	/**
+	 * select top N peaks in 100 m/z
+	 * @param depth
+	 * @return
+	 */
+	public FragmentScan trimToPeakDepth(int depth) {
+		// peaks above 2000 are placed in the last bin
+		return SpectrumPeakFilter.filterPeaks(this, 100.0, 20, depth);
+	}
+	
 	public FragmentScan trimMasses(Range r) {
 		TFloatArrayList ints=new TFloatArrayList();
 		TDoubleArrayList masses=new TDoubleArrayList();
@@ -107,7 +120,7 @@ public class FragmentScan implements Comparable<FragmentScan>, AcquiredSpectrum 
 	 * can return 0 (if charge state is unknown)
 	 * @return
 	 */
-	public byte getCharge() {
+	public byte getPrecursorCharge() {
 		return charge;
 	}
 	

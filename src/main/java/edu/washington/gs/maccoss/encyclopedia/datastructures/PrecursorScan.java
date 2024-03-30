@@ -1,6 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.AcquiredSpectrum;
@@ -71,6 +72,23 @@ public class PrecursorScan implements AcquiredSpectrum, Comparable<PrecursorScan
 		double UpperBound=Math.min(precursorIsolationWindow.getStop(), isolationWindowUpper);
 
 		return new PrecursorScan(spectrumName, spectrumIndex, scanStartTime, fraction, lowerBound, UpperBound, ionInjectionTime, massArray, intensityArray, ionMobilityArray.orElse(null), tic);
+	}
+	
+	public float integrate(Range mzRange) {
+		int index=Arrays.binarySearch(massArray, mzRange.getStart());
+		if (index<0) {
+			index=-(index+1);
+		}
+		float sum=0.0f;
+		while (index<massArray.length) {
+			if (mzRange.contains(massArray[index])) {
+				sum+=intensityArray[index];
+			} else {
+				break;
+			}
+			index++;
+		}
+		return sum;
 	}
 	
 	@Override

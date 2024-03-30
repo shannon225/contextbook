@@ -7,13 +7,17 @@ import java.awt.Dimension;
 import java.awt.FileDialog;
 import java.awt.Font;
 import java.awt.Frame;
+import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.Paint;
 import java.awt.Shape;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.font.TextAttribute;
@@ -21,6 +25,7 @@ import java.awt.geom.Arc2D;
 import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -28,6 +33,7 @@ import java.sql.SQLException;
 import java.text.AttributedString;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -36,9 +42,12 @@ import java.util.Map.Entry;
 
 import javax.swing.JComponent;
 import javax.swing.JFrame;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
+import javax.swing.KeyStroke;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
@@ -58,6 +67,7 @@ import org.jfree.chart.renderer.xy.AbstractXYItemRenderer;
 import org.jfree.chart.renderer.xy.XYAreaRenderer;
 import org.jfree.chart.renderer.xy.XYBlockRenderer;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
+import org.jfree.chart.title.TextTitle;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.statistics.DefaultBoxAndWhiskerCategoryDataset;
 import org.jfree.data.xy.XYSeries;
@@ -79,6 +89,7 @@ import com.itextpdf.text.pdf.PdfTemplate;
 import com.itextpdf.text.pdf.PdfWriter;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedSpectrum;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
@@ -86,6 +97,7 @@ import edu.washington.gs.maccoss.encyclopedia.gui.general.Boxplotter.CategoryBox
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.CategoricalData;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
@@ -137,13 +149,61 @@ public class Charter {
 		// new Dimension(792, 612));
 	}
 
-	public static void launchComponent(JComponent comp, String title, Dimension dim) {
+	public static void launchComponent(final JComponent comp, String title, Dimension dim) {
 		final JFrame f=new JFrame(title);
 		f.addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent e) {
 				System.exit(0);
 			}
 		});
+		
+		JMenuBar bar=new JMenuBar();
+		JMenu fileMenu=new JMenu("File");
+		fileMenu.setMnemonic(KeyEvent.VK_F);
+		bar.add(fileMenu);
+
+		JMenuItem copyImage=new JMenuItem("Copy as image");
+		copyImage.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				BufferedImage image=new BufferedImage(comp.getWidth(), comp.getHeight(), BufferedImage.TYPE_INT_RGB);
+		        Graphics g=image.getGraphics();
+		        comp.paint(g);
+		        g.dispose();
+	            TransferableImage trans = new TransferableImage(image);
+		        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(trans, null);
+			}
+		});
+		copyImage.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		fileMenu.add(copyImage);
+
+		JMenuItem saveSVG=new JMenuItem("Save as SVG");
+		saveSVG.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				FileDialog dialog=new FileDialog((Frame)null, "Save SVG File", FileDialog.SAVE);
+				dialog.setFile(title+".svg");
+				dialog.setFilenameFilter(new SimpleFilenameFilter(".svg"));
+				
+				dialog.setVisible(true);
+				File[] fs=dialog.getFiles();
+				
+				if (fs.length>0) {
+					File saveFile=fs[0];
+					if (!saveFile.getName().toLowerCase().endsWith(".svg")) {
+						saveFile=new File(saveFile.getParentFile(), saveFile.getName()+".svg");
+					}
+					Logger.logLine("Writing SVG: "+saveFile.getAbsolutePath());
+					Charter.writeAsSVG(comp, saveFile, comp.getSize());
+					Logger.logLine("Finished writing SVG.");
+				}
+			}
+		});
+		saveSVG.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		fileMenu.add(saveSVG);
+		
+		
+		f.setJMenuBar(bar);
 
 		f.getContentPane().add(comp, BorderLayout.CENTER);
 
@@ -160,15 +220,7 @@ public class Charter {
 		launchChart(trace, trace.getSpectrumName());
 	}
 
-	public static void launchChart(LibraryEntry trace) {
-		launchChart(trace, trace.getSpectrumName());
-	}
-
 	public static void launchChart(Spectrum trace, String title) {
-		launchChart(trace, title, new Dimension(1000, 500));
-	}
-
-	public static void launchChart(LibraryEntry trace, String title) {
 		launchChart(trace, title, new Dimension(1000, 500));
 	}
 
@@ -177,10 +229,6 @@ public class Charter {
 	}
 
 	public static void launchChart(Spectrum trace, String title, Dimension dim) {
-		launchComponent(getChart(trace, title), title, dim);
-	}
-
-	public static void launchChart(LibraryEntry trace, String title, Dimension dim) {
 		launchComponent(getChart(trace, title), title, dim);
 	}
 
@@ -216,7 +264,7 @@ public class Charter {
 		writeAsPDF(chart, f, d);
 	}
 
-	public static void writeAsPDF(JPanel panel, File f, Dimension d) {
+	public static void writeAsPDF(JComponent panel, File f, Dimension d) {
 		try {
 			FontFactory.defaultEmbedding = true;
 			
@@ -287,7 +335,7 @@ public class Charter {
 		
 		writeAsSVG(getChart(xAxis, yAxis, displayLegend, traces).getChart(), f, d);
 	}
-	public static void writeAsSVG(JPanel panel, File f, Dimension d) {
+	public static void writeAsSVG(JComponent panel, File f, Dimension d) {
 		try {
 			SVGGraphics2D g2 = new SVGGraphics2D(d.width, d.height); 
 	        java.awt.Rectangle r = new java.awt.Rectangle(0, 0, d.width, d.height); 
@@ -367,14 +415,14 @@ public class Charter {
 		return chart;
 	}
 
-	public static ExtendedChartPanel getChart(LibraryEntry trace, String title) {
-		ExtendedChartPanel chart=getChart("M/Z", "Intensity", false, trace);
-		chart.getChart().setTitle(title);
-		return chart;
-	}
-
 	public static ExtendedChartPanel getChart(Spectrum spec, String title) {
-		XYTrace trace=spec instanceof XYTrace?(XYTrace)spec:new XYTrace(spec);
+		XYTraceInterface trace;
+		if (spec instanceof XYTraceInterface) {
+			trace=(XYTraceInterface)spec;
+		} else {
+			trace=new XYTrace(spec);
+		}
+		
 		ExtendedChartPanel chart=getChart("M/Z", "Intensity", false, trace);
 		chart.getChart().setTitle(title);
 		return chart;
@@ -523,26 +571,45 @@ public class Charter {
 	}
 	public static ExtendedChartPanel getBoxplotChart(String title, String xAxisLabel, String yAxisLabel, String[] categories, TFloatArrayList[] values, boolean requireRangeIncludesZero) {
 		assert (categories.length==values.length);
+		
+		CategoricalData[] dataset=new CategoricalData[categories.length];
+		for (int i = 0; i < values.length; i++) {
+			dataset[i]=new CategoricalData(categories[i], values[i].toArray());
+		}
+		return getBoxplotChart(title, xAxisLabel, yAxisLabel, 14, 10, dataset, requireRangeIncludesZero);
+	}
+	public static ExtendedChartPanel getBoxplotChart(String title, String xAxisLabel, String yAxisLabel, int fontsizeAxes, int fontsizeTicks, final CategoricalData[] values, boolean requireRangeIncludesZero) {
 		boolean displayLegend=false;
 
 		DefaultBoxAndWhiskerCategoryDataset dataset=new DefaultBoxAndWhiskerCategoryDataset();
+		CategoryBoxPlotterRenderer renderer=new CategoryBoxPlotterRenderer() {
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public Paint getItemPaint(int row, int column) {
+				if (column>=0&&column<values.length&&values[column].getColor().isPresent()) {
+					return values[column].getColor().get();
+				} else {
+					return super.getItemPaint(row, column);
+				}
+			}
+		};
 		for (int i=0; i<values.length; i++) {
-			dataset.add(Boxplotter.calculateBoxAndWhiskerStatistics(values[i].toArray()), xAxisLabel, categories[i]);
+			dataset.add(Boxplotter.calculateBoxAndWhiskerStatistics(values[i].getData()), xAxisLabel, values[i].getCategory());
+			if (values[i].getColor().isPresent()) {
+				renderer.setSeriesPaint(i, values[i].getColor().get());
+			}
 		}
 
-		CategoryBoxPlotterRenderer renderer=new CategoryBoxPlotterRenderer();
 		CategoryAxis xAxis=new CategoryAxis(xAxisLabel);
 		NumberAxis yAxis=new NumberAxis(yAxisLabel);
 		yAxis.setAutoRangeIncludesZero(requireRangeIncludesZero);
 		CategoryPlot plot=new CategoryPlot(dataset, xAxis, yAxis, renderer);
 
-		Font font=new Font(BASE_FONT_NAME, Font.PLAIN, 24);
-		Font font2=new Font(BASE_FONT_NAME, Font.PLAIN, 32);
-		Font font3=new Font(BASE_FONT_NAME, Font.PLAIN, 18);
-		font=new Font(BASE_FONT_NAME, Font.PLAIN, 10);
-		font2=new Font(BASE_FONT_NAME, Font.PLAIN, 14);
-		font3=new Font(BASE_FONT_NAME, Font.PLAIN, 14);
-		final JFreeChart chart=new JFreeChart(title, font, plot, true);
+		Font font=new Font(BASE_FONT_NAME, Font.PLAIN, fontsizeTicks);
+		Font font2=new Font(BASE_FONT_NAME, Font.PLAIN, fontsizeAxes);
+		
+		final JFreeChart chart=new JFreeChart(title, font2, plot, true);
 
 		plot.setBackgroundPaint(Color.white);
 		plot.setDomainGridlinePaint(Color.white);//gray);
@@ -568,7 +635,7 @@ public class Charter {
 		if (!displayLegend) {
 			chartPanel.getChart().removeLegend();
 		} else {
-			chartPanel.getChart().getLegend().setItemFont(font3);
+			chartPanel.getChart().getLegend().setItemFont(font2);
 		}
 
 		chartPanel.setMinimumDrawWidth(0);
@@ -801,68 +868,56 @@ public class Charter {
 				break;
 
 			case spectrum:
-				double yThreshold=General.max(y)*0.2;
+				double[] intensities=y.clone();
+				Arrays.sort(intensities);
+				
+				// just annotate the top 5 ions that don't already have labels and above 20%
+				double yThreshold=0;//intensities.length>0?intensities[Math.max(0, intensities.length-5)]:0.0;
+				yThreshold=Math.max(General.max(y)*0.1, yThreshold);
+				FragmentIon[] annotations;
+				
 				if (trace instanceof AnnotatedLibraryEntry) {
-					AnnotatedLibraryEntry entry=(AnnotatedLibraryEntry)(Spectrum)trace;
-					FragmentIon[] annotations=entry.getIonAnnotations();
-					
-					for (int i=0; i<x.length; i++) {
-						if (!Double.isNaN(x[i])&&!Double.isNaN(y[i])) {
-							XYSeries peakSeries=new XYSeries(i);
-							peakSeries.add(x[i], 0);
-							peakSeries.add(x[i], y[i]);
-							dataset.addSeries(peakSeries);
-							if (annotations[i]!=null) {
-								Color color=IonType.getColor(annotations[i].getType());
-								renderer.setSeriesStroke(i, IonType.getStroke(annotations[i].getType()));
-								renderer.setSeriesPaint(i, color);
-								
-								
-								boolean aboveThreshold=y[i]<0?y[i]<-yThreshold:y[i]>yThreshold;
-								if (IonType.b==annotations[i].getType()||IonType.y==annotations[i].getType()||aboveThreshold) {
-									XYTextAnnotation xytextannotation = new XYTextAnnotation(annotations[i].toString(), x[i], y[i]);
-									xytextannotation.setPaint(color);
-									
-									xytextannotation.setFont(IonType.getFont(annotations[i].getType()));
-							        xytextannotation.setTextAnchor(y[i]<0?TextAnchor.TOP_CENTER:TextAnchor.BOTTOM_CENTER);
-							        plot.addAnnotation(xytextannotation);
-								}
-							} else {
-								renderer.setSeriesStroke(i, IonType.missingStroke);
-								renderer.setSeriesPaint(i, IonType.missingColor);
-
-								boolean aboveThreshold=y[i]<0?y[i]<-yThreshold:y[i]>yThreshold;
-								if (aboveThreshold) {
-									XYTextAnnotation xytextannotation = new XYTextAnnotation(MASS_FORMAT.format(x[i]), x[i], y[i]);
-									xytextannotation.setPaint(IonType.missingColor);
-							        xytextannotation.setFont(IonType.primaryAnnotationFont);//missingAnnotationFont);
-							        xytextannotation.setTextAnchor(y[i]<0?TextAnchor.TOP_CENTER:TextAnchor.BOTTOM_CENTER);
-							        //plot.addAnnotation(xytextannotation);
-								}
-							}
-						}
-					}
+					annotations=((AnnotatedLibraryEntry)trace).getIonAnnotations();
+				} else if (trace instanceof AnnotatedSpectrum) {
+					annotations=((AnnotatedSpectrum)trace).getAnnotations();
 				} else {
-					for (int i=0; i<x.length; i++) {
-						if (!Double.isNaN(x[i])&&!Double.isNaN(y[i])) {
-							XYSeries peakSeries=new XYSeries(x[i]);
-							peakSeries.add(x[i], 0);
-							peakSeries.add(x[i], y[i]);
-							dataset.addSeries(peakSeries);
+					annotations=new FragmentIon[x.length];;
+				}
+				for (int i=0; i<x.length; i++) {
+					if (!Double.isNaN(x[i])&&!Double.isNaN(y[i])) {
+						XYSeries peakSeries=new XYSeries(i);
+						peakSeries.add(x[i], 0);
+						peakSeries.add(x[i], y[i]);
+						dataset.addSeries(peakSeries);
+						if (annotations[i]!=null) {
+							Color color=IonType.getColor(annotations[i].getType());
+							renderer.setSeriesStroke(i, IonType.getStroke(annotations[i].getType()));
+							renderer.setSeriesPaint(i, color);
+							
+							boolean aboveThreshold=y[i]<0?y[i]<-yThreshold:y[i]>yThreshold;
+							if (IonType.b==annotations[i].getType()||IonType.y==annotations[i].getType()||IonType.annotated==annotations[i].getType()||aboveThreshold) {
+								XYTextAnnotation xytextannotation = new XYTextAnnotation(annotations[i].toString(), x[i], y[i]);
+								xytextannotation.setPaint(color);
+								
+								xytextannotation.setFont(IonType.getFont(annotations[i].getType()));
+						        xytextannotation.setTextAnchor(y[i]<0?TextAnchor.TOP_CENTER:TextAnchor.BOTTOM_CENTER);
+						        plot.addAnnotation(xytextannotation);
+							}
+						} else {
 							renderer.setSeriesStroke(i, IonType.missingStroke);
 							renderer.setSeriesPaint(i, IonType.missingColor);
-							
-							if (y[i]>yThreshold) {
+
+							boolean aboveThreshold=y[i]<0?y[i]<-yThreshold:y[i]>yThreshold;
+							if (aboveThreshold) {
 								XYTextAnnotation xytextannotation = new XYTextAnnotation(MASS_FORMAT.format(x[i]), x[i], y[i]);
 								xytextannotation.setPaint(IonType.missingColor);
 						        xytextannotation.setFont(IonType.missingAnnotationFont);
 						        xytextannotation.setTextAnchor(y[i]<0?TextAnchor.TOP_CENTER:TextAnchor.BOTTOM_CENTER);
-						        //plot.addAnnotation(xytextannotation);
+						        plot.addAnnotation(xytextannotation);
 							}
 						}
 					}
 				}
-
 				
 				double maxX=0.0;
 				double minY=0.0;

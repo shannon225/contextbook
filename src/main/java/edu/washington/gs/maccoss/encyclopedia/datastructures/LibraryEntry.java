@@ -10,7 +10,6 @@ import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.Quadruplet;
-import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
@@ -23,11 +22,11 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakChromatogram;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.QuantitativePeakIntensityComparator;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.SpectrumWithCharge;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
 //@Immutable
-public class LibraryEntry implements Comparable<PeptidePrecursor>, Spectrum, HasRetentionTime, PeptidePrecursorWithProteins, XYTraceInterface {
+public class LibraryEntry implements Comparable<PeptidePrecursor>, SpectrumWithCharge, HasRetentionTime, PeptidePrecursorWithProteins, XYTraceInterface {
 	public static final String SHUFFLE_STRING="SHUFFLE_";
 	public static final String DECOY_STRING="DECOY_";
 

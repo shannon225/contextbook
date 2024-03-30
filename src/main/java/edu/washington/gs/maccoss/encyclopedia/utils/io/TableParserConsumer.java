@@ -1,6 +1,9 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.io;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
@@ -28,6 +31,11 @@ public class TableParserConsumer implements Runnable {
 					muscle.processRow(row);
 				} catch (Exception e) {
 					Logger.errorLine("Exception found parsing table (row="+n+"): "+e.getMessage());
+					ArrayList<String> keySet = new ArrayList<>(row.keySet());
+					Collections.sort(keySet);
+					for (String key : keySet) {
+						Logger.errorLine("  "+key+" = "+row.get(key));
+					}
 					throw new EncyclopediaException("Error parsing row " + n, e);
 				}
 			}

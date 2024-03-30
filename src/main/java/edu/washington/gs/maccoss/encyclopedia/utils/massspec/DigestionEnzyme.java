@@ -44,6 +44,7 @@ public final class DigestionEnzyme {
 		enzymes.add(getEnzyme("Elastase"));
 		enzymes.add(getEnzyme("Thermolysin"));
 		enzymes.add(getEnzyme("No Enzyme"));
+		enzymes.add(getEnzyme("Nonspecific"));
 		return enzymes;
 	}
 	
@@ -72,6 +73,12 @@ public final class DigestionEnzyme {
 		} else if ("None".equalsIgnoreCase(enzymeName)) {
 			
 			return new DigestionEnzyme("No Enzyme", "no_enzyme", n, c);
+			
+		} else if ("Nonspecific".equalsIgnoreCase(enzymeName)) {
+
+			n.addAll(AAs);
+			c.addAll(AAs);
+			return new DigestionEnzyme("Nonspecific Enzyme", "nonspecific_enzyme", n, c);
 			
 		} else if ("Lys-C".equalsIgnoreCase(enzymeName)) {
 			n.add('K');

@@ -124,9 +124,9 @@ public class Spectra3dPanelTest {
 	 * @throws Exception
 	 */
 	public static void main(String[] args) throws Exception {
-		SearchParameters params=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(16.7), new MassTolerance(16.7), DigestionEnzyme.getEnzyme("trypsin"), DataAcquisitionType.OVERLAPPING_DIA, false, true, false);
+		SearchParameters params=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(16.7), new MassTolerance(16.7), DigestionEnzyme.getEnzyme("trypsin"), DataAcquisitionType.DIA, false, true, false);
 
-		File file=new File("/Users/searleb/Documents/school/perspective/rawfiles/2017dec27_prm_6b_rep1_180103142426.mzML");
+		File file=new File("/Users/searleb/Downloads/2017dec27_prm_6b_rep1_180103142426.mzML");
 		StripeFileInterface raw=StripeFileGenerator.getFile(file, params, true);
 		
 		float rtInSecStart=71.48f*60;

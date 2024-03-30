@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Set;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntRange;
+import gnu.trove.list.array.TFloatArrayList;
 
 public class General {
 	public static String formatCellToWidth(String s, int w) {
@@ -78,6 +79,8 @@ public class General {
 	}
 
 	public static float[][] transposeMatrix(float[][] m) {
+		if (m.length==0) return m.clone();
+		
 		if (m[0].length==0) {
 			throw new ArrayIndexOutOfBoundsException(m[0].length);
 		}
@@ -477,6 +480,12 @@ public class General {
 		}
 		return r;
 	}
+
+	public static double[] normalizeToL2(double[] y) {
+		double sqrt = Math.sqrt(sum(multiply(y, y)));
+		if (sqrt==0) return new double[y.length];
+		return divide(y, sqrt);
+	}
 	
 	public static float[] normalizeToL2(float[] y) {
 		float sqrt = (float)Math.sqrt(sum(multiply(y, y)));
@@ -661,6 +670,16 @@ public class General {
 		return r;
 	}
 
+	public static double[] multiply(double[] v1, double[] v2) {
+		assert(v1.length==v2.length);
+		
+		double[] r=new double[v1.length];
+		for (int i=0; i<r.length; i++) {
+			r[i]=v1[i]*v2[i];
+		}
+		return r;
+	}
+
 	public static float[] multiply(float[] v1, float[] v2) {
 		assert(v1.length==v2.length);
 		
@@ -805,5 +824,15 @@ public class General {
 	
 	public static boolean isEven(int x) {
 		return (x&1)==0; // check first bit
+	}
+	
+	public static float[] removeNaNs(float[] f) {
+		TFloatArrayList r=new TFloatArrayList();
+		for (int i = 0; i < f.length; i++) {
+			if (!Float.isNaN(f[i])) {
+				r.add(f[i]);
+			}
+		}
+		return r.toArray();
 	}
 }

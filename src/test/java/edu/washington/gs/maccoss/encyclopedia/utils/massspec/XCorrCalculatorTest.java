@@ -1,9 +1,11 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
 import java.awt.Dimension;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
@@ -11,14 +13,23 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.scribe.ScribeScoringTask;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.parameters.InstrumentSpecificSearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
-import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
@@ -26,6 +37,8 @@ import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserProducer;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
+import gnu.trove.map.hash.TObjectDoubleHashMap;
+import gnu.trove.procedure.TObjectDoubleProcedure;
 import junit.framework.TestCase;
 
 public class XCorrCalculatorTest extends TestCase {
@@ -33,6 +46,66 @@ public class XCorrCalculatorTest extends TestCase {
 	//private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(0.05, MassErrorUnitType.AMU), new MassTolerance(10, MassErrorUnitType.PPM), DigestionEnzyme.getEnzyme("trypsin"));
 	private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(0.5, MassErrorUnitType.AMU), new MassTolerance(0.5, MassErrorUnitType.AMU), DigestionEnzyme.getEnzyme("trypsin"), false, true, false);
 	//private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.YONLY, new MassTolerance(10, MassErrorUnitType.PPM), new MassTolerance(10, MassErrorUnitType.PPM), DigestionEnzyme.getEnzyme("trypsin"));
+	
+	public static void main(String[] args) throws Exception {
+		final SearchParameters parameters=SearchParameterParser.getDefaultParametersObject(InstrumentSpecificSearchParameters.OrbitrapOrbitrap);
+		
+		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("Trypsin");
+		MassTolerance precursorTolerance=new MassTolerance(1000);
+		AminoAcidConstants aaConstants=new AminoAcidConstants();
+		
+		PrintWriter writer=new PrintWriter("/Users/searleb/Downloads/human/evalue_scores.txt");
+		
+		File diaFile = new File("/Users/searleb/Downloads/human/23aug2017_hela_serum_timecourse_pool_dda_001.mzML");
+		File fastaFile=new File("/Users/searleb/Downloads/human/uniprot_sprot.fasta");
+		StripeFileInterface dia=StripeFileGenerator.getFile(diaFile, parameters, false);
+
+		double mz=892.464364792153;
+		float rt=39.78f;
+		FragmentScan msms=dia.getStripes(mz, (rt-0.01f)*60f, (rt+0.01f)*60f, true).get(0);
+		SparseXCorrCalculator preprocessedSpectrum=new SparseXCorrCalculator(msms, new Range(msms.getPrecursorMZ()-10.0f, msms.getPrecursorMZ()+10.0f), PARAMETERS);
+		
+		int[] histogram=new int[100];
+		TObjectDoubleHashMap<String> scoreMap=new TObjectDoubleHashMap<String>();
+
+		ArrayList<FastaEntryInterface> proteinEntries=FastaReader.readFasta(fastaFile, parameters);
+		for (FastaEntryInterface proteinEntry : proteinEntries) {
+			ArrayList<FastaPeptideEntry> peptideEntries=enzyme.digestProtein(proteinEntry, 7, 40, 1, aaConstants, false);
+			for (FastaPeptideEntry peptideEntry : peptideEntries) {
+				for (byte z : new byte[] {2,3,4}) {
+					double targetMass=aaConstants.getChargedMass(peptideEntry.getSequence(), z);
+
+					if (precursorTolerance.equals(msms.getPrecursorMZ(), targetMass)) {
+						float xcorr=preprocessedSpectrum.score(peptideEntry.getSequence(), z);
+						int index=Math.round((xcorr+1f)*10f);
+						if (index<0) index=0;
+						if (index>=histogram.length) index=histogram.length;
+						histogram[index]++;
+						
+//						FragmentationModel model=PeptideUtils.getPeptideModel(peptideEntry.getSequence(), parameters.getAAConstants());
+//						AnnotatedLibraryEntry unitEntry=model.getUnitSpectrum("filename", new HashSet<String>(), z, 0.0f, parameters);
+//						float[] scores=ScribeScoringTask.score(unitEntry, msms, parameters);
+						
+						scoreMap.put(peptideEntry.getSequenceWithModsStripped(), xcorr);
+						
+					}
+				}
+			}
+		}
+		scoreMap.forEachEntry(new TObjectDoubleProcedure<String>() {
+			@Override
+			public boolean execute(String a, double b) {
+				writer.println(String.format("%.3f\t"+a, b));
+				return true;
+			}
+		});
+		
+		for (int i = 0; i < histogram.length; i++) {
+			System.out.println((i/10f-1f)+"\t"+histogram[i]);
+		}
+		writer.flush();
+		writer.close();
+	}
 	
 	public static void main3(String[] args) {
 		// timing test
@@ -77,7 +150,7 @@ public class XCorrCalculatorTest extends TestCase {
 		System.out.println("Array: "+(System.currentTimeMillis()-time));
 	}
 	
-	public static void main(String[] args) {
+	public static void main2(String[] args) {
 		final byte charge=2;
 		final float chargedMz=(float)((1329.6335+(charge-1)*MassConstants.protonMass)/charge);
 		System.out.println(chargedMz);

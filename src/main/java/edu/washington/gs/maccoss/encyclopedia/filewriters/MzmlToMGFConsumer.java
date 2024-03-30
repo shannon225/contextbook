@@ -27,6 +27,7 @@ public class MzmlToMGFConsumer implements Runnable {
 	@Override
 	public void run() {
 		PrintWriter writer=null;
+		int count=0;
 		try {
 			writer=new PrintWriter(f, "UTF-8");
 			while (true) {
@@ -34,13 +35,24 @@ public class MzmlToMGFConsumer implements Runnable {
 				if (MSMSBlock.POISON_BLOCK==block) break;
 				
 				for (FragmentScan stripe : block.getFragmentScans()) {
-					byte charge=stripe.getCharge();
+					//if (stripe.getTIC()<20355933) continue;
+					//System.out.println(stripe.getScanStartTime()+", "+stripe.getTIC());
+					
+					if (stripe.getScanStartTime()>(50*60)||stripe.getScanStartTime()<(25*60)) {
+						continue;
+					}
+					count++;
+					if (count>=20000) continue;
+					
+					//stripe=stripe.trimToPeakDepth(4);
+					
+					byte charge=stripe.getPrecursorCharge();
 					if (charge==0) continue;
 					
 					writer.println("BEGIN IONS");
 					if (charge>0) {
 						writer.print("PEPMASS=");
-						writer.println(MassConstants.getPeptideMass(stripe.getPrecursorMZ(), charge));
+						writer.println(stripe.getPrecursorMZ()); // ACTUALLY M/Z, the docs are wrong!
 						
 						writer.print("CHARGE=");
 						writer.print(charge);
@@ -76,8 +88,8 @@ public class MzmlToMGFConsumer implements Runnable {
 	}
 	
 	public static void main(String[] args) {
-		File mzMLFile=new File("/Users/searleb/Documents/damien/dda_library_search/hela/23aug2017_hela_serum_timecourse_pool_dda_003.mzML");
-		File mgfFile=new File("/Users/searleb/Documents/damien/dda_library_search/hela/23aug2017_hela_serum_timecourse_pool_dda_003.mgf");
+		File mzMLFile = new File("/Users/searleb/Downloads/human/23aug2017_hela_serum_timecourse_pool_dda_001.mzML");
+		File mgfFile=new File("/Users/searleb/Downloads/human/23aug2017_hela_serum_timecourse_pool_dda_001.mgf");
 		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
 		convertSAX(mzMLFile, mgfFile, parameters);
 	}

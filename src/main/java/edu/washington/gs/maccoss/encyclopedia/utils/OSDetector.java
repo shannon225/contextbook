@@ -2,9 +2,11 @@ package edu.washington.gs.maccoss.encyclopedia.utils;
 
 public class OSDetector {
 	final private static String sys=System.getProperty("os.name").toLowerCase();
+	final private static String arch=System.getProperty("os.arch").toLowerCase();
 
 	public static void main(String[] args) {
 		System.out.println(sys);
+		System.out.println(arch);
 
 		System.out.println(getOSName(getOS()));
 	}
@@ -18,6 +20,13 @@ public class OSDetector {
 			return OS.LINUX;
 		}
 		throw new EncyclopediaException("Unknown operating system ["+sys+"]");
+	}
+	
+	public static boolean isARM() {
+		if ("aarch64".equals(arch)||"arm".equals(arch)) {
+			return true;
+		}
+		return false;
 	}
 	
 	public static String getOSName(OS os) {

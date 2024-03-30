@@ -10,13 +10,14 @@ import java.util.concurrent.LinkedBlockingQueue;
 import org.apache.commons.math3.distribution.HypergeometricDistribution;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserProducer;
 import gnu.trove.map.hash.TObjectIntHashMap;
 
 public class FishersExactTest {
-	public static void main(String[] args) {
+	public static void main2(String[] args) {
 		File[] files=new File("/Users/searleb/Downloads/emma/").listFiles();
 		for (File f : files) {
 
@@ -126,6 +127,26 @@ public class FishersExactTest {
 		}
 	}
 
+	public static void main(String[] args) {
+		File f=new File("/Users/searleb/Documents/students/george_sun/local_fishers_exact.txt");
+		TableParser.parseTSV(f, new TableParserMuscle() {
+			
+			@Override
+			public void processRow(Map<String, String> row) {
+				String accession=row.get("peptide_protein_accession_numbers");
+				int x1=Integer.parseInt(row.get("x [category=75]"));
+				int x2=Integer.parseInt(row.get("x [category=76]"));
+				int n1=Integer.parseInt(row.get("n [category=75]"));
+				int n2=Integer.parseInt(row.get("n [category=76]"));
+				double pvalue=getFishersExactPvalue(n1, n2, x1, x2);
+				System.out.println(accession+"\t"+x1+"\t"+x2+"\t"+n1+"\t"+n2+"\t"+pvalue);
+			}
+			
+			@Override
+			public void cleanup() {
+			}
+		});
+	}
 	public static double getFishersExactPvalue(float total1, float total2, float value1, float value2) {
 		HypergeometricDistribution hyperDist=new HypergeometricDistribution(Math.round(total1+total2), Math.round(total1), Math.round(value1+value2));
 		double pValue1=hyperDist.cumulativeProbability(Math.round(value1));

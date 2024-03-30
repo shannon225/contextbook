@@ -99,6 +99,7 @@ public class SearchPanel extends JPanel {
 	private static final ImageIcon skylineIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/skyline_icon.png"));
 	private static final ImageIcon openDBIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/filedb.png"));
 	private static final ImageIcon convertDBIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/convertdb.png"));
+	private static final ImageIcon processingIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/processing_icon.png"));
 	private static final ImageIcon libraryBrowserIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/library_small_icon.png"));
 	private static final ImageIcon diaBrowserIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/orbi_icon.png"));
 	private static final ImageIcon peptideBrowserIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/peptide_icon.png"));
@@ -703,6 +704,18 @@ public class SearchPanel extends JPanel {
 		if (enableAdvancedOptions) {
 			subsetDIA.setText("HIDDEN: "+subsetDIA.getText());
 			dataMenu.add(subsetDIA);
+		}
+
+		JMenuItem dilutonCurveFitterItem=new JMenuItem("Create PRM assay from DIA titration", processingIcon);
+		dilutonCurveFitterItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				SearchPanelUtilities.launchDIAtoPRMDialog(SearchPanel.this);
+			}
+		});
+		if (enableAdvancedOptions) {
+			dilutonCurveFitterItem.setText("HIDDEN: "+dilutonCurveFitterItem.getText());
+			dataMenu.add(dilutonCurveFitterItem);
 		}
 
 		JMenuItem toggleScoringSystemItem=new JMenuItem("Toggle EncyclopeDIA Scoring System", libraryBrowserIcon);

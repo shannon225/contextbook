@@ -3,6 +3,8 @@ package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 import java.util.Comparator;
 
 public class PeakIntensityComparator implements Comparator<Peak> {
+	public static final PeakIntensityComparator DEFAULT_INTENSITY_COMPARATOR=new PeakIntensityComparator();
+	
 	public PeakIntensityComparator() {
 	}
 

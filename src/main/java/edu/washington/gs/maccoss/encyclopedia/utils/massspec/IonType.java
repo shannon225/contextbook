@@ -15,7 +15,7 @@ public enum IonType {
 	x,xNL,xp2,xp2NL,
 	y,yNL,yp2,yp2NL,yp3,yp4,
 	z,zNL,z1,z1NL,zp2,zp2NL,z1p2,z1p2NL,
-	precursor,unknown;
+	precursor,annotated;
 	
 	private static final String _PRECURSOR = "p";
 	private static final String _1="+1";
@@ -31,13 +31,16 @@ public enum IonType {
 	public static final Color oddColor=new Color(26, 148, 49);
 	public static final Color bcColor=new Color(59, 109, 226);
 	public static final Color yzColor=new Color(226, 75, 59);
+	public static final Color annotatedColor=Color.BLACK;
 	public static final Color missingColor=Color.DARK_GRAY;
 	public static final BasicStroke primaryStroke=new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
 	public static final BasicStroke secondaryStroke=new BasicStroke(1.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
+	public static final BasicStroke annotatedStroke=new BasicStroke(1.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
 	public static final BasicStroke missingStroke=new BasicStroke(1.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
 	public static final Font primaryAnnotationFont=new Font("News Gothic MT", Font.BOLD, 14);
-	public static final Font secondaryAnnotationFont=new Font("News Gothic MT", Font.PLAIN, 10);
-	public static final Font missingAnnotationFont=new Font("News Gothic MT", Font.PLAIN, 10);
+	public static final Font secondaryAnnotationFont=new Font("News Gothic MT", Font.PLAIN, 12);
+	public static final Font missingAnnotationFont=new Font("News Gothic MT", Font.PLAIN, 12);
+	public static final Font annotatedAnnotationFont=new Font("News Gothic MT", Font.PLAIN, 12);
 
 	public static String toString(IonType t) {
 		switch (t) {
@@ -77,7 +80,7 @@ public enum IonType {
 		case yp4: return "y+4H";
 		
 		case precursor: return _PRECURSOR;
-		case unknown: return "unknown";
+		case annotated: return "unknown";
 		}
 		return "unknown";
 	}
@@ -120,7 +123,7 @@ public enum IonType {
 		
 		if(_PRECURSOR.equals(s)) return precursor;
 
-		return unknown;
+		return annotated;
 	}
 	
 	public static String toString(IonType t, byte index) {
@@ -161,7 +164,7 @@ public enum IonType {
 		case yp4: return "y"+index+_4H;
 		
 		case precursor: return _PRECURSOR;
-		case unknown: return "unknown";
+		case annotated: return "unknown";
 		}
 		return "unknown";
 	}
@@ -226,7 +229,7 @@ public enum IonType {
 		case yp4: return "y";
 		
 		case precursor: return _PRECURSOR;
-		case unknown: return "unknown";
+		case annotated: return "unknown";
 		}
 		return "unknown";
 	}
@@ -391,7 +394,7 @@ public enum IonType {
 		case yp4: return 4;
 		
 		case precursor: return 0;
-		case unknown: return 1;
+		case annotated: return 1;
 		}
 		return 1;
 	}
@@ -434,9 +437,9 @@ public enum IonType {
 		case yp4: return yzColor;
 		
 		case precursor: return oddColor;
-		case unknown: return missingColor;
+		case annotated: return annotatedColor;
 		}
-		return missingColor;
+		return annotatedColor;
 	}
 	
 	public static Stroke getStroke(IonType t) {
@@ -477,9 +480,9 @@ public enum IonType {
 		case yp4: return secondaryStroke;
 		
 		case precursor: return primaryStroke;
-		case unknown: return missingStroke;
+		case annotated: return annotatedStroke;
 		}
-		return missingStroke;
+		return annotatedStroke;
 	}
 	
 	public static Font getFont(IonType t) {
@@ -520,7 +523,7 @@ public enum IonType {
 		case yp4: return secondaryAnnotationFont;
 		
 		case precursor: return primaryAnnotationFont;
-		case unknown: return missingAnnotationFont;
+		case annotated: return annotatedAnnotationFont;
 		}
 		return missingAnnotationFont;
 	}
@@ -563,9 +566,9 @@ public enum IonType {
 		case yp4: return y;
 		
 		case precursor: return precursor;
-		case unknown: return unknown;
+		case annotated: return annotated;
 		}
-		return unknown;
+		return annotated;
 	}
 	
 	@SuppressWarnings("incomplete-switch")

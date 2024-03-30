@@ -77,6 +77,7 @@ import edu.washington.gs.maccoss.encyclopedia.filewriters.MSPWriter;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PrositCSVWriter;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.StripeFileMerger;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.StripeFileTrimmer;
+import edu.washington.gs.maccoss.encyclopedia.gui.dia.curves.DilutionCurveFitterDialog;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.AboutDialog;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserList;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
@@ -1951,5 +1952,9 @@ public class SearchPanelUtilities {
 		dialog.pack(); 
 		dialog.setSize(500, 170);
 		dialog.setVisible(true);
+	}
+	
+	public static void launchDIAtoPRMDialog(Component root) {
+		DilutionCurveFitterDialog.launchDilutionCurveFitterDialog(root);
 	}
 }

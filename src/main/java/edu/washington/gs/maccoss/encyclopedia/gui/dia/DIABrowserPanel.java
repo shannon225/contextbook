@@ -296,7 +296,7 @@ public class DIABrowserPanel extends JPanel {
 			XYTrace histTrace=new XYTrace(PivotTableGenerator.createPivotTable(basepeakIntensityArray), GraphType.line, "Basepeak distribution");
 			Charter.launchChart("log10 intensity", "frequency", true, histTrace);
 			
-			Collections.sort(intensePeaks, new PeakIntensityComparator());
+			Collections.sort(intensePeaks, PeakIntensityComparator.DEFAULT_INTENSITY_COMPARATOR);
 			Collections.reverse(intensePeaks);
 	
 			double[] masses=new double[0];
