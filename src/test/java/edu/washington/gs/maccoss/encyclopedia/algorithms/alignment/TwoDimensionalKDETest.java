@@ -4,7 +4,10 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Optional;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
+import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Function;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.MedianInterpolatorTest;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.CosineGaussian;
@@ -14,30 +17,41 @@ import junit.framework.TestCase;
 public class TwoDimensionalKDETest extends TestCase {
 	public static void main(String[] args) {
 		ArrayList<XYPoint> rts=MedianInterpolatorTest.getSyntheticData();
-		rts.addAll(MedianInterpolatorTest.getLowNoiseData());
-		rts.addAll(MedianInterpolatorTest.getLowNoiseData());
-		rts.addAll(MedianInterpolatorTest.getLowNoiseData());
-		rts.addAll(MedianInterpolatorTest.getLowNoiseData());
-		rts.addAll(MedianInterpolatorTest.getLowNoiseData());
+//		rts.addAll(MedianInterpolatorTest.getLowNoiseData());
+//		rts.addAll(MedianInterpolatorTest.getLowNoiseData());
+//		rts.addAll(MedianInterpolatorTest.getLowNoiseData());
+//		rts.addAll(MedianInterpolatorTest.getLowNoiseData());
+//		rts.addAll(MedianInterpolatorTest.getLowNoiseData());
 		//rts=MedianInterpolatorTest.getSyntheticData();
-		rts=MedianInterpolatorTest.getPhosphoData();
-		//rts=MedianInterpolatorTest.getCleanData();
+		//rts=MedianInterpolatorTest.getPhosphoData();
+		rts=MedianInterpolatorTest.getCleanData();
 		//rts=new ArrayList<XYPoint>(rts.subList(0, 10000));
 		//System.out.println(rts.size());
-		//File f=new File("/Users/searleb/Downloads/23aug2017_hela_serum_timecourse_pool_wide_001_170829031834.mzML.encyclopedia.txt.first.rt_fit.txt");
-		//f=new File("/Users/searleb/Downloads/23aug2017_hela_serum_timecourse_pool_wide_001_170829031834.mzML.encyclopedia.txt.rt_fit.txt");
-		//rts=MedianInterpolatorTest.getData(f);
-		//File f=new File("/Users/searleb/Documents/phospho_localization/data/110515_bcs_hela_phospho_starved_20mz_500_900.dia.encyclopedia.txt.rt_fit.txt");
-		//File f=new File("/Users/searleb/Documents/chromatogram_library_manuscript/hela_window_size/2018may14_hela_window_size_test_BCS_hela_wide_400_1200_1.mzML.encyclopedia.txt.first.rt_fit.txt");
-		//rts=MedianInterpolatorTest.getData(f, 1f);
+
+//		File f=new File("/Users/searleb/Documents/encyclopedia/small_file/bcs_2020jan16_hela_clib_3.mzML.encyclopedia.txt.final.rt_fit.txt");
+//		rts=MedianInterpolatorTest.getData(f, 1f, 0.5f);
 		
-		ArrayList<XYPoint> data=new ArrayList();
+		Pair<float[], float[]> values=XYTrace.toFloatArrays(rts);
+		Range x=new Range(values.x);
+		Range y=new Range(values.y);
+		
+//		for (int i = 0; i < 1500; i++) {
+//			rts.add(new XYPoint(x.mapBackToRange((float)Math.random(), 0.0f, 1.0f), y.mapBackToRange((float)Math.random(), 0.0f, 1.0f)));
+//		}
+		
+		ArrayList<XYPoint> data=new ArrayList<>();
 		data=rts;
 		
-		RetentionTimeFilter filter=RetentionTimeFilter.getFilter(rts);
+		AbstractRetentionTimeFilter filter=RetentionTimeFilter.getFilter(rts);
 		filter.plot(rts, Optional.ofNullable((File)null));
 		
 		//RTFitMixtureModel model=new RTFitMixtureModel(rts, filter.getRtWarper());
+		
+//		filter=RetentionTimeFilter.getLinearFilter(rts);
+//		filter.plot(rts, Optional.ofNullable((File)null));
+//
+//		filter=MedianRetentionTimeFilter.getFilter(rts);
+//		filter.plot(rts, Optional.ofNullable((File)null));
 		
 		//filter=BrudererRetentionTimeFilter.getFilter(rts);
 		//filter.plot(rts, Optional.ofNullable((File)null));

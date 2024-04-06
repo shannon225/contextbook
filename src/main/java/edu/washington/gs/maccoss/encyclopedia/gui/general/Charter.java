@@ -873,7 +873,7 @@ public class Charter {
 				
 				// just annotate the top 5 ions that don't already have labels and above 20%
 				double yThreshold=0;//intensities.length>0?intensities[Math.max(0, intensities.length-5)]:0.0;
-				yThreshold=Math.max(General.max(y)*0.1, yThreshold);
+				yThreshold=Double.MAX_VALUE;//Math.max(General.max(y)*0.1, yThreshold);
 				FragmentIon[] annotations;
 				
 				if (trace instanceof AnnotatedLibraryEntry) {
@@ -1101,10 +1101,17 @@ public class Charter {
 				try {
 					LibraryFile library=new LibraryFile();
 					if (fs!=null&&fs.length>0&&fs[0]!=null) {
+						File altFile=new File(fs[0].getParentFile(), fs[0].getName()+LibraryFile.DLIB);
 						if (fs[0].exists()&&fs[0].canRead()) {
+							Logger.logLine("Appending to existing file ["+fs[0].getName()+"].");
 							library.openFile(fs[0]);
+						} else if (altFile.exists()&&altFile.canRead()) {
+								Logger.logLine("Appending to existing file ["+altFile.getName()+"].");
+								library.openFile(altFile);
+								fs[0]=altFile;
 							
 						} else {
+							Logger.logLine("Creating new file ["+fs[0].getName()+"].");
 							if (!fs[0].getName().toLowerCase().endsWith(LibraryFile.DLIB)) {
 								File newFile=new File(fs[0].getAbsolutePath()+LibraryFile.DLIB);
 								fs[0]=newFile;

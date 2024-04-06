@@ -830,6 +830,7 @@ public class ChromatogrindrPanel extends JPanel {
 			ValueAxis axis=deltaMassPanel.getChart().getCategoryPlot().getRangeAxis();
 			axis.setRange(-fragmentTolerance.getToleranceThreshold(), fragmentTolerance.getToleranceThreshold());
 			rightInfoPanel.add(deltaMassPanel);
+			deltaMassPanel.getChart().setTitle((String)null);
 			
 			if (reference!=null) {
 				ArrayList<LibraryEntry> references=reference.getEntries(entry.getPeptideModSeq(), entry.getPrecursorCharge(), false);

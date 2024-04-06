@@ -151,7 +151,7 @@ public class AbstractRetentionTimeFilter implements RetentionTimeAlignmentInterf
 		XYTraceInterface posTrace=new XYTrace(positivePoints, GraphType.line, "Positive", new Color(26, 198, 49, 100), 2.0f);
 		
 		float alpha=Math.min(1.0f, 5000.0f/rts.size());
-		XYTraceInterface median2=new XYTrace(rtWarper.getKnots(), GraphType.line, "Retention Time Fit", new Color(26, 198, 49, 100), 4.0f);
+		XYTraceInterface median2=new XYTrace(rtWarper.getKnots(), GraphType.line, "Retention Time Fit", new Color(26, 198, 49, 0), 4.0f);
 		XYTraceInterface selectedTrace=new XYTrace(selectedRTs, GraphType.tinypoint, "Data Used In Fit", new Color(0f, 0f, 1f, alpha), 1.0f);
 		XYTraceInterface trace=new XYTrace(removedRTs, GraphType.tinypoint, "Data Removed From Fit", new Color(1f, 0f, 0f, alpha), 1.0f);
 

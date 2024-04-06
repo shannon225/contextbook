@@ -193,7 +193,7 @@ public class TwoDimensionalKDE {
 		int i = initialI;
 		int j = initialJ;
 
-		while (true) {// gauranteed to exit because each step either i or j (or both) increases
+		while (true) {// guaranteed to exit because each step either i or j (or both) increases
 			float x = xRange.mapBackToRange(i, 0, resolution - 1);
 			float y = yRange.mapBackToRange(j, 0, resolution - 1);
 			prev.add(new XYPoint(x, y));

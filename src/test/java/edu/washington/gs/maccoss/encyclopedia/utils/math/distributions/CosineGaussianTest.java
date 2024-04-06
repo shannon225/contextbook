@@ -6,12 +6,13 @@ import junit.framework.TestCase;
 
 public class CosineGaussianTest extends TestCase {
 	public static void main(String[] args) {
-		CosineGaussian dist=new CosineGaussian(5, 2, 5);
-		Range range=new Range(0, 10);
+		CosineGaussian dist=new CosineGaussian(0, 1, 1);
+		Gaussian dist2=new Gaussian(0, 1, 1);
+		Range range=new Range(-3, 3);
 		for (int i = 0; i < 10; i++) {
 			System.out.println(dist.getPDF(i));
 		}
-		Charter.launchChart(Charter.getChart(range, dist), "cosine");	
+		Charter.launchChart(Charter.getChart(range, dist, dist2), "cosine");	
 	}
 	
 	public void testGaussian() {
