@@ -30,11 +30,18 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassErrorUnitType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
+import gnu.trove.list.array.TDoubleArrayList;
+import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TCharDoubleHashMap;
+import gnu.trove.map.hash.TIntIntHashMap;
+import gnu.trove.map.hash.TObjectIntHashMap;
+import gnu.trove.procedure.TIntProcedure;
 import gnu.trove.map.hash.TCharIntHashMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
 import gnu.trove.procedure.TCharIntProcedure;
@@ -68,6 +75,60 @@ public class FastaReaderTest extends TestCase {
 	}
 
 	public static void main(String[] args) throws Exception {
+		SearchParameters params=SearchParameterParser.getDefaultParametersObject();
+		File f=new File("/Users/searleb/Downloads/uniprotkb_proteome_UP000005640_2024_01_07.fasta");
+		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f, params);
+		
+		float[] ppms=new float[] {100000, 50000, 20000, 10000, 5000, 2000, 1000, 500, 200, 100, 50, 20, 10, 5, 2, 1, 0.5f, 0.2f, 0.1f, 0.05f, 0.02f, 0.01f};
+		for (float ppm : ppms) {
+			MassTolerance tolerance=new MassTolerance(ppm, MassErrorUnitType.PPM);
+			
+			TDoubleArrayList masses=new TDoubleArrayList();
+			for (FastaEntryInterface entry : entries) {
+				float mass=(float)params.getAAConstants().getMass(entry.getSequence());
+				masses.add(mass);
+			}
+			
+			masses.sort();
+			int unique=0;
+			for (int i = 0; i < masses.size(); i++) {
+				double prev=i<=0?0.0:masses.get(i-1);
+				double next=i>=masses.size()-1?Double.MAX_VALUE:masses.get(i+1);
+				double curr=masses.get(i);
+				
+				if (tolerance.compareTo(next, curr)!=0&&tolerance.compareTo(prev, curr)!=0) {
+					unique++;
+				}
+			}
+			System.out.println(unique+" / "+entries.size()+" = "+(unique/(float)entries.size())+" at "+ppm+" ppm");
+		}
+	}
+	
+	public static void mainS(String[] args) throws Exception {
+		SearchParameters params=SearchParameterParser.getDefaultParametersObject();
+		File f=new File("/Users/searleb/Downloads/uniprotkb_proteome_UP000005640_2024_01_07.fasta");
+		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f, params);
+		float error=0.01f;
+		
+		int[] density=new int[40000]; // 100 Da per bin
+		for (FastaEntryInterface entry : entries) {
+			float mass=(float)params.getAAConstants().getMass(entry.getSequence());
+			
+			int minIndex=Math.round((mass-mass*error)/100f);
+			int maxIndex=Math.round((mass+mass*error)/100f);
+			for (int i = minIndex; i <= maxIndex; i++) {
+				if (i>0&&i<density.length) {
+					density[i]++;
+				}
+			}
+		}
+		
+		for (int i = 1; i < density.length; i++) {
+			System.out.println(Log.log10(i*100)+"\t"+density[i]);
+		}
+	}
+	
+	public static void mainL(String[] args) throws Exception {
 		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
 		String fastaFilePath = "/Users/searleb/Documents/OSU/teaching/proteomics_class/homework/homework3/UP000000625_83333.fasta";
 		DigestionEnzyme enzyme = DigestionEnzyme.getEnzyme("Trypsin");
