@@ -6,6 +6,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.Function;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.LinearRegression;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ProphetMixtureModel;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RTProbabilityModel;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.RunningMedianWarper;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.Distribution;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.Gaussian;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.UnitDistribution;
@@ -21,6 +22,10 @@ public class RetentionTimeFilter extends AbstractRetentionTimeFilter {
 	
 	public static RetentionTimeFilter getFilter(List<XYPoint> rts) {
 		return getFilter(rts, RT_STRING, "Retention Time (min)");
+	}
+	
+	public static RetentionTimeFilter getLinearFilter(List<XYPoint> rts) {
+		return getLinearFilter(rts, RT_STRING, "Retention Time (min)");
 	}
 	public static RetentionTimeFilter getFilter(List<XYPoint> rts, String xAxis, String yAxis) {
 		return getFilter(rts, xAxis, yAxis, TwoDimensionalKDE.DEFAULT_RESOLUTION);
@@ -43,6 +48,20 @@ public class RetentionTimeFilter extends AbstractRetentionTimeFilter {
 				rtWarper=new LinearRegression(rts);
 				model=Optional.of(generateMixtureModel(rts, rtWarper));
 			}
+		}
+		return new RetentionTimeFilter(rtWarper, model, xAxis, yAxis, rts.size());
+	}
+
+	public static RetentionTimeFilter getLinearFilter(List<XYPoint> rts, String xAxis, String yAxis) {
+		Function rtWarper;
+		Optional<RTProbabilityModel> model;
+		if (rts.size()<=1) {
+			Logger.errorLine("Not enough data points ("+rts.size()+") to perform KDE alignment, forced to use one-to-one mapping!");
+			rtWarper=new LinearRegression(new float[] {0, 1}, new float[] {0, 1});
+			model=Optional.empty();
+		} else {
+			rtWarper=new LinearRegression(rts);
+			model=Optional.of(generateMixtureModel(rts, rtWarper));
 		}
 		return new RetentionTimeFilter(rtWarper, model, xAxis, yAxis, rts.size());
 	}

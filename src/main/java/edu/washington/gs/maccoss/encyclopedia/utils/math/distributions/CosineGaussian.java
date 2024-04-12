@@ -23,7 +23,7 @@ public class CosineGaussian implements Distribution {
 	
 	@Override
 	public String getName() {
-		return "Cosine Distribution";
+		return "Cosine Approximation";
 	}
 	
 	@Override

@@ -86,12 +86,14 @@ public class MedianInterpolatorTest extends TestCase {
 		return getData(is);
 	}
 
-	public static ArrayList<XYPoint> getData(File f, float multiplier) {
+	public static ArrayList<XYPoint> getData(File f, float multiplier, float downsamplePercentage) {
 		final ArrayList<XYPoint> rts=new ArrayList<XYPoint>();
 
 		TableParserMuscle muscle=new TableParserMuscle() {
 			@Override
 			public void processRow(Map<String, String> row) {
+				if (Math.random()>downsamplePercentage) return;
+				
 				String s=row.get("predicted");
 				if (s==null) s=row.get("library");
 				float predicted=Float.parseFloat(s)*multiplier;

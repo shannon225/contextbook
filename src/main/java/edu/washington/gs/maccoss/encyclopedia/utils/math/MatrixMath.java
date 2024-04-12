@@ -23,6 +23,19 @@ public class MatrixMath {
 		System.out.println("]");
 	}
 
+	public static double[][] calculateCovarianceMatrix(double[][] matrix) {
+		double[] mean=new double[matrix[0].length];
+		for (int i=0; i<mean.length; i++) {
+			mean[i]=General.mean(MatrixMath.getColumn(matrix, i));
+		}
+		
+		double[][] normalized=MatrixMath.subtract(matrix, mean);
+		double[][] transpose=MatrixMath.transpose(normalized);
+		
+		int n=normalized.length;
+		return MatrixMath.divide(MatrixMath.multiply(transpose, normalized), n);
+	}
+
 	/**
 	 * from http://www.sanfoundry.com/java-program-find-inverse-matrix/
 	 * @param a
@@ -121,7 +134,10 @@ public class MatrixMath {
 		}
 		return r;
 	}
-	
+
+	public static double[][] divide(double[][] m, double v) {
+		return multiply(m, 1.0/v);
+	}
 	public static double[][] multiply(double[][] m, double v) {
 		double[][] n=new double[m.length][];
 		for (int i=0; i<m.length; i++) {
@@ -149,6 +165,17 @@ public class MatrixMath {
 			d+=a[i]*b[i];
 		}
 		return d;
+	}
+	
+	public static double[][] subtract(double[][] m, double[][] q) {
+		double[][] n=new double[m.length][];
+		for (int i=0; i<m.length; i++) {
+			n[i]=new double[m[i].length];
+			for (int j=0; j<m[i].length; j++) {
+				n[i][j]=m[i][j]-q[i][j];
+			}
+		}
+		return n;
 	}
 	
 	public static double[][] subtract(double[][] m, double[] array) {

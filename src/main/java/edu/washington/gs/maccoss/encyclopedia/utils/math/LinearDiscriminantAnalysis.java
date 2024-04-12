@@ -74,17 +74,23 @@ public class LinearDiscriminantAnalysis implements ScoreCombiner {
 		for (int i=0; i<meanAll.length; i++) {
 			meanPos[i]=General.mean(MatrixMath.getColumn(posData, i));
 			meanNeg[i]=General.mean(MatrixMath.getColumn(negData, i));
+			
+			// meanAll uses the priors to calculate the weighted mean
 			meanAll[i]=meanPos[i]*posPrior+meanNeg[i]*negPrior;
+			
 			meanSum[i]=meanPos[i]+meanNeg[i];
 			meanDiff[i]=meanPos[i]-meanNeg[i];
 		}
 		
+		// normalize by the average of the columns in both matrices 
 		double[][] meanCorrectedPos=MatrixMath.subtract(posData, meanAll);
 		double[][] meanCorrectedNeg=MatrixMath.subtract(negData, meanAll);
 		
+		// calculate the covariance matrix for both positive and negative matrices
 		double[][] covarPos=MatrixMath.multiply(MatrixMath.multiply(MatrixMath.transpose(meanCorrectedPos), meanCorrectedPos), 1.0/meanCorrectedPos.length);
 		double[][] covarNeg=MatrixMath.multiply(MatrixMath.multiply(MatrixMath.transpose(meanCorrectedNeg), meanCorrectedNeg), 1.0/meanCorrectedNeg.length);
 
+		// calculate the average covariance matrix, again using priors to weight
 		double[][] pooledCovar=new double[covarPos.length][];
 		for (int i=0; i<pooledCovar.length; i++) {
 			pooledCovar[i]=new double[covarPos[i].length];
@@ -92,6 +98,10 @@ public class LinearDiscriminantAnalysis implements ScoreCombiner {
 				pooledCovar[i][j]=covarPos[i][j]*posPrior+covarNeg[i][j]*negPrior;
 			}
 		}
+		
+		// The inverse covariance is a measure of precision, while covariance is a measure of dispersion. 
+		// Increased dispersion occurs when values are farther apart and the more they co-vary with other 
+		// variables. LDA wants to upweight variables that have low variance and do not co-vary with others. 
 		double[][] inversePooledCovar=MatrixMath.invert(pooledCovar);
 		
 		double[] coefficients=MatrixMath.multiply(inversePooledCovar, meanDiff);

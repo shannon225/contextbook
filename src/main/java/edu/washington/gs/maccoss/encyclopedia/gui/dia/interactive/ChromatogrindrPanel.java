@@ -29,9 +29,8 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Optional;
 import java.util.zip.DataFormatException;
 
@@ -62,19 +61,18 @@ import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
 import org.jfree.chart.ChartPanel;
-import org.jfree.chart.annotations.XYAnnotation;
 import org.jfree.chart.annotations.XYTextAnnotation;
 import org.jfree.chart.axis.ValueAxis;
-import org.jfree.chart.event.AnnotationChangeListener;
 import org.jfree.chart.panel.CrosshairOverlay;
 import org.jfree.chart.plot.Crosshair;
-import org.jfree.chart.plot.PlotRenderingInfo;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.ui.RectangleEdge;
 import org.jfree.ui.TextAnchor;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeptideXYPoint;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefinementData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefiner;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
@@ -89,7 +87,6 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.FragmentIonConsistencyCharter;
-import edu.washington.gs.maccoss.encyclopedia.gui.framework.SearchPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
@@ -102,11 +99,11 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.CategoricalData;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.EditableXYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.ChromatogramExtractor;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.IonType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
@@ -114,6 +111,8 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.BackgroundSubtractionFi
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
 import gnu.trove.list.array.TFloatArrayList;
+import gnu.trove.map.hash.TObjectFloatHashMap;
+import gnu.trove.procedure.TObjectFloatProcedure;
 
 /**
  * click right to approve chromatogram, click left to flag as bad
@@ -142,8 +141,10 @@ public class ChromatogrindrPanel extends JPanel {
 
 	private LibraryInterface reference=null;
 	private StripeFileInterface dia=null;
-
 	
+	private final TObjectFloatHashMap<String> pastedRTs=new TObjectFloatHashMap<String>();
+	private final TObjectFloatHashMap<String> libraryRTs=new TObjectFloatHashMap<String>();
+
 	public static void main(String[] args) {
 		File rawFile=new File("/Users/searleb/Documents/encyclopedia/small_file/bcs_2020jan16_hela_clib_3.mzML");
 		File libraryFile=new File("/Users/searleb/Documents/encyclopedia/small_file/pan_human_library.dlib");
@@ -622,6 +623,11 @@ public class ChromatogrindrPanel extends JPanel {
 
 	public void pasteTable(String clip) {
 		peptideModel.paste(clip);
+		
+		pastedRTs.clear();
+		for (InteractivePeptidePrecursor peptide : peptideModel.getAllEntries()) {
+			pastedRTs.put(peptide.getPeptideModSeq(), peptide.getRetentionTimeInSec()/60f);
+		}
 		if (peptideTable.getRowCount()>0) {
 			peptideTable.setRowSelectionInterval(0, 0);
 		}
@@ -646,6 +652,12 @@ public class ChromatogrindrPanel extends JPanel {
 					throw new EncyclopediaException("Sorry, can't load this type of library file "+ilib.getClass().getName());
 				}
 				LibraryFile library=(LibraryFile)ilib;
+				
+				libraryRTs.clear();
+				for (LibraryEntry entry : library.getAllEntries(false, new AminoAcidConstants())) {
+					libraryRTs.put(entry.getPeptideModSeq(), entry.getRetentionTimeInSec()/60f);
+				}
+				
 				return library;
 			}
 			@Override
@@ -807,7 +819,7 @@ public class ChromatogrindrPanel extends JPanel {
 	        
 			dataPanel.add(chartPanel);
 			
-			JPanel rightInfoPanel=new JPanel(new GridLayout(2, 0));
+			JPanel rightInfoPanel=new JPanel(new GridLayout(0, 1));
 			rightInfoPanel.setBackground(Color.WHITE);
 			dataPanel.add(rightInfoPanel);
 			
@@ -818,6 +830,7 @@ public class ChromatogrindrPanel extends JPanel {
 			ValueAxis axis=deltaMassPanel.getChart().getCategoryPlot().getRangeAxis();
 			axis.setRange(-fragmentTolerance.getToleranceThreshold(), fragmentTolerance.getToleranceThreshold());
 			rightInfoPanel.add(deltaMassPanel);
+			deltaMassPanel.getChart().setTitle((String)null);
 			
 			if (reference!=null) {
 				ArrayList<LibraryEntry> references=reference.getEntries(entry.getPeptideModSeq(), entry.getPrecursorCharge(), false);
@@ -828,6 +841,26 @@ public class ChromatogrindrPanel extends JPanel {
 				if (references.size()>0) {
 					LibraryEntry ref=references.get(0);
 					LibraryEntry acq=data.getEntry(ref, parameters);
+
+					if (pastedRTs.size()>0&&libraryRTs.size()>0) {
+						Collection<XYPoint> points=new ArrayList<XYPoint>();
+						pastedRTs.forEachEntry(new TObjectFloatProcedure<String>() {
+							@Override
+							public boolean execute(String a, float b) {
+								if (libraryRTs.contains(a)) {
+									float c=libraryRTs.get(a);
+									points.add(new PeptideXYPoint(c, b, false, a));
+								}
+								return true;
+							}
+						});
+						
+						XYTrace backgroundRTs=new XYTrace(points, GraphType.bigpoint, "backgroundRTs", new Color(0f, 0f, 0f, 0.2f), 2.0f);
+						XYTrace targetRT=new XYTrace(new float[] {ref.getScanStartTime()/60f}, new float[] {entry.getRetentionTimeInSec()/60f}, GraphType.bighollowpoint, "targetRTs", Color.red, 5.0f);
+						
+						ChartPanel rtPanel=Charter.getChart("Library Retention Time", "Acquired Retention Time", false, targetRT, backgroundRTs);
+						rightInfoPanel.add(rtPanel);
+					}
 	
 					LibraryEntry butterfly=FragmentIonConsistencyCharter.getButterfly(acq, ref);
 					ChartPanel chartPanelButterfly = Charter.getChart(new AnnotatedLibraryEntry(butterfly, parameters, true));
@@ -938,6 +971,8 @@ public class ChromatogrindrPanel extends JPanel {
 				double prevX=zoomPoint.getX();
 				if (!Double.isNaN(prevX)) {
 		            Rectangle2D area=chartPanel.getScreenDataArea(e.getX(), e.getY());
+		            if (area==null) return;
+		            
 		        	double x=Math.max(area.getMinX(), Math.min(e.getX(), area.getMaxX()));
 		        	
 		        	double first=Math.min(x, prevX);

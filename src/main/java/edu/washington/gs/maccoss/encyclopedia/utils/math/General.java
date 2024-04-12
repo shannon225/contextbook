@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Set;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntRange;
+import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import gnu.trove.list.array.TFloatArrayList;
 
 public class General {
@@ -500,6 +501,8 @@ public class General {
 	}
 	
 	public static float[] firstDerivative(float[] v) {
+		if (v.length==0) return new float[0];
+		
 		float[] d=new float[v.length-1];
 		for (int i=1; i<v.length; i++) {
 			d[i-1]=v[i]-v[i-1];
@@ -587,6 +590,22 @@ public class General {
 			}
 		}
 		return sum;
+	}
+
+	public static float covariance(float[] v1, float[] v2) {
+		if (v1.length==0) return 0.0f;
+		if (v1.length!=v2.length) throw new EncyclopediaException("Inconsistent array lenghs!");
+		
+		float m1=mean(v1);
+		float m2=mean(v2);
+		float sumSquares=0.0f;
+		for (int i=0; i<v1.length; i++) {
+			float diff1=v1[i]-m1;
+			float diff2=v2[i]-m2;
+			sumSquares+=diff1*diff2;
+		}
+		
+		return sumSquares/v1.length;
 	}
 
 	public static float variance(float[] v) {

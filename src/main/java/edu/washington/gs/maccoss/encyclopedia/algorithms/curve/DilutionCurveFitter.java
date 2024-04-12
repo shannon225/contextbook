@@ -713,7 +713,8 @@ public class DilutionCurveFitter {
 
 			// calculate equations
 			Pair<Float, Float> equation=LinearRegression.getRegression(linearX.toArray(), linearY.toArray());
-			equation=new Pair<Float, Float>(1f, 0f);
+			float b=General.mean(General.subtract(linearY.toArray(), linearX.toArray()));
+			equation=new Pair<Float, Float>(1f, b);
 			
 			// calculate deviation to find the best fit
 			float rsquared=0;
@@ -811,7 +812,7 @@ public class DilutionCurveFitter {
 		}
 		
 		XYTrace lodTrace=new XYTrace(new float[] {lod}, new float[] {bestFit.getUnloggedPredicted(lod)}, GraphType.bighollowpoint, "LOD="+lod, Color.gray, 10f);
-		XYTrace loqTrace=new XYTrace(new float[] {minExpected/5, maxExpectedWithMargin*adjustmentForUnknowns, Float.NaN, loq, loq}, new float[] {loq, loq, Float.NaN, minExpectedWithMargin, maxExpectedWithMargin/10}, GraphType.dashedline, "LOQ="+loq, Color.red, 2f);
+		XYTrace loqTrace=new XYTrace(new float[] {minExpected/5, maxExpectedWithMargin*adjustmentForUnknowns, Float.NaN, loq, loq}, new float[] {bestFit.getUnloggedPredicted(loq), bestFit.getUnloggedPredicted(loq), Float.NaN, minExpectedWithMargin, maxExpectedWithMargin/10}, GraphType.dashedline, "LOQ="+loq, Color.red, 2f);
 		
 		XYTrace actualTrace=new XYTrace(expectedFound.toArray(), actualFound.toArray(), GraphType.bigpoint, peptide, Color.BLACK, 10f);
 		XYTrace actualMissingTrace=new XYTrace(expectedMissing.toArray(), actualMissing.toArray(), GraphType.bighollowpoint, "Missing", Color.BLACK, 10f);
