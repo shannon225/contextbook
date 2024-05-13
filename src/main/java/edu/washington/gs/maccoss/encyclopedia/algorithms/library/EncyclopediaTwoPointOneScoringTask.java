@@ -284,18 +284,14 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 					}
 					
 					// correlation scores
-					float[] sortedCorrelations=correlations.clone();
-					Arrays.sort(sortedCorrelations);
-					General.reverse(sortedCorrelations);
-					
 					int numPeaksWithGoodCorrelation=0;
 					int numPeaksWithGreatCorrelation=0;
-					for (int j = 0; j < sortedCorrelations.length; j++) {
-						if (sortedCorrelations[j]>=TransitionRefiner.identificationCorrelationThreshold) {
+					for (float corr : correlations) {
+						if (corr>=TransitionRefiner.identificationCorrelationThreshold) {
 							numPeaksWithGoodCorrelation++;
 						}
 
-						if (sortedCorrelations[j]>=TransitionRefiner.quantitativeCorrelationThreshold) {
+						if (corr>=TransitionRefiner.quantitativeCorrelationThreshold) {
 							numPeaksWithGreatCorrelation++;
 						}
 					}
@@ -326,7 +322,7 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 					for (int j=lowerWindow; j<=upperWindow; j++) {
 						takenScans.add(j);
 					}
-					if (bestStripe==null) {
+					if (bestStripe==null || score > bestScore) {
 						bestStripe=stripe;
 						bestAuxScores=auxScoreArray;
 						bestScore=score;
