@@ -127,7 +127,7 @@ public class FishersExactTest {
 		}
 	}
 
-	public static void main(String[] args) {
+	public static void mainTest(String[] args) {
 		File f=new File("/Users/searleb/Documents/students/george_sun/local_fishers_exact.txt");
 		TableParser.parseTSV(f, new TableParserMuscle() {
 			
@@ -147,6 +147,28 @@ public class FishersExactTest {
 			}
 		});
 	}
+
+	public static void main(String[] args) {
+		File f=new File("/Users/searleb/Documents/OSU/teaching/proteomics_class/homework/final_exam_notes/fishers_exact.csv");
+		TableParser.parseCSV(f, new TableParserMuscle() {
+			
+			@Override
+			public void processRow(Map<String, String> row) {
+				String accession=row.get("Sample");
+				int x1=Integer.parseInt(row.get("x1"));
+				int x2=Integer.parseInt(row.get("x2"));
+				int n1=Integer.parseInt(row.get("n1"));
+				int n2=Integer.parseInt(row.get("n2"));
+				double pvalue=Math.min(getFishersExactPvalue(n1, n2, x1, x2), 1);
+				System.out.println(accession+"\t"+x1+"\t"+x2+"\t"+n1+"\t"+n2+"\t"+pvalue);
+			}
+			
+			@Override
+			public void cleanup() {
+			}
+		});
+	}
+	
 	public static double getFishersExactPvalue(float total1, float total2, float value1, float value2) {
 		HypergeometricDistribution hyperDist=new HypergeometricDistribution(Math.round(total1+total2), Math.round(total1), Math.round(value1+value2));
 		double pValue1=hyperDist.cumulativeProbability(Math.round(value1));
