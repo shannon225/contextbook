@@ -168,15 +168,13 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 
 			// score time points
 			float[] primary=new float[super.stripes.size()];
-			float[] secondary=new float[super.stripes.size()];
 			for (int i=0; i<super.stripes.size(); i++) {
 				FragmentScan stripe=super.stripes.get(i);
 				FloatPair scores=score(allMasses[i], allSqrtIntensities[i], predictedIntensities, correlation);
 				
 				primary[i]=scores.getOne();
-				secondary[i]=scores.getTwo();
 				
-				if (modificationSpecificIons.isPresent()) {
+				if (primary[i] > 0.0f && modificationSpecificIons.isPresent()) {
 					// if modified signal represents less than 25% of the score then don't trust it
 					Pair<double[], float[]> modSpecificResults=extract(stripe, modIons);
 					FloatPair modSpecificScores=score(modSpecificResults.x, modSpecificResults.y, modPredictedIntensities, modCorrelation);
@@ -284,18 +282,14 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 					}
 					
 					// correlation scores
-					float[] sortedCorrelations=correlations.clone();
-					Arrays.sort(sortedCorrelations);
-					General.reverse(sortedCorrelations);
-					
 					int numPeaksWithGoodCorrelation=0;
 					int numPeaksWithGreatCorrelation=0;
-					for (int j = 0; j < sortedCorrelations.length; j++) {
-						if (sortedCorrelations[j]>=TransitionRefiner.identificationCorrelationThreshold) {
+					for (float corr : correlations) {
+						if (corr>=TransitionRefiner.identificationCorrelationThreshold) {
 							numPeaksWithGoodCorrelation++;
 						}
 
-						if (sortedCorrelations[j]>=TransitionRefiner.quantitativeCorrelationThreshold) {
+						if (corr>=TransitionRefiner.quantitativeCorrelationThreshold) {
 							numPeaksWithGreatCorrelation++;
 						}
 					}
@@ -326,7 +320,7 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 					for (int j=lowerWindow; j<=upperWindow; j++) {
 						takenScans.add(j);
 					}
-					if (bestStripe==null) {
+					if (bestStripe==null || score > bestScore) {
 						bestStripe=stripe;
 						bestAuxScores=auxScoreArray;
 						bestScore=score;
@@ -424,16 +418,25 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 		if (numberOfMatchingPeaks==0||dotProduct<=0) {
 			xTandem=0.0f;
 		} else {
-			xTandem=((float)Log.protectedLog10(dotProduct))+Log.logFactorial(numberOfMatchingPeaks); // really log10(X!Tandem score)
+			// really log10(X!Tandem score)
+			// shifted +2 to capture part of the negative range while ensuring a non-negative score
+			xTandem=((float)Log.protectedLog10(dotProduct))+Log.logFactorial(numberOfMatchingPeaks)+2f;
 		}
-		
+
+		if (xTandem < 0.0f) {
+			xTandem = 0.0f;
+		}
+
+
 		float scribe;
 		if (sumOfSquaredErrors<=0.0f) {
 			scribe=0.0f;
 		} else {
 			scribe=Log.protectedLn(1.0f/sumOfSquaredErrors);
 		}
-		
+		if (scribe < 0.0f) {
+			scribe = 0.0f;
+		}
 		return new FloatPair(xTandem, scribe);
 	}
 }
