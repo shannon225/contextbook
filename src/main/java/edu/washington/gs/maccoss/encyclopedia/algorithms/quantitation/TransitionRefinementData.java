@@ -127,10 +127,14 @@ public class TransitionRefinementData implements PeptidePrecursor {
 		}
 		
 		float apexRT;
-		try {
-			apexRT=getApexRT();
-		} catch (EncyclopediaException e) {
-			apexRT=0;
+		if (!rtArray.isPresent()) {
+			apexRT=entry.getRetentionTimeInSec();
+		} else {
+			try {
+				apexRT=getApexRT();
+			} catch (EncyclopediaException e) {
+				apexRT=entry.getRetentionTimeInSec();
+			}
 		}
 		return new AnnotatedLibraryEntry(entry.getSource(), entry.getAccessions(), entry.getSpectrumIndex(), entry.getPrecursorMZ(), entry.getPrecursorCharge(), entry.getPeptideModSeq(),
 				entry.getCopies(), apexRT, entry.getScore(), mzsArray, intensArray, corrsArray, isQuantArray, ionAnnotations.toArray(new FragmentIon[ionAnnotations.size()]), ionMobility, parameters.getAAConstants());

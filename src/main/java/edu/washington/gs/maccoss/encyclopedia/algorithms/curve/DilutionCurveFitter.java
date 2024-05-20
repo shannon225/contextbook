@@ -93,7 +93,31 @@ public class DilutionCurveFitter {
 	}
 	
 	public static void main(String[] args) throws Exception {
-		final File outputDirectory=new File("/Users/searleb/Documents/cobbs/2021jan12_cobbs_ln229/figures/prms/curvefitting/");
+		final File outputDirectory=new File("/Users/searleb/Documents/students/ariana/stellar_dilution/curves/");
+		final File targetDirectory=new File(outputDirectory, "target");
+		outputDirectory.mkdirs();
+		targetDirectory.mkdirs();
+
+		File dataFile=new File("/Users/searleb/Documents/students/ariana/stellar_dilution/EncyclopdiaFoM_Input_1ngCalCurve.csv");
+		File sampleOrganizationFile=new File("/Users/searleb/Documents/students/ariana/stellar_dilution/1ngSampleList2.csv");
+		
+		Pair<ArrayList<ScoredObject<String>>, Map<String, TObjectFloatHashMap<String>>> concentrationPair=getExpectedConcentrationsFromCSV(sampleOrganizationFile);
+		final ArrayList<ScoredObject<String>> expectedConcentrations=concentrationPair.x;
+		final Map<String, TObjectFloatHashMap<String>> unknowns=concentrationPair.y;
+		final float[] expected = adjustForZeroConcentrations(expectedConcentrations);
+
+		final ArrayList<FitPeptide> fitPeptides=fitCurves(outputDirectory, dataFile, expectedConcentrations, expected, new DilutionCurveFitting8HzWideParameters("MOUSE"), true);
+		final HashMap<String, Map<String, TObjectFloatHashMap<String>>> unknownData=extractUnknowns(dataFile, unknowns, "MOUSE");
+		
+		for (FitPeptide fit : fitPeptides) {
+			Map<String, TObjectFloatHashMap<String>> data=unknownData.get(fit.peptideModSeq);
+			ChartPanel panel=graph(fit.peptideModSeq, fit.expectedRelativeIntensities, fit.actualRelativeIntensities, fit.bestFit, Optional.ofNullable(data));
+			Charter.writeAsPDF(panel.getChart(), new File(targetDirectory, fit.peptideModSeq+".pdf"), new Dimension(400, 300));
+		}
+	}
+	
+	public static void mainCobbsPaper(String[] args) throws Exception {
+		final File outputDirectory=new File("/Users/searleb/Documents/cobbs/2021jan12_cobbs_ln229/figures/prms/curvefitting_testA/");
 		final File targetDirectory=new File(outputDirectory, "target");
 		outputDirectory.mkdirs();
 		targetDirectory.mkdirs();
@@ -107,7 +131,7 @@ public class DilutionCurveFitter {
 		final Map<String, TObjectFloatHashMap<String>> unknowns=concentrationPair.y;
 		final float[] expected = adjustForZeroConcentrations(expectedConcentrations);
 
-		final ArrayList<FitPeptide> fitPeptides=fitCurves(outputDirectory, dataFile, expectedConcentrations, expected, new DilutionCurveFitting8HzWideParameters(), true);
+		final ArrayList<FitPeptide> fitPeptides=fitCurves(outputDirectory, dataFile, expectedConcentrations, expected, new DilutionCurveFitting8HzWideParameters("HCMV"), true);
 		final HashMap<String, Map<String, TObjectFloatHashMap<String>>> unknownData=extractUnknowns(dataFile, unknowns, "HCMV");
 		
 		for (FitPeptide fit : fitPeptides) {
@@ -293,6 +317,7 @@ public class DilutionCurveFitter {
 			public void processRow(Map<String, String> row) {
 				String peptide = getPeptide(row);
 				String protein = getProtein(row);
+				System.out.println(peptide+" --> "+protein+" --> "+requiredAccessionText.isTargetedProtein(protein));//+row.get(column));
 				
 				if (requiredAccessionText!=null&&!requiredAccessionText.isTargetedProtein(protein)) {
 					return;
@@ -385,14 +410,16 @@ public class DilutionCurveFitter {
 						@Override
 						public boolean execute(String column, float normalization) {
 							float concentration;
-							try {
-								concentration=Float.parseFloat(row.get(column));
-							} catch (NullPointerException npe) {
-								Logger.errorLine("Failure to parse number from ["+row.get(column)+"] for column ["+column+"]");
+							String valueString = row.get(column);
+
+							if (valueString==null) {
+								Logger.errorLine("Failure to parse number from ["+valueString+"] for column ["+column+"]");
 								concentration=0.0f;
-							} catch (NumberFormatException nfe) {
-								Logger.errorLine("Failure to parse number from ["+row.get(column)+"] for column ["+column+"]");
+							} else if (valueString.indexOf("N/A")>=0) {
+								Logger.logLine("Found N/A for column ["+column+"], setting to 0");
 								concentration=0.0f;
+							} else {
+								concentration=Float.parseFloat(valueString);
 							}
 							groupUnknowns.put(column, concentration*normalization);
 							return true;

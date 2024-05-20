@@ -1,22 +1,18 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.curve;
 
-public class DilutionCurveFitting8HzWideParameters implements AbstractDilutionCurveFittingParameters {
-	final int numberOfRTAnchors=10;
+public class TargetedAssayParameters implements AbstractDilutionCurveFittingParameters {
+	final int numberOfRTAnchors=0;
 	final int maxNumberPeptidesPerProtein=5;
-	final int targetTotalNumberOfPeptides=300; // remember to subtract off anchors (total is 160 peptides)
+	final int targetTotalNumberOfPeptides=9999; // remember to subtract off anchors (total is 160 peptides)
 	final float windowInMin=5f; // in minutes!
 	final float minCVForAnchors=0.05f;
 	final float minCVForBadAnchors=0.75f;
-	final int assayMaxDensity=20;
-	final String targetAccessionNumberKeyword;
+	final int assayMaxDensity;
+	final String targetAccessionNumberKeyword="";
 	final boolean requireAlignmentRT=true; // turn off for fitting against PRM
 	final boolean useLineNoise=false; // newer versions should set this to "true"
-	
-	public DilutionCurveFitting8HzWideParameters() {
-		this.targetAccessionNumberKeyword="HCMV";
-	}
-	public DilutionCurveFitting8HzWideParameters(String targetAccessionNumberKeyword) {
-		this.targetAccessionNumberKeyword=targetAccessionNumberKeyword;
+	public TargetedAssayParameters(int assayMaxDensity) {
+		this.assayMaxDensity=assayMaxDensity;
 	}
 
 	public float getWindowInMin() {
@@ -56,7 +52,7 @@ public class DilutionCurveFitting8HzWideParameters implements AbstractDilutionCu
 	
 	@Override
 	public boolean isTargetedProtein(String accession) {
-		return accession.indexOf(targetAccessionNumberKeyword)>=0;
+		return true;
 	}
 	
 	@Override

@@ -3,6 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.gui.dia.interactive;
 import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.FileDialog;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Frame;
@@ -31,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.zip.DataFormatException;
 
@@ -538,6 +540,15 @@ public class ChromatogrindrPanel extends JPanel {
 		});
 		buttons.add(pasteButton);
 		
+		JButton exportButton=new JButton("Export");
+		exportButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				exportLibrary();
+			}
+		});
+		buttons.add(exportButton);
+		
 		peptideTable.addKeyListener(new KeyListener() {
 			
 			@Override
@@ -690,6 +701,150 @@ public class ChromatogrindrPanel extends JPanel {
 
 	private SearchParameters getParameters() {
 		return instrumentCombo.getItemAt(instrumentCombo.getSelectedIndex()).getDefaultParameters();
+	}
+	
+	public void exportLibrary() {
+		FileDialog dialog=new FileDialog((Frame)null, "Select a new or existing library file", FileDialog.SAVE);
+		dialog.setFilenameFilter(new SimpleFilenameFilter(LibraryFile.DLIB));
+		dialog.setVisible(true);
+		File[] fs=dialog.getFiles();
+		try {
+			LibraryFile library=new LibraryFile();
+			if (fs!=null&&fs.length>0&&fs[0]!=null) {
+				File altFile=new File(fs[0].getParentFile(), fs[0].getName()+LibraryFile.DLIB);
+				if (fs[0].exists()&&fs[0].canRead()) {
+					Logger.logLine("Appending to existing file ["+fs[0].getName()+"].");
+					library.openFile(fs[0]);
+				} else if (altFile.exists()&&altFile.canRead()) {
+						Logger.logLine("Appending to existing file ["+altFile.getName()+"].");
+						library.openFile(altFile);
+						fs[0]=altFile;
+					
+				} else {
+					Logger.logLine("Creating new file ["+fs[0].getName()+"].");
+					if (!fs[0].getName().toLowerCase().endsWith(LibraryFile.DLIB)) {
+						File newFile=new File(fs[0].getAbsolutePath()+LibraryFile.DLIB);
+						fs[0]=newFile;
+					}
+					library.openFile();
+				}
+
+				ArrayList<LibraryEntry> entries=new ArrayList<LibraryEntry>(); 
+						
+				try {
+					int lastUpdate=0;
+					for (int i = 0; i < peptideModel.getRowCount(); i++) {
+						int ratio=(100*i)/peptideModel.getRowCount();
+						if (ratio>lastUpdate) {
+							Logger.logLine(ratio+"% complete");
+							lastUpdate=ratio;
+						}
+						InteractivePeptidePrecursor precursor=peptideModel.getSelectedRow(i);
+						AnnotatedLibraryEntry entry=getLibraryEntry(precursor);
+						if (entry!=null) {
+							entries.add(entry);
+						}
+						
+					}
+				} catch (SQLException | IOException e) {
+					Logger.errorException(e);
+				}
+
+				library.addEntries(entries, false);
+				library.addProteinsFromEntries(entries);
+				library.createIndices();
+
+				library.saveAsFile(fs[0]);
+				library.close();
+				
+				Logger.logLine("Finished exporting library!");
+			}
+		
+		} catch (SQLException sqle) {
+			Logger.errorLine("Found SQL error adding data to library file...");
+			Logger.errorException(sqle);
+		} catch (IOException ioe) {
+			Logger.errorLine("Found IO error adding data to library file...");
+			Logger.errorException(ioe);
+		}
+		
+	}
+	
+	public AnnotatedLibraryEntry getLibraryEntry(final InteractivePeptidePrecursor entry) throws SQLException, IOException {
+		SearchParameters parameters=getParameters();
+		FragmentationModel model=PeptideUtils.getPeptideModel(entry.getPeptideModSeq(), parameters.getAAConstants());
+		FragmentIon[] primaryIonObjects=model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge(), false);
+		
+		float rtInSec=entry.getRetentionTimeInSec();
+		float minRTInSec = rtInSec-RT_EXTRACTION_MARGIN_IN_SEC;
+		float maxRTInSec = rtInSec+RT_EXTRACTION_MARGIN_IN_SEC;
+
+		Range rtRange=entry.getRTRange();
+		if (rtRange!=null&&rtRange.getRange()>0.0f) {
+			minRTInSec=rtRange.getStart();
+			maxRTInSec=rtRange.getStop();
+		}
+		
+		// get fragment traces
+		ArrayList<FragmentScan> scans=dia.getStripes(entry.getPrecursorMZ(), minRTInSec, maxRTInSec, false);
+		if (scans.size()==0) {
+			// expand to full width
+			scans=dia.getStripes(entry.getPrecursorMZ(), rtInSec-RT_EXTRACTION_MARGIN_IN_SEC, rtInSec+RT_EXTRACTION_MARGIN_IN_SEC, false);
+		}
+		if (scans.size()==0) {
+			return null;
+		}
+		Collections.sort(scans);
+		double[][] allMasses=new double[scans.size()][];
+		float[][] allDeltaMasses=new float[scans.size()][];
+		float[][] allIntensities=new float[scans.size()][];
+		float[] retentionTimes=new float[scans.size()];
+		for (int i=0; i<scans.size(); i++) {
+			FragmentScan scan=scans.get(i);
+			Triplet<double[], float[], float[]> results=extract(scan, primaryIonObjects, parameters);
+			double[] masses=results.x;
+			float[] deltaMasses=results.y;
+			float[] intensities=results.z;
+			
+			allMasses[i]=masses;
+			allDeltaMasses[i]=deltaMasses;
+			allIntensities[i]=intensities;
+			retentionTimes[i]=scan.getScanStartTime();
+		}
+
+		int movingAverageLength=8; // expected points across the peak
+		float[][] chromatograms=General.transposeMatrix(allIntensities);
+		float[][] deltaMassByIon=General.transposeMatrix(allDeltaMasses);
+		ArrayList<float[]> chromatogramList=new ArrayList<float[]>();
+		ArrayList<FragmentIon> foundIons=new ArrayList<>();
+		ArrayList<float[]> deltaMassList=new ArrayList<float[]>();
+		for (int j = 0; j < chromatograms.length; j++) {
+			if (primaryIonObjects[j].getIndex()>2&&General.sum(chromatograms[j])>0.0f) {
+				if (sgSmoothBox.isSelected()) {
+					chromatograms[j]=SkylineSGFilter.paddedSavitzkyGolaySmooth(chromatograms[j]);
+				}
+				if (backgroundSubtractBox.isSelected()) {
+					chromatograms[j]=BackgroundSubtractionFilter.backgroundSubtractMovingMedian(chromatograms[j], movingAverageLength*10);
+				}
+				chromatogramList.add(chromatograms[j]);
+				foundIons.add(primaryIonObjects[j]);
+				deltaMassList.add(deltaMassByIon[j]);
+			}
+		}
+		primaryIonObjects=foundIons.toArray(new FragmentIon[0]);
+		
+		TransitionRefinementData data;
+		if (rtRange!=null&&rtRange.getRange()>0.0f) {
+			data=TransitionRefiner.identifyTransitionsFromRTRange(entry.getPeptideModSeq(), entry.getPrecursorCharge(), entry.getRetentionTimeInSec(), 
+					primaryIonObjects, chromatogramList, retentionTimes, rtRange, parameters);
+		} else {
+			data=TransitionRefiner.identifyTransitions(entry.getPeptideModSeq(), entry.getPrecursorCharge(), entry.getRetentionTimeInSec(), 
+					primaryIonObjects, chromatogramList, retentionTimes, false, parameters);
+		}
+		
+		AnnotatedLibraryEntry ref=FragmentationModel.generateEntry(entry.getPeptideModSeq(), dia.getFile().getName(), new HashSet<String>(), entry.getPrecursorCharge(), entry.getRetentionTimeInSec(), false, parameters);
+		AnnotatedLibraryEntry acq=data.getEntry(ref, parameters);
+		return acq;
 	}
 	
 	public void updateToSelectedPeptide() {
