@@ -180,7 +180,7 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 					FloatPair modSpecificScores=score(modSpecificResults.x, modSpecificResults.y, modPredictedIntensities, modCorrelation);
 					
 					float scoreFromModIons=modSpecificScores.getOne();
-					if (scoreFromModIons/primary[i]<0.25f) {
+					if (primary[i] > 0.0f && scoreFromModIons/primary[i]<0.25f) {
 						primary[i]=0.0f;
 					}
 				}
@@ -418,14 +418,24 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 		if (numberOfMatchingPeaks==0||dotProduct<=0) {
 			xTandem=0.0f;
 		} else {
-			xTandem=((float)Log.protectedLog10(dotProduct))+Log.logFactorial(numberOfMatchingPeaks); // really log10(X!Tandem score)
+			// really log10(X!Tandem score)
+			// shifted +2 to capture part of the negative range while ensuring a non-negative score
+			xTandem=((float)Log.protectedLog10(dotProduct))+Log.logFactorial(numberOfMatchingPeaks)+2f;
 		}
-		
+
+		if (xTandem < 0.0f) {
+			xTandem = 0.0f;
+		}
+
+
 		float scribe;
 		if (sumOfSquaredErrors<=0.0f) {
 			scribe=0.0f;
 		} else {
 			scribe=Log.protectedLn(1.0f/sumOfSquaredErrors);
+		}
+		if (scribe < 0.0f) {
+			scribe = 0.0f;
 		}
 		return new FloatPair(xTandem, scribe);
 	}

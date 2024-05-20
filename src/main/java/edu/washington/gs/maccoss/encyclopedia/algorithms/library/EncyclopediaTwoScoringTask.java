@@ -122,7 +122,6 @@ public class EncyclopediaTwoScoringTask extends AbstractLibraryScoringTask {
 			float[] predictedIsotopeDistribution=IsotopicDistributionCalculator.getIsotopeDistribution(entry.getPeptideModSeq(), parameters.getAAConstants());
 			
 			float[] primary=new float[super.stripes.size()];
-			float[] secondary=new float[super.stripes.size()];
 			double[][] allMasses=new double[super.stripes.size()][];
 			float[][] allRawIntensities=new float[super.stripes.size()][];
 			float[] retentionTimes=new float[super.stripes.size()];
@@ -135,7 +134,6 @@ public class EncyclopediaTwoScoringTask extends AbstractLibraryScoringTask {
 				float[] intensities=results.z;
 				
 				primary[i]=scores[0];//*0.075f+scores[1]*0.43f;
-				secondary[i]=scores[1];
 				allMasses[i]=masses;
 				allRawIntensities[i]=General.multiply(intensities, intensities); // undo the sqrt
 				retentionTimes[i]=super.stripes.get(i).getScanStartTime();
@@ -143,7 +141,7 @@ public class EncyclopediaTwoScoringTask extends AbstractLibraryScoringTask {
 				if (modificationSpecificIons.isPresent()) {
 					// if modified signal represents less than 25% of the score then don't trust it
 					float scoreFromModIons=eScorer.score(entry, stripe, modificationSpecificIons.get());
-					if (scoreFromModIons/primary[i]<0.25f) {
+					if (primary[i]>0.0f && scoreFromModIons/primary[i]<0.25f) {
 						primary[i]=0.0f;
 					}
 				}
@@ -242,18 +240,14 @@ public class EncyclopediaTwoScoringTask extends AbstractLibraryScoringTask {
 					}
 					
 					// correlation scores
-					float[] sortedCorrelations=correlations.clone();
-					Arrays.sort(sortedCorrelations);
-					General.reverse(sortedCorrelations);
-					
 					int numPeaksWithGoodCorrelation=0;
 					int numPeaksWithGreatCorrelation=0;
-					for (int j = 0; j < sortedCorrelations.length; j++) {
-						if (sortedCorrelations[j]>=TransitionRefiner.identificationCorrelationThreshold) {
+					for (float corr : correlations) {
+						if (corr>=TransitionRefiner.identificationCorrelationThreshold) {
 							numPeaksWithGoodCorrelation++;
 						}
 
-						if (sortedCorrelations[j]>=TransitionRefiner.quantitativeCorrelationThreshold) {
+						if (corr>=TransitionRefiner.quantitativeCorrelationThreshold) {
 							numPeaksWithGreatCorrelation++;
 						}
 					}
@@ -284,7 +278,7 @@ public class EncyclopediaTwoScoringTask extends AbstractLibraryScoringTask {
 					for (int j=lowerWindow; j<=upperWindow; j++) {
 						takenScans.add(j);
 					}
-					if (bestStripe==null) {
+					if (bestStripe==null || score > bestScore) {
 						bestStripe=stripe;
 						bestAuxScores=auxScoreArray;
 						bestScore=score;
@@ -399,16 +393,24 @@ public class EncyclopediaTwoScoringTask extends AbstractLibraryScoringTask {
 		if (numberOfMatchingPeaks==0||dotProduct<=0) {
 			xTandem=0.0f;
 		} else {
-			xTandem=((float)Log.protectedLog10(dotProduct))+Log.logFactorial(numberOfMatchingPeaks); // really log10(X!Tandem score)
+			// really log10(X!Tandem score)
+			// shifted +2 to capture part of the negative range while ensuring a non-negative score
+			xTandem=((float)Log.protectedLog10(dotProduct))+Log.logFactorial(numberOfMatchingPeaks)+2f;
 		}
-		
+
+		if (xTandem < 0.0f) {
+			xTandem = 0.0f;
+		}
+
 		float scribe;
 		if (sumOfSquaredErrors<=0.0f) {
 			scribe=0.0f;
 		} else {
 			scribe=Log.protectedLn(1.0f/sumOfSquaredErrors);
 		}
-		
+		if (scribe < 0.0f) {
+			scribe = 0.0f;
+		}
 		return new Triplet<float[], double[], float[]>(new float[] {xTandem, scribe}, 
 				actualTargetMassesRaw, actualTargetIntensitiesRaw);
 	}
