@@ -168,13 +168,11 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 
 			// score time points
 			float[] primary=new float[super.stripes.size()];
-			float[] secondary=new float[super.stripes.size()];
 			for (int i=0; i<super.stripes.size(); i++) {
 				FragmentScan stripe=super.stripes.get(i);
 				FloatPair scores=score(allMasses[i], allSqrtIntensities[i], predictedIntensities, correlation);
 				
 				primary[i]=scores.getOne();
-				secondary[i]=scores.getTwo();
 				
 				if (modificationSpecificIons.isPresent()) {
 					// if modified signal represents less than 25% of the score then don't trust it
@@ -429,7 +427,6 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 		} else {
 			scribe=Log.protectedLn(1.0f/sumOfSquaredErrors);
 		}
-		
 		return new FloatPair(xTandem, scribe);
 	}
 }
