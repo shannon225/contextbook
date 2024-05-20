@@ -432,7 +432,8 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 		if (sumOfSquaredErrors<=0.0f) {
 			scribe=0.0f;
 		} else {
-			scribe=Log.protectedLn(1.0f/sumOfSquaredErrors);
+			// shifted +1 to capture part of the negative range while ensuring a non-negative score
+			scribe=Log.protectedLn(1.0f/sumOfSquaredErrors)+1f;
 		}
 		if (scribe < 0.0f) {
 			scribe = 0.0f;
