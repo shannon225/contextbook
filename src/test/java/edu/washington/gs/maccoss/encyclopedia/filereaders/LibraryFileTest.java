@@ -2,11 +2,13 @@ package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefiner;
@@ -16,13 +18,51 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.PivotTableGenerator;
+import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
+import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
+import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 
 public class LibraryFileTest {
 	public static void main(String[] args) throws Exception {
-
+		LibraryFile elibFile = new LibraryFile();
+		//elibFile.openFile(new File("/Users/searleb/Downloads/ariana_curve/aurora_calcurve_quant.elib"));
+		elibFile.openFile(new File("/Users/searleb/Downloads/MaxIIT_HeLaQuant.elib"));
+		Connection c=elibFile.getConnection();
+		PreparedStatement s=c.prepareStatement("select QuantIonMassLength, QuantIonMassArray, QuantIonCorrelationLength, QuantIonCorrelationArray from peptidequants");
+		ResultSet rs=s.executeQuery();
+		
+		int[] counts=new int[151];
+		TFloatArrayList[] correlations=new TFloatArrayList[counts.length];
+		for (int i = 0; i < correlations.length; i++) {
+			correlations[i]=new TFloatArrayList();
+		}
+		
+		while (rs.next()) {
+			int massEncodedLength=rs.getInt(1);
+			double[] massArray=ByteConverter.toDoubleArray(CompressionUtils.decompress(rs.getBytes(2), massEncodedLength));
+			int correlationEncodedLength=rs.getInt(3);
+			float[] correlationArray=ByteConverter.toFloatArray(CompressionUtils.decompress(rs.getBytes(4), correlationEncodedLength));
+			
+			for (int i = 0; i < massArray.length; i++) {
+				int index = (int)Math.round(massArray[i]/10);
+				if (index>=counts.length) index=counts.length-1;
+				
+				correlations[index].add(correlationArray[i]);
+				if (correlationArray[i]>0.99) {
+					counts[index]++;
+				}
+			}
+		}
+		for (int i = 0; i < counts.length; i++) {
+			System.out.println((i*10)+"\t"+counts[i]+"\t"+QuickMedian.median(correlations[i].toArray()));
+		}
+		elibFile.close();
+		
+	}
+	public static void main6(String[] args) throws Exception {
 		LibraryInterface lib=BlibToLibraryConverter.getFile(new File("/Users/searleb/Documents/encyclopedia/tests/uniprot_human_25apr2019.z3_nce.dlib"));
 		final ArrayList<LibraryEntry> entries=lib.getAllEntries(false, new AminoAcidConstants());
 		

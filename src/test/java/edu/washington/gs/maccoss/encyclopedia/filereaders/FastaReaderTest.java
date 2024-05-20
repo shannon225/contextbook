@@ -49,6 +49,42 @@ import gnu.trove.set.hash.TIntHashSet;
 import junit.framework.TestCase;
 
 public class FastaReaderTest extends TestCase {
+
+
+	public static void main(String[] args) throws Exception {
+		SearchParameters params=SearchParameterParser.getDefaultParametersObject();
+		File f=new File("/Users/searleb/Downloads/thorium/mus_musculus_reviewed_uniprot.fasta");
+		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f, params);
+		String[] targets = new String[] { "P04202", "Q5SVQ0", "Q69ZK0", "P06240", "P43404", "A2AJK6", "P48453",
+				"Q06180", "P29352", "P06800", "P27870", "Q61160", "P10417", "P03958", "P17095", "O08900", "O70494",
+				"P06332", "Q08775", "P97305", "Q9JKD8", "P47930", "Q03267", "P08046", "Q8BZZ3", "Q61735", "O54824",
+				"Q9Z1X4", "P10417", "P04187", "Q00417", "Q61164", "P04202", "P67778", "Q80TQ2", "P34902", "Q08024",
+				"P63158", "Q8K1X4", "P01590", "Q99JB2", "P09055", "P70224", "Q60766", "Q8BWF2", "Q99MI6", "Q02111",
+				"P58801", "Q3TTA7", "Q8K352", "O35129", "Q80V62", "Q99JG7", "Q8CIS0", "Q8R0W6", "Q60611", "Q64131",
+				"O08573", "P42082", "Q60974", "Q03347", "P15379", "P22646", "Q8C863", "Q924T7", "Q3U2S4", "Q80TQ2",
+				"Q08024", "Q8K1X4", "Q91XB0", "P70224", "Q9QZL0", "P29352", "Q61160", "P10417", "Q60611", "O54839",
+				"Q64131", "P14429", "P06339", "P01897", "P01898", "P01901", "Q03347", "P10300", "P01731", "P15379",
+				"P24788", "P37217", "Q78PG9", "Q8CGF7", "P16297", "P01590" };
+		boolean[] found=new boolean[targets.length];
+
+		ArrayList<FastaEntryInterface> saved=new ArrayList<FastaEntryInterface>();
+		for (FastaEntryInterface entry : entries) {
+			for (int i = 0; i < targets.length; i++) {
+				if (entry.getAccession().indexOf(targets[i])>=0) {
+					saved.add(entry);
+					found[i]=true;
+					break;
+				}
+			}
+		}
+		System.out.println(saved.size());
+		for (int i = 0; i < found.length; i++) {
+			if (!found[i]) System.out.println(targets[i]);
+		}
+
+		FastaWriter.writeFasta(new File("/Users/searleb/Downloads/thorium/selected_mus_musculus_reviewed_uniprot.fasta"), saved);
+	}
+	
 	public static void mainW(String[] args) throws Exception {
 		PecanSearchParameters parameters=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(10), new MassTolerance(10), DigestionEnzyme.getEnzyme("trypsin"), false, true, false);
 		File f=new File("/Users/searleb/Documents/maccoss/barnes/chris_barnes/mus_musculus_reviewed_uniprot.fasta"); 
@@ -74,7 +110,7 @@ public class FastaReaderTest extends TestCase {
 		}
 	}
 
-	public static void main(String[] args) throws Exception {
+	public static void mainX(String[] args) throws Exception {
 		SearchParameters params=SearchParameterParser.getDefaultParametersObject();
 		File f=new File("/Users/searleb/Downloads/uniprotkb_proteome_UP000005640_2024_01_07.fasta");
 		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f, params);

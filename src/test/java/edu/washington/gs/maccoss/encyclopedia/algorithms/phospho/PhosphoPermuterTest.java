@@ -10,6 +10,19 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import junit.framework.TestCase;
 
 public class PhosphoPermuterTest extends TestCase {
+	public static void main(String[] args) {
+		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
+		ArrayList<String> permutations=PhosphoPermuter.getPermutations("S[+80]LEPSGILLK", PeptideModification.phosphorylation, parameters.getAAConstants());
+
+		for (int i=0; i<permutations.size(); i++) {
+			FragmentationModel model=PeptideUtils.getPeptideModel(permutations.get(i), parameters.getAAConstants());
+			Ion[] yions=model.getBIons(false);
+			for (int j=0; j<yions.length; j++) {
+				System.out.println(j+") "+yions[j].getMass());
+				//assertEquals(expected[i][j], yions[j].getMass(), 0.01);
+			}
+		}
+	}
 	public void testPermutations() {
 		// normal test one site
 		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();

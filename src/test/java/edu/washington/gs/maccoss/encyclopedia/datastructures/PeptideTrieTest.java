@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.StringTokenizer;
@@ -23,6 +24,66 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 import junit.framework.TestCase;
 
 public class PeptideTrieTest extends TestCase {
+	
+	public static void main(String[] args) throws Exception {
+
+		//File file=new File("/Users/searleb/Documents/encyclopedia/positional_isomers/phosphopedia_human_phosphopeptide_HCD_library.dlib");
+		File file=new File("/Users/searleb/Downloads/human/pan_human_library.dlib");
+		File fastaFile=new File("/Users/searleb/Downloads/uniprot_sprot.fasta");
+		SearchParameters params=SearchParameterParser.getDefaultParametersObject();
+		LibraryFile library=new LibraryFile();
+		library.openFile(file);
+		
+		final HashSet<String> motifs=new HashSet<String>();
+		PeptideTrie<LibraryEntry> motifTrie=new PeptideTrie<LibraryEntry>(library.getAllEntries(false, params.getAAConstants())) {
+			@Override
+			protected void processMatch(FastaEntryInterface fasta, LibraryEntry entry, int start) {
+				String peptideModSeq = entry.getPeptideModSeq();
+				peptideModSeq=peptideModSeq.replace("T[+79.966331]", "T");
+				peptideModSeq=peptideModSeq.replace("Y[+79.966331]", "Y");
+				peptideModSeq=peptideModSeq.replace("[+15.994915]", "");
+				peptideModSeq=peptideModSeq.replace("[+42.010565]", "");
+				peptideModSeq=peptideModSeq.replace("[+57.0214635]", "");
+				peptideModSeq=peptideModSeq.replace("[+57.021464]", "");
+				peptideModSeq=peptideModSeq.replace("[+58.00548]", "");
+				peptideModSeq=peptideModSeq.replace("[+99.0320285]", "");
+				peptideModSeq=peptideModSeq.replace("[+121.976896]", "");
+				
+				if (peptideModSeq.indexOf('[')>=0) {
+					System.out.println(peptideModSeq);
+					System.exit(1);
+				}
+				
+				int offset=peptideModSeq.indexOf("S");
+				if (offset<0) return;
+				
+				int begin=start-5+offset;
+				int end=start+5+offset+1;
+
+				String sequence = fasta.getSequence();
+				StringBuilder sb=new StringBuilder();
+				for (int i = begin; i < end; i++) {
+					if (i<0) {
+						sb.append(' ');
+					} else {
+						if (i>=sequence.length()) {
+							sb.append(' ');
+						} else {
+							sb.append(sequence.charAt(i));
+						}
+					}
+				}
+				motifs.add(sb.toString());
+			}
+		};
+
+		ArrayList<FastaEntryInterface> proteins=FastaReader.readFasta(fastaFile, params);
+		motifTrie.addFasta(proteins);
+		
+		for (String motif : motifs) {
+			System.out.println(motif);
+		}
+	}
 
 	public void testTrie() throws Exception {
 		InputStream is=getClass().getResourceAsStream("/truncated.msp");
@@ -50,7 +111,7 @@ public class PeptideTrieTest extends TestCase {
 		assertEquals(1, entries.get(2).getAccessions().size());
 	}
 	
-	public static void main(String[] args) throws Exception {
+	public static void main2(String[] args) throws Exception {
 		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
 		float scoreThreshold = 1.00E-08f;
 		File[] humanLibraries=new File[] {

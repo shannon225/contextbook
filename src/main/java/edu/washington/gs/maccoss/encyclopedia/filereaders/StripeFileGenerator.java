@@ -29,7 +29,7 @@ public class StripeFileGenerator {
 		return getFile(f, parameters, false);
 	}
 
-	public static StripeFileInterface getFile(File f, SearchParameters parameters, boolean isOpenFileInPlace){
+	public static StripeFileInterface getFile(File f, SearchParameters parameters, boolean isOpenFileInPlace) {
 		if (loadedFiles.containsKey(f)) {
 			StripeFileInterface maybeLoaded=loadedFiles.get(f).get();
 			if (maybeLoaded==null||!maybeLoaded.isOpen()) {
