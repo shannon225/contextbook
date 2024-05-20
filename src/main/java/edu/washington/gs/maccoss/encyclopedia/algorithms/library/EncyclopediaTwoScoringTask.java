@@ -138,10 +138,10 @@ public class EncyclopediaTwoScoringTask extends AbstractLibraryScoringTask {
 				allRawIntensities[i]=General.multiply(intensities, intensities); // undo the sqrt
 				retentionTimes[i]=super.stripes.get(i).getScanStartTime();
 				
-				if (modificationSpecificIons.isPresent()) {
+				if (primary[i]>0.0f && modificationSpecificIons.isPresent()) {
 					// if modified signal represents less than 25% of the score then don't trust it
 					float scoreFromModIons=eScorer.score(entry, stripe, modificationSpecificIons.get());
-					if (primary[i]>0.0f && scoreFromModIons/primary[i]<0.25f) {
+					if (scoreFromModIons/primary[i]<0.25f) {
 						primary[i]=0.0f;
 					}
 				}

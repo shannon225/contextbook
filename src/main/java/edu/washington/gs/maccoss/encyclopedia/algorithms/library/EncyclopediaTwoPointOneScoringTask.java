@@ -174,13 +174,13 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 				
 				primary[i]=scores.getOne();
 				
-				if (modificationSpecificIons.isPresent()) {
+				if (primary[i] > 0.0f && modificationSpecificIons.isPresent()) {
 					// if modified signal represents less than 25% of the score then don't trust it
 					Pair<double[], float[]> modSpecificResults=extract(stripe, modIons);
 					FloatPair modSpecificScores=score(modSpecificResults.x, modSpecificResults.y, modPredictedIntensities, modCorrelation);
 					
 					float scoreFromModIons=modSpecificScores.getOne();
-					if (primary[i] > 0.0f && scoreFromModIons/primary[i]<0.25f) {
+					if (scoreFromModIons/primary[i]<0.25f) {
 						primary[i]=0.0f;
 					}
 				}
