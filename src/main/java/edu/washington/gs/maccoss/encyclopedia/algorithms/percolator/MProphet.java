@@ -86,13 +86,13 @@ public class MProphet implements Runnable {
 //		}
 //		System.out.println("c:\t"+lda.getConstant());
 
-		ArrayList<ScoredObject<MProphetData>> scoredDataset=new ArrayList<>();
+		ArrayList<ScoredObject<MProphetDataset.MProphetData>> scoredDataset=new ArrayList<>();
 		TFloatArrayList targetScores=new TFloatArrayList();
 		TFloatArrayList decoyScores=new TFloatArrayList();
-		for (MProphetData data : dataset.allData()) {
-			float score=lda.getScore(data.data);
-			scoredDataset.add(new ScoredObject<MProphet.MProphetData>(score, data));
-			if (data.isDecoy) {
+		for (MProphetDataset.MProphetData data : dataset.allData()) {
+			float score=lda.getScore(data.getData());
+			scoredDataset.add(new ScoredObject<MProphetDataset.MProphetData>(score, data));
+			if (data.isDecoy()) {
 				decoyScores.add(score);
 			} else {
 				targetScores.add(score);
@@ -145,9 +145,9 @@ public class MProphet implements Runnable {
 		float targetCount=0f;
 		float decoyCount=0f;
 		ArrayList<XYPoint> fdrCalc=new ArrayList<XYPoint>();
-		for (ScoredObject<MProphetData> scoredData : scoredDataset) {
+		for (ScoredObject<MProphetDataset.MProphetData> scoredData : scoredDataset) {
 			float score=scoredData.getScore();
-			boolean isDecoy=scoredData.y.isDecoy;
+			boolean isDecoy=scoredData.y.isDecoy();
 			
 			if (isDecoy) {
 				decoyCount+=pi0Prob;
@@ -177,23 +177,23 @@ public class MProphet implements Runnable {
 			targetWriter.println("PSMId\tscore\tq-value\tposterior_error_prob\tpeptide\tproteinIds");
 			decoyWriter.println("PSMId\tscore\tq-value\tposterior_error_prob\tpeptide\tproteinIds");
 			
-			for (ScoredObject<MProphetData> scoredData : scoredDataset) {
+			for (ScoredObject<MProphetDataset.MProphetData> scoredData : scoredDataset) {
 				float score=scoredData.getScore();
 				
 				float qValue=qValueFunc.getYValue(score);
 				float posteriorErrorProb=1.0f-pepValueFunction.getYValue(score);
-				if (qValue<=peptideFDRThreshold&&!scoredData.y.isDecoy) {
+				if (qValue<=peptideFDRThreshold&&!scoredData.y.isDecoy()) {
 					if (score<minScore) {
 						minScore=score;
 					}
-					PercolatorPeptide pep=new PercolatorPeptide(scoredData.y.id, scoredData.y.protein, qValue, posteriorErrorProb, aaConstants);
+					PercolatorPeptide pep=new PercolatorPeptide(scoredData.y.getId(), scoredData.y.getProtein(), qValue, posteriorErrorProb, aaConstants);
 					detectedPeptides.add(pep);
 				}
 				
-				if (scoredData.y.isDecoy) {
-					decoyWriter.println(scoredData.y.id+"\t"+score+"\t"+qValue+"\t"+posteriorErrorProb+"\t"+"-."+scoredData.y.sequence+".-"+"\t"+scoredData.y.protein);
+				if (scoredData.y.isDecoy()) {
+					decoyWriter.println(scoredData.y.getId()+"\t"+score+"\t"+qValue+"\t"+posteriorErrorProb+"\t"+"-."+scoredData.y.getSequence()+".-"+"\t"+scoredData.y.getProtein());
 				} else {
-					targetWriter.println(scoredData.y.id+"\t"+score+"\t"+qValue+"\t"+posteriorErrorProb+"\t"+"-."+scoredData.y.sequence+".-"+"\t"+scoredData.y.protein);
+					targetWriter.println(scoredData.y.getId()+"\t"+score+"\t"+qValue+"\t"+posteriorErrorProb+"\t"+"-."+scoredData.y.getSequence()+".-"+"\t"+scoredData.y.getProtein());
 				}
 			}
 			targetWriter.println("pi_0="+pi0Prob);
@@ -350,7 +350,7 @@ public class MProphet implements Runnable {
 			final boolean[] isFeatureFinal=isFeature;
 			final String[] columnNamesFinal=columnNames;
 			
-			ArrayList<MProphetData> peptideData=new ArrayList<>();
+			ArrayList<MProphetDataset.MProphetData> peptideData=new ArrayList<>();
 			LineParserMuscle muscle = new LineParserMuscle() {
 				boolean isFirst=true;
 				
@@ -388,7 +388,7 @@ public class MProphet implements Runnable {
 							}
 						}
 					}
-					peptideData.add(new MProphetData(values[idIndexFinal], values[sequenceIndexFinal], values[proteinIndexFinal], features.toArray(), isDecoy));
+					peptideData.add(new MProphetDataset.MProphetData(values[idIndexFinal], values[sequenceIndexFinal], values[proteinIndexFinal], features.toArray(), isDecoy));
 					
 				}
 				
@@ -419,80 +419,5 @@ public class MProphet implements Runnable {
 	
 	public Pair<ArrayList<PercolatorPeptide>, Float> getPeptides() {
 		return result;
-	}
-	
-	protected class MProphetDataset {
-		private final ArrayList<String> featureNames;
-		private final ArrayList<MProphetData> targetPeptideData;
-		private final ArrayList<MProphetData> decoyPeptideData;
-		public MProphetDataset(ArrayList<String> featureNames, ArrayList<MProphetData> peptideData) {
-			this.featureNames = featureNames;
-			targetPeptideData=new ArrayList<MProphet.MProphetData>();
-			decoyPeptideData=new ArrayList<MProphet.MProphetData>();
-			for (MProphetData mProphetData : peptideData) {
-				if (mProphetData.isDecoy) {
-					decoyPeptideData.add(mProphetData);
-				} else {
-					targetPeptideData.add(mProphetData);
-				}
-			}
-		}
-		
-		public ArrayList<MProphetData> allData() {
-			ArrayList<MProphetData> dataset=new ArrayList<>();
-			dataset.addAll(targetPeptideData);
-			dataset.addAll(decoyPeptideData);
-			return dataset;
-		}
-		
-		public ArrayList<float[]> getTargetData() {
-			return getDataset(targetPeptideData);
-		}
-		
-		public ArrayList<float[]> getDecoyData() {
-			return getDataset(decoyPeptideData);
-		}
-		
-		private ArrayList<float[]> getDataset(ArrayList<MProphetData> dataset) {
-			ArrayList<float[]> data=new ArrayList<float[]>();
-			for (MProphetData mProphetData : dataset) {
-				data.add(mProphetData.data);
-			}
-			return data;
-		}
-		
-		public ArrayList<MProphetData> getTargetPeptides() {
-			return targetPeptideData;
-		}
-	}
-	
-	protected class MProphetData implements Comparable<MProphetData> {
-		private final String id;
-		private final String sequence;
-		private final String protein;
-		private final float[] data;
-		private final boolean isDecoy;
-		
-		public MProphetData(String id, String sequence, String protein, float[] data, boolean isDecoy) {
-			this.id = id;
-			this.sequence = sequence;
-			this.protein = protein;
-			this.data = data;
-			this.isDecoy=isDecoy;
-		}
-		
-		@Override
-		public int compareTo(MProphetData o) {
-			return id.compareTo(o.id);
-		}
-		@Override
-		public int hashCode() {
-			return id.hashCode();
-		}
-		@Override
-		public boolean equals(Object obj) {
-			if (obj instanceof MProphetData) return compareTo((MProphetData)obj)==0;
-			return false;
-		}
 	}
 }
