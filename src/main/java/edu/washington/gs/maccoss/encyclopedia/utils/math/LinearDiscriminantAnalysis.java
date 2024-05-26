@@ -2,6 +2,9 @@ package edu.washington.gs.maccoss.encyclopedia.utils.math;
 
 import java.util.ArrayList;
 
+import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+
 public class LinearDiscriminantAnalysis implements ScoreCombiner {
 	private final double[] coefficients;
 	private final double constant;
@@ -77,6 +80,7 @@ public class LinearDiscriminantAnalysis implements ScoreCombiner {
 	}
 
 	public static LinearDiscriminantAnalysis buildModel(double[][] positiveData, double[][] negativeData) {
+		try {
 		double posPrior=positiveData.length/(float)(positiveData.length+negativeData.length);
 		double negPrior=negativeData.length/(float)(positiveData.length+negativeData.length);
 
@@ -87,6 +91,7 @@ public class LinearDiscriminantAnalysis implements ScoreCombiner {
 		}
 		double[][] posData=selectUsedFeatures(positiveData, useFeature);
 		double[][] negData=selectUsedFeatures(negativeData, useFeature);
+		featureCount=Math.min(posData[0].length, negData[0].length);
 		
 		double[] meanAll=new double[featureCount];
 		double[] meanPos=new double[featureCount];
@@ -140,8 +145,24 @@ public class LinearDiscriminantAnalysis implements ScoreCombiner {
 				index++;
 			}
 		}
-
 		return new LinearDiscriminantAnalysis(allCoefficients, constant);
+		} catch (ArrayIndexOutOfBoundsException aiobe) {
+			Logger.errorLine("LDA indexing error. Starting data was pos: "+positiveData.length+" neg: "+negativeData.length);
+			for (int i = 1; i < negativeData.length; i++) {
+				if (negativeData[i].length!=negativeData[i-1].length) {
+					Logger.errorLine("Inconsistent negative record length: "+negativeData[i].length+" != "+negativeData[i-1].length);
+				}
+			}
+			Logger.errorLine("Reference negative record length: "+negativeData[0].length);
+			for (int i = 1; i < positiveData.length; i++) {
+				if (positiveData[i].length!=positiveData[i-1].length) {
+					Logger.errorLine("Inconsistent positive record length: "+positiveData[i].length+" != "+positiveData[i-1].length);
+				}
+			}
+			Logger.errorLine("Reference positive record length: "+positiveData[0].length);
+			throw new EncyclopediaException("Error calculating LDA", aiobe);
+		}
+
 	}
 
 	private static double[][] selectUsedFeatures(double[][] data, boolean[] useFeature) {

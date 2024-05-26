@@ -346,7 +346,10 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 							int[] scoreIndexConvertingArray=((EncyclopediaTwoLDAScorer) scorer).getScoreIndexConvertingArray();
 							float[] ldaFeatures=new float[scoreIndexConvertingArray.length];
 							for (int j = 0; j < ldaFeatures.length; j++) {
-								ldaFeatures[i]=auxScoreArray[scoreIndexConvertingArray[j]];
+								if (scoreIndexConvertingArray[j]>=0) {
+									// zero out features we can't carry forward
+									ldaFeatures[j]=auxScoreArray[scoreIndexConvertingArray[j]];
+								}
 							}
 							score=optScorer.get().getX().getLDA().getScore(ldaFeatures);
 						}

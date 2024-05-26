@@ -23,6 +23,7 @@ import javax.swing.SpinnerNumberModel;
 
 import edu.washington.gs.maccoss.encyclopedia.ProgramType;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaScoringFactory;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaTwoAlignmentLibraryFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaTwoJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
@@ -113,7 +114,7 @@ public class EncyclopediaTwoParametersPanel extends JPanel implements Parameters
 		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
 		options.add(new LabeledComponent("<p style=\"font-size:12px; font-family: Helvetica, sans-serif\"><b>Parameters", new JLabel()));
 
-		prealignmentLibraryFileChooser=new FileChooserPanel(null, "Prealignment Library", new SimpleFilenameFilter(LibraryFile.DLIB, LibraryFile.ELIB), true);
+		prealignmentLibraryFileChooser=new FileChooserPanel(null, "Prealignment Library", new SimpleFilenameFilter(LibraryFile.DLIB, LibraryFile.ELIB), false);
 		options.add(prealignmentLibraryFileChooser);
 		
 		libraryFileChooser=new FileChooserPanel(null, "Library", new SimpleFilenameFilter(LibraryFile.DLIB, LibraryFile.ELIB), true);
@@ -172,9 +173,6 @@ public class EncyclopediaTwoParametersPanel extends JPanel implements Parameters
 	 */
 	@Override
 	public Optional<String> canLoadData() {
-		if (prealignmentLibraryFileChooser.getFile()==null) {
-			return Optional.of("Please load a prealignment library file first!");	
-		}
 		if (libraryFileChooser.getFile()==null) {
 			return Optional.of("Please load a library file first!");	
 		}
@@ -193,7 +191,15 @@ public class EncyclopediaTwoParametersPanel extends JPanel implements Parameters
 		File prealignmentLibraryFile=prealignmentLibraryFileChooser.getFile();
 		File libraryFile=libraryFileChooser.getFile();
 		File fastaFile=getBackgroundFastaFile();
-		if (prealignmentLibraryFile==null) return;
+		if (prealignmentLibraryFile==null) {
+			Optional<File> optFile=EncyclopediaTwoAlignmentLibraryFactory.getPreAlignmentFile(searchPanel.getEnzyme());
+			if (optFile.isEmpty()) {
+				Logger.errorLine("Sorry, no pre-alignment library for that enzyme. You must select a library or change enzyme!");
+				return;
+			}
+			prealignmentLibraryFile=optFile.get();
+			Logger.logLine("Using prealignment library: "+prealignmentLibraryFile.getName());
+		}
 		if (libraryFile==null) return;
 		SearchJob job=getJob(diaFile, fastaFile, prealignmentLibraryFile, libraryFile, parameters);
 

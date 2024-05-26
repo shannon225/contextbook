@@ -31,20 +31,26 @@ public final class DigestionEnzyme {
 	private final TCharHashSet nterm;
 	private final TCharHashSet cterm;
 	
+	private static final String[] enzymeNames=new String[] {
+			"Trypsin",
+			"Trypsin/p",
+			"Lys-C",
+			"Lys-N",
+			"Arg-C",
+			"Glu-C",
+			"Chymotrypsin",
+			"Pepsin A",
+			"Elastase",
+			"Thermolysin",
+			"No Enzyme",
+			"Nonspecific"
+	};
+	
 	public static List<DigestionEnzyme> getAvailableEnzymes() {
 		List<DigestionEnzyme> enzymes=new ArrayList<DigestionEnzyme>();
-		enzymes.add(getEnzyme("Trypsin"));
-		enzymes.add(getEnzyme("Trypsin/p"));
-		enzymes.add(getEnzyme("Lys-C"));
-		enzymes.add(getEnzyme("Lys-N"));
-		enzymes.add(getEnzyme("Arg-C"));
-		enzymes.add(getEnzyme("Glu-C"));
-		enzymes.add(getEnzyme("Chymotrypsin"));
-		enzymes.add(getEnzyme("Pepsin A"));
-		enzymes.add(getEnzyme("Elastase"));
-		enzymes.add(getEnzyme("Thermolysin"));
-		enzymes.add(getEnzyme("No Enzyme"));
-		enzymes.add(getEnzyme("Nonspecific"));
+		for (String name : enzymeNames) {
+			enzymes.add(getEnzyme(name));
+		}
 		return enzymes;
 	}
 	
