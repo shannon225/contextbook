@@ -3,6 +3,13 @@ package edu.washington.gs.maccoss.encyclopedia.utils;
 import java.util.Arrays;
 
 public class StringUtils {
+	public static boolean contains(String[] array, String target) {
+		for (int i = 0; i < array.length; i++) {
+			if (array[i].equals(target)) return true;
+		}
+		return false;
+	}
+	
 	public static String getCommonName(String[] names, String insert) {
 		if (insert==null) insert="";
 		if (names==null||names.length==0) return insert;

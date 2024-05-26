@@ -76,6 +76,10 @@ public class InteractivePeptidePrecursor extends SimplePeptidePrecursor implemen
 		newLibrary.createIndices();
 		newLibrary.saveAsFile(newLibraryFile);
 	}
+	
+	public InteractivePeptidePrecursor(LibraryEntry entry) {
+		this(entry.getPeptideModSeq(), entry.getPrecursorCharge(), entry.getRetentionTimeInSec());
+	}
 
 	public InteractivePeptidePrecursor(String peptideModSeq, byte precursorCharge, float rtInSecs) {
 		this(peptideModSeq, precursorCharge, rtInSecs, (byte)0);

@@ -1,19 +1,34 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.percolator;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Optional;
+
+import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.BenjaminiHochberg;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.LinearDiscriminantAnalysis;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.LocalFDR;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.Gaussian;
+import gnu.trove.list.array.TDoubleArrayList;
+import gnu.trove.list.array.TFloatArrayList;
 
 
 public class MProphetDataset {
-
+	private final int startingScoreIndex;
 	private final ArrayList<String> featureNames;
 	private final ArrayList<MProphetData> targetPeptideData;
 	private final ArrayList<MProphetData> decoyPeptideData;
-	public MProphetDataset(ArrayList<String> featureNames, ArrayList<MProphetData> peptideData) {
+	
+	public MProphetDataset(ArrayList<String> featureNames, int startingScoreIndex, ArrayList<MProphetData> peptideData) {
 		this.featureNames = featureNames;
+		this.startingScoreIndex=startingScoreIndex;
 		targetPeptideData=new ArrayList<MProphetData>();
 		decoyPeptideData=new ArrayList<MProphetData>();
 		for (MProphetData mProphetData : peptideData) {
-			if (mProphetData.isDecoy) {
+			if (mProphetData.isDecoy()) {
 				decoyPeptideData.add(mProphetData);
 			} else {
 				targetPeptideData.add(mProphetData);
@@ -21,6 +36,118 @@ public class MProphetDataset {
 		}
 	}
 	
+	private MProphetDataset(ArrayList<String> featureNames, int startingScoreIndex, ArrayList<MProphetData> targetPeptideData,
+			ArrayList<MProphetData> decoyPeptideData) {
+		this.featureNames = featureNames;
+		this.startingScoreIndex=startingScoreIndex;
+		this.targetPeptideData = targetPeptideData;
+		this.decoyPeptideData = decoyPeptideData;
+	}
+
+	public static MProphetDataset[] splitKFold(MProphetDataset dataset, int k, int randomSeed) {
+		ArrayList<MProphetData>[] targetSplitData=splitKFold(dataset.targetPeptideData, k, randomSeed);
+		ArrayList<MProphetData>[] decoySplitData=splitKFold(dataset.decoyPeptideData, k, RandomGenerator.randomIntAlt(randomSeed));
+		
+		MProphetDataset[] splitDatasets=new MProphetDataset[k];
+		for (int i = 0; i < splitDatasets.length; i++) {
+			splitDatasets[i]=new MProphetDataset(dataset.featureNames, dataset.startingScoreIndex, targetSplitData[i], decoySplitData[i]);
+		}
+		return splitDatasets;
+	}
+	
+	private static ArrayList<MProphetData>[] splitKFold(ArrayList<MProphetData> dataset, int k, int randomSeed) {
+		ArrayList<ScoredObject<MProphetData>> targetDataRandomized=new ArrayList<ScoredObject<MProphetData>>();
+		for (MProphetData data : dataset) {
+			randomSeed=RandomGenerator.randomInt(randomSeed);
+			float random=RandomGenerator.floatFromRandomInt(randomSeed);
+			targetDataRandomized.add(new ScoredObject<MProphetData>(random, data));
+		}
+		Collections.sort(targetDataRandomized);
+
+		@SuppressWarnings("unchecked")
+		ArrayList<MProphetData>[] splitData=new ArrayList[k];
+		for (int i = 0; i < splitData.length; i++) {
+			splitData[i]=new ArrayList<MProphetData>();
+		}
+		int currentK=0;
+		for (ScoredObject<MProphetData> scoredObject : targetDataRandomized) {
+			splitData[currentK].add(scoredObject.y);
+			currentK = (currentK + 1) % k;
+			
+		}
+		return splitData;
+	}
+	
+	public static MProphetDataset combineFolds(MProphetDataset[] folds) {
+		ArrayList<MProphetData> targets=new ArrayList<MProphetData>();
+		ArrayList<MProphetData> decoys=new ArrayList<MProphetData>();
+		
+		for (int i = 0; i < folds.length; i++) {
+			targets.addAll(folds[i].targetPeptideData);
+			targets.addAll(folds[i].decoyPeptideData);
+		}
+		return new MProphetDataset(folds[0].featureNames, folds[0].startingScoreIndex, targets, decoys);
+	}
+
+	public Pair<ArrayList<ScoredMProphetData>, Float> getPassingTargets(Optional<LinearDiscriminantAnalysis> optionalLDA, float targetFDR) {
+		return getPassingTargets(optionalLDA, targetFDR, false);
+	}
+	public Pair<ArrayList<ScoredMProphetData>, Float> getPassingTargets(Optional<LinearDiscriminantAnalysis> optionalLDA, float targetFDR, boolean getDecoysInstead) {
+		Gaussian nullDistribution = getDecoyDistribution(optionalLDA);
+
+		TFloatArrayList targetScores=new TFloatArrayList();
+		TDoubleArrayList targetPValues=new TDoubleArrayList();
+		
+		ArrayList<MProphetData> dataset=targetPeptideData;
+		if (getDecoysInstead) {
+			dataset=decoyPeptideData;
+		}
+		
+		for (MProphetData mProphetData : dataset) {
+			float score;
+			if (optionalLDA.isPresent()) {
+				score=optionalLDA.get().getScore(mProphetData.getData());
+			} else {
+				score=mProphetData.getData()[startingScoreIndex];
+			}
+			targetScores.add(score);
+			double pvalue=nullDistribution.getComplementaryCDF(score);
+			targetPValues.add(pvalue);
+		}
+		
+		double[] pValueArray = targetPValues.toArray();
+		double pi0=LocalFDR.estimatePi0(pValueArray);
+		double[] targetFDRValues=BenjaminiHochberg.calculateAdjustedPValues(pValueArray);
+		double[] targetLFDRValues=LocalFDR.estimateLocalFDR(pValueArray);
+		
+		ArrayList<ScoredMProphetData> returnedData=new ArrayList<ScoredMProphetData>();
+		for (int i = 0; i < targetFDRValues.length; i++) {
+			if (targetFDRValues[i]<targetFDR) {
+				ScoredMProphetData data=new ScoredMProphetData(dataset.get(i), 
+						targetScores.get(i), pValueArray[i], targetLFDRValues[i], targetFDRValues[i]);
+				returnedData.add(data);
+			}			
+		}
+		return new Pair<ArrayList<ScoredMProphetData>, Float>(returnedData, (float)pi0);
+	}
+
+	private Gaussian getDecoyDistribution(Optional<LinearDiscriminantAnalysis> optionalLDA) {
+		TFloatArrayList decoyScores=new TFloatArrayList();
+		for (MProphetData mProphetData : decoyPeptideData) {
+			float score;
+			if (optionalLDA.isPresent()) {
+				score=optionalLDA.get().getScore(mProphetData.getData());
+			} else {
+				score=mProphetData.getData()[startingScoreIndex];
+			}
+			decoyScores.add(score);
+		}
+		
+		float[] nullScoreArray=decoyScores.toArray();
+		
+		Gaussian nullDistribution=new Gaussian(General.mean(nullScoreArray), General.stdev(nullScoreArray), 1.0f);
+		return nullDistribution;
+	}
 	
 	public ArrayList<MProphetData> allData() {
 		ArrayList<MProphetData> dataset=new ArrayList<>();
@@ -30,68 +157,30 @@ public class MProphetDataset {
 	}
 	
 	public ArrayList<float[]> getTargetData() {
-		return getDataset(targetPeptideData);
+		return getData(targetPeptideData);
 	}
 	
 	public ArrayList<float[]> getDecoyData() {
-		return getDataset(decoyPeptideData);
+		return getData(decoyPeptideData);
+	}
+	public ArrayList<String> getFeatureNames() {
+		return featureNames;
 	}
 	
-	private ArrayList<float[]> getDataset(ArrayList<MProphetData> dataset) {
+	public static ArrayList<float[]> getData(ArrayList<MProphetData> dataset) {
 		ArrayList<float[]> data=new ArrayList<float[]>();
 		for (MProphetData mProphetData : dataset) {
-			data.add(mProphetData.data);
+			data.add(mProphetData.getData());
 		}
 		return data;
 	}
 	
-	public ArrayList<MProphetData> getTargetPeptides() {
-		return targetPeptideData;
+	public static ArrayList<float[]> getScoredData(ArrayList<ScoredMProphetData> dataset) {
+		ArrayList<float[]> data=new ArrayList<float[]>();
+		for (ScoredMProphetData mProphetData : dataset) {
+			data.add(mProphetData.getData().getData());
+		}
+		return data;
 	}
 	
-	static public class MProphetData implements Comparable<MProphetData> {
-		private final String id;
-		private final String sequence;
-		private final String protein;
-		private final float[] data;
-		private final boolean isDecoy;
-		
-		public MProphetData(String id, String sequence, String protein, float[] data, boolean isDecoy) {
-			this.id = id;
-			this.sequence = sequence;
-			this.protein = protein;
-			this.data = data;
-			this.isDecoy=isDecoy;
-		}
-		
-		@Override
-		public int compareTo(MProphetData o) {
-			return id.compareTo(o.id);
-		}
-		@Override
-		public int hashCode() {
-			return id.hashCode();
-		}
-		@Override
-		public boolean equals(Object obj) {
-			if (obj instanceof MProphetData) return compareTo((MProphetData)obj)==0;
-			return false;
-		}
-		
-		public float[] getData() {
-			return data;
-		}
-		public String getId() {
-			return id;
-		}
-		public String getProtein() {
-			return protein;
-		}
-		public String getSequence() {
-			return sequence;
-		}
-		public boolean isDecoy() {
-			return isDecoy;
-		}
-	}
 }

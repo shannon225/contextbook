@@ -55,7 +55,7 @@ public class TableConcatenatorTest extends TestCase {
 		
 		TableConcatenator.concatenatePeptideCentricTables(list, output, "primary");
 		
-		assertEquals(110924, output.length());
+		assertEquals(111049, output.length());
 		assertEquals(302, Files.lines(output.toPath()).count());
 	}
 

@@ -6,6 +6,7 @@ import java.util.StringTokenizer;
 
 import javax.swing.table.AbstractTableModel;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
@@ -49,6 +50,14 @@ public class PeptidePrecursorTableModel extends AbstractTableModel {
 		allEntries.clear();
 		allEntries.addAll(entries);
 		
+		fireTableDataChanged();
+	}
+	
+	public void paste(ArrayList<LibraryEntry> entries) {
+		allEntries.clear();
+		for (LibraryEntry entry : entries) {
+			allEntries.add(new InteractivePeptidePrecursor(entry));
+		}
 		fireTableDataChanged();
 	}
 	

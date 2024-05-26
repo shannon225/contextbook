@@ -2,6 +2,9 @@ package edu.washington.gs.maccoss.encyclopedia.utils.math.distributions;
 
 import java.util.ArrayList;
 
+import org.apache.commons.math3.analysis.interpolation.SplineInterpolator;
+import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
+
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.WeightedValue;
@@ -17,13 +20,22 @@ public class KDE implements Distribution {
 	private final double prior;
 	private final double mean;
 	private final double stdev;
+	private final PolynomialSplineFunction spline;
 	
 	public KDE(double[] values, double prior) {
-		this(getUnitWeightedValues(values), prior);
+		this(values, prior, 100);
 	}
 	
 	public KDE(float[] values, double prior) {
-		this(getUnitWeightedValues(General.toDoubleArray(values)), prior);
+		this(values, prior, 100);
+	}
+	
+	public KDE(double[] values, double prior, int numberOfBins) {
+		this(getUnitWeightedValues(values), prior, numberOfBins);
+	}
+	
+	public KDE(float[] values, double prior, int numberOfBins) {
+		this(getUnitWeightedValues(General.toDoubleArray(values)), prior, numberOfBins);
 	}
 	
 	private static ArrayList<WeightedValue> getUnitWeightedValues(double[] values) {
@@ -33,10 +45,13 @@ public class KDE implements Distribution {
 		}
 		return list;
 	}
-
 	public KDE(ArrayList<WeightedValue> values, double prior) {
+		this(values, prior, 100);
+	}
+
+	public KDE(ArrayList<WeightedValue> values, double prior, int numberOfBins) {
 		this.prior=prior;
-		this.numberOfBins=20;
+		this.numberOfBins=numberOfBins;
 		stdev=WeightedValue.stdev(values);
 		mean=WeightedValue.mean(values);
 		// Silverman's (1986) rule of thumb (wikipedia)
@@ -83,6 +98,12 @@ public class KDE implements Distribution {
 		}
 		sumHistogram=General.sum(histogram);
 		sumPriors=total;
+
+		if (data.size()>10) {
+			spline=new SplineInterpolator().interpolate(binValues, histogram);
+		} else {
+			spline=null;
+		}
 	}
 	
 	@Override
@@ -129,20 +150,28 @@ public class KDE implements Distribution {
 	public double getPDF(double value) {
 		if (sumPriors==0.0f) return 0.0; // no probability
 
-		double sum=0.0;
-		for (Distribution dist : data) {
-			double localMin=(double)(dist.getMean()-2.0f*dist.getStdev());
-			double localMax=(double)(dist.getMean()+2.0f*dist.getStdev());
-			if (value<localMin||value>localMax) {
-				continue;
+		if (spline!=null) {
+			if (spline.isValidPoint(value)) {
+				return spline.value(value)/sumPriors;
+			} else {
+				return 0.0;
 			}
+		} else {
+			double sum=0.0;
+			for (Distribution dist : data) {
+				double localMin=(double)(dist.getMean()-2.0f*dist.getStdev());
+				double localMax=(double)(dist.getMean()+2.0f*dist.getStdev());
+				if (value<localMin||value>localMax) {
+					continue;
+				}
 
-			double probability=(double)dist.getProbability(value);
-			if (!Double.isNaN(probability)&&!Double.isInfinite(probability)) {
-				sum+=probability;
+				double probability=(double)dist.getProbability(value);
+				if (!Double.isNaN(probability)&&!Double.isInfinite(probability)) {
+					sum+=probability;
+				}
 			}
+			return sum/sumPriors;
 		}
-		return sum/sumPriors;
 	}
 
 	@Override

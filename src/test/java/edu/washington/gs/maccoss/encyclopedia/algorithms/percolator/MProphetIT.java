@@ -25,7 +25,7 @@ import gnu.trove.map.hash.TCharDoubleHashMap;
 public class MProphetIT {
 	public static void main(String[] args) throws Exception {
 		//File featureFile=new File("/Volumes/MacOnlySSD/day8/2022_12_05_ID5_day2_tcells_16mzst_DIA_wtrap_50cm_01.mzML.features.txt");
-		File featureFile=new File("/Users/searleb/Documents/teaching/encyclopedia/test/23aug2017_hela_serum_timecourse_wide_1a.dia.features.txt");
+		File featureFile=new File("/Users/searleb/Documents/encyclopedia/small_file/bcs_2020jan16_600to603_hela_clib.dia.features.txt");
 		File fastaFile=new File(featureFile.getParent(), "uniprot-9606.fasta");
 		processMProphet(featureFile, fastaFile);
 	}
@@ -56,21 +56,21 @@ public class MProphetIT {
 		final AminoAcidConstants aaConstants = new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
 		final float threshold = 0.01f;
 		
-		Pair<ArrayList<PercolatorPeptide>, Float> origpair=MProphet.executeMProphetTSV(percolatorFiles, threshold, aaConstants, 0);
+		MProphetResult origpair=MProphetReiter.executeMProphetTSV(percolatorFiles, threshold, aaConstants, 0);
 
-		assertTrue(origpair.x.size()>0);
-		assertTrue(origpair.y>0);
+		assertTrue(origpair.getPassingPeptides().size()>0);
+		assertTrue(origpair.getPi0()>0);
 		
-		System.out.println("total pep: "+origpair.x.size());
-		System.out.println("pi_0: "+origpair.y);
+		System.out.println("total pep: "+origpair.getPassingPeptides().size());
+		System.out.println("pi_0: "+origpair.getPi0());
 		
 		// Check that re-reading the results gives the same data as the return from executing Percolator
 		Pair<ArrayList<PercolatorPeptide>, Float> pair= PercolatorReader.getPassingPeptidesFromTSV(percolatorFiles.getPeptideOutputFile(), threshold, aaConstants, false);
-		assertEquals(origpair.x.size(), pair.x.size());
-		assertEquals(origpair.y, pair.y, 0.001f);
+		assertEquals(origpair.getPassingPeptides().size(), pair.x.size());
+		assertEquals(origpair.getPi0(), pair.y, 0.001f);
 
 		// Check for a sensible pi0
-		final float pi0 = origpair.y;
+		final float pi0 = origpair.getPi0();
 		assertTrue("Got invalid pi0 from MProphet (" + pi0 + ")", 0.1 < pi0 && pi0 < 0.9);
 
 		Pair<ArrayList<PercolatorPeptide>, Float> decoyPair=PercolatorReader.getPassingPeptidesFromTSV(percolatorFiles.getPeptideDecoyFile(), threshold, aaConstants, true);
@@ -79,7 +79,7 @@ public class MProphetIT {
 		assertTrue(nDecoys > 0);
 
 		// check that the decoys/targets is less than the qvalue threshold
-		final int nTargets = origpair.x.size();
+		final int nTargets = origpair.getPassingPeptides().size();
 		final float fdr = pi0 * nDecoys / (float) nTargets;
 		assertTrue(
 				String.format("Result didn't meet threshold! %.03f * %d / %d = %.02f >= %.02f",

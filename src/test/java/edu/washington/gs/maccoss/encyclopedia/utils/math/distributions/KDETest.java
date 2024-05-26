@@ -9,7 +9,7 @@ import junit.framework.TestCase;
 
 public class KDETest extends TestCase {
 	public static void main(String[] args) {
-		KDE dist=new KDE(getData(), 1);
+		KDE dist=new KDE(getData(), 1, 100);
 		Range range=new Range(-2, 8);
 		Charter.launchChart(Charter.getChart(range, dist), "kde");
 	}

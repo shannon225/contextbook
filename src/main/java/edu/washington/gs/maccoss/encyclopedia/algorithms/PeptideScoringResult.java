@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.ScoredPSMFilter;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.ScoredPSMFilterInterface;
@@ -66,6 +67,14 @@ public class PeptideScoringResult extends AbstractScoringResult {
 
 	public void addStripe(float score, float[] auxScoreArray, float deltaPrecursorMass, float deltaFragmentMass, FragmentScan stripe) {
 		goodStripes.add(new ScoredPSM(entry, stripe, score, auxScoreArray, deltaPrecursorMass, deltaFragmentMass));
+	}
+	
+	public void sort(int trimToN) {
+		Collections.sort(goodStripes);
+		Collections.reverse(goodStripes);
+		while (goodStripes.size()>trimToN) {
+			goodStripes.remove(goodStripes.size()-1);
+		}
 	}
 	
 	public float getBestScore() {

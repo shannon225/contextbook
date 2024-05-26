@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.ScoredPSMFilter;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.ScoredPSMFilterInterface;
@@ -71,6 +72,14 @@ public class SpectrumScoringResult extends AbstractScoringResult {
 	@Override
 	public void addStripe(float score, float[] auxScoreArray, float deltaPrecursorMass, float deltaFragmentMass, FragmentScan stripe) {
 		throw new EncyclopediaException("Unexpected addStripe in SpectrumScoringResult. You can only addPeptide to a SpectrumScoringResult (DDA)");	
+	}
+	
+	public void sort(int trimToN) {
+		Collections.sort(goodPeptides);
+		Collections.reverse(goodPeptides);
+		while (goodPeptides.size()>trimToN) {
+			goodPeptides.remove(goodPeptides.size()-1);
+		}
 	}
 	
 	public float getBestScore() {

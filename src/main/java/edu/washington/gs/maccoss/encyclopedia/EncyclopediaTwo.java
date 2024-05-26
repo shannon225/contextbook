@@ -22,27 +22,25 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.DataFormatException;
 
-import org.jfree.data.RangeInfo;
-
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import edu.washington.gs.maccoss.encyclopedia.SearchToBLIB.OutputFormat;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ScoredPSM;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.ScoredPSMFilterInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.TargeteDecoyPSMFilter;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaTwoJobData;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaScoringFactory;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaTwoJobData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaTwoLDAScorer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaTwoScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackground;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackgroundInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.MProphet;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.MProphetExecutionData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.MProphetReiter;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.MProphetResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
@@ -268,9 +266,9 @@ public class EncyclopediaTwo {
 		SaveResultsConsumer saveResultsConsumer=generateFeatureFile(subProgress, prealignmentLibrary, job, stripefile, Optional.empty());
 
 		Logger.logLine("Assessing FDR...");
-		Pair<ArrayList<PercolatorPeptide>, TargeteDecoyPSMFilter> percolatorResults=firstPassFDR(subProgress, job, stripefile, saveResultsConsumer);
+		Pair<MProphetResult, TargeteDecoyPSMFilter> mprophetResults=firstPassFDR(subProgress, job, stripefile, saveResultsConsumer);
 
-		if (percolatorResults.x.size()==0) {
+		if (mprophetResults.getX().getPassingPeptides().size()==0) {
 			Logger.errorLine("Found zero peptides after pre-alignment, consider searching a different pre-alignment library!");
 			Logger.errorLine("Exiting early from failed analysis.");
 			return;
@@ -278,14 +276,14 @@ public class EncyclopediaTwo {
 
 		subProgress=new SubProgressIndicator(progress, 0.9f);
 		Logger.logLine("Calculating post-alignment features for "+job.getLibrary().getName());
-		saveResultsConsumer=generateFeatureFile(subProgress, job.getLibrary(), job, stripefile, Optional.ofNullable(percolatorResults.y));
+		saveResultsConsumer=generateFeatureFile(subProgress, job.getLibrary(), job, stripefile, Optional.ofNullable(mprophetResults));
 
 		subProgress=new SubProgressIndicator(progress, 0.05f);
 		Logger.logLine("Assessing FDR...");
 		//percolatorResults=percolatePeptides(subProgress, job, stripefile, saveResultsConsumer);
-		percolatorResults=repercolatePeptides(subProgress, job, stripefile, saveResultsConsumer, percolatorResults.y);
+		Pair<ArrayList<PercolatorPeptide>, TargeteDecoyPSMFilter> percolatorResults=repercolatePeptides(subProgress, job, stripefile, saveResultsConsumer, mprophetResults.getY());
 		
-		ArrayList<PercolatorPeptide> passingPeptides=percolatorResults.x;
+		ArrayList<PercolatorPeptide> passingPeptides=percolatorResults.getX();
 		
 		Logger.logLine("Writing elib result library...");
 		File elibFile=job.getResultLibrary();
@@ -299,7 +297,7 @@ public class EncyclopediaTwo {
 		Logger.logLine(""); 
 	}
 
-	static SaveResultsConsumer generateFeatureFile(ProgressIndicator progress, LibraryInterface library, EncyclopediaTwoJobData job, StripeFileInterface stripefile, Optional<TargeteDecoyPSMFilter> rtAlignment) throws IOException, SQLException, DataFormatException, InterruptedException {
+	static SaveResultsConsumer generateFeatureFile(ProgressIndicator progress, LibraryInterface library, EncyclopediaTwoJobData job, StripeFileInterface stripefile, Optional<Pair<MProphetResult, TargeteDecoyPSMFilter>> prelimAnalysis) throws IOException, SQLException, DataFormatException, InterruptedException {
 
 		LibraryScoringFactory taskFactory=job.getTaskFactory();
 		SearchParameters parameters=taskFactory.getParameters();
@@ -381,6 +379,8 @@ public class EncyclopediaTwo {
 				int count = 0;
 				LibraryBackgroundInterface background = new LibraryBackground(entries);
 				PSMScorer scorer = taskFactory.getLibraryScorer(background);
+				assert(scorer instanceof EncyclopediaTwoScorer);
+				scorer=new EncyclopediaTwoLDAScorer((EncyclopediaTwoScorer)scorer, prelimAnalysis);
 
 				for (LibraryEntry entry : entries) {
 					count++;
@@ -404,8 +404,8 @@ public class EncyclopediaTwo {
 					}
 
 					ArrayList<FragmentScan> localStripes;
-					if (rtAlignment.isPresent()) {
-						localStripes = getScanSubsetFromStripes(entry, rtAlignment.get(), stripes, rts);
+					if (prelimAnalysis.isPresent()) {
+						localStripes = getScanSubsetFromStripes(entry, prelimAnalysis.get().getY(), stripes, rts);
 					} else {
 						localStripes = stripes;
 					}
@@ -482,7 +482,7 @@ public class EncyclopediaTwo {
 		return subset;
 	}
 
-	public static Pair<ArrayList<PercolatorPeptide>, TargeteDecoyPSMFilter> firstPassFDR(ProgressIndicator progress, EncyclopediaTwoJobData job, StripeFileInterface stripefile, SaveResultsConsumer saveResultsConsumer) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
+	public static Pair<MProphetResult, TargeteDecoyPSMFilter> firstPassFDR(ProgressIndicator progress, EncyclopediaTwoJobData job, StripeFileInterface stripefile, SaveResultsConsumer saveResultsConsumer) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
 		SearchParameters parameters=job.getParameters();
 		
 		try {
@@ -490,15 +490,15 @@ public class EncyclopediaTwo {
 			Logger.logLine("Running mProphet ("+(parameters.getPercolatorTestThreshold()*100f)+"%)");
 
 			MProphetExecutionData mprophetData=new MProphetExecutionData(job.getPercolatorFiles());
-			Pair<ArrayList<PercolatorPeptide>, Float> pair=MProphet.executeMProphetTSV(mprophetData, job.getParameters().getPercolatorTestThreshold(), job.getParameters().getAAConstants(), 1);
-			ArrayList<PercolatorPeptide> passingPeptides=pair.x;
+			MProphetResult result=MProphetReiter.executeMProphetTSV(mprophetData, job.getParameters().getPercolatorTestThreshold(), job.getParameters().getAAConstants(), 1);
+			ArrayList<PercolatorPeptide> passingPeptides=result.getPassingPeptides();
 			Logger.logLine("First pass: "+passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100f)+"% FDR");
 			
 			ArrayList<AbstractScoringResult> data=saveResultsConsumer.getSavedResults();
 			ArrayList<PercolatorPeptide> decoyPeptides = getDecoyPeptides(job, parameters, passingPeptides.size());
 			TargeteDecoyPSMFilter filter=getRescoringModel(passingPeptides, decoyPeptides, data, job, false);
 			
-			return new Pair<ArrayList<PercolatorPeptide>, TargeteDecoyPSMFilter>(passingPeptides, filter);
+			return new Pair<MProphetResult, TargeteDecoyPSMFilter>(result, filter);
 		} catch (EncyclopediaException e) {
 			Logger.errorLine("Fatal Error: "+e.getMessage());
 			Logger.errorLine("Sorry, not feeling well today! Try again tomorrow!");

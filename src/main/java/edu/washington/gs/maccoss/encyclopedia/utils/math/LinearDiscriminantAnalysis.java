@@ -12,6 +12,27 @@ public class LinearDiscriminantAnalysis implements ScoreCombiner {
 		this.constant=constant;
 	}
 	
+	public static LinearDiscriminantAnalysis average(ArrayList<LinearDiscriminantAnalysis> ldas) {
+		double[] coefficients=null;
+		double constant=0.0;
+		
+		int count=0;
+		for (LinearDiscriminantAnalysis lda : ldas) {
+			if (coefficients==null) {
+				coefficients=lda.coefficients.clone();
+				constant=lda.constant;
+			} else {
+				coefficients=MatrixMath.add(coefficients, lda.coefficients);
+				constant+=lda.constant;
+			}
+			count++;
+		}
+		
+		coefficients=General.divide(coefficients, count);
+		constant=constant/count;
+		return new LinearDiscriminantAnalysis(coefficients, constant);
+	}
+	
 	@Override
 	public String toString() {
 		StringBuilder sb=new StringBuilder("coeff:[");
@@ -41,6 +62,7 @@ public class LinearDiscriminantAnalysis implements ScoreCombiner {
 	public double getConstant() {
 		return constant;
 	}
+	
 	public static LinearDiscriminantAnalysis buildModel(ArrayList<float[]> positiveData, ArrayList<float[]> negativeData) {
 		double[][] positive=new double[positiveData.size()][];
 		double[][] negative=new double[negativeData.size()][];

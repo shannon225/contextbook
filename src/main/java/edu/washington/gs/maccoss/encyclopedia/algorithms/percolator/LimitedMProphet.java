@@ -4,24 +4,20 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
-
-import com.sun.xml.bind.v2.runtime.unmarshaller.XsiNilLoader.Array;
+import java.util.HashSet;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
-import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
+import edu.washington.gs.maccoss.encyclopedia.utils.StringUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
-import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
-import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.LineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.LineParserMuscle;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.FloatPair;
@@ -33,11 +29,10 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RunningMedianWarper;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredIndex;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.Sigmoid;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.randomforest.RocPlot;
 import gnu.trove.list.array.TFloatArrayList;
 
-public class MProphet implements Runnable {
+public class LimitedMProphet implements Runnable {
 	private static final String DELIM = "\t";
 	private final float peptideFDRThreshold;
 	private final MProphetExecutionData settings;
@@ -46,14 +41,14 @@ public class MProphet implements Runnable {
 	private Throwable error;
 	private Pair<ArrayList<PercolatorPeptide>, Float> result;
 
-	public MProphet(MProphetExecutionData settings, float peptideFDRThreshold, AminoAcidConstants aaConstants) {
+	public LimitedMProphet(MProphetExecutionData settings, float peptideFDRThreshold, AminoAcidConstants aaConstants) {
 		this.settings = settings;
 		this.peptideFDRThreshold=peptideFDRThreshold;
 		this.aaConstants=aaConstants;
 	}
 	
 	public static Pair<ArrayList<PercolatorPeptide>, Float> executeMProphetTSV(MProphetExecutionData commandData, float threshold, AminoAcidConstants aaConstants, int round) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
-		MProphet prophet=new MProphet(commandData, threshold, aaConstants);
+		LimitedMProphet prophet=new LimitedMProphet(commandData, threshold, aaConstants);
 		prophet.run();
 		return prophet.getPeptides();
 	}
@@ -63,7 +58,7 @@ public class MProphet implements Runnable {
 		File file=settings.getInputTSV();
 
 		try {
-			MProphetDataset data = parseFeatureFile(file);
+			MProphetDataset data = parseFeatureFile(file, settings);
 			result = calculateProbabilities(data);
 
 		} catch (Throwable t) {
@@ -86,12 +81,12 @@ public class MProphet implements Runnable {
 //		}
 //		System.out.println("c:\t"+lda.getConstant());
 
-		ArrayList<ScoredObject<MProphetDataset.MProphetData>> scoredDataset=new ArrayList<>();
+		ArrayList<ScoredObject<MProphetData>> scoredDataset=new ArrayList<>();
 		TFloatArrayList targetScores=new TFloatArrayList();
 		TFloatArrayList decoyScores=new TFloatArrayList();
-		for (MProphetDataset.MProphetData data : dataset.allData()) {
+		for (MProphetData data : dataset.allData()) {
 			float score=lda.getScore(data.getData());
-			scoredDataset.add(new ScoredObject<MProphetDataset.MProphetData>(score, data));
+			scoredDataset.add(new ScoredObject<MProphetData>(score, data));
 			if (data.isDecoy()) {
 				decoyScores.add(score);
 			} else {
@@ -145,7 +140,7 @@ public class MProphet implements Runnable {
 		float targetCount=0f;
 		float decoyCount=0f;
 		ArrayList<XYPoint> fdrCalc=new ArrayList<XYPoint>();
-		for (ScoredObject<MProphetDataset.MProphetData> scoredData : scoredDataset) {
+		for (ScoredObject<MProphetData> scoredData : scoredDataset) {
 			float score=scoredData.getScore();
 			boolean isDecoy=scoredData.y.isDecoy();
 			
@@ -177,7 +172,7 @@ public class MProphet implements Runnable {
 			targetWriter.println("PSMId\tscore\tq-value\tposterior_error_prob\tpeptide\tproteinIds");
 			decoyWriter.println("PSMId\tscore\tq-value\tposterior_error_prob\tpeptide\tproteinIds");
 			
-			for (ScoredObject<MProphetDataset.MProphetData> scoredData : scoredDataset) {
+			for (ScoredObject<MProphetData> scoredData : scoredDataset) {
 				float score=scoredData.getScore();
 				
 				float qValue=qValueFunc.getYValue(score);
@@ -289,7 +284,7 @@ public class MProphet implements Runnable {
 		return roc;
 	}
 
-	private MProphetDataset parseFeatureFile(File file) throws EncyclopediaException {
+	public static MProphetDataset parseFeatureFile(File file, MProphetExecutionData settings) throws EncyclopediaException {
 		String[] columnNames=null;
 		int idIndex=0;
 		int labelIndex=0;
@@ -319,6 +314,8 @@ public class MProphet implements Runnable {
 					sequenceIndex=i;
 				} else if ("Proteins".equals(columnNames[i])) {
 					proteinIndex=i;
+				} else if ("protein".equals(columnNames[i])) {
+					proteinIndex=i;
 				} else if ("pepLength".equals(columnNames[i])) {
 					// skip
 				} else if ("charge1".equals(columnNames[i])) {
@@ -340,7 +337,26 @@ public class MProphet implements Runnable {
 					isFeature[i]=true;
 				}
 			}
+			
 			in.close();
+			
+			String sortingScoreString=null;
+			if (StringUtils.contains(columnNames, "primary")) sortingScoreString="primary";  
+			if (StringUtils.contains(columnNames, "xTandem")) sortingScoreString="xTandem";  
+			if (StringUtils.contains(columnNames, "peakZScore")) sortingScoreString="peakZScore";  
+			if (StringUtils.contains(columnNames, "peakBGScore")) sortingScoreString="peakBGScore";  
+			if (StringUtils.contains(columnNames, "primary")) sortingScoreString="primary";  
+
+			if (sortingScoreString==null) {
+				throw new EncyclopediaException("Can't parse sorting score from header from ["+header+"]");
+			}
+			int sortingScoreIndex=0;
+			for (int i = 0; i < columnNames.length; i++) {
+				if (columnNames[i].equals(sortingScoreString)) {
+					sortingScoreIndex=i;
+					break;
+				}
+			}
 			Logger.logLine("Found indicies for "+featureNames.size()+" features: ["+General.toString(featureNames)+"]");
 
 			final int idIndexFinal=idIndex;
@@ -350,7 +366,7 @@ public class MProphet implements Runnable {
 			final boolean[] isFeatureFinal=isFeature;
 			final String[] columnNamesFinal=columnNames;
 			
-			ArrayList<MProphetDataset.MProphetData> peptideData=new ArrayList<>();
+			ArrayList<MProphetData> peptideData=new ArrayList<>();
 			LineParserMuscle muscle = new LineParserMuscle() {
 				boolean isFirst=true;
 				
@@ -369,8 +385,6 @@ public class MProphet implements Runnable {
 					} catch (Exception e) {
 						Logger.errorLine("Error parsing ["+values[labelIndexFinal]+"] as "+columnNamesFinal[labelIndexFinal]+" (index "+labelIndexFinal+")!");
 						Logger.errorException(e);
-
-						MProphet.this.error = e;
 						throw e;
 					}
 					
@@ -382,13 +396,11 @@ public class MProphet implements Runnable {
 							} catch (Exception e) {
 								Logger.errorLine("Error parsing ["+values[j]+"] as "+columnNamesFinal[j]+" (index "+j+")!");
 								Logger.errorException(e);
-
-								MProphet.this.error = e;
 								throw e;
 							}
 						}
 					}
-					peptideData.add(new MProphetDataset.MProphetData(values[idIndexFinal], values[sequenceIndexFinal], values[proteinIndexFinal], features.toArray(), isDecoy));
+					peptideData.add(new MProphetData(values[idIndexFinal], values[sequenceIndexFinal], values[proteinIndexFinal], features.toArray(), isDecoy));
 					
 				}
 				
@@ -398,13 +410,12 @@ public class MProphet implements Runnable {
 			};
 			LineParser.parseFile(settings.getInputTSV(), muscle);
 
-			return new MProphetDataset(featureNames, peptideData);
+			return new MProphetDataset(featureNames, sortingScoreIndex, peptideData);
 			
 		} catch (Throwable t) {
 			Logger.errorLine("Error performing mProphet!");
 			Logger.errorException(t);
 
-			this.error = t;
 			throw new EncyclopediaException(t);
 		}
 	}

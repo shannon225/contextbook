@@ -14,6 +14,31 @@ public class RandomGeneratorTest extends TestCase {
 		String sequence=RandomGenerator.randomSequence(seed);
 		assertEquals("CQGLCIDFNMQPEYGIHIIKC", sequence);
 	}
+	
+	/**
+	 * not quite as regular as the ANSI C method, but still pretty good
+	 */
+	public void testRandomIntAlt() {
+		TFloatHashSet set=new TFloatHashSet();
+		int[] count=new int[1000];
+		int seed=1;
+		for (int i=0; i<100000; i++) {
+			seed=RandomGenerator.randomInt(seed);
+			float r=RandomGenerator.floatFromRandomInt(RandomGenerator.randomIntAlt(i));
+			// asserts you never get the same number in seeds of 0 to 100,000
+			assertFalse(set.contains(r));
+			set.add(r);
+			int index=(int)(count.length*r);
+			count[index]++;
+		}
+		
+		// asserts regularity
+		for (int i=0; i<count.length; i++) {
+			assertTrue(count[i]>85);
+			assertTrue(count[i]<115);
+		}
+	}
+	
 	public void testRandomInt() {
 		TFloatHashSet set=new TFloatHashSet();
 		int[] count=new int[1000];

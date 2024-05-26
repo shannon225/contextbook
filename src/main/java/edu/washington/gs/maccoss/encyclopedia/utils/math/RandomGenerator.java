@@ -16,6 +16,11 @@ public class RandomGenerator {
 		seed=seed*1103515245+12345;
 		return seed%2147483647;
 	}
+	public static int randomIntAlt(int seed) {
+		// uses a large random prime number
+		seed=seed*1559861749+12345;
+		return seed%2147483647;
+	}
 	public static float random(int seed) {
 		return floatFromRandomInt(randomInt(seed));
 	}

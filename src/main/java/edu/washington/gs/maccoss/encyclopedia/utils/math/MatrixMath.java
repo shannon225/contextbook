@@ -197,6 +197,14 @@ public class MatrixMath {
 		return r;
 	}
 	
+	public static double[] add(double[] a, double[] b) {
+		double[] r=new double[a.length];
+		for (int i=0; i<r.length; i++) {
+			r[i]=a[i]+b[i];
+		}
+		return r;
+	}
+	
 	public static double getRange(double[] array) {
 		double min=Double.MAX_VALUE;
 		double max=-Double.MAX_VALUE;

@@ -67,7 +67,7 @@ public class EncyclopediaTwoScorer implements EncyclopediaScorer {
 		return scoreIons(individualPeakScores);
 	}
 
-	private float scoreIons(PeakScores[] individualPeakScores) {
+	public float scoreIons(PeakScores[] individualPeakScores) {
 		int count=0; // number of matches
 		for (int i=0; i<individualPeakScores.length; i++) {
 			if (individualPeakScores[i]!=null) count++;

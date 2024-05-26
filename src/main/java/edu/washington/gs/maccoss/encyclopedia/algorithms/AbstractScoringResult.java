@@ -22,6 +22,8 @@ public abstract class AbstractScoringResult {
 	public abstract float getBestScore();
 	public abstract float getSecondBestScore();
 	
+	public abstract void sort(int trimToN);
+	
 	public abstract void setTrace(XYTraceInterface trace);
 	
 	public abstract XYTraceInterface getTrace();

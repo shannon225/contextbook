@@ -13,6 +13,8 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.EValueCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.IsotopicDistributionCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.TargeteDecoyPSMFilter;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.MProphetResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefinementData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefiner;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
@@ -52,8 +54,8 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 		this.precursorIsolationRange=new Range(precursorIsolationRange.getStart(), precursorIsolationRange.getStop());
 	}
 	
-	private static final int peaksKept=5;
-	private static final int peaksConsidered=7;
+	private static final int peaksKept=12;
+	private static final int peaksConsidered=15;
 
 	@Override
 	protected Nothing process() {
@@ -336,6 +338,20 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 					
 					float deltaPrecursorMass=auxScorer.getParentDeltaMassIndex()>=0?auxScoreArray[auxScorer.getParentDeltaMassIndex()]:0.0f;
 					float deltaFragmentMass=auxScorer.getFragmentDeltaMassIndex()>=0?auxScoreArray[auxScorer.getFragmentDeltaMassIndex()]:0.0f;
+					
+					
+					if (scorer instanceof EncyclopediaTwoLDAScorer) {
+						Optional<Pair<MProphetResult, TargeteDecoyPSMFilter>> optScorer=((EncyclopediaTwoLDAScorer) scorer).getLDAScorer();
+						if (optScorer.isPresent()) {
+							int[] scoreIndexConvertingArray=((EncyclopediaTwoLDAScorer) scorer).getScoreIndexConvertingArray();
+							float[] ldaFeatures=new float[scoreIndexConvertingArray.length];
+							for (int j = 0; j < ldaFeatures.length; j++) {
+								ldaFeatures[i]=auxScoreArray[scoreIndexConvertingArray[j]];
+							}
+							score=optScorer.get().getX().getLDA().getScore(ldaFeatures);
+						}
+					}
+					
 					result.addStripe(score, auxScoreArray, deltaPrecursorMass, deltaFragmentMass, stripe);
 					if (identifiedPeaks>peaksKept) {
 						// keep N+1 peaks
@@ -351,6 +367,7 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 				float deltaFragmentMass=auxScorer.getFragmentDeltaMassIndex()>=0?bestAuxScores[auxScorer.getFragmentDeltaMassIndex()]:0.0f;
 				result.addStripe(bestScore, bestAuxScores, deltaPrecursorMass, deltaFragmentMass, bestStripe);
 			}
+			result.sort(2);
 			
 			resultsQueue.add(result);
 		}

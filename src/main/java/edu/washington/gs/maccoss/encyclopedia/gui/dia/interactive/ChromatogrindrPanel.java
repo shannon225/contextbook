@@ -36,6 +36,8 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.zip.DataFormatException;
 
+import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -83,6 +85,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.parameters.InstrumentSpecificSearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
@@ -508,20 +511,32 @@ public class ChromatogrindrPanel extends JPanel {
 				updateToSelectedPeptide();
 			}
 		});
-		options.add(sgSmoothBox);
-		options.add(backgroundSubtractBox);
+
+		JPanel checkboxes=new JPanel(new FlowLayout());
+		options.add(checkboxes);
+		checkboxes.add(sgSmoothBox);
+		checkboxes.add(backgroundSubtractBox);
 		
 		JPanel buttons=new JPanel(new FlowLayout());
 		options.add(buttons);
 		
-		JButton copyButton = new JButton("Copy");
-		copyButton.addActionListener(new ActionListener() {	
+		JPanel in=new JPanel(new FlowLayout());
+		int width=5;
+		in.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(width, width, width, width), BorderFactory.createTitledBorder("In:")));
+		JPanel out=new JPanel(new FlowLayout());
+		out.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(width, width, width, width), BorderFactory.createTitledBorder("Out:")));
+		buttons.add(in);
+		buttons.add(Box.createHorizontalStrut(10));
+		buttons.add(out);
+		
+		JButton importButton=new JButton("Import");
+		importButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				copyTable();
+				importLibrary();
 			}
 		});
-		buttons.add(copyButton);
+		in.add(importButton);
 		
 		JButton pasteButton=new JButton("Paste");
 		pasteButton.addActionListener(new ActionListener() {
@@ -538,7 +553,16 @@ public class ChromatogrindrPanel extends JPanel {
 				}
 			}
 		});
-		buttons.add(pasteButton);
+		in.add(pasteButton);
+		
+		JButton copyButton = new JButton("Copy");
+		copyButton.addActionListener(new ActionListener() {	
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				copyTable();
+			}
+		});
+		out.add(copyButton);
 		
 		JButton exportButton=new JButton("Export");
 		exportButton.addActionListener(new ActionListener() {
@@ -547,7 +571,7 @@ public class ChromatogrindrPanel extends JPanel {
 				exportLibrary();
 			}
 		});
-		buttons.add(exportButton);
+		out.add(exportButton);
 		
 		peptideTable.addKeyListener(new KeyListener() {
 			
@@ -701,6 +725,46 @@ public class ChromatogrindrPanel extends JPanel {
 
 	private SearchParameters getParameters() {
 		return instrumentCombo.getItemAt(instrumentCombo.getSelectedIndex()).getDefaultParameters();
+	}
+	
+	public void importLibrary() {
+		FileDialog dialog=new FileDialog((JFrame)null, "Library files", FileDialog.LOAD);
+		dialog.setFilenameFilter(new SimpleFilenameFilter(LibraryFile.DLIB, LibraryFile.ELIB, BlibFile.BLIB));
+		dialog.setVisible(true);
+		File[] fs=dialog.getFiles();
+
+		if (fs==null&&fs.length==0&&fs[0]==null) {
+			return;
+		}
+		File libraryFile=fs[0];
+
+		try {
+			LibraryFile library=new LibraryFile();
+			library.openFile(libraryFile);
+			ArrayList<LibraryEntry> entries=library.getAllEntries(false, new AminoAcidConstants());
+
+			peptideModel.paste(entries);
+			
+			pastedRTs.clear();
+			for (InteractivePeptidePrecursor peptide : peptideModel.getAllEntries()) {
+				pastedRTs.put(peptide.getPeptideModSeq(), peptide.getRetentionTimeInSec()/60f);
+			}
+			if (peptideTable.getRowCount()>0) {
+				peptideTable.setRowSelectionInterval(0, 0);
+			}
+			peptideTable.requestFocus();
+
+		} catch (DataFormatException dfe) {
+			Logger.errorLine("Found Data Format error reading data from library file...");
+			Logger.errorException(dfe);
+		} catch (SQLException sqle) {
+			Logger.errorLine("Found SQL error reading data from library file...");
+			Logger.errorException(sqle);
+		} catch (IOException ioe) {
+			Logger.errorLine("Found IO error reading data from library file...");
+			Logger.errorException(ioe);
+		}
+		
 	}
 	
 	public void exportLibrary() {
