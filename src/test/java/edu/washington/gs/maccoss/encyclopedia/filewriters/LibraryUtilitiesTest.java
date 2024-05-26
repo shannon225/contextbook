@@ -36,13 +36,17 @@ import gnu.trove.map.hash.TObjectFloatHashMap;
 import gnu.trove.procedure.TObjectFloatProcedure;
 
 public class LibraryUtilitiesTest {
-	public static void main10(String[] args) throws Exception {
+	public static void main(String[] args) throws Exception {
 		File dir=new File("/Users/searleb/Documents/encyclopedia/encyclopedia/src/main/resources/libraries");
 		for (File f : dir.listFiles(new SimpleFilenameFilter(".dlib"))) {
 			LibraryFile lib=new LibraryFile();
 			lib.openFile(f);
 			
-			ArrayList<LibraryEntry> newList=LibraryEntryCleaner.filterIons(lib.getAllEntries(false, new AminoAcidConstants()), 6, 300);
+			ArrayList<LibraryEntry> newList=LibraryEntryCleaner.filterIons(lib.getAllEntries(false, new AminoAcidConstants()), 8, 300);
+			for (LibraryEntry entry : newList) {
+				entry.getAccessions().clear();
+				entry.getAccessions().add("X");
+			}
 
 			LibraryFile saveLibrary=new LibraryFile();
 			saveLibrary.openFile();
@@ -56,7 +60,7 @@ public class LibraryUtilitiesTest {
 		}
 	}
 	
-	public static void main(String[] args) throws Exception {
+	public static void main10(String[] args) throws Exception {
 		File dir=new File("/Volumes/MacOnlySSD/2023_06_29_CD8_TCell_Exhaustion_Data/dia_files/libraries/");
 		File lib1=new File(dir, "051622_Mouse_Tcell_pool_clib.elib");
 		File lib2=new File(dir, "combined_2x_pooled_GPF_day8_tcells.dia.elib");

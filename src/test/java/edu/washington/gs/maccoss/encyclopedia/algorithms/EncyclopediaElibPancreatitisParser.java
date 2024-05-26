@@ -50,25 +50,25 @@ public class EncyclopediaElibPancreatitisParser {
 	//public static int[] tests=new int[] {0, 1};
 	//public static int[] controls=new int[] {2, 4};
 	
-	public static int[] tests=new int[] {1};
-	public static int[] controls=new int[] {0, 2, 3, 4};
+	//public static int[] tests=new int[] {1};
+	//public static int[] controls=new int[] {0, 2, 3, 4};
 	
-	//public static int[] tests=new int[] {0};
+	public static int[] tests=new int[] {0};
 	//public static int[] controls=new int[] {1, 2, 3, 4};
 	
 	//public static int[] tests=new int[] {1, 4};
 	//public static int[] controls=new int[] {2, 3};
-	//public static int[] controls=new int[] {0, 2, 3};
+	public static int[] controls=new int[] {1, 2, 3};
 	//
 	public static HashMap<String, SampleCoordinate> sampleKey=new HashMap<>();
 
 	public static void main(String[] args) throws IOException, SQLException, DataFormatException {
 		loadMap();
 		
-		File file=new File("/Users/searleb/Documents/OSU/projects/maisam_pancreatitis/presentation/pancreatitis_analysis/032922_pancreatitis_120_quant_reports.elib");
-		//File file=new File("/Users/searleb/Documents/OSU/projects/maisam_pancreatitis/032922_pancreatitis_grant_dataset/032922_pancreatitis_120_quant_reports.elib");
+		//File file=new File("/Users/searleb/Documents/OSU/projects/maisam_pancreatitis/presentation/pancreatitis_analysis/032922_pancreatitis_120_quant_reports.elib");
+		File file=new File("/Users/searleb/Documents/OSU/projects/maisam_pancreatitis/032922_pancreatitis_grant_dataset/032922_pancreatitis_120_quant_reports.elib");
 		//File stub=new File(file.getParent(), "pancreatitis_poster_120_boxplots");
-		File stub=new File(file.getParent(), "ap_versus_others/ap_vs_cp_120_boxplots");
+		File stub=new File(file.getParent(), "cp_versus_others/cp_120_boxplots");
 		//File stub=new File(file.getParent(), "fracture_120_boxplots");
 		FileUtils.deleteDirectory(stub);
 		
@@ -105,7 +105,7 @@ public class EncyclopediaElibPancreatitisParser {
 		
 		//createClassifier(proteinReportFile, new HashSet<String>(Arrays.asList(keptAccessions)));
 		assessProteinSpecificPValues(testDirs, proteinReportFile, new File(stub, "volcano_report.csv"));
-		createClassifier(proteinReportFile, new HashSet<String>(Arrays.asList(keptAccessions)));
+		//createClassifier(proteinReportFile, new HashSet<String>(Arrays.asList(keptAccessions)));
 		//assessProteinSpecificPValues(testDirs, proteinReportFile);
 	}
 	
@@ -317,8 +317,8 @@ public class EncyclopediaElibPancreatitisParser {
 //			if (fdrs[i]>pvalueThreshold) {
 //				continue;
 //			}
-			System.out.println(accessions.get(i).split(";")[0]+"\t"+fdrs[i]);
-			if (true) continue;
+			//System.out.println(accessions.get(i).split(";")[0]+"\t"+fdrs[i]);
+			//if (true) continue;
 			
 			TFloatArrayList[] rawdata=datasets.get(i);
 			
