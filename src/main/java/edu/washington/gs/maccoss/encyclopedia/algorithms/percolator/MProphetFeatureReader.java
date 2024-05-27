@@ -157,7 +157,8 @@ public class MProphetFeatureReader {
 							}
 						}
 					}
-					peptideData.add(new MProphetData(values[idIndexFinal], values[sequenceIndexFinal], values[proteinIndexFinal], features.toArray(), isDecoy));
+					String peptideModSeq=PercolatorPeptide.getPeptideSequence(values[idIndexFinal]);
+					peptideData.add(new MProphetData(values[idIndexFinal], peptideModSeq, values[proteinIndexFinal], features.toArray(), isDecoy));
 					
 				}
 				
