@@ -5,7 +5,7 @@
 
 # Use the most recent maven docker image from Docker Hub as the build environment,
 # specifically using OpenJDK 8.
-image: maven:3.6.3-openjdk-8
+image: maven:3.8.5-openjdk-17
 
 pipelines:
   default:
