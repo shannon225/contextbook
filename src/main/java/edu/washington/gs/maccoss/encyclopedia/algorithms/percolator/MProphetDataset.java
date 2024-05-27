@@ -44,9 +44,9 @@ public class MProphetDataset {
 		this.decoyPeptideData = decoyPeptideData;
 	}
 
-	public static MProphetDataset[] splitKFold(MProphetDataset dataset, int k, int randomSeed) {
-		ArrayList<MProphetData>[] targetSplitData=splitKFold(dataset.targetPeptideData, k, randomSeed);
-		ArrayList<MProphetData>[] decoySplitData=splitKFold(dataset.decoyPeptideData, k, RandomGenerator.randomIntAlt(randomSeed));
+	public static MProphetDataset[] splitKFold(MProphetDataset dataset, int k, int randomSeed, int maximumFoldSize) {
+		ArrayList<MProphetData>[] targetSplitData=splitKFold(dataset.targetPeptideData, k, randomSeed, maximumFoldSize);
+		ArrayList<MProphetData>[] decoySplitData=splitKFold(dataset.decoyPeptideData, k, RandomGenerator.randomIntAlt(randomSeed), maximumFoldSize);
 		
 		MProphetDataset[] splitDatasets=new MProphetDataset[k];
 		for (int i = 0; i < splitDatasets.length; i++) {
@@ -55,7 +55,7 @@ public class MProphetDataset {
 		return splitDatasets;
 	}
 	
-	private static ArrayList<MProphetData>[] splitKFold(ArrayList<MProphetData> dataset, int k, int randomSeed) {
+	private static ArrayList<MProphetData>[] splitKFold(ArrayList<MProphetData> dataset, int k, int randomSeed, int maximumFoldSize) {
 		ArrayList<ScoredObject<MProphetData>> targetDataRandomized=new ArrayList<ScoredObject<MProphetData>>();
 		for (MProphetData data : dataset) {
 			randomSeed=RandomGenerator.randomInt(randomSeed);
@@ -71,9 +71,10 @@ public class MProphetDataset {
 		}
 		int currentK=0;
 		for (ScoredObject<MProphetData> scoredObject : targetDataRandomized) {
-			splitData[currentK].add(scoredObject.y);
+			if (splitData[currentK].size()<maximumFoldSize) {
+				splitData[currentK].add(scoredObject.y);
+			}
 			currentK = (currentK + 1) % k;
-			
 		}
 		return splitData;
 	}
@@ -126,6 +127,7 @@ public class MProphetDataset {
 				ScoredMProphetData data=new ScoredMProphetData(dataset.get(i), 
 						targetScores.get(i), pValueArray[i], targetLFDRValues[i], targetFDRValues[i]);
 				returnedData.add(data);
+				//System.out.println(data.getData().getSequence()+" --> "+data.getScore()+", "+data.getPvalue()+", "+data.getFDR()+", "+data.getLocalFDR());
 			}			
 		}
 		return new Pair<ArrayList<ScoredMProphetData>, Float>(returnedData, (float)pi0);
@@ -165,6 +167,9 @@ public class MProphetDataset {
 	}
 	public ArrayList<String> getFeatureNames() {
 		return featureNames;
+	}
+	public int getStartingScoreIndex() {
+		return startingScoreIndex;
 	}
 	
 	public static ArrayList<float[]> getData(ArrayList<MProphetData> dataset) {

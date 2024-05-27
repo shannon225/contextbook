@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
@@ -14,6 +16,8 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.LinearDiscriminantAnalysis;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
+import gnu.trove.map.hash.TObjectDoubleHashMap;
+import gnu.trove.map.hash.TObjectFloatHashMap;
 
 public class MProphetReiter implements Runnable {
 	private final float peptideFDRThreshold;
@@ -40,7 +44,7 @@ public class MProphetReiter implements Runnable {
 		File file=settings.getInputTSV();
 
 		try {
-			MProphetDataset data = LimitedMProphet.parseFeatureFile(file, settings);
+			MProphetDataset data = MProphetFeatureReader.parseFeatureFile(file, settings);
 			result = calculateProbabilities(data);
 
 		} catch (Throwable t) {
@@ -56,15 +60,34 @@ public class MProphetReiter implements Runnable {
 		int iterationCount = 50;
 		int numIterationsPerCalculation = 10;
 		
+		TObjectDoubleHashMap<String> seedCoefficients=new TObjectDoubleHashMap<String>();
+		seedCoefficients.put("HyperScore", 0.6);
+		seedCoefficients.put("xCorrLib", 5.0);
+		seedCoefficients.put("xCorrModel", 0.2);
+		seedCoefficients.put("numberOfMatchingPeaksAboveThreshold", 0.2);
+		seedCoefficients.put("isotopeDotProduct", 0.5);
+		seedCoefficients.put("correlationToPrecursor", 0.4);
+		seedCoefficients.put("isIntegratedSignal", 0.2);
+		seedCoefficients.put("numPeaksWithGoodCorrelation", 0.1);
+		
+		double[] coefficients=new double[dataset.getFeatureNames().size()];
+		for (int i = 0; i < coefficients.length; i++) {
+			double value=seedCoefficients.get(dataset.getFeatureNames().get(i));
+			if (value!=0.0) {
+				coefficients[i]=value;
+			}
+		}
+		LinearDiscriminantAnalysis seedModel=new LinearDiscriminantAnalysis(coefficients, 0.0);
+		
 		ArrayList<LinearDiscriminantAnalysis> models=new ArrayList<LinearDiscriminantAnalysis>();
 		for (int n = 0; n < iterationCount; n++) {
 			randomSeed=RandomGenerator.randomInt(randomSeed);
-			MProphetDataset[] folds=MProphetDataset.splitKFold(dataset, 2, randomSeed);
+			MProphetDataset[] folds=MProphetDataset.splitKFold(dataset, 2, randomSeed, settings.getParameters().getPercolatorTrainingSetSize());
 			
 			MProphetDataset trainingDataset=folds[0];
 			MProphetDataset testingDataset=folds[1];
 			
-			LinearDiscriminantAnalysis lda=null;
+			LinearDiscriminantAnalysis lda=seedModel;
 			int best=0;
 			for (int i = 0; i < numIterationsPerCalculation; i++) {
 				float targetFDR=0.01f;
@@ -73,19 +96,29 @@ public class MProphetReiter implements Runnable {
 				}
 				ArrayList<ScoredMProphetData> data=trainingDataset.getPassingTargets(Optional.ofNullable(lda), targetFDR).x;
 				
-				if (data.size()<best) {
+				if (data.size()<best||data.size()==0) {
 					break;
 				}
 				best=data.size();
 				lda=LinearDiscriminantAnalysis.buildModel(MProphetDataset.getScoredData(data), trainingDataset.getDecoyData());
 			}
 			
-			models.add(lda);
-			Pair<ArrayList<ScoredMProphetData>, Float> data=testingDataset.getPassingTargets(Optional.ofNullable(lda), 0.01f);
-			System.out.println("Iteration "+(n+1)+": "+data.x.size()+"/"+testingDataset.getTargetData().size()+" passing, pi0:"+data.y);
+			if (lda==null) {
+				Logger.logLine("Iteration "+(n+1)+": Failed to generate a meaningful model!");
+			} else {
+				models.add(lda);
+				Pair<ArrayList<ScoredMProphetData>, Float> data=testingDataset.getPassingTargets(Optional.ofNullable(lda), 0.01f);
+				Logger.logLine("Iteration "+(n+1)+": "+data.x.size()+"/"+testingDataset.getTargetData().size()+" passing, pi0:"+data.y);
+			}
 		}
 		
-		LinearDiscriminantAnalysis averageModel=LinearDiscriminantAnalysis.average(models);
+		LinearDiscriminantAnalysis averageModel;
+		if (models.size()==0) {
+			Logger.logLine("No meaningful models generated, falling back on seed model for separation!");
+			averageModel=seedModel;
+		} else {	
+			averageModel=LinearDiscriminantAnalysis.average(models);
+		}
 
 		Pair<ArrayList<ScoredMProphetData>, Float> finalData=dataset.getPassingTargets(Optional.ofNullable(averageModel), Float.MAX_VALUE);
 		int passingCount=0;
@@ -93,15 +126,20 @@ public class MProphetReiter implements Runnable {
 			if (data.fdr<0.01) passingCount++;
 		}
 		
-		System.out.println("Final model: "+passingCount+"/"+dataset.getTargetData().size()+" passing, pi0:"+finalData.y);
+		Logger.logLine("Final model: "+passingCount+"/"+dataset.getTargetData().size()+" passing, pi0:"+finalData.y);
 		Pair<ArrayList<ScoredMProphetData>, Float> finalDecoyData=dataset.getPassingTargets(Optional.ofNullable(averageModel), Float.MAX_VALUE, true);
+		
+		for (int i = 0; i < averageModel.getCoefficients().length; i++) {
+			Logger.logLine("   "+dataset.getFeatureNames().get(i)+" --> "+averageModel.getCoefficients()[i]);
+		}
 		
 		ArrayList<ScoredMProphetData> allData=new ArrayList<ScoredMProphetData>();
 		allData.addAll(finalData.x);
 		allData.addAll(finalDecoyData.x);
+		Collections.sort(allData);
 			
+		HashSet<String> detectedPeptideSequences=new HashSet<String>();
 		ArrayList<PercolatorPeptide> detectedPeptides=new ArrayList<>();
-		float minScore=Float.MAX_VALUE;
 		try {
 			PrintWriter targetWriter=new PrintWriter(settings.getPeptideOutputFile(), "UTF-8");
 			PrintWriter decoyWriter=new PrintWriter(settings.getPeptideDecoyFile(), "UTF-8");
@@ -110,14 +148,16 @@ public class MProphetReiter implements Runnable {
 			decoyWriter.println("PSMId\tscore\tq-value\tposterior_error_prob\tpeptide\tproteinIds");
 			
 			for (ScoredMProphetData scoredData : allData) {
-				float score=scoredData.getScore();
+				if (detectedPeptideSequences.contains(scoredData.getData().getSequence())) {
+					// only keep the best (highest scoring) representation of the peptide
+					continue;
+				}
+				detectedPeptideSequences.add(scoredData.getData().getSequence());
 				
+				float score=scoredData.getScore();
 				float qValue=(float)scoredData.getFDR();
 				float posteriorErrorProb=(float)scoredData.getLocalFDR();
 				if (qValue<=peptideFDRThreshold&&!scoredData.getData().isDecoy()) {
-					if (score<minScore) {
-						minScore=score;
-					}
 					PercolatorPeptide pep=new PercolatorPeptide(scoredData.getData().getId(), scoredData.getData().getProtein(), qValue, posteriorErrorProb, aaConstants);
 					detectedPeptides.add(pep);
 				}

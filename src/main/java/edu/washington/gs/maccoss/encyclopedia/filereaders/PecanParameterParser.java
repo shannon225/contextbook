@@ -43,6 +43,7 @@ public class PecanParameterParser {
 		map.put("-numberOfReportedPeaks", "1");
 		map.put("-addDecoysToBackground", "false");
 		map.put("-dontRunDecoys", "false");
+		map.put("-usePercolator", "true");
 		map.put("-percolatorThreshold", "0.01");
 		map.put("-percolatorProteinThreshold", "0.01");
 		map.put("-alpha", "1.8");
@@ -98,6 +99,7 @@ public class PecanParameterParser {
 		final boolean dontRunDecoys;
 		final float percolatorThreshold;
 		final float percolatorProteinThreshold;
+		final boolean usePercolator;
 		final PercolatorVersion percolatorVersionNumber;
 		final int percolatorTrainingSetSize;
 		final float percolatorTrainingSetThreshold;
@@ -274,6 +276,7 @@ public class PecanParameterParser {
 			}
 		}
 
+		usePercolator=ParsingUtils.getBoolean("-usePercolator", parameters, false);
 		minPeptideLength=ParsingUtils.getInteger("-minLength", parameters, 5);
 		maxPeptideLength=ParsingUtils.getInteger("-maxLength", parameters, 100);
 		maxMissedCleavages=ParsingUtils.getInteger("-maxMissedCleavage", parameters, 1);
@@ -338,6 +341,7 @@ public class PecanParameterParser {
 				dontRunDecoys,
 				percolatorThreshold,
 				percolatorProteinThreshold,
+				usePercolator,
 				percolatorVersionNumber,
 				percolatorTrainingSetSize,
 				percolatorTrainingSetThreshold,

@@ -224,12 +224,29 @@ public class EncyclopediaTwoAuxillaryPSMScorer extends EncyclopediaAuxillaryPSMS
 				}
 			}
 		}
-
+		
+		float scribe;
+		if (sumOfSquaredErrors<=0.0f) {
+			scribe=0.0f;
+		} else {
+			// shifted +1 to capture part of the negative range while ensuring a non-negative score
+			scribe=Log.protectedLn(1.0f/sumOfSquaredErrors)+1f;
+		}
+		if (scribe < 0.0f) {
+			scribe = 0.0f;
+		}
+		
 		float xTandem;
-		if (dotProduct==0) {
+		if (numberOfMatchingPeaks==0||dotProduct<=0) {
 			xTandem=0.0f;
 		} else {
-			xTandem=((float)Log.protectedLog10(dotProduct))+Log.logFactorial(numberOfMatchingPeaks); // really log10(X!Tandem score)
+			// really log10(X!Tandem score)
+			// shifted +2 to capture part of the negative range while ensuring a non-negative score
+			xTandem=((float)Log.protectedLog10(dotProduct))+Log.logFactorial(numberOfMatchingPeaks)+2f;
+		}
+
+		if (xTandem < 0.0f) {
+			xTandem = 0.0f;
 		}
 		
 		SparseXCorrSpectrum sparseScan=SparseXCorrCalculator.normalize(spectrum, new Range((float)entry.getPrecursorMZ()-10f, (float)entry.getPrecursorMZ()+10f), false, parameters);
@@ -239,7 +256,7 @@ public class EncyclopediaTwoAuxillaryPSMScorer extends EncyclopediaAuxillaryPSMS
 		SparseXCorrCalculator sparseModel=sparseModelCalculator!=null?sparseModelCalculator:new SparseXCorrCalculator(entry.getPeptideModSeq(), entry.getPrecursorCharge(), parameters);
 		float xCorrModel=sparseModel.score(sparseScan);
 		
-		return new float[] {xTandem, xCorrLib, xCorrModel, dotProduct, contrastAngle, logit, sumOfSquaredErrors, numberOfMatchingPeaks, numberOfMatchingPeaksAboveThreshold, 
+		return new float[] {xTandem, xCorrLib, xCorrModel, dotProduct, contrastAngle, logit, scribe, numberOfMatchingPeaks, numberOfMatchingPeaksAboveThreshold, 
 				averageFragmentDeltaMasses, isotopeDotProduct, averagePPM, percentBlankOverMono, numberPrecursorMatch, Log.protectedLn(sp), 
 				maxLadderLength};
 	
@@ -251,7 +268,7 @@ public class EncyclopediaTwoAuxillaryPSMScorer extends EncyclopediaAuxillaryPSMS
 	}
 
 	public static String[] getScoreNames() {
-		return new String[] {"primary", "xCorrLib", "xCorrModel", "dotProduct", "contrastAngle", "logit", "sumOfSquaredErrors", "numberOfMatchingPeaks", 
+		return new String[] {"primary", "HyperScore", "xCorrLib", "xCorrModel", "dotProduct", "contrastAngle", "logit", "scribe", "numberOfMatchingPeaks", 
 				"numberOfMatchingPeaksAboveThreshold", "averageFragmentDeltaMasses", "isotopeDotProduct", 
 				"averageParentDeltaMass", "percentBlankOverMono", "numberPrecursorMatch", "lnSp", "maxLadderLength", 
 				"evalue", "correlationToGaussian", "correlationToPrecursor", "isIntegratedSignal", "isIntegratedPrecursor", 

@@ -247,6 +247,7 @@ public class ThesaurusParametersPanel extends JPanel implements ParametersPanelI
 				digestionEnzyme,
 				percolatorThresholdValue,
 				percolatorThresholdValue,
+				true,
 				percolator,
 				PercolatorExecutor.DEFAULT_TRAINING_SET_SIZE,
 				PercolatorExecutor.DEFAULT_TRAINING_THRESHOLD,

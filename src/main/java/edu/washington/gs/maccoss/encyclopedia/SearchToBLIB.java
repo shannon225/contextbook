@@ -49,6 +49,9 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.MProphetExecutionData;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.MProphetReiter;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.MProphetResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutionData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
@@ -759,7 +762,7 @@ public class SearchToBLIB {
 		File bigPercolatorDecoyFile=new File(representativeJob.getPercolatorFiles().getInputTSV().getParentFile(), filename+"_concatenated_decoy.txt");
 		File bigPercolatorProteinFile=new File(representativeJob.getPercolatorFiles().getInputTSV().getParentFile(), filename+"_concatenated_protein_results.txt");
 		File bigPercolatorProteinDecoyFile=new File(representativeJob.getPercolatorFiles().getInputTSV().getParentFile(), filename+"_concatenated_protein_decoy.txt");
-		PercolatorExecutionData bigPercolatorFiles=new PercolatorExecutionData(bigFeatureFile, representativeJob.getPercolatorFiles().getFastaFile(), bigPercolatorFile, bigPercolatorDecoyFile, bigPercolatorProteinFile, bigPercolatorProteinDecoyFile, parameters, !integratePrecursors);
+		PercolatorExecutionData bigPercolatorFiles=new PercolatorExecutionData(bigFeatureFile, representativeJob.getPercolatorFiles().getFastaFile(), bigPercolatorFile, bigPercolatorDecoyFile, bigPercolatorProteinFile, bigPercolatorProteinDecoyFile, parameters, !anyDDA);
 
 		final float threshold=parameters.getEffectivePercolatorThreshold();
 		try {
@@ -818,7 +821,17 @@ public class SearchToBLIB {
 				bigPercolatorFiles.getModelFile().delete();
 			}
 			int modelNumber = Integer.MAX_VALUE; // always use the last model (if reusing a model)
-			passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), bigPercolatorFiles, threshold, parameters.getAAConstants(), modelNumber);
+			
+
+			if (parameters.isUsePercolator()) {
+				Logger.logLine("Running Percolator ("+(parameters.getPercolatorThreshold()*100f)+"%)");
+				passingPeptides=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), bigPercolatorFiles, threshold, parameters.getAAConstants(), modelNumber);
+			} else {
+				Logger.logLine("Running mProphet ("+(parameters.getPercolatorTestThreshold()*100f)+"%)");
+				MProphetExecutionData mprophetData=new MProphetExecutionData(bigPercolatorFiles);
+				MProphetResult result=MProphetReiter.executeMProphetTSV(mprophetData, threshold, parameters.getAAConstants(), 1);
+				passingPeptides=new Pair<ArrayList<PercolatorPeptide>, Float>(result.getPassingPeptides(), result.getPi0());
+			}
 		}
 		
 		Pair<Pair<ArrayList<PercolatorPeptide>, Float>, Boolean> percolatorDataPair=new Pair<>(passingPeptides, runningPercolator);

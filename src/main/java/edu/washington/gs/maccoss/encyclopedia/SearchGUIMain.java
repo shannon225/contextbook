@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.Taskbar;
 import java.awt.Toolkit;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -86,18 +87,10 @@ public class SearchGUIMain {
 			System.setProperty("com.apple.mrj.application.apple.menu.about.name", shortName);
 			System.setProperty("apple.laf.useScreenMenuBar", "true");
 			try {
-				// Replace: import com.apple.eawt.Application
-				String className="com.apple.eawt.Application";
-				Class<?> cls=Class.forName(className);
 
-				// Replace: Application application=Application.getApplication();
-				
-				Object application=cls.newInstance().getClass().getMethod("getApplication").invoke(null);
-				
+				Taskbar taskbar=Taskbar.getTaskbar();
+				taskbar.setIconImage(image.getImage());
 
-				// Replace: application.setDockIconImage(image);
-				application.getClass().getMethod("setDockIconImage", java.awt.Image.class).invoke(application, image.getImage());
-				
 			} catch (Exception e) {
 				Logger.errorLine("Error setting Mac-specific properties");
 				Logger.errorException(e);

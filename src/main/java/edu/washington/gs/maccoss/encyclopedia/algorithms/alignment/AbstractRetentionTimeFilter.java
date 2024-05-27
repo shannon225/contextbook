@@ -243,7 +243,15 @@ public class AbstractRetentionTimeFilter implements RetentionTimeAlignmentInterf
 
 	public float getProbability(float actualRT, float delta) {
 		if (model.isPresent()) {
-			return model.get().getProbability(actualRT, delta);
+			float probability = model.get().getProbability(actualRT, delta);
+			if (Float.isNaN(probability)) {
+				if (delta==0.0f) {
+					return 1f;
+				} else {
+					return 0f;
+				}
+			}
+			return probability;
 		} else {
 			return 1f;
 		}

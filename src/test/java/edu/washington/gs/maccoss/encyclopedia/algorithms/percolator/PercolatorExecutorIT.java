@@ -145,6 +145,7 @@ public class PercolatorExecutorIT {
 						params.getAAConstants(), params.getFragType(), params.getPrecursorTolerance(), params.getPrecursorOffsetPPM(),
 						params.getPrecursorIsolationMargin(), params.getFragmentTolerance(), params.getFragmentOffsetPPM(),
 						params.getLibraryFragmentTolerance(), params.getEnzyme(), params.getPercolatorThreshold(), params.getPercolatorProteinThreshold(),
+						params.isUsePercolator(),
 						params.getPercolatorVersionNumber(), params.getPercolatorTrainingSetSize(), params.getPercolatorTrainingSetThreshold(),
 						params.getPercolatorTrainingIterations(), params.getDataAcquisitionType(), params.getNumberOfThreadsUsed(),
 						params.getExpectedPeakWidth(), params.getTargetWindowCenter(), params.getPrecursorWindowSize(),

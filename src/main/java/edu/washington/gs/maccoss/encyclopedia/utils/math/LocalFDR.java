@@ -5,6 +5,7 @@ import java.util.Arrays;
 import org.apache.commons.math3.analysis.interpolation.SplineInterpolator;
 import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
 
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.KDE;
 import gnu.trove.list.array.TDoubleArrayList;
 
@@ -88,8 +89,14 @@ public class LocalFDR {
         for (int i = 0; i < n; i++) {
             x[i] = Math.log((pvalues[i] + smallestMeaningfulP) / (1 - pvalues[i] + smallestMeaningfulP));
         }
-        
-        KDE density=new KDE(x, 1.0, 100);
+        KDE density;
+        try {
+        	density=new KDE(x, 1.0, 100);
+        } catch (Exception e) {
+        	Logger.errorLine("ERRORED WITH "+pvalues.length+" VALUES: "+General.toString(pvalues));
+        	density=null; // FIXME
+        	throw e;
+        }
         
         for (int i = 0; i < n; i++) {
             double dx = Math.exp(x[i]) / Math.pow(1 + Math.exp(x[i]), 2);

@@ -486,11 +486,11 @@ public class EncyclopediaTwo {
 		SearchParameters parameters=job.getParameters();
 		
 		try {
-			progress.update("Running mProphet ("+(parameters.getPercolatorTestThreshold()*100f)+"%)");
-			Logger.logLine("Running mProphet ("+(parameters.getPercolatorTestThreshold()*100f)+"%)");
+			progress.update("Running mProphet ("+(parameters.getPercolatorThreshold()*100f)+"%)");
+			Logger.logLine("Running mProphet ("+(parameters.getPercolatorThreshold()*100f)+"%)");
 
 			MProphetExecutionData mprophetData=new MProphetExecutionData(job.getPercolatorFiles());
-			MProphetResult result=MProphetReiter.executeMProphetTSV(mprophetData, job.getParameters().getPercolatorTestThreshold(), job.getParameters().getAAConstants(), 1);
+			MProphetResult result=MProphetReiter.executeMProphetTSV(mprophetData, job.getParameters().getPercolatorThreshold(), job.getParameters().getAAConstants(), 1);
 			ArrayList<PercolatorPeptide> passingPeptides=result.getPassingPeptides();
 			Logger.logLine("First pass: "+passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100f)+"% FDR");
 			
@@ -499,30 +499,6 @@ public class EncyclopediaTwo {
 			TargeteDecoyPSMFilter filter=getRescoringModel(passingPeptides, decoyPeptides, data, job, false);
 			
 			return new Pair<MProphetResult, TargeteDecoyPSMFilter>(result, filter);
-		} catch (EncyclopediaException e) {
-			Logger.errorLine("Fatal Error: "+e.getMessage());
-			Logger.errorLine("Sorry, not feeling well today! Try again tomorrow!");
-			progress.update("Fatal Error: "+e.getMessage(), -1.0f);
-			throw e;
-		}
-	}
-
-	public static Pair<ArrayList<PercolatorPeptide>, TargeteDecoyPSMFilter> percolatePeptides(ProgressIndicator progress, EncyclopediaTwoJobData job, StripeFileInterface stripefile, SaveResultsConsumer saveResultsConsumer) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
-		SearchParameters parameters=job.getParameters();
-		
-		try {
-			progress.update("Running Percolator ("+(parameters.getPercolatorThreshold()*100f)+"%)");
-			
-			Pair<ArrayList<PercolatorPeptide>, Float> pair=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), job.getPercolatorFiles(), parameters.getEffectivePercolatorThreshold(), parameters.getAAConstants(), 1);
-			ArrayList<PercolatorPeptide> passingPeptides=pair.x;
-			Logger.logLine("First pass: "+passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100f)+"% FDR");
-
-			ArrayList<PercolatorPeptide> decoyPeptides = getDecoyPeptides(job, parameters, passingPeptides.size());
-			
-			ArrayList<AbstractScoringResult> data=saveResultsConsumer.getSavedResults();
-			TargeteDecoyPSMFilter filter=getRescoringModel(passingPeptides, decoyPeptides, data, job, false);
-			
-			return new Pair<ArrayList<PercolatorPeptide>, TargeteDecoyPSMFilter>(passingPeptides, filter);
 		} catch (EncyclopediaException e) {
 			Logger.errorLine("Fatal Error: "+e.getMessage());
 			Logger.errorLine("Sorry, not feeling well today! Try again tomorrow!");
@@ -548,12 +524,23 @@ public class EncyclopediaTwo {
 			finalWriteConsumerThread.join();
 			rescoredResultsConsumer.close();
 	
-			progress.update("Re-running Percolator ("+(parameters.getPercolatorThreshold()*100f)+"%)");
-			Pair<ArrayList<PercolatorPeptide>, Float> pair=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), job.getPercolatorFiles(), parameters.getEffectivePercolatorThreshold(), parameters.getAAConstants(), 2);
-
-			ArrayList<PercolatorPeptide> passingPeptides=pair.x;
+			
+			ArrayList<PercolatorPeptide> passingPeptides;
+			if (parameters.isUsePercolator()) {
+				progress.update("Running Percolator ("+(parameters.getPercolatorThreshold()*100f)+"%)");
+				Logger.logLine("Running Percolator ("+(parameters.getPercolatorThreshold()*100f)+"%)");
+				Pair<ArrayList<PercolatorPeptide>, Float> pair=PercolatorExecutor.executePercolatorTSV(parameters.getPercolatorVersionNumber(), job.getPercolatorFiles(), parameters.getEffectivePercolatorThreshold(), parameters.getAAConstants(), 2);
+				passingPeptides=pair.x;
+			} else {
+				progress.update("Running mProphet ("+(parameters.getPercolatorThreshold()*100f)+"%)");
+				Logger.logLine("Running mProphet ("+(parameters.getPercolatorThreshold()*100f)+"%)");
+	
+				MProphetExecutionData mprophetData=new MProphetExecutionData(job.getPercolatorFiles());
+				MProphetResult result=MProphetReiter.executeMProphetTSV(mprophetData, job.getParameters().getPercolatorThreshold(), job.getParameters().getAAConstants(), 1);
+				passingPeptides=result.getPassingPeptides();
+			}
+			
 			ArrayList<PercolatorPeptide> decoyPeptides = getDecoyPeptides(job, parameters, passingPeptides.size());
-
 			filter=getRescoringModel(passingPeptides, decoyPeptides, data, job, true);
 			
 			progress.update(passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);

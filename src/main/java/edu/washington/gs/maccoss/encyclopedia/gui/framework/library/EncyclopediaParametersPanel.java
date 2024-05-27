@@ -238,6 +238,7 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 				digestionEnzyme,
 				0.01f,
 				0.01f,
+				true,
 				percolator,
 				PercolatorExecutor.DEFAULT_TRAINING_SET_SIZE,
 				PercolatorExecutor.DEFAULT_TRAINING_THRESHOLD,

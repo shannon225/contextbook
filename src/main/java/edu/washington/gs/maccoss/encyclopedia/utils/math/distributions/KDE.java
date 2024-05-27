@@ -73,7 +73,7 @@ public class KDE implements Distribution {
 			if (max<localMax) max=localMax;
 		}
 		range=new Range(min, max);
-		double binsize=(max-min)/numberOfBins;
+		double binsize=Math.max(1e-4, (max-min)/numberOfBins); // force increasing
 
 		histogram=new double[numberOfBins];
 		double[] binValues=new double[histogram.length];

@@ -43,6 +43,7 @@ public class SearchParameterParser {
 		map.put("-precursorIsolationMargin", "0");
 		map.put("-precursorWindowSize", "-1");
 		map.put("-enzyme", "trypsin");
+		map.put("-usePercolator", "false");
 		map.put("-percolatorThreshold", "0.01");
 		map.put("-percolatorProteinThreshold", "0.01");
 		map.put("-percolatorVersion", PercolatorExecutor.DEFAULT_VERSION_NUMBER.toString());
@@ -126,6 +127,7 @@ public class SearchParameterParser {
 		final DigestionEnzyme enzyme;
 		final float percolatorThreshold;
 		final float percolatorProteinThreshold;
+		final boolean usePercolator;
 		final PercolatorVersion percolatorVersionNumber;
 		final int percolatorTrainingSetSize;
 		final float percolatorTrainingSetThreshold;
@@ -303,7 +305,7 @@ public class SearchParameterParser {
 			}
 		}
 		
-
+		usePercolator=ParsingUtils.getBoolean("-usePercolator", parameters, false);
 		percolatorThreshold=ParsingUtils.getFloat("-percolatorThreshold", parameters, 0.01f);
 		percolatorProteinThreshold=ParsingUtils.getFloat("-percolatorProteinThreshold", parameters, 0.01f);
 		percolatorVersionNumber=PercolatorVersion.getVersion(parameters.get("-percolatorVersion"));
@@ -397,6 +399,7 @@ public class SearchParameterParser {
 				enzyme,
 				percolatorThreshold,
 				percolatorProteinThreshold,
+				usePercolator,
 				percolatorVersionNumber,
 				percolatorTrainingSetSize,
 				percolatorTrainingSetThreshold,

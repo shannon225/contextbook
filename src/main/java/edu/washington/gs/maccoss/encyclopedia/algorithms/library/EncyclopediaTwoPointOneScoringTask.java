@@ -314,7 +314,7 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 						//correlationToPlusOne=Correlation.getPearsons(precursorPlusOne, median);
 					}
 					
-					auxScoreArray=General.concatenate(auxScoreArray, new float[] {evalue, correlationToGaussian, 
+					auxScoreArray=General.concatenate(new float[] {score}, auxScoreArray, new float[] {evalue, correlationToGaussian, 
 							correlationToPrecursor, isIntegratedSignal, isIntegratedPrecursor,
 							numPeaksWithGoodCorrelation});
 					
@@ -353,6 +353,7 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 							}
 							score=optScorer.get().getX().getLDA().getScore(ldaFeatures);
 						}
+						auxScoreArray[0]=score; // update score with LDA
 					}
 					
 					result.addStripe(score, auxScoreArray, deltaPrecursorMass, deltaFragmentMass, stripe);
@@ -446,7 +447,6 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 		if (xTandem < 0.0f) {
 			xTandem = 0.0f;
 		}
-
 
 		float scribe;
 		if (sumOfSquaredErrors<=0.0f) {

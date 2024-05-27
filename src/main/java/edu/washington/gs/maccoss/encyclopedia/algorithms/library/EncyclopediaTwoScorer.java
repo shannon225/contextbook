@@ -22,8 +22,12 @@ public class EncyclopediaTwoScorer implements EncyclopediaScorer {
 		auxScorer=new EncyclopediaTwoAuxillaryPSMScorer(parameters);
 	}
 
+	/*
+	 * what score is used to combine multiple samples. Higher XCorr also means lower background, 
+	 * making it a nice score to judge which version of a peptide is best suited for further analysis
+	 */
 	public static String getPrimaryScoreName() {
-		return "primary";
+		return "xCorrModel";
 	}
 
 	@Override

@@ -162,19 +162,8 @@ public class SearchPanel extends JPanel {
 			map=SearchParameterParser.getDefaultParameters();
 			params=SearchParameterParser.parseParameters(map);
 		}
-		
-		if ((ProgramType.Global==program||ProgramType.EncyclopeDIA==program)&&enableAdvancedOptions) {
-			try {
-				EncyclopediaTwoParametersPanel encyclopedia=new EncyclopediaTwoParametersPanel(this);
-				
-				encyclopedia.setParameters(params, map.get(EncyclopediaTwo.PREALIGNMENT_LIBRARY_TAG), map.get(EncyclopediaTwo.TARGET_LIBRARY_TAG), map.get(EncyclopediaTwo.BACKGROUND_FASTA_TAG));
-				engineSpecificParameters.addTab(encyclopedia.getProgramName(), encyclopedia.getSmallImage(), encyclopedia, encyclopedia.getProgramShortDescription());
-			} catch (Exception e) {
-				Logger.errorLine("Unexpected error reading saved parameters; using default parameters.");
-				Logger.errorException(e);
-			}
-		}
-		if (ProgramType.Global==program||ProgramType.EncyclopeDIA==program) {
+
+		if ((ProgramType.Global==program||ProgramType.EncyclopeDIA==program)&&false) {
 			try {
 				EncyclopediaParametersPanel encyclopedia;
 				switch (Networking.isOffendingAddress()) {
@@ -192,6 +181,17 @@ public class SearchPanel extends JPanel {
 						break;
 				}
 				encyclopedia.setParameters(params, map.get(Encyclopedia.TARGET_LIBRARY_TAG), map.get(Encyclopedia.BACKGROUND_FASTA_TAG));
+				engineSpecificParameters.addTab(encyclopedia.getProgramName(), encyclopedia.getSmallImage(), encyclopedia, encyclopedia.getProgramShortDescription());
+			} catch (Exception e) {
+				Logger.errorLine("Unexpected error reading saved parameters; using default parameters.");
+				Logger.errorException(e);
+			}
+		}
+		if ((ProgramType.Global==program||ProgramType.EncyclopeDIA==program)) {
+			try {
+				EncyclopediaTwoParametersPanel encyclopedia=new EncyclopediaTwoParametersPanel(this);
+				
+				encyclopedia.setParameters(params, map.get(EncyclopediaTwo.PREALIGNMENT_LIBRARY_TAG), map.get(EncyclopediaTwo.TARGET_LIBRARY_TAG), map.get(EncyclopediaTwo.BACKGROUND_FASTA_TAG));
 				engineSpecificParameters.addTab(encyclopedia.getProgramName(), encyclopedia.getSmallImage(), encyclopedia, encyclopedia.getProgramShortDescription());
 			} catch (Exception e) {
 				Logger.errorLine("Unexpected error reading saved parameters; using default parameters.");

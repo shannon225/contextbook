@@ -50,6 +50,7 @@ public class SearchParameters implements XMLObject {
 	protected final DigestionEnzyme enzyme;
 	protected final float percolatorThreshold;
 	protected final float percolatorProteinThreshold;
+	protected final boolean usePercolator;
 	protected final PercolatorVersion percolatorVersionNumber;
 	protected final int percolatorTrainingSetSize;
 	protected final float percolatorTrainingSetThreshold;
@@ -93,7 +94,7 @@ public class SearchParameters implements XMLObject {
 	}
 
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, double precursorOffsetPPM, double precursorIsolationMargin, MassTolerance fragmentTolerance, double fragmentOffsetPPM, MassTolerance libraryFragmentTolerance, DigestionEnzyme enzyme,
-			float percolatorThreshold, float percolatorProteinThreshold, PercolatorVersion percolatorVersionNumber, int percolatorTrainingSetSize, float percolatorTrainingSetThreshold,
+			float percolatorThreshold, float percolatorProteinThreshold, boolean usePercolator, PercolatorVersion percolatorVersionNumber, int percolatorTrainingSetSize, float percolatorTrainingSetThreshold,
 			int percolatorTrainingIterations, DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, 
 			int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, int topNTargetsUsed, float minIntensity, float minIntensityNumIons, Optional<PeptideModification> localizingModification, ScoringBreadthType CASiLBreadthType, 
 			float getNumberOfExtraDecoyLibrariesSearched, boolean quantifyAcrossSamples, boolean verifyModificationIons, float rtWindowInMin, int minNumIntegratedRTPoints, boolean filterPeaklists, boolean doNotUseGlobalFDR, 
@@ -109,6 +110,7 @@ public class SearchParameters implements XMLObject {
 		this.enzyme=enzyme;
 		this.percolatorThreshold=percolatorThreshold;
 		this.percolatorProteinThreshold=percolatorProteinThreshold;
+		this.usePercolator=usePercolator;
 		this.percolatorVersionNumber=percolatorVersionNumber==null?PercolatorVersion.DEFAULT_VERSION:percolatorVersionNumber;
 		this.percolatorTrainingSetSize = percolatorTrainingSetSize;
 		this.percolatorTrainingSetThreshold = percolatorTrainingSetThreshold;
@@ -214,6 +216,7 @@ public class SearchParameters implements XMLObject {
 		sb.append(" -poffset "+precursorOffsetPPM+"\n");
 		sb.append(" -foffset "+fragmentOffsetPPM+"\n");
 		sb.append(" -enzyme "+enzyme.getName()+"\n");
+		sb.append(" -usePercolator "+usePercolator+"\n");
 		sb.append(" -percolatorThreshold "+percolatorThreshold+"\n");
 		sb.append(" -percolatorVersion "+percolatorVersionNumber+"\n");
 		sb.append(" -percolatorTrainingIterations "+percolatorTrainingIterations+"\n");
@@ -267,6 +270,7 @@ public class SearchParameters implements XMLObject {
 		map.put("-poffset", precursorOffsetPPM+"");
 		map.put("-foffset", fragmentOffsetPPM+"");
 		map.put("-enzyme", enzyme.getName());
+		map.put("-usePercolator", usePercolator+"");
 		map.put("-percolatorThreshold", percolatorThreshold+"");
 		map.put("-percolatorVersion", percolatorVersionNumber+"");
 		map.put("-percolatorVersionNumber", percolatorVersionNumber.getMajorVersion()+"");
@@ -426,6 +430,10 @@ public class SearchParameters implements XMLObject {
 	
 	public PercolatorVersion getPercolatorVersionNumber() {
 		return percolatorVersionNumber;
+	}
+	
+	public boolean isUsePercolator() {
+		return usePercolator;
 	}
 
 	/**
