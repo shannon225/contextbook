@@ -109,6 +109,7 @@ public class LinearDiscriminantAnalysis implements ScoreCombiner {
 			meanDiff[i]=meanPos[i]-meanNeg[i];
 		}
 		
+		
 		// normalize by the average of the columns in both matrices 
 		double[][] meanCorrectedPos=MatrixMath.subtract(posData, meanAll);
 		double[][] meanCorrectedNeg=MatrixMath.subtract(negData, meanAll);
@@ -132,6 +133,9 @@ public class LinearDiscriminantAnalysis implements ScoreCombiner {
 		double[][] inversePooledCovar=MatrixMath.invert(pooledCovar);
 		
 		double[] coefficients=MatrixMath.multiply(inversePooledCovar, meanDiff);
+		if (General.checkNaN(coefficients)) {
+			System.out.println();
+		}
 		double zeroPoint=MatrixMath.multiply(coefficients, meanSum);
 		double constant=-Math.log(negPrior/posPrior)-0.5*zeroPoint;
 		

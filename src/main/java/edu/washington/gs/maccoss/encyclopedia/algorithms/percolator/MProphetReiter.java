@@ -14,6 +14,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.LinearDiscriminantAnalysis;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
@@ -100,7 +101,12 @@ public class MProphetReiter implements Runnable {
 					break;
 				}
 				best=data.size();
-				lda=LinearDiscriminantAnalysis.buildModel(MProphetDataset.getScoredData(data), trainingDataset.getDecoyData());
+				LinearDiscriminantAnalysis model=LinearDiscriminantAnalysis.buildModel(MProphetDataset.getScoredData(data), trainingDataset.getDecoyData());
+				if (!General.checkNaN(model.getCoefficients())) {
+					// if we get NaNs, then fall back on wherever we were previously
+					lda=model;
+					break;
+				}
 			}
 			
 			if (lda==null) {
@@ -127,6 +133,8 @@ public class MProphetReiter implements Runnable {
 		}
 		
 		Logger.logLine("Final model: "+passingCount+"/"+dataset.getTargetData().size()+" passing, pi0:"+finalData.y);
+		
+		// get decoys for logging
 		Pair<ArrayList<ScoredMProphetData>, Float> finalDecoyData=dataset.getPassingTargets(Optional.ofNullable(averageModel), Float.MAX_VALUE, true);
 		
 		for (int i = 0; i < averageModel.getCoefficients().length; i++) {
