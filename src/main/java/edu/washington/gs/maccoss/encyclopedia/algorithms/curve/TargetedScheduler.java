@@ -3544,9 +3544,24 @@ public class TargetedScheduler {
 			File rtAlignFile, File targetFastaFile, HashSet<String> keyAccessionNumbers, 
 			HashSet<String> inclusionPeptideModSeqList, HashSet<String> exclusionPeptideModSeqList, 
 			AbstractDilutionCurveFittingParameters fittingParams) throws IOException, SQLException, DataFormatException, FileNotFoundException, UnsupportedEncodingException {
+
+		ArrayList<FastaEntryInterface> targetProteins=FastaReader.readFasta(targetFastaFile, params);
+		HashSet<String> targetAccessionNumbers=new HashSet<>();
+		for (FastaEntryInterface entry : targetProteins) {
+			targetAccessionNumbers.add(entry.getAccession());
+		}
+		
+		generateAssay(params, outputDirectory, libraryFile, rtAlignFile, targetAccessionNumbers, keyAccessionNumbers, inclusionPeptideModSeqList, exclusionPeptideModSeqList, fittingParams);
+	}
+	
+	public static void generateAssay(SearchParameters params, final File outputDirectory, File libraryFile, 
+			File rtAlignFile, HashSet<String> targetAccessionNumbers, HashSet<String> keyAccessionNumbers, 
+			HashSet<String> inclusionPeptideModSeqList, HashSet<String> exclusionPeptideModSeqList, 
+			AbstractDilutionCurveFittingParameters fittingParams) throws IOException, SQLException, DataFormatException, FileNotFoundException, UnsupportedEncodingException {
 		final File exportLibraryFile=new File(outputDirectory, "target_library.dlib");
 		final File libraryAlignmentFile=new File(outputDirectory, "library_rt_alignment.pdf");
 
+		targetAccessionNumbers.removeAll(keyAccessionNumbers);
 		outputDirectory.mkdirs();
 
 		final HashMap<String, LibraryEntry> libraryEntryByPeptideModSeq=DilutionCurveFitter.getLibraryData(params, libraryFile);
@@ -3584,13 +3599,6 @@ public class TargetedScheduler {
 		Range rtInSecRange=new Range(minRTInSec, maxRTInSec);
 		//rtInSecRange=new Range(12*60f, 95*60f);
 		
-		ArrayList<FastaEntryInterface> targetProteins=FastaReader.readFasta(targetFastaFile, params);
-		HashSet<String> targetAccessionNumbers=new HashSet<>();
-		for (FastaEntryInterface entry : targetProteins) {
-			targetAccessionNumbers.add(entry.getAccession());
-		}
-		targetAccessionNumbers.removeAll(keyAccessionNumbers);
-
 		ArrayList<ScoredEntry> keyPreferentialTargetEntries=new ArrayList<ScoredEntry>();
 		ArrayList<ScoredEntry> keyTargetEntries=new ArrayList<ScoredEntry>();
 		ArrayList<ScoredEntry> preferentialTargetEntries=new ArrayList<ScoredEntry>();

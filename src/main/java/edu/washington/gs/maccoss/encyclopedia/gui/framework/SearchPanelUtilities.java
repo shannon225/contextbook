@@ -78,6 +78,7 @@ import edu.washington.gs.maccoss.encyclopedia.filewriters.PrositCSVWriter;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.StripeFileMerger;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.StripeFileTrimmer;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.curves.DilutionCurveFitterDialog;
+import edu.washington.gs.maccoss.encyclopedia.gui.dia.curves.TargetedSchedulerDialog;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.AboutDialog;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserList;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
@@ -1955,6 +1956,10 @@ public class SearchPanelUtilities {
 	}
 	
 	public static void launchDIAtoPRMDialog(Component root) {
+		TargetedSchedulerDialog.launchTargetedSchedulerDialog(root);
+	}
+	
+	public static void launchDIAtoPRMWithCurvesDialog(Component root) {
 		DilutionCurveFitterDialog.launchDilutionCurveFitterDialog(root);
 	}
 }

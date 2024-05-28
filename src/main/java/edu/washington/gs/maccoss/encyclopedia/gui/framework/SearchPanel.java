@@ -706,17 +706,14 @@ public class SearchPanel extends JPanel {
 			dataMenu.add(subsetDIA);
 		}
 
-		JMenuItem dilutonCurveFitterItem=new JMenuItem("Create PRM assay from DIA titration", processingIcon);
+		JMenuItem dilutonCurveFitterItem=new JMenuItem("Create PRM assay from DIA", processingIcon);
 		dilutonCurveFitterItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				SearchPanelUtilities.launchDIAtoPRMDialog(SearchPanel.this);
 			}
 		});
-		if (enableAdvancedOptions) {
-			dilutonCurveFitterItem.setText("HIDDEN: "+dilutonCurveFitterItem.getText());
-			dataMenu.add(dilutonCurveFitterItem);
-		}
+		dataMenu.add(dilutonCurveFitterItem);
 
 		JMenuItem toggleScoringSystemItem=new JMenuItem("Toggle EncyclopeDIA Scoring System", libraryBrowserIcon);
 		toggleScoringSystemItem.addActionListener(new ActionListener() {
