@@ -83,6 +83,10 @@ public class MProphetFeatureReader {
 					// skip
 				} else if ("midTime".equals(columnNames[i])) {
 					// skip
+				} else if ("numberOfMatchingPeaksAboveThreshold".equals(columnNames[i])) {
+					// skip
+				} else if ("primary".equals(columnNames[i])) {
+					// Primary score can get overloaded, so drop!
 				} else {
 					featureNames.add(columnNames[i]);
 					isFeature[i]=true;
@@ -93,8 +97,7 @@ public class MProphetFeatureReader {
 			
 			String sortingScoreString=null;
 			
-			// Primary score can get overloaded, so prefer Scribe or xCorr instead!
-			if (StringUtils.contains(columnNames, "primary")) sortingScoreString="primary";  
+			// prefer last in list (xCorrModel)
 			if (StringUtils.contains(columnNames, "peakZScore")) sortingScoreString="peakZScore";  
 			if (StringUtils.contains(columnNames, "peakBGScore")) sortingScoreString="peakBGScore";  
 			if (StringUtils.contains(columnNames, "xTandem")) sortingScoreString="xTandem";  

@@ -15,8 +15,10 @@ import org.junit.AssumptionViolatedException;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
@@ -27,6 +29,22 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class PercolatorExecutorIT {
+	public static void main(String[] args) throws Exception {
+		//File featureFile=new File("/Volumes/MacOnlySSD/day8/2022_12_05_ID5_day2_tcells_16mzst_DIA_wtrap_50cm_01.mzML.features.txt");
+		//File featureFile=new File("/Users/searleb/Documents/encyclopedia/small_file/bcs_2020jan16_600to603_hela_clib.dia.features.txt");
+		//File featureFile=new File("/Users/searleb/Documents/encyclopedia/small_file/bcs_2020jan16_hela_clib_3.dia.features.txt");
+		//File featureFile=new File("/Users/searleb/Documents/encyclopedia/swath_gold_standard_demo_raw/raw/L120442_dilution_01.dia.features.txt");
+		
+		File featureFile=new File("/Users/searleb/Documents/encyclopedia/thorium/sample_specific_libraries/20240408_P5_Neo_ES75150_500ng_IL2A_GPFDIA_60min_01.dia.features.txt");
+		//File featureFile=new File("/Users/searleb/Documents/encyclopedia/thorium/sample_specific_libraries/20240408_P5_Neo_ES75150_500ng_IL2A_GPFDIA_60min_02.dia.features.txt");
+		//File featureFile=new File("/Users/searleb/Documents/encyclopedia/thorium/sample_specific_libraries/20240408_P5_Neo_ES75150_500ng_IL2A_GPFDIA_60min_03.dia.features.txt");
+		//File featureFile=new File("/Users/searleb/Documents/encyclopedia/thorium/sample_specific_libraries/20240408_P5_Neo_ES75150_500ng_IL2A_GPFDIA_60min_04.dia.features.txt");
+		//File featureFile=new File("/Users/searleb/Documents/encyclopedia/thorium/sample_specific_libraries/20240408_P5_Neo_ES75150_500ng_IL2A_GPFDIA_60min_05.dia.features.txt");
+		//File featureFile=new File("/Users/searleb/Documents/encyclopedia/thorium/sample_specific_libraries/20240408_P5_Neo_ES75150_500ng_IL2A_GPFDIA_60min_06.dia.features.txt");
+		File fastaFile=new File(featureFile.getParent(), "uniprot-9606.fasta");
+		processPercolator(PercolatorVersion.DEFAULT_VERSION, SearchParameterParser.getDefaultParametersObject(), featureFile, fastaFile);
+	}
+	
 	@Test
 	public void testPercolatorExecutorV2() throws Exception {
 		doPercolatorTest(PercolatorVersion.v2p10);
@@ -209,6 +227,12 @@ public class PercolatorExecutorIT {
 		fastaFile.deleteOnExit();
 		Files.copy(is, fastaFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
+		return processPercolator(percolatorVersion, parameters, featureFile, fastaFile);
+	}
+
+	private static PercolatorExecutionData processPercolator(PercolatorVersion percolatorVersion, SearchParameters parameters,
+			File featureFile, File fastaFile)
+			throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
 		PercolatorExecutionData percolatorFiles=getPercolatorFiles(featureFile, fastaFile, parameters);
 
 		final AminoAcidConstants aaConstants = new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());

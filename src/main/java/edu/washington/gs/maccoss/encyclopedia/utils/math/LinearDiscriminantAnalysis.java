@@ -2,10 +2,14 @@ package edu.washington.gs.maccoss.encyclopedia.utils.math;
 
 import java.util.ArrayList;
 
+import org.apache.commons.math3.linear.LUDecomposition;
+import org.apache.commons.math3.linear.MatrixUtils;
+import org.apache.commons.math3.linear.RealMatrix;
+
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 
-public class LinearDiscriminantAnalysis implements ScoreCombiner {
+public class LinearDiscriminantAnalysis implements ScoreCombiner, Comparable<LinearDiscriminantAnalysis> {
 	private final double[] coefficients;
 	private final double constant;
 	
@@ -13,6 +17,13 @@ public class LinearDiscriminantAnalysis implements ScoreCombiner {
 	public LinearDiscriminantAnalysis(double[] coefficients, double constant) {
 		this.coefficients=coefficients;
 		this.constant=constant;
+	}
+	
+	@Override
+	public int compareTo(LinearDiscriminantAnalysis o) {
+		if (o==null) return 1;
+		// LDAs aren't directly comparable, so this is just to maintain consistent sort order!
+		return Double.compare(General.sum(coefficients), General.sum(o.coefficients));
 	}
 	
 	public static LinearDiscriminantAnalysis average(ArrayList<LinearDiscriminantAnalysis> ldas) {
@@ -124,8 +135,12 @@ public class LinearDiscriminantAnalysis implements ScoreCombiner {
 			pooledCovar[i]=new double[covarPos[i].length];
 			for (int j=0; j<pooledCovar[i].length; j++) {
 				pooledCovar[i][j]=covarPos[i][j]*posPrior+covarNeg[i][j]*negPrior;
+				if (!Double.isFinite(pooledCovar[i][j])) {
+					System.out.println(pooledCovar[i][j]+" = "+covarPos[i][j]+"*"+posPrior+" + "+covarNeg[i][j]+"*"+negPrior);
+				}
 			}
 		}
+		double[][] pooledCovarSaved=MatrixMath.multiply(pooledCovar, 1.0);
 		
 		// The inverse covariance is a measure of precision, while covariance is a measure of dispersion. 
 		// Increased dispersion occurs when values are farther apart and the more they co-vary with other 
@@ -133,9 +148,7 @@ public class LinearDiscriminantAnalysis implements ScoreCombiner {
 		double[][] inversePooledCovar=MatrixMath.invert(pooledCovar);
 		
 		double[] coefficients=MatrixMath.multiply(inversePooledCovar, meanDiff);
-		if (General.checkNaN(coefficients)) {
-			System.out.println();
-		}
+		
 		double zeroPoint=MatrixMath.multiply(coefficients, meanSum);
 		double constant=-Math.log(negPrior/posPrior)-0.5*zeroPoint;
 		

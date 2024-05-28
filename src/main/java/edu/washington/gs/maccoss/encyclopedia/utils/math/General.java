@@ -33,6 +33,15 @@ public class General {
 		return new String(ca);
 	}
 	
+	public static boolean checkNaN(double[][] values) {
+		for (int i = 0; i < values.length; i++) {
+			for (int j = 0; j < values[i].length; j++) {
+				if (Double.isNaN(values[i][j])) return true;
+			}
+		}
+		return false;
+	}
+	
 	public static boolean checkNaN(double[] values) {
 		for (int i = 0; i < values.length; i++) {
 			if (Double.isNaN(values[i])) return true;
@@ -43,6 +52,13 @@ public class General {
 	public static boolean checkNaN(float[] values) {
 		for (int i = 0; i < values.length; i++) {
 			if (Float.isNaN(values[i])) return true;
+		}
+		return false;
+	}
+	
+	public static boolean checkFinite(float[] values) {
+		for (int i = 0; i < values.length; i++) {
+			if (Float.isFinite(values[i])) return true;
 		}
 		return false;
 	}

@@ -6,8 +6,10 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
@@ -17,6 +19,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.LinearDiscriminantAnalysis;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
@@ -58,8 +61,9 @@ public class MProphetReiter implements Runnable {
 
 	private MProphetResult calculateProbabilities(MProphetDataset dataset) throws EncyclopediaException {
 		int randomSeed=RandomGenerator.randomInt(1);
-		int iterationCount = 50;
-		int numIterationsPerCalculation = 10;
+		int iterationCount=50;
+		int maxKeptModels=iterationCount/2;
+		int numIterationsPerCalculation=10;
 		
 		TObjectDoubleHashMap<String> seedCoefficients=new TObjectDoubleHashMap<String>();
 		seedCoefficients.put("HyperScore", 0.6);
@@ -80,7 +84,7 @@ public class MProphetReiter implements Runnable {
 		}
 		LinearDiscriminantAnalysis seedModel=new LinearDiscriminantAnalysis(coefficients, 0.0);
 		
-		ArrayList<LinearDiscriminantAnalysis> models=new ArrayList<LinearDiscriminantAnalysis>();
+		ArrayList<ScoredObject<LinearDiscriminantAnalysis>> models=new ArrayList<ScoredObject<LinearDiscriminantAnalysis>>();
 		for (int n = 0; n < iterationCount; n++) {
 			randomSeed=RandomGenerator.randomInt(randomSeed);
 			MProphetDataset[] folds=MProphetDataset.splitKFold(dataset, 2, randomSeed, settings.getParameters().getPercolatorTrainingSetSize());
@@ -96,15 +100,22 @@ public class MProphetReiter implements Runnable {
 					targetFDR=0.15f;
 				}
 				ArrayList<ScoredMProphetData> data=trainingDataset.getPassingTargets(Optional.ofNullable(lda), targetFDR).x;
-				
+				System.out.println(n+"."+i+") "+data.size()); //FIXME
 				if (data.size()<best||data.size()==0) {
 					break;
 				}
 				best=data.size();
-				LinearDiscriminantAnalysis model=LinearDiscriminantAnalysis.buildModel(MProphetDataset.getScoredData(data), trainingDataset.getDecoyData());
+				ArrayList<float[]> decoyData = trainingDataset.getDecoyData();
+				ArrayList<float[]> scoredData = MProphetDataset.getScoredData(data);
+				if (decoyData.size()>scoredData.size()*100) {
+					// make sure the decoy data doesn't get too out of hand in size
+					decoyData=new ArrayList<float[]>(decoyData.subList(0, scoredData.size()*1));
+				}
+				LinearDiscriminantAnalysis model=LinearDiscriminantAnalysis.buildModel(scoredData, decoyData);
 				if (!General.checkNaN(model.getCoefficients())) {
 					// if we get NaNs, then fall back on wherever we were previously
 					lda=model;
+				} else {
 					break;
 				}
 			}
@@ -112,9 +123,15 @@ public class MProphetReiter implements Runnable {
 			if (lda==null) {
 				Logger.logLine("Iteration "+(n+1)+": Failed to generate a meaningful model!");
 			} else {
-				models.add(lda);
 				Pair<ArrayList<ScoredMProphetData>, Float> data=testingDataset.getPassingTargets(Optional.ofNullable(lda), 0.01f);
-				Logger.logLine("Iteration "+(n+1)+": "+data.x.size()+"/"+testingDataset.getTargetData().size()+" passing, pi0:"+data.y);
+				Pair<ArrayList<ScoredMProphetData>, Float> seedData=testingDataset.getPassingTargets(Optional.ofNullable(seedModel), 0.01f);
+				if (seedData.x.size()>data.x.size()) {	
+					models.add(new ScoredObject<LinearDiscriminantAnalysis>(seedData.x.size(), seedModel));
+					Logger.logLine("Iteration "+(n+1)+": prefer seed model, "+seedData.x.size()+"/"+testingDataset.getTargetData().size()+" passing, pi0:"+seedData.y);
+				} else {
+					models.add(new ScoredObject<LinearDiscriminantAnalysis>(data.x.size(), lda));
+					Logger.logLine("Iteration "+(n+1)+": "+data.x.size()+"/"+testingDataset.getTargetData().size()+" passing, pi0:"+data.y);
+				}
 			}
 		}
 		
@@ -123,7 +140,15 @@ public class MProphetReiter implements Runnable {
 			Logger.logLine("No meaningful models generated, falling back on seed model for separation!");
 			averageModel=seedModel;
 		} else {	
-			averageModel=LinearDiscriminantAnalysis.average(models);
+			Collections.sort(models);
+			Collections.reverse(models);
+			// keep the N best models
+			ArrayList<LinearDiscriminantAnalysis> bestModels=new ArrayList<LinearDiscriminantAnalysis>();
+			for (ScoredObject<LinearDiscriminantAnalysis> scoredModel : models) {
+				bestModels.add(scoredModel.getY());
+				if (bestModels.size()>=maxKeptModels) break;
+			}
+			averageModel=LinearDiscriminantAnalysis.average(bestModels);
 		}
 
 		Pair<ArrayList<ScoredMProphetData>, Float> finalData=dataset.getPassingTargets(Optional.ofNullable(averageModel), Float.MAX_VALUE);
