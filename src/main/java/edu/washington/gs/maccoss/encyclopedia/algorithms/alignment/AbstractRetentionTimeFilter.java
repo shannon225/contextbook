@@ -88,6 +88,7 @@ public class AbstractRetentionTimeFilter implements RetentionTimeAlignmentInterf
 			}
 			
 			float prob=getProbabilityFitsModel((float)xyPoint.y, (float)xyPoint.x);
+			
 			if (prob>=getRejectionPValue()) {
 				selectedRTs.add(xyPoint);
 			} else {
@@ -232,13 +233,7 @@ public class AbstractRetentionTimeFilter implements RetentionTimeAlignmentInterf
 
 	@Override
 	public float getDelta(float actualRT, float modelRT) {
-		float one=actualRT-getYValue(modelRT);
-		float two=getXValue(actualRT)-modelRT;
-		if (Math.abs(one)<Math.abs(two)) {
-			return one;
-		} else {
-			return two;
-		}
+		return actualRT-getYValue(modelRT);
 	}
 
 	public float getProbability(float actualRT, float delta) {

@@ -161,7 +161,7 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 			
 			float[][] transposeChromatograms=General.transposeMatrix(allSqrtIntensities);
 			for (int i = 0; i < transposeChromatograms.length; i++) {
-				//transposeChromatograms[i]=SkylineSGFilter.paddedSavitzkyGolaySmooth(transposeChromatograms[i]);
+				transposeChromatograms[i]=SkylineSGFilter.paddedSavitzkyGolaySmooth(transposeChromatograms[i]);
 				if (parameters.isSubtractBackground()) {
 					transposeChromatograms[i]=BackgroundSubtractionFilter.backgroundSubtractMovingMedian(transposeChromatograms[i], movingAverageLength*10);
 				}

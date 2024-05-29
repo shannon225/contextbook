@@ -258,7 +258,7 @@ public class EncyclopediaTwoParametersPanel extends JPanel implements Parameters
 				digestionEnzyme,
 				0.01f,
 				0.01f,
-				false, // default is to use mProphet
+				true,
 				percolator,
 				PercolatorExecutor.DEFAULT_TRAINING_SET_SIZE,
 				PercolatorExecutor.DEFAULT_TRAINING_THRESHOLD,

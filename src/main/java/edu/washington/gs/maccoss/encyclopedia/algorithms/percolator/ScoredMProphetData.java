@@ -35,6 +35,14 @@ public class ScoredMProphetData implements Comparable<ScoredMProphetData> {
 		if (o==null) return -1;
 		int c=Double.compare(localFDR, o.localFDR);
 		if (c!=0) return c;
+		c=Double.compare(fdr, o.fdr);
+		if (c!=0) return c;
+		c=Double.compare(pvalue, o.pvalue);
+		if (c!=0) return c;
+		
+		// sort order for score is reversed
+		c=-Double.compare(score, o.score);
+		if (c!=0) return c;
 		
 		return data.compareTo(o.data);
 	}

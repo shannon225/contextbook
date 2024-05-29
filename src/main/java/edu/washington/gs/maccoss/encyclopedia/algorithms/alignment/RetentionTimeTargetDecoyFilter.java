@@ -7,10 +7,12 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Function;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.LinearRegression;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RTProbabilityModel;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.SimpleMixtureModel;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.Gaussian;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.KDE;
 import gnu.trove.list.array.TFloatArrayList;
 
@@ -61,7 +63,9 @@ public class RetentionTimeTargetDecoyFilter extends AbstractRetentionTimeFilter 
 			float delta=(float)xyPoint.y-warper.getYValue((float)xyPoint.x);
 			decoyDeltas.add(delta);
 		}
-		KDE negative=new KDE(decoyDeltas.toArray(), 0.5);
+		//KDE negative=new KDE(decoyDeltas.toArray(), 0.5);
+		float[] data=decoyDeltas.toArray();
+		Gaussian negative=new Gaussian(General.mean(data), General.stdev(data), 0.5f);
 		
 		TFloatArrayList targetDeltas=new TFloatArrayList();
 		for (int i=0; i<targetMatches.size(); i++) {
@@ -72,19 +76,11 @@ public class RetentionTimeTargetDecoyFilter extends AbstractRetentionTimeFilter 
 		float[] targets = targetDeltas.toArray();
 		float bottom=QuickMedian.select(targets, 0.005f);
 		float top=QuickMedian.select(targets, 0.995f);
-		KDE positive=new KDE(targets, 0.5); // ok if they get sorted/rearranged
+		//KDE positive=new KDE(targets, 0.5); // ok if they get sorted/rearranged
+		Gaussian positive=new Gaussian(General.mean(targets), General.stdev(targets), 0.5f);
 		
 		SimpleMixtureModel model=new SimpleMixtureModel(positive, negative, new Range(bottom, top));
+		
 		return model;
-	}
-
-	public static float getDelta(Function rtWarper, float actualRT, float modelRT) {
-		float one=actualRT-rtWarper.getYValue(modelRT);
-		float two=rtWarper.getXValue(actualRT)-modelRT;
-		if (Math.abs(one)<Math.abs(two)) {
-			return one;
-		} else {
-			return two;
-		}
 	}
 }

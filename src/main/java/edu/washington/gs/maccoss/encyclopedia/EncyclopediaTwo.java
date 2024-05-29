@@ -459,7 +459,7 @@ public class EncyclopediaTwo {
 		ArrayList<FragmentScan> subset=new ArrayList<FragmentScan>();
 		for (int i = index; i >= 0; i--) {
 			float actualRT=allScansInStripe.get(i).getScanStartTime()/60f;
-			boolean passes=filter.getRtFilter().getProbabilityFitsModel(actualRT, modelRT)>=0.25f;
+			boolean passes=filter.getRtFilter().getProbabilityFitsModel(actualRT, modelRT)>=0.5f;
 			if (passes) {
 				subset.add(allScansInStripe.get(i));
 			} else {
@@ -471,7 +471,7 @@ public class EncyclopediaTwo {
 		// then for after the center (+1) add to the end
 		for (int i = index+1; i < rts.length; i++) {
 			float actualRT=allScansInStripe.get(i).getScanStartTime()/60f;
-			boolean passes=filter.getRtFilter().getProbabilityFitsModel(actualRT, modelRT)>=0.25f;
+			boolean passes=filter.getRtFilter().getProbabilityFitsModel(actualRT, modelRT)>=0.5f;
 			if (passes) {
 				subset.add(allScansInStripe.get(i));
 			} else {
