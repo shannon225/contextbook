@@ -259,8 +259,14 @@ public class EncyclopediaTwo {
 	
 		ProgressIndicator subProgress=new SubProgressIndicator(progress, 0.05f);
 
-		Logger.logLine("Aligning pre-alignment library to "+job.getLibrary().getName());
-		LibraryInterface prealignmentLibrary = LibraryUtilities.getReferenceCorrectedLibrary(job.getPrealignmentLibrary(), job.getLibrary());
+		LibraryInterface prealignmentLibrary;
+		if (job.getLibrary()==job.getPrealignmentLibrary()) {
+			Logger.logLine("Pre-alignment library and search library are the same so no alignment necessary.");
+			prealignmentLibrary=job.getPrealignmentLibrary();
+		} else {
+			Logger.logLine("Aligning pre-alignment library to "+job.getLibrary().getName());
+			prealignmentLibrary=LibraryUtilities.getReferenceCorrectedLibrary(job.getPrealignmentLibrary(), job.getLibrary());
+		}
 
 		Logger.logLine("Calculating pre-alignment features for "+job.getLibrary().getName());
 		SaveResultsConsumer saveResultsConsumer=generateFeatureFile(subProgress, prealignmentLibrary, job, stripefile, Optional.empty());

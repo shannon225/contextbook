@@ -1,19 +1,17 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.alignment;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Function;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.LinearRegression;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RTProbabilityModel;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.SimpleMixtureModel;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.Gaussian;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.KDE;
 import gnu.trove.list.array.TFloatArrayList;
 
 public class RetentionTimeTargetDecoyFilter extends AbstractRetentionTimeFilter {
@@ -63,7 +61,7 @@ public class RetentionTimeTargetDecoyFilter extends AbstractRetentionTimeFilter 
 			float delta=(float)xyPoint.y-warper.getYValue((float)xyPoint.x);
 			decoyDeltas.add(delta);
 		}
-		//KDE negative=new KDE(decoyDeltas.toArray(), 0.5);
+
 		float[] data=decoyDeltas.toArray();
 		Gaussian negative=new Gaussian(General.mean(data), General.stdev(data), 0.5f);
 		
@@ -73,13 +71,27 @@ public class RetentionTimeTargetDecoyFilter extends AbstractRetentionTimeFilter 
 			float delta=(float)xyPoint.y-warper.getYValue((float)xyPoint.x);
 			targetDeltas.add(delta);
 		}
-		float[] targets = targetDeltas.toArray();
-		float bottom=QuickMedian.select(targets, 0.005f);
-		float top=QuickMedian.select(targets, 0.995f);
-		//KDE positive=new KDE(targets, 0.5); // ok if they get sorted/rearranged
+		targetDeltas.sort();
+
+		float[] targets=targetDeltas.toArray();
 		Gaussian positive=new Gaussian(General.mean(targets), General.stdev(targets), 0.5f);
+		Logger.logLine("Starting with mixture model from pos: "+positive.toString()+" and neg: "+negative.toString()+" from "+targets.length+" data points");
 		
-		SimpleMixtureModel model=new SimpleMixtureModel(positive, negative, new Range(bottom, top));
+		// remove the worst 5% of the data
+		int numToRemove=targetMatches.size()/20;
+		Logger.logLine("Removing the worst "+numToRemove+" of "+targetMatches.size()+" retention time matches.");
+		for (int i = 0; i < numToRemove; i++) {
+			if (Math.abs(targetDeltas.get(0))>Math.abs(targetDeltas.get(targetDeltas.size()-1))) {
+				targetDeltas.removeAt(0);
+			} else {
+				targetDeltas.removeAt(targetDeltas.size()-1);
+			}
+		}
+		
+		targets=targetDeltas.toArray();
+		positive=new Gaussian(General.mean(targets), General.stdev(targets), 0.5f);
+		Logger.logLine("Generating mixture model from pos: "+positive.toString()+" and neg: "+negative.toString()+" from "+targets.length+" data points");
+		SimpleMixtureModel model=new SimpleMixtureModel(positive, negative);
 		
 		return model;
 	}

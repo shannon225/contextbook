@@ -371,7 +371,7 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 				float deltaFragmentMass=auxScorer.getFragmentDeltaMassIndex()>=0?bestAuxScores[auxScorer.getFragmentDeltaMassIndex()]:0.0f;
 				result.addStripe(bestScore, bestAuxScores, deltaPrecursorMass, deltaFragmentMass, bestStripe);
 			}
-			result.sort(2);
+			result.sort(1);
 			
 			resultsQueue.add(result);
 		}

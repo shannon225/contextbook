@@ -1,31 +1,25 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.math;
 
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.Distribution;
 
 public class SimpleMixtureModel implements RTProbabilityModel {
 	private Distribution positive;
 	private Distribution negative;
-	private Range range;
 	
-	public SimpleMixtureModel(Distribution positive, Distribution negative, Range range) {
+	public SimpleMixtureModel(Distribution positive, Distribution negative) {
 		this.positive=positive;
 		this.negative=negative;
-		this.range=range;
 	}
 
 	@Override
 	public float getProbability(float retentionTime, float delta) {
-		if (range.contains(delta)) {
-			double pos=positive.getProbability(delta);
-			if (pos<0.001f) return 0.0f;
-			
-			double neg=negative.getProbability(delta);
-			double denom = pos+neg;
-			if (denom==0) return 0.0f;
-			return (float)(pos/denom);
-		}
-		return 0.0f;
+		double pos=positive.getProbability(delta);
+		if (pos<0.001f) return 0.0f;
+		
+		double neg=negative.getProbability(delta);
+		double denom = pos+neg;
+		if (denom==0) return 0.0f;
+		return (float)(pos/denom);
 	}
 	
 	public Distribution getPositive() {
