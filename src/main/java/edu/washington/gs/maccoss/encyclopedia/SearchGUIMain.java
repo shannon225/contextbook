@@ -2,10 +2,11 @@ package edu.washington.gs.maccoss.encyclopedia;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.awt.Taskbar;
+import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 
 import javax.swing.ImageIcon;
@@ -88,8 +89,16 @@ public class SearchGUIMain {
 			System.setProperty("apple.laf.useScreenMenuBar", "true");
 			try {
 
-				Taskbar taskbar=Taskbar.getTaskbar();
-				taskbar.setIconImage(image.getImage());
+				//Taskbar taskbar=Taskbar.getTaskbar();
+				//taskbar.setIconImage(image.getImage());
+				
+				// Load the Taskbar class using reflection to avoid issues with old java versions
+	            Class<?> taskbarClass = Class.forName("java.awt.Taskbar");
+	            Method getTaskbarMethod = taskbarClass.getMethod("getTaskbar");
+	            Object taskbarInstance = getTaskbarMethod.invoke(null);
+	            Method setIconImageMethod = taskbarClass.getMethod("setIconImage", Image.class);
+	            setIconImageMethod.invoke(taskbarInstance, image.getImage());
+
 
 			} catch (Exception e) {
 				Logger.errorLine("Error setting Mac-specific properties");

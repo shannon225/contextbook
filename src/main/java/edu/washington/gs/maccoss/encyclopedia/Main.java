@@ -27,7 +27,7 @@ public class Main {
 	
 	public static boolean isJavaVersionOK() {
 		int javaVersion=getJavaVersion();
-		return javaVersion>=8&&javaVersion<=17;
+		return javaVersion>=8;//&&javaVersion<=17;
 	}
 	
 	public static void main(String[] args) throws IOException {
