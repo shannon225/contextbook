@@ -193,7 +193,7 @@ public class EncyclopediaTwoParametersPanel extends JPanel implements Parameters
 		File fastaFile=getBackgroundFastaFile();
 		if (prealignmentLibraryFile==null) {
 			Optional<File> optFile=EncyclopediaTwoAlignmentLibraryFactory.getPreAlignmentFile(searchPanel.getEnzyme());
-			if (optFile.isEmpty()) {
+			if (!optFile.isPresent()) {
 				Logger.errorLine("Sorry, no pre-alignment library for that enzyme. You must select a library or change enzyme!");
 				return;
 			}

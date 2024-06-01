@@ -22,7 +22,7 @@ public class EncyclopediaTwoLDAScorer implements EncyclopediaScorer {
 		this.mainScorer = mainScorer;
 		this.ldaScorer = ldaScorer;
 		
-		if (ldaScorer.isEmpty()) {
+		if (!ldaScorer.isPresent()) {
 			scoreIndexConvertingArray=null;
 		} else {
 			ArrayList<String> featureNames=ldaScorer.get().getX().getFeatureNames();
