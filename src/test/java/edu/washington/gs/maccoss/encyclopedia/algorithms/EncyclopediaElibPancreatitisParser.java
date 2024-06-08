@@ -1,10 +1,7 @@
 	package edu.washington.gs.maccoss.encyclopedia.algorithms;
 
-import java.awt.Dimension;
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,30 +16,31 @@ import java.util.zip.DataFormatException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.math3.stat.inference.TestUtils;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.CoefficientOfVariationCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.LibraryReportExtractor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.SampleCoordinate;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ProteinGroupInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.ExtendedChartPanel;
+import edu.washington.gs.maccoss.encyclopedia.utils.ComparablePair;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.BenjaminiHochberg;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.Correlation;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.LinearDiscriminantAnalysis;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.MatrixMath;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredIndex;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.randomforest.RocPlot;
+import gnu.trove.list.array.TByteArrayList;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
+import gnu.trove.map.hash.TObjectDoubleHashMap;
+import gnu.trove.procedure.TObjectDoubleProcedure;
 
 public class EncyclopediaElibPancreatitisParser {
-	private static final float pvalueThreshold = 0.05f;
+	private static final float pvalueThreshold = 0.01f;
 	public static boolean combineControls=true;
 	//public static String[] sampleNames=new String[] {"CP", "AP", "Cont", "Frac"};
 	public static String[] sampleNames=combineControls?new String[] {"Chronic", "Acute", "Control", "Fracture"}:new String[] {"CP", "AP", "Cont 1", "Cont 2", "Frac"};
@@ -61,12 +59,14 @@ public class EncyclopediaElibPancreatitisParser {
 	public static int[] controls=new int[] {1, 2, 3};
 	//
 	public static HashMap<String, SampleCoordinate> sampleKey=new HashMap<>();
+	public static TObjectDoubleHashMap<String> fibrosisScoreMap=new TObjectDoubleHashMap<String>();
 
 	public static void main(String[] args) throws IOException, SQLException, DataFormatException {
 		loadMap();
 		
 		//File file=new File("/Users/searleb/Documents/OSU/projects/maisam_pancreatitis/presentation/pancreatitis_analysis/032922_pancreatitis_120_quant_reports.elib");
-		File file=new File("/Users/searleb/Documents/OSU/projects/maisam_pancreatitis/032922_pancreatitis_grant_dataset/032922_pancreatitis_120_quant_reports.elib");
+		//File file=new File("/Users/searleb/Documents/OSU/projects/maisam_pancreatitis/032922_pancreatitis_grant_dataset/032922_pancreatitis_120_quant_reports.elib");
+		File file=new File("/Users/searleb/Documents/manuscripts/2024/chronic_pancreatitis/032922_pancreatitis_120_quant_reports.elib");
 		//File stub=new File(file.getParent(), "pancreatitis_poster_120_boxplots");
 		File stub=new File(file.getParent(), "cp_versus_others/cp_120_boxplots");
 		//File stub=new File(file.getParent(), "fracture_120_boxplots");
@@ -104,9 +104,159 @@ public class EncyclopediaElibPancreatitisParser {
 		//String[] keptAccessions=new String[] {"FETUA_HUMAN", "CYTM_HUMAN", "A1AG1_HUMAN", "LV218_HUMAN"};
 		
 		//createClassifier(proteinReportFile, new HashSet<String>(Arrays.asList(keptAccessions)));
-		assessProteinSpecificPValues(testDirs, proteinReportFile, new File(stub, "volcano_report.csv"));
+		HashSet<String> significantAccessions=assessProteinSpecificPValues(testDirs, proteinReportFile, new File(stub, "volcano_report.csv"));
 		//createClassifier(proteinReportFile, new HashSet<String>(Arrays.asList(keptAccessions)));
 		//assessProteinSpecificPValues(testDirs, proteinReportFile);
+		
+		analyzeFibrosis(proteinReportFile, significantAccessions);
+	}
+	
+	private static void analyzeFibrosis(File proteinReportFile, HashSet<String> keptAccessions) {
+		ArrayList<String> accessions=new ArrayList<String>();
+		HashMap<String, TDoubleArrayList> dataMap=new HashMap<>(); 
+		
+		TFloatArrayList targetCorrelationScores=new TFloatArrayList();
+		TFloatArrayList backgroundCorrelationScores=new TFloatArrayList();
+		
+		TableParser.parseTSV(proteinReportFile, new TableParserMuscle() {
+			
+			@Override
+			public void processRow(Map<String, String> row) {
+				String proteinAccession=row.get("Protein").split(";")[0];
+				
+				
+				TDoubleArrayList predicted=new TDoubleArrayList();
+				TDoubleArrayList acquired=new TDoubleArrayList();
+				
+				fibrosisScoreMap.forEachEntry(new TObjectDoubleProcedure<String>() {
+					@Override
+					public boolean execute(String a, double b) {
+						double acq=Double.parseDouble(row.get(a));
+						predicted.add(b);
+						acquired.add(acq);
+						
+						TDoubleArrayList list=dataMap.get(a);
+						if (list==null) {
+							list=new TDoubleArrayList();
+							dataMap.put(a, list);
+						}
+						list.add(b);
+						return true;
+					}
+				});
+				
+				double correlation=Correlation.getPearsons(predicted.toArray(), acquired.toArray());
+
+				if (keptAccessions.contains(proteinAccession)) {
+					targetCorrelationScores.add((float)correlation);
+				} else {
+					backgroundCorrelationScores.add((float)correlation);
+					return;
+				}
+				
+
+				accessions.add(proteinAccession);
+			}
+			
+			@Override
+			public void cleanup() {
+			}
+		});
+		
+		for (float corr : targetCorrelationScores.toArray()) {
+			System.out.println(corr+"\ttarget");
+		}
+		for (float corr : backgroundCorrelationScores.toArray()) {
+			System.out.println(corr+"\tbackground");
+		}
+		
+		if (true) {
+			return;
+		}
+		
+		System.out.println("Creating fibrosis analysis with "+accessions.size()+"/"+keptAccessions.size()+" proteins");
+
+		HashMap<String, double[]>[] datasetsByGroup=new HashMap[sampleNames.length];
+		for (int i = 0; i < datasetsByGroup.length; i++) {
+			datasetsByGroup[i]=new HashMap<>();
+		}
+		for (Map.Entry<String, TDoubleArrayList> entry : dataMap.entrySet()) {
+			String key = entry.getKey();
+			TDoubleArrayList val = entry.getValue();
+			
+			SampleCoordinate coords=sampleKey.get(key);
+			int index=coords.getSampleIndex();
+			if (index<datasetsByGroup.length) {
+				datasetsByGroup[index].put(key, val.toArray());
+			}
+		}
+		
+		for (int i = 0; i < tests.length; i++) {
+			int testIndex=tests[i];
+			
+			HashMap<String, double[]> testDataset=datasetsByGroup[testIndex];
+			HashMap<String, double[]> controlDataset=new HashMap<>();
+			
+			for (int j = 0; j < controls.length; j++) {
+				int controlIndex=controls[j];
+				controlDataset.putAll(datasetsByGroup[controlIndex]);
+			}
+			System.out.println("tests:"+testDataset.size()+" controls:"+controlDataset.size());
+			
+			ArrayList<RocPlot> rocs=new ArrayList<>();
+			for (int n = 0; n < 100; n++) {
+				int seed=16807*n;
+				Pair<double[][], double[][]> testData=getData(testDataset, 0.5f, seed);
+				Pair<double[][], double[][]> controlData=getData(controlDataset, 0.5f, seed);
+				
+				LinearDiscriminantAnalysis model=LinearDiscriminantAnalysis.buildModel(testData.x, controlData.x);
+				
+				ArrayList<ScoredIndex> scores=new ArrayList<>();
+				for (int j = 0; j < testData.y.length; j++) {
+					//System.out.println("1\t"+model.getScore(General.toFloatArray(testData.y[j])));
+					scores.add(new ScoredIndex(model.getScore(General.toFloatArray(testData.y[j])), 1));
+				}
+				for (int j = 0; j < controlData.y.length; j++) {
+					//System.out.println("0\t"+model.getScore(General.toFloatArray(controlData.y[j])));
+					scores.add(new ScoredIndex(model.getScore(General.toFloatArray(controlData.y[j])), 0));
+				}
+	
+				Collections.sort(scores);
+				Collections.reverse(scores);
+				
+				RocPlot plot=getRocPlot(scores, testData.y.length, controlData.y.length);
+				//System.out.println(n+") "+plot.getAUC()+"\t"+testData.x.length);
+				rocs.add(plot);
+			}
+			
+			for (float fpr = 0.0f; fpr <= 1.0; fpr+=0.01f) {
+				TFloatArrayList tprs=new TFloatArrayList();
+				for (RocPlot roc : rocs) {
+					tprs.add(roc.getTPR(fpr));
+				}
+				float[] tprArray=tprs.toArray();
+				System.out.println(fpr+"\t"+QuickMedian.select(tprArray, 0.25f)+"\t"+QuickMedian.select(tprArray, 0.5f)
+						+"\t"+QuickMedian.select(tprArray, 0.75f));
+			}
+
+			TFloatArrayList aucs=new TFloatArrayList();
+			for (RocPlot roc : rocs) {
+				aucs.add(roc.getAUC());
+			}
+			float[] aucArray=aucs.toArray();
+			System.out.println("AUC Range:\t"+QuickMedian.select(aucArray, 0.25f)+"\t"+QuickMedian.select(aucArray, 0.5f)
+					+"\t"+QuickMedian.select(aucArray, 0.75f));
+			
+//			System.out.println(sampleNames[testIndex]+" AUC: "+plot.getAUC()+", eval cases: "+scores.size());
+//
+//			for (int j = 0; j < accessions.size(); j++) {
+//				System.out.println(accessions.get(j)+"\t"+model.getCoefficients()[j]
+//						+"\t"+General.mean(MatrixMath.getColumn(testData.x, j))
+//						+"\t"+General.mean(MatrixMath.getColumn(controlData.x, j))
+//						);
+//			}
+//			System.out.println("Constant\t"+model.getConstant());
+		}
 	}
 	
 	private static void createClassifier(File proteinReportFile, HashSet<String> keptAccessions) {
@@ -265,14 +415,14 @@ public class EncyclopediaElibPancreatitisParser {
 		return new Pair<>(train.values().toArray(new double[0][]), eval.values().toArray(new double[0][]));
 	}
 
-	private static void assessProteinSpecificPValues(File[] testDirs, File proteinReportFile, File volcanoReportFile) throws IOException {
+	private static HashSet<String> assessProteinSpecificPValues(File[] testDirs, File proteinReportFile, File volcanoReportFile) throws IOException {
 		ArrayList<String> accessions=new ArrayList<String>();
 		TDoubleArrayList pvalues=new TDoubleArrayList();
+		TByteArrayList directions=new TByteArrayList();
+		HashMap<ComparablePair<Integer, Integer>, TDoubleArrayList> pairedPvalues=new HashMap<ComparablePair<Integer,Integer>, TDoubleArrayList>();
+		
 		ArrayList<TFloatArrayList[]> datasets=new ArrayList<TFloatArrayList[]>();
 		ArrayList<TDoubleArrayList[]> loggeddatasets=new ArrayList<TDoubleArrayList[]>();
-
-
-		PrintWriter out=new PrintWriter(volcanoReportFile);
 		
 		TableParser.parseTSV(proteinReportFile, new TableParserMuscle() {
 			
@@ -305,6 +455,34 @@ public class EncyclopediaElibPancreatitisParser {
 				pvalues.add(TestUtils.oneWayAnovaPValue(dataset));
 				datasets.add(rawdata);
 				loggeddatasets.add(data);
+				
+				byte direction=0;
+				for (int t=0; t<tests.length; t++) {
+					int testIndex=tests[t];
+					TFloatArrayList test=rawdata[testIndex];
+					
+					for (int j=0; j<controls.length; j++) {
+						int controlIndex=controls[j];
+						double pvalue=TestUtils.tTest(log2(General.toDoubleArray(test.toArray())), log2(General.toDoubleArray(rawdata[controlIndex].toArray())));
+						
+						float delta=General.mean(test.toArray())-General.mean(rawdata[controlIndex].toArray());
+						byte localDirection=delta>0?(byte)1:(byte)-1;
+						if (direction==0) {
+							direction=localDirection;
+						} else if (direction!=localDirection) {
+							direction=-2;
+						}
+						
+						ComparablePair<Integer, Integer> index=new ComparablePair<Integer, Integer>(testIndex, controlIndex);
+						TDoubleArrayList list=pairedPvalues.get(index);
+						if (list==null) {
+							list=new TDoubleArrayList();
+							pairedPvalues.put(index, list);
+						}
+						list.add(pvalue);
+					}
+				}
+				directions.add(direction);
 			}
 			
 			@Override
@@ -312,84 +490,31 @@ public class EncyclopediaElibPancreatitisParser {
 			}
 		});
 		
+		HashSet<String> significantProteins=new HashSet<String>();
+		
 		double[] fdrs=BenjaminiHochberg.calculateAdjustedPValues(pvalues.toArray());
-		for (int i = 0; i < fdrs.length; i++) {
-//			if (fdrs[i]>pvalueThreshold) {
-//				continue;
-//			}
-			//System.out.println(accessions.get(i).split(";")[0]+"\t"+fdrs[i]);
-			//if (true) continue;
-			
-			TFloatArrayList[] rawdata=datasets.get(i);
-			
-			TDoubleArrayList[] loggedrawdata=loggeddatasets.get(i);
-			
-			double[] worstPValues=new double[tests.length];
-			byte[] direction=new byte[tests.length];
-			double[] greatestDistance=new double[tests.length];
-			Arrays.fill(greatestDistance, -Double.MAX_VALUE);
-			double[] smallestDistance=new double[tests.length];
-			Arrays.fill(smallestDistance, Double.MAX_VALUE);
-			for (int t=0; t<tests.length; t++) {
-				int testIndex=tests[t];
 
-				TFloatArrayList test=rawdata[testIndex];
-				float avgTest=QuickMedian.median(test.toArray());
-				double log10AvgTest=log2(avgTest);
-				
-				for (int j=0; j<controls.length; j++) {
-					int controlIndex=controls[j];
-					double pvalue=TestUtils.tTest(log2(General.toDoubleArray(test.toArray())), log2(General.toDoubleArray(rawdata[controlIndex].toArray())));
-					worstPValues[t]=Math.max(worstPValues[t], pvalue);
-					float avgControl=QuickMedian.median(rawdata[controlIndex].toArray());
-					byte localDirection;
-					if (avgTest>avgControl) {
-						localDirection=1; 
-					} else {
-						localDirection=-1;
-					}
-
-					double distance=log10AvgTest-log2(avgControl);
-					if (distance>greatestDistance[t]) greatestDistance[t]=distance;
-					if (distance<smallestDistance[t]) smallestDistance[t]=distance;
-					
-					if (direction[t]==0) {
-						direction[t]=localDirection;
-					} else if (localDirection!=direction[t]) {
-						direction[t]=-2; // error state;
-					}
-				}
-			}
-			
-			for (int j = 0; j < worstPValues.length; j++) {
-				String accession=accessions.get(i).split(";")[0];
-
-				String adjective="Flat";
-				double shortestDistance=0;
-				if (direction[j]==-1) {
-					adjective="Down";
-					shortestDistance=greatestDistance[j];
-				} else if (direction[j]==1) {
-					adjective="Up";
-					shortestDistance=smallestDistance[j];
-				} else if (direction[j]==-2) {
-					// mixed
-					//continue;
-				}
-				out.println(accession+","+shortestDistance+","+-Log.log10(fdrs[i]));
-				
-				if (worstPValues[j]<=pvalueThreshold&&fdrs[i]<=pvalueThreshold&&direction[j]!=-2) {
-					System.out.println(sampleNames[tests[j]]+"\t"+adjective+"\t"+accession+"\t"+fdrs[i]+"\t"+worstPValues[j]+"\t"+shortestDistance);	
-					ExtendedChartPanel panel=Charter.getBoxplotChart(accession, "", "Log2 Intensity", sampleNames, loggedrawdata);
-					
-					File f=new File(testDirs[j], accession+".pdf");
-					Charter.writeAsPDF(panel.getChart(), f, new Dimension(150, 200));
-					
+		double[] maxPairedFDR=new double[fdrs.length];
+		Arrays.fill(maxPairedFDR, 0.0);
+		
+		for (Entry<ComparablePair<Integer, Integer>, TDoubleArrayList> entry : pairedPvalues.entrySet()) {
+			double[] pairedfdrs=BenjaminiHochberg.calculateAdjustedPValues(entry.getValue().toArray());
+			for (int i = 0; i < maxPairedFDR.length; i++) {
+				if (maxPairedFDR[i]<pairedfdrs[i]) {
+					maxPairedFDR[i]=pairedfdrs[i];
 				}
 			}
 		}
-		out.flush();
-		out.close();
+		
+		for (int i = 0; i < fdrs.length; i++) {
+			String accession=accessions.get(i).split(";")[0];
+			if (fdrs[i]<pvalueThreshold&&maxPairedFDR[i]<pvalueThreshold&&directions.get(i)==1) {
+				System.out.println(accession+"\t"+-Log.log10(fdrs[i])+"\t"+-Log.log10(maxPairedFDR[i]));
+				significantProteins.add(accession);
+			}
+			
+		}
+		return significantProteins;
 	}
 
 	public static double[] log2(double[] v) {
@@ -408,6 +533,52 @@ public class EncyclopediaElibPancreatitisParser {
 	}
 
 	public static void loadMap() {
+		fibrosisScoreMap.put("032922_pancreatitis_1ug_DIA_2016_9510_085_CP_F_01.mzML",0f);
+		fibrosisScoreMap.put("032922_pancreatitis_1ug_DIA_2016_9510_016_CP_M_01.mzML",2f);
+		fibrosisScoreMap.put("032922_pancreatitis_1ug_DIA_2016_9510_057_CP_F_01.mzML",3.5f);
+		fibrosisScoreMap.put("032922_pancreatitis_1ug_DIA_2016_9510_035_CP_F_01.mzML",5f);
+		fibrosisScoreMap.put("032922_pancreatitis_1ug_DIA_2016_9510_041_CP_F_01.mzML",6f);
+		fibrosisScoreMap.put("032922_pancreatitis_1ug_DIA_2016_9510_073_CP_F_01.mzML",6.5f);
+		fibrosisScoreMap.put("032922_pancreatitis_1ug_DIA_2016_9510_083_CP_F_01.mzML",6.5f);
+		fibrosisScoreMap.put("032922_pancreatitis_1ug_DIA_2016_9510_080_CP_M_01.mzML",7f);
+		fibrosisScoreMap.put("032922_pancreatitis_1ug_DIA_2016_9510_092_CP_M_01.mzML",7f);
+		fibrosisScoreMap.put("032922_pancreatitis_1ug_DIA_2016_9510_027_CP_M_01.mzML",7.5f);
+		fibrosisScoreMap.put("032922_pancreatitis_1ug_DIA_2016_9510_072_CP_F_01.mzML",7.5f);
+		fibrosisScoreMap.put("032922_pancreatitis_1ug_DIA_2016_9510_079_CP_M_01.mzML",7.5f);
+		fibrosisScoreMap.put("032922_pancreatitis_1ug_DIA_2016_9510_006_CP_F_01.mzML",8f);
+		fibrosisScoreMap.put("032922_pancreatitis_1ug_DIA_2016_9510_022_CP_M_01.mzML",8f);
+		fibrosisScoreMap.put("032922_pancreatitis_1ug_DIA_2016_9510_025_CP_F_01.mzML",8f);
+		fibrosisScoreMap.put("032922_pancreatitis_1ug_DIA_2016_9510_034_CP_F_01.mzML",8f);
+		fibrosisScoreMap.put("032922_pancreatitis_1ug_DIA_2016_9510_058_CP_M_01.mzML",8f);
+		fibrosisScoreMap.put("032922_pancreatitis_1ug_DIA_2016_9510_065_CP_M_01.mzML",8f);
+		fibrosisScoreMap.put("032922_pancreatitis_1ug_DIA_2016_9510_066_CP_M_01.mzML",8f);
+		fibrosisScoreMap.put("032922_pancreatitis_1ug_DIA_2016_9510_076_CP_F_01.mzML",8f);
+		fibrosisScoreMap.put("032922_pancreatitis_1ug_DIA_2016_9510_091_CP_F_01.mzML",8f);
+		fibrosisScoreMap.put("032922_pancreatitis_1ug_DIA_2016_9510_003_CP_M_01.mzML",8.5f);
+		fibrosisScoreMap.put("032922_pancreatitis_1ug_DIA_2016_9510_039_CP_F_01.mzML",8.5f);
+		fibrosisScoreMap.put("032922_pancreatitis_1ug_DIA_2016_9510_048_CP_M_01.mzML",8.5f);
+		fibrosisScoreMap.put("032922_pancreatitis_1ug_DIA_2016_9510_074_CP_M_01.mzML",8.5f);
+		fibrosisScoreMap.put("032922_pancreatitis_1ug_DIA_2016_9510_004_CP_F_01.mzML",9f);
+		fibrosisScoreMap.put("032922_pancreatitis_1ug_DIA_2016_9510_031_CP_F_01.mzML",9f);
+		fibrosisScoreMap.put("032922_pancreatitis_1ug_DIA_2016_9510_054_CP_M_01.mzML",9f);
+		fibrosisScoreMap.put("032922_pancreatitis_1ug_DIA_2016_9510_062_CP_M_01.mzML",9f);
+		fibrosisScoreMap.put("032922_pancreatitis_1ug_DIA_2016_9510_078_CP_F_01.mzML",9f);
+		fibrosisScoreMap.put("032922_pancreatitis_1ug_DIA_2016_9510_088_CP_M_01.mzML",9f);
+		fibrosisScoreMap.put("032922_pancreatitis_1ug_DIA_2016_9510_051_CP_F_01.mzML",9.5f);
+		fibrosisScoreMap.put("032922_pancreatitis_1ug_DIA_2016_9510_037_CP_M_01.mzML",10f);
+		fibrosisScoreMap.put("032922_pancreatitis_1ug_DIA_2016_9510_095_CP_F_01.mzML",10f);
+		fibrosisScoreMap.put("032922_pancreatitis_1ug_DIA_2016_9510_052_CP_F_01.mzML",10.5f);
+		fibrosisScoreMap.put("032922_pancreatitis_1ug_DIA_2016_9510_053_CP_F_01.mzML",10.5f);
+		fibrosisScoreMap.put("032922_pancreatitis_1ug_DIA_2016_9510_061_CP_F_01.mzML",10.5f);
+		fibrosisScoreMap.put("032922_pancreatitis_1ug_DIA_2016_9510_033_CP_M_01.mzML",12f);
+		fibrosisScoreMap.put("032922_pancreatitis_1ug_DIA_2016_9510_042_CP_F_01.mzML",12f);
+		fibrosisScoreMap.put("032922_pancreatitis_1ug_DIA_2016_9510_045_CP_F_01.mzML",12f);
+		fibrosisScoreMap.put("032922_pancreatitis_1ug_DIA_2016_9510_063_CP_M_01.mzML",12f);
+		fibrosisScoreMap.put("032922_pancreatitis_1ug_DIA_2016_9510_064_CP_M_01.mzML",12f);
+		fibrosisScoreMap.put("032922_pancreatitis_1ug_DIA_2016_9510_068_CP_F_01.mzML",12f);
+		fibrosisScoreMap.put("032922_pancreatitis_1ug_DIA_2016_9510_069_CP_M_01.mzML",12f);
+		fibrosisScoreMap.put("032922_pancreatitis_1ug_DIA_2016_9510_075_CP_M_01.mzML",12f);
+		
 		if (combineControls) {
 			sampleKey.put("032922_pancreatitis_1ug_DIA_5156_AP_F_01.mzML", new SampleCoordinate(0,1));
 			sampleKey.put("032922_pancreatitis_1ug_DIA_5157_AP_M_01.mzML", new SampleCoordinate(1,1));

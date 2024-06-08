@@ -66,6 +66,7 @@ import edu.washington.gs.maccoss.encyclopedia.gui.dia.MultiResultsBrowserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.PeptideExtractingBrowserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.ResultsBrowserPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.WindowingSchemeWizard;
+import edu.washington.gs.maccoss.encyclopedia.gui.dia.interactive.ChromatogrindrPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.AustinsSpecialEncyclopediaPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.EncyclopediaParametersPanel;
 import edu.washington.gs.maccoss.encyclopedia.gui.framework.library.EncyclopediaTwoParametersPanel;
@@ -104,6 +105,7 @@ public class SearchPanel extends JPanel {
 	private static final ImageIcon diaBrowserIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/orbi_icon.png"));
 	private static final ImageIcon peptideBrowserIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/peptide_icon.png"));
 	private static final ImageIcon featureBrowserIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/feature_icon.png"));
+	private static final ImageIcon grindrIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/grindr_icon.png"));
 	private static final ImageIcon helpIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/help_icon.png"));
 	private static final ImageIcon windowSchemeIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/window_scheme_icon.png"));
 	private static final ImageIcon xmlFileIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/xml_file_icon.png"));
@@ -473,6 +475,17 @@ public class SearchPanel extends JPanel {
 			viewMenu.add(launchFeatureBrowser);
 		}
 
+		JMenuItem chromatogrindrItem=new JMenuItem("Launch Chromatogrind Browser", grindrIcon);
+		chromatogrindrItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Logger.logLine("Launching Interactive Chromatogram Visualizer");
+				ChromatogrindrPanel.launchBrowserPanel(new ChromatogrindrPanel());
+			}
+		});
+		chromatogrindrItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+		viewMenu.add(chromatogrindrItem);
+
 		JMenu convertMenu=new JMenu("Convert");
 		convertMenu.setMnemonic(KeyEvent.VK_C);
 
@@ -706,7 +719,7 @@ public class SearchPanel extends JPanel {
 			dataMenu.add(subsetDIA);
 		}
 
-		JMenuItem dilutonCurveFitterItem=new JMenuItem("Create PRM assay from DIA", processingIcon);
+		JMenuItem dilutonCurveFitterItem=new JMenuItem("Create PRM assay from DIA...", processingIcon);
 		dilutonCurveFitterItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {

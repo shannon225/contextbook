@@ -72,6 +72,8 @@ public class FastaReaderTest extends TestCase {
 			for (int i = 0; i < targets.length; i++) {
 				if (entry.getAccession().indexOf(targets[i])>=0) {
 					saved.add(entry);
+					
+					System.out.println(targets[i]+"\t"+params.getEnzyme().digestProtein(entry, 7, 40, 0, params.getAAConstants(), false).size());
 					found[i]=true;
 					break;
 				}
