@@ -250,7 +250,7 @@ public class EncyclopediaParametersPanel extends JPanel implements ParametersPan
 				precursorWindowWidthValue,
 				numberOfQuantitativeIonsValue,
 				minNumOfQuantitativeIonsValue,
-				-1,
+				SearchParameters.DEFAULT_MAX_NUM_FRAGMENT_IONS,
 				minIntensity,
 				IITNumberOfIonsThreshold,
 				modificationType,
