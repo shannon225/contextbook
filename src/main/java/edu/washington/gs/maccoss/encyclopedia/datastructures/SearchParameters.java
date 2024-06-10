@@ -41,6 +41,7 @@ public class SearchParameters implements XMLObject {
 	public static final String MIN_NUM_INTEGRATED_RT_POINTS = "-minNumIntegratedRTPoints";
 	public static final String INSTRUMENT="-instrument"; 
 	public static final int DEFAULT_MIN_NUM_INTEGRATED_RT_POINTS = 3;
+	public static final int DEFAULT_MAX_NUM_FRAGMENT_IONS = 10;
 
 	protected final AminoAcidConstants aaConstants;
 	protected final FragmentationType fragType;

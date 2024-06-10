@@ -13,6 +13,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.EValueCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.IsotopicDistributionCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.TDCPeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.TargeteDecoyPSMFilter;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.MProphetResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefinementData;
@@ -47,6 +48,17 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 	private final float dutyCycle;
 	private final Range precursorIsolationRange;
 	
+	/**
+	 * NOTE: Entries now compete (target/decoy competition). Make sure all entries are appropriate to compete against each other!
+	 * @param scorer
+	 * @param entries
+	 * @param stripes
+	 * @param precursorIsolationRange
+	 * @param dutyCycle
+	 * @param precursors
+	 * @param resultsQueue
+	 * @param parameters
+	 */
 	public EncyclopediaTwoPointOneScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<FragmentScan> stripes, Range precursorIsolationRange, float dutyCycle, PrecursorScanMap precursors, BlockingQueue<AbstractScoringResult> resultsQueue,
 			SearchParameters parameters) {
 		super(scorer, entries, stripes, precursors, resultsQueue, parameters);
@@ -60,6 +72,7 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 	@Override
 	protected Nothing process() {
 		if (super.stripes.size()==0) return Nothing.NOTHING;
+		TDCPeptideScoringResult result=new TDCPeptideScoringResult();
 		
 		MassTolerance libraryTolerance=parameters.getLibraryFragmentTolerance();
 		EncyclopediaScorer eScorer=(EncyclopediaScorer)scorer;
@@ -140,7 +153,6 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 				targetMasses[i]=ions[i].getMass();
 			}
 			
-			AbstractScoringResult result=new PeptideScoringResult(entry);
 			float[] predictedIsotopeDistribution=IsotopicDistributionCalculator.getIsotopeDistribution(entry.getPeptideModSeq(), parameters.getAAConstants());
 			
 			// extract chromatograms
@@ -174,14 +186,14 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 				FragmentScan stripe=super.stripes.get(i);
 				FloatPair scores=score(allMasses[i], allSqrtIntensities[i], predictedIntensities, correlation);
 				
-				primary[i]=scores.getOne();
+				primary[i]=scores.getTwo();
 				
 				if (primary[i] > 0.0f && modificationSpecificIons.isPresent()) {
 					// if modified signal represents less than 25% of the score then don't trust it
 					Pair<double[], float[]> modSpecificResults=extract(stripe, modIons);
 					FloatPair modSpecificScores=score(modSpecificResults.x, modSpecificResults.y, modPredictedIntensities, modCorrelation);
 					
-					float scoreFromModIons=modSpecificScores.getOne();
+					float scoreFromModIons=modSpecificScores.getTwo();
 					if (scoreFromModIons/primary[i]<0.25f) {
 						primary[i]=0.0f;
 					}
@@ -356,7 +368,7 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 						auxScoreArray[0]=score; // update score with LDA
 					}
 					
-					result.addStripe(score, auxScoreArray, deltaPrecursorMass, deltaFragmentMass, stripe);
+					result.addStripe(entry, score, auxScoreArray, deltaPrecursorMass, deltaFragmentMass, stripe);
 					if (identifiedPeaks>peaksKept) {
 						// keep N+1 peaks
 						break;
@@ -369,12 +381,12 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 				// add the best data if we can't find any valid peaks
 				float deltaPrecursorMass=auxScorer.getParentDeltaMassIndex()>=0?bestAuxScores[auxScorer.getParentDeltaMassIndex()]:0.0f;
 				float deltaFragmentMass=auxScorer.getFragmentDeltaMassIndex()>=0?bestAuxScores[auxScorer.getFragmentDeltaMassIndex()]:0.0f;
-				result.addStripe(bestScore, bestAuxScores, deltaPrecursorMass, deltaFragmentMass, bestStripe);
+				result.addStripe(entry, bestScore, bestAuxScores, deltaPrecursorMass, deltaFragmentMass, bestStripe);
 			}
 			result.sort(1);
 			
-			resultsQueue.add(result);
 		}
+		resultsQueue.add(result);
 		return Nothing.NOTHING;
 	}
 

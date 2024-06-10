@@ -56,7 +56,7 @@ public class SearchParameterParser {
 		map.put("-numberOfExtraDecoyLibrariesSearched", "0.0");
 		map.put(SearchParameters.NUMBER_OF_QUANTITATIVE_PEAKS, "5");
 		map.put("-minNumOfQuantitativePeaks", "3");
-		map.put("-topNTargetsUsed", "-1");
+		map.put("-topNTargetsUsed", ""+SearchParameters.DEFAULT_MAX_NUM_FRAGMENT_IONS);
 		map.put("-verifyModificationIons", "true");
 		map.put("-minIntensity", "-1.0");
 		map.put("-minIntensityNumIons", "-1.0");
@@ -319,7 +319,7 @@ public class SearchParameterParser {
 		expectedPeakWidth=ParsingUtils.getFloat("-expectedPeakWidth", parameters, 25f);
 		numberOfQuantitativePeaks=ParsingUtils.getInteger(SearchParameters.NUMBER_OF_QUANTITATIVE_PEAKS, parameters, 5);
 		minNumOfQuantitativePeaks=ParsingUtils.getInteger("-minNumOfQuantitativePeaks", parameters, 3);
-		topNTargetsUsed=ParsingUtils.getInteger("-topNTargetsUsed", parameters, -1);
+		topNTargetsUsed=ParsingUtils.getInteger("-topNTargetsUsed", parameters, SearchParameters.DEFAULT_MAX_NUM_FRAGMENT_IONS);
 		
 		minIntensity=ParsingUtils.getFloat("-minIntensity", parameters, -1.0f);
 		minIntensityNumIons=ParsingUtils.getFloat("-minIntensityNumIons", parameters, -1.0f);

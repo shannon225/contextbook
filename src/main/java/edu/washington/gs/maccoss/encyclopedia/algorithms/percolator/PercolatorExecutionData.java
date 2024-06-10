@@ -27,17 +27,8 @@ public class PercolatorExecutionData implements XMLObject {
 	private String percolatorExecutableVersion;
 
 	public PercolatorExecutionData(File inputTSV, File fastaFile, File peptideOutputFile, File peptideDecoyFile, File proteinOutputFile, File proteinDecoyFile, SearchParameters parameters) {
-		this.inputTSV=inputTSV;
-		this.fastaFile=fastaFile;
-		this.peptideOutputFile=peptideOutputFile;
-		this.peptideDecoyFile=peptideDecoyFile;
-		this.proteinOutputFile=proteinOutputFile;
-		this.proteinDecoyFile=proteinDecoyFile;
-		this.parameters=parameters;
-		this.useMinMax=true;
+		this(inputTSV, fastaFile, peptideOutputFile, peptideDecoyFile, proteinOutputFile, proteinDecoyFile, parameters, true);
 	}
-	
-	
 	
 	public PercolatorExecutionData(File inputTSV, File fastaFile, File peptideOutputFile, File peptideDecoyFile, File proteinOutputFile, File proteinDecoyFile, SearchParameters parameters, boolean useMinMax) {
 		this.inputTSV=inputTSV;

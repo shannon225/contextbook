@@ -44,6 +44,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTime
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.SimplePeakLocationInferrer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaScoringFactory;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaTwoJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneScoringFactory;
@@ -735,16 +736,24 @@ public class SearchToBLIB {
 		
 		boolean integratePrecursors=parameters.isIntegratePrecursors();
 
+		boolean useTDC=false;
 		boolean anyDDA=false;
 		for (int i=0; i<pecanJobs.size(); i++) {
 			SearchJobData job=pecanJobs.get(i);
 			if (job instanceof DDASearchJobData) {
 				anyDDA=true;
+				useTDC=true;
+				break;
+			}
+			if (job instanceof EncyclopediaTwoJobData) {
+				useTDC=true;
 				break;
 			}
 		}
+		if (useTDC) {
+			Logger.logLine("Running Percolator in target-decoy completition mode");
+		}
 		if (anyDDA) {
-			Logger.logLine("Found DDA data, running Percolator in target-decoy completition mode");
 			if (!integratePrecursors) {
 				Logger.logLine("Found DDA data, forcing integration of precursors");
 				integratePrecursors=true;
@@ -762,7 +771,7 @@ public class SearchToBLIB {
 		File bigPercolatorDecoyFile=new File(representativeJob.getPercolatorFiles().getInputTSV().getParentFile(), filename+"_concatenated_decoy.txt");
 		File bigPercolatorProteinFile=new File(representativeJob.getPercolatorFiles().getInputTSV().getParentFile(), filename+"_concatenated_protein_results.txt");
 		File bigPercolatorProteinDecoyFile=new File(representativeJob.getPercolatorFiles().getInputTSV().getParentFile(), filename+"_concatenated_protein_decoy.txt");
-		PercolatorExecutionData bigPercolatorFiles=new PercolatorExecutionData(bigFeatureFile, representativeJob.getPercolatorFiles().getFastaFile(), bigPercolatorFile, bigPercolatorDecoyFile, bigPercolatorProteinFile, bigPercolatorProteinDecoyFile, parameters, !anyDDA);
+		PercolatorExecutionData bigPercolatorFiles=new PercolatorExecutionData(bigFeatureFile, representativeJob.getPercolatorFiles().getFastaFile(), bigPercolatorFile, bigPercolatorDecoyFile, bigPercolatorProteinFile, bigPercolatorProteinDecoyFile, parameters, !useTDC);
 
 		final float threshold=parameters.getEffectivePercolatorThreshold();
 		try {

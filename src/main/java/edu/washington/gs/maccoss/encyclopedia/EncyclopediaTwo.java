@@ -529,7 +529,6 @@ public class EncyclopediaTwo {
 			resultList.add(AbstractScoringResult.POISON_RESULT);
 			finalWriteConsumerThread.join();
 			rescoredResultsConsumer.close();
-	
 			
 			ArrayList<PercolatorPeptide> passingPeptides;
 			if (parameters.isUsePercolator()) {
