@@ -78,6 +78,7 @@ public class EncyclopediaTwo {
 	public static final String BACKGROUND_FASTA_TAG="-f";
 	public static final String QUIET_MODE_ARG = "-quiet";
 	private static final RetentionTimeComparator rtComparator=new RetentionTimeComparator();
+	public static final boolean useSqrt=false;
 
 	public static void main(String[] args) {
 		HashMap<String, String> arguments=CommandLineParser.parseArguments(args);
@@ -340,11 +341,14 @@ public class EncyclopediaTwo {
 			// get stripes
 			int rangesFinished = 0;
 			float numberOfTasks = 2.0f + ranges.size();
+
+			ArrayList<LibraryEntry> nextEntries=library.getEntries(ranges.get(0), useSqrt, parameters.getAAConstants());
+			ArrayList<FragmentScan> nextStripes=stripefile.getStripes(ranges.get(0).getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, useSqrt);
 			
-			ArrayList<LibraryEntry> nextEntries=library.getEntries(ranges.get(0), true, parameters.getAAConstants());
 			for (int rangeIndex = 0; rangeIndex < ranges.size(); rangeIndex++) {
 				Range range=ranges.get(rangeIndex);
 				ArrayList<LibraryEntry> entries=nextEntries;
+				ArrayList<FragmentScan> stripes=nextStripes;
 				
 				String baseMessage = "Working on " + range + " m/z";
 				float baseIncrement = 1.0f / numberOfTasks;
@@ -363,7 +367,6 @@ public class EncyclopediaTwo {
 				}
 				Logger.logLine("Processing " + range + " m/z, (" + dutyCycle + " second duty cycle)");
 
-				ArrayList<FragmentScan> stripes = stripefile.getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, true);
 				Collections.sort(stripes);
 
 				if (stripes.size() < 10) {
@@ -419,7 +422,8 @@ public class EncyclopediaTwo {
 				}
 
 				if (rangeIndex+1<ranges.size()) {
-					nextEntries=library.getEntries(ranges.get(rangeIndex+1), true, parameters.getAAConstants());
+					nextEntries=library.getEntries(ranges.get(rangeIndex+1), useSqrt, parameters.getAAConstants());
+					nextStripes=stripefile.getStripes(ranges.get(rangeIndex+1).getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, useSqrt);
 				}
 
 				executor.shutdown();
@@ -593,9 +597,10 @@ public class EncyclopediaTwo {
 		
 		for (AbstractScoringResult result : data) {
 			if (result.hasScoredResults()) {
+				ScoredPSM psm=result.getScoredMSMS();
 				String peptideModSeq=result.getEntry().getPeptideModSeq();
 				if (passingSeqs.contains(peptideModSeq+"+"+result.getEntry().getPrecursorCharge())) {
-					passingPSMs.add(result.getScoredMSMS());
+					passingPSMs.add(psm);
 				}
 			}
 		}

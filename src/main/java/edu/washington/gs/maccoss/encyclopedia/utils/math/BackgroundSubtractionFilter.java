@@ -201,7 +201,7 @@ public class BackgroundSubtractionFilter {
 		return subtract;
 	}
 	
-	public static float[] movingCenteredAverage(float[] scores, int scanAveragingWindow) {
+	public static float[] movingCenteredSum(float[] scores, int scanAveragingWindow) {
 		// moving sum on background subtracted scores, this approach uses less data for the first and last scanAveragingMargin scans
 		int scanAveragingMargin=(scanAveragingWindow-1)/2;
 		
@@ -214,9 +214,14 @@ public class BackgroundSubtractionFilter {
 					sum+=scores[index];
 				}
 			}
-			sumScores[i]=sum/scanAveragingWindow;
+			sumScores[i]=sum;
 		}
 		return sumScores;
+	}
+	
+	public static float[] movingCenteredAverage(float[] scores, int scanAveragingWindow) {
+		float[] sumScores=movingCenteredSum(scores, scanAveragingWindow);
+		return General.divide(sumScores, scanAveragingWindow);
 	}
 	
 	public static float[] gaussianCenteredAverage(float[] scores, int scanAveragingWindow) {

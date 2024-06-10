@@ -104,6 +104,7 @@ public class MProphetFeatureReader {
 			if (StringUtils.contains(columnNames, "scribe")) sortingScoreString="scribe";  
 			if (StringUtils.contains(columnNames, "xCorrLib")) sortingScoreString="xCorrLib";  
 			if (StringUtils.contains(columnNames, "xCorrModel")) sortingScoreString="xCorrModel";  
+			//if (StringUtils.contains(columnNames, "primary")) sortingScoreString="primary";  
 
 			if (sortingScoreString==null) {
 				throw new EncyclopediaException("Can't parse sorting score from header from ["+header+"]");

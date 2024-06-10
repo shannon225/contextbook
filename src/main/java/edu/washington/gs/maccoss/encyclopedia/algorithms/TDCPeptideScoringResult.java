@@ -119,20 +119,11 @@ public class TDCPeptideScoringResult extends AbstractScoringResult {
 	}
 	
 	public boolean hasScoredResults() {
-		return goodStripes.size()>0;
+		return goodStripes.size()>0&&goodStripes.get(0).getMSMS()!=null;
 	}
 	
 	public ScoredPSM getScoredMSMS() {
-		float bestScore=-Float.MAX_VALUE;
-		ScoredPSM bestPair=null;
-		
-		for (ScoredPSM pair : goodStripes) {
-			if (pair.getPrimaryScore()>bestScore) {
-				bestScore=pair.getPrimaryScore();
-				bestPair=pair;
-			}
-		}
-		return bestPair;
+		return goodStripes.get(0);
 	}
 	
 	public ArrayList<ScoredPSM> getGoodMSMSCandidates() {

@@ -431,6 +431,11 @@ public class TransitionRefiner {
 		return chromatograms;
 	}
 
+	public static float calculateCorrelation(IntRange indices, float[] medianChromatogram, float[] normalizedChromatogram) {
+		float medianMean=General.mean(medianChromatogram, indices.getStart(), indices.getStop());
+		return calculateCorrelation(medianMean, indices, medianChromatogram, normalizedChromatogram);
+	}
+	
 	public static float calculateCorrelation(float medianMean, IntRange indices, float[] medianChromatogram, float[] normalizedChromatogram) {
 		float fragmentMean=General.mean(normalizedChromatogram, indices.getStart(), indices.getStop());
 		
@@ -452,6 +457,8 @@ public class TransitionRefiner {
 			correlation=Float.MIN_VALUE;
 		} else {
 			float denominator=(float)Math.sqrt(medianDeltaSquareSum*fragmentDeltaSquareSum);
+			if (denominator==0.0f) return Float.MIN_VALUE;
+			
 			correlation=deltaProductSum/denominator;
 			if (correlation>1.0f) {
 				correlation=1.0f; // there can be minor floating point errors in the sqrt

@@ -27,6 +27,26 @@ public class EncyclopediaTwoPointOneScoringTaskTest extends TestCase {
 
 	private LibraryFile LIBRARY=null;
 	private StripeFileInterface SINGLE_WINDOW_STRIPE_FILE=null;
+	
+	public static void main(String[] args) throws Exception {
+		EncyclopediaTwoPointOneScoringTaskTest test=new EncyclopediaTwoPointOneScoringTaskTest();
+		test.setUp();
+		if (true) {
+			AbstractScoringResult result=test.processPeptide("AHWTPFEGQK", (byte)2);
+		}
+		if (true) {
+			AbstractScoringResult result=test.processPeptide("SAGFHPSGSVLAVGTVTGR", (byte)3);
+		}
+		if (true) {
+			AbstractScoringResult result=test.processPeptide("SADESGQALLAAGHYASDEVREK", (byte)4);
+		}
+		if (true) {
+			AbstractScoringResult result=test.processPeptide("SIYEGDESFR", (byte)2);
+		}
+		if (true) {
+			AbstractScoringResult result=test.processPeptide("RNFILDQTNVSAAAQR", (byte)3);
+		}
+	}
 
 	@Override
 	protected void setUp() throws Exception {

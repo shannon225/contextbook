@@ -1,11 +1,13 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.library;
 
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 
+import edu.washington.gs.maccoss.encyclopedia.EncyclopediaTwo;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractLibraryScoringTask;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AuxillaryPSMScorer;
@@ -20,12 +22,16 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.Transition
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefiner;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.IntRange;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
@@ -36,6 +42,8 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.Correlation;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.FloatPair;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredIndex;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.CosineGaussian;
@@ -172,14 +180,69 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 			}
 			
 			float[][] transposeChromatograms=General.transposeMatrix(allSqrtIntensities);
+			float[][] transposeNormalizedChromatograms=new float[transposeChromatograms.length][];
+			
+//			ArrayList<XYTrace> traces=new ArrayList<XYTrace>();
 			for (int i = 0; i < transposeChromatograms.length; i++) {
 				transposeChromatograms[i]=SkylineSGFilter.paddedSavitzkyGolaySmooth(transposeChromatograms[i]);
 				if (parameters.isSubtractBackground()) {
 					transposeChromatograms[i]=BackgroundSubtractionFilter.backgroundSubtractMovingMedian(transposeChromatograms[i], movingAverageLength*10);
 				}
+				
+				// pad moving normalizer by 50%
+				float[] movingAverageSum=BackgroundSubtractionFilter.movingCenteredSum(transposeChromatograms[i], Math.round(movingAverageLength*1.5f));
+
+				transposeNormalizedChromatograms[i]=new float[transposeChromatograms[i].length];
+				for (int j = 0; j < transposeNormalizedChromatograms[i].length; j++) {
+					if (movingAverageSum[j]>0) {
+						transposeNormalizedChromatograms[i][j]=transposeChromatograms[i][j]/movingAverageSum[j];
+					}
+				}
+//				Color c = RandomGenerator.randomColor(i);
+//				traces.add(new XYTrace(General.divide(retentionTimes, 60f), transposeNormalizedChromatograms[i], GraphType.line, getTaskName(), new Color(c.getRed(), c.getGreen(), c.getBlue(), 122), 2f));
 			}
 			allSqrtIntensities=General.transposeMatrix(transposeChromatograms);
+			float[][] allNormalizedIntensities=General.transposeMatrix(transposeNormalizedChromatograms);
+			
+			int targetTransitions=Math.max(parameters.getMinNumOfQuantitativePeaks(), (int)Math.ceil(parameters.getNumberOfQuantitativePeaks()/2.0));
+			float[] medianChromatogram=new float[super.stripes.size()];
+			for (int i = 0; i < medianChromatogram.length; i++) {
+				TFloatArrayList nonZeros=new TFloatArrayList();
+				for (int j = 0; j < allNormalizedIntensities[i].length; j++) {
+					if (allNormalizedIntensities[i][j]>0) {
+						nonZeros.add(allNormalizedIntensities[i][j]);
+					}
+				}
+				
+				if (targetTransitions>nonZeros.size()) {
+					medianChromatogram[i]=0;
+				} else {
+					float targetFraction=1.0f-targetTransitions/(float)nonZeros.size(); // get closest to max
+					medianChromatogram[i]=QuickMedian.select(nonZeros.toArray(), targetFraction);
+				}
+			}
 
+
+			float[] correlationSumAcrossTime=new float[medianChromatogram.length];
+			for (int i = 0; i < transposeChromatograms.length; i++) {
+				float[] correlationAcrossTime=new float[transposeChromatograms[i].length];
+				for (int j = 0; j < transposeChromatograms[i].length-movingAverageLength; j++) {
+					IntRange range=new IntRange(j, j+movingAverageLength);
+					
+					int center=j+movingAverageLength/2;
+					
+					if (medianChromatogram[center]>medianChromatogram[range.getStart()]&&medianChromatogram[center]>medianChromatogram[range.getStop()]) {
+						correlationAcrossTime[center]=TransitionRefiner.calculateCorrelation(range, medianChromatogram, transposeChromatograms[i]);
+						if (Float.isNaN(correlationAcrossTime[center])) {
+							correlationAcrossTime[center]=0.0f;
+						}
+					}
+				}
+				correlationSumAcrossTime=General.add(correlationSumAcrossTime, correlationAcrossTime);
+			}
+			correlationSumAcrossTime=BackgroundSubtractionFilter.fastMovingCenteredAverage(correlationSumAcrossTime, movingAverageLength/2);
+			correlationSumAcrossTime=General.divide(correlationSumAcrossTime, (float)targetTransitions);
+			
 			// score time points
 			float[] primary=new float[super.stripes.size()];
 			for (int i=0; i<super.stripes.size(); i++) {
@@ -199,6 +262,11 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 					}
 				}
 			}
+			primary=General.multiply(primary, correlationSumAcrossTime);
+
+//			traces.add(new XYTrace(General.divide(retentionTimes, 60f), correlationSumAcrossTime, GraphType.boldline, getTaskName(), Color.black, 4f));
+//			traces.add(new XYTrace(General.divide(retentionTimes, 60f), primary, GraphType.boldline, getTaskName(), Color.red, 4f));
+//			Charter.launchChart("time", "score", false, traces.toArray(new XYTrace[0]));
 
 			TFloatFloatHashMap map=new TFloatFloatHashMap();
 			ArrayList<ScoredIndex> goodStripes=new ArrayList<ScoredIndex>();
@@ -233,7 +301,9 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 					System.arraycopy(retentionTimes, lowerWindow, localRetentionTimes, 0, range);
 					System.arraycopy(allSqrtIntensities, lowerWindow, localRawIntensities, 0, range);
 					for (int j = 0; j < localRawIntensities.length; j++) {
-						localRawIntensities[j]=General.multiply(localRawIntensities[j], localRawIntensities[j]); // undo the sqrt
+						if (EncyclopediaTwo.useSqrt) {
+							localRawIntensities[j]=General.multiply(localRawIntensities[j], localRawIntensities[j]); // undo the sqrt
+						}
 					}
 					
 					float[][] chromatograms=General.transposeMatrix(localRawIntensities);
