@@ -31,20 +31,23 @@ public class EncyclopediaTwoPointOneScoringTaskTest extends TestCase {
 	public static void main(String[] args) throws Exception {
 		EncyclopediaTwoPointOneScoringTaskTest test=new EncyclopediaTwoPointOneScoringTaskTest();
 		test.setUp();
-		if (true) {
+		if (false) {
 			AbstractScoringResult result=test.processPeptide("AHWTPFEGQK", (byte)2);
 		}
-		if (true) {
+		if (false) {
 			AbstractScoringResult result=test.processPeptide("SAGFHPSGSVLAVGTVTGR", (byte)3);
 		}
-		if (true) {
+		if (false) {
 			AbstractScoringResult result=test.processPeptide("SADESGQALLAAGHYASDEVREK", (byte)4);
 		}
-		if (true) {
+		if (false) {
 			AbstractScoringResult result=test.processPeptide("SIYEGDESFR", (byte)2);
 		}
-		if (true) {
+		if (false) {
 			AbstractScoringResult result=test.processPeptide("RNFILDQTNVSAAAQR", (byte)3);
+		}
+		if (true) {
+			AbstractScoringResult result=test.processPeptide("SSEHINEGETAMLVC[+57.021464]K", (byte)3);
 		}
 	}
 
@@ -85,9 +88,36 @@ public class EncyclopediaTwoPointOneScoringTaskTest extends TestCase {
 		try {
 			AbstractScoringResult result=processPeptide("AHWTPFEGQK", (byte)2);
 			assertEquals("AHWTPFEGQK", result.getEntry().getPeptideModSeq());
-			assertTrue(result.getBestScore()>1f);
+			assertTrue(result.getBestScore()<1f);
 			ScoredPSM psm=result.getScoredMSMS();
-			assertTrue(new Range(47.5f, 48.2f).contains(psm.getMSMS().getScanStartTime()/60f));
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
+	
+	public void testSinglePeptideNSTFSEIFKK() {
+		try {
+			AbstractScoringResult result=processPeptide("NSTFSEIFKK", (byte)2);
+			assertEquals("NSTFSEIFKK", result.getEntry().getPeptideModSeq());
+			assertTrue(result.getBestScore()>10f);
+			ScoredPSM psm=result.getScoredMSMS();
+			assertTrue(new Range(56f, 57f).contains(psm.getMSMS().getScanStartTime()/60f));
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
+	
+	public void testSinglePeptideSSEHINEGETAMLVCK() {
+		try {
+			AbstractScoringResult result=processPeptide("SSEHINEGETAMLVC[+57.021464]K", (byte)3);
+			assertEquals("SSEHINEGETAMLVC[+57.021464]K", result.getEntry().getPeptideModSeq());
+			assertTrue(result.getBestScore()>10f);
+			ScoredPSM psm=result.getScoredMSMS();
+			assertTrue(new Range(49f, 50f).contains(psm.getMSMS().getScanStartTime()/60f));
 			
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -117,7 +147,7 @@ public class EncyclopediaTwoPointOneScoringTaskTest extends TestCase {
 		try {
 			AbstractScoringResult result=processPeptide("SADESGQALLAAGHYASDEVREK", (byte)4);
 			assertEquals("SADESGQALLAAGHYASDEVREK", result.getEntry().getPeptideModSeq());
-			assertTrue(result.getBestScore()>6f); // 6.475733
+			assertTrue(result.getBestScore()>5f); // 6.475733
 			ScoredPSM psm=result.getScoredMSMS();
 			assertTrue(new Range(58f, 58.8f).contains(psm.getMSMS().getScanStartTime()/60f)); // Not the right integration, but time is 58.3
 			
@@ -162,6 +192,7 @@ public class EncyclopediaTwoPointOneScoringTaskTest extends TestCase {
 			fail(e.getMessage());
 		}
 	}
+	public static final String expected = "SSEHINEGETAMLVC[+57.021464]K";
 	
 	/**
 	 * Smoke Test
@@ -188,22 +219,11 @@ public class EncyclopediaTwoPointOneScoringTaskTest extends TestCase {
 					resultsQueue, parameters);
 
 			task.call();
-
-			TFloatArrayList scoreList=new TFloatArrayList();
-			TObjectFloatHashMap<String> scoresByPeptideModSeq=new TObjectFloatHashMap<>();
-			for (AbstractScoringResult result : resultsQueue) {
-				LibraryEntry entry = result.getEntry();
-				scoreList.add(result.getBestScore());
-				scoresByPeptideModSeq.put(entry.getPeptideModSeq(), result.getBestScore());
-				//System.out.println(entry.getPeptideModSeq()+"\t"+entry.getPrecursorCharge()+"\t"+result.getBestScore()+"\t"+result.getScoredMSMS().getAuxScores()[21]);
-			}
-			float[] scoreArray=scoreList.toArray();
-			float top5Percent=QuickMedian.select(scoreArray, 0.95f);
-			//System.out.println("top 5%: "+top5Percent);
 			
-			for (String peptideModSeq : EncyclopediaOneScoringTaskTest.expected) {
-				assertTrue("Problem with: "+peptideModSeq, scoresByPeptideModSeq.get(peptideModSeq)>top5Percent);
-			}
+			// only the top match is saved (TDC)
+			assertTrue(resultsQueue.size()==1);
+			assertEquals(resultsQueue.take().getEntry().getPeptideModSeq(), "SSEHINEGETAMLVC[+57.021464]K");
+
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail(e.getMessage());

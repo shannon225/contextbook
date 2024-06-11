@@ -8,7 +8,6 @@ import java.io.FileWriter;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
-import edu.washington.gs.maccoss.encyclopedia.utils.math.MedianInterpolatorTest;
 import junit.framework.TestCase;
 
 public class FileConcatenatorTest extends TestCase {
@@ -45,7 +44,7 @@ public class FileConcatenatorTest extends TestCase {
 	}
 	
 	public static File writeTempFile(String fileResourceName) throws Exception {
-		InputStream is=MedianInterpolatorTest.class.getResourceAsStream(fileResourceName);
+		InputStream is=FileConcatenatorTest.class.getResourceAsStream(fileResourceName);
 		return writeTempFile(is);
 	}
 
