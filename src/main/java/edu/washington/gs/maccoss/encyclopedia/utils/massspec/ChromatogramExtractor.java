@@ -15,8 +15,10 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.BackgroundSubtractionFi
 import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
 
 public class ChromatogramExtractor {
-	public static final byte[] isotopes=new byte[] {0, 1, 2};
-	public static final Color[] isotopeColors=new Color[] {new Color(0, 0, 255), new Color(138, 43, 226), new Color(165, 42, 42)};
+	public static final byte[] isotopes=new byte[] {-1, 0, 1, 2};
+	public static final Color[] isotopeColors=new Color[] {new Color(100, 100, 100), new Color(0, 0, 255), new Color(138, 43, 226), new Color(165, 42, 42)};
+	public static final GraphType[] isotopeTypes=new GraphType[] {GraphType.dashedline, GraphType.line, GraphType.line, GraphType.line};
+	
 	public static XYTraceInterface[] extractPrecursorChromatograms(MassTolerance tolerance, double precursorMz, byte charge, List<? extends Spectrum> precursors, boolean sgSmooth, boolean backgroundSubtract) {
 		double[] targetMasses=new double[isotopes.length];
 		for (int i=0; i<targetMasses.length; i++) {
@@ -39,13 +41,9 @@ public class ChromatogramExtractor {
 		}
 		ArrayList<XYTrace> kept=new ArrayList<XYTrace>();
 		for (int i=0; i<traces.length; i++) {
-			String name;
-			if (isotopes[i]>0) {
-				name="Precursor+"+isotopes[i];
-			} else {
-				name="Precursor";
-			}
-			XYTrace trace=new XYTrace(traces[i], GraphType.line, name, isotopeColors[i], 3.0f);
+			String name = getIsotopeName(i);
+			
+			XYTrace trace=new XYTrace(traces[i], isotopeTypes[i], name, isotopeColors[i], 3.0f);
 			
 			if (sgSmooth) {
 				trace=SkylineSGFilter.paddedSavitzkyGolaySmooth(trace);
@@ -56,6 +54,30 @@ public class ChromatogramExtractor {
 			kept.add(trace);
 		}
 		return kept.toArray(new XYTrace[kept.size()]);
+	}
+
+	public static String getIsotopeShortName(int i) {
+		String name;
+		if (isotopes[i]>0) {
+			name="P+"+isotopes[i];
+		} else if (isotopes[i]<0) {
+			name="P"+isotopes[i];
+		} else {
+			name="P";
+		}
+		return name;
+	}
+
+	public static String getIsotopeName(int i) {
+		String name;
+		if (isotopes[i]>0) {
+			name="Precursor+"+isotopes[i];
+		} else if (isotopes[i]<0) {
+			name="Precursor"+isotopes[i];
+		} else {
+			name="Precursor";
+		}
+		return name;
 	}
 
 	public static <T extends Ion> HashMap<T, XYTrace> extractFragmentChromatograms(MassTolerance tolerance, T[] ionTypes, List<? extends Spectrum> stripes, Float targetRTInSec, GraphType type, boolean sgSmooth, boolean backgroundSubtract) {

@@ -1,7 +1,8 @@
 package edu.washington.gs.maccoss.encyclopedia.gui.dia;
 
+import java.awt.Color;
 import java.text.DecimalFormat;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Optional;
 
@@ -11,8 +12,12 @@ import org.jfree.data.category.DefaultCategoryDataset;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursor;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.ChromatogramExtractor;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
@@ -108,6 +113,36 @@ public class FragmentIonConsistencyCharter {
 		}
 		
 		return Charter.getBarChart(null, "Sample", "Fractional Intensity", result, true);
+	}
+	
+	public static ArrayList<XYTrace> getPrecursorButterfly(byte[] isotopes, float[] top, float[] bottom, Color[] colors) {
+		System.out.println(General.toString(top));
+		
+		float max = General.max(top);
+		if (max>0) top=General.divide(top, max);
+		max = General.max(bottom);
+		if (max>0) bottom=General.divide(bottom, max);
+		
+		ArrayList<XYTrace> traces=new ArrayList<XYTrace>();
+		for (int i = 0; i < isotopes.length; i++) {
+			GraphType lineType=isotopes[i]<0?GraphType.bolddashedline:GraphType.boldline;
+			
+			traces.add(new XYTrace(new double[] {isotopes[i], isotopes[i]}, new double[] {-bottom[i], top[i]}, lineType, getIsotopeShortName(isotopes[i]), colors[i], 3f));
+			traces.add(new XYTrace(new double[] {isotopes[i], isotopes[i]}, new double[] {-bottom[i], top[i]}, GraphType.bigpoint, getIsotopeShortName(isotopes[i]), colors[i], 10f));				
+		}
+		return traces;
+	}
+
+	private static String getIsotopeShortName(byte isotope) {
+		String name;
+		if (isotope>0) {
+			name="P+"+isotope;
+		} else if (isotope<0) {
+			name="P"+isotope;
+		} else {
+			name="P";
+		}
+		return name;
 	}
 
 	public static LibraryEntry getButterfly(LibraryEntry top, LibraryEntry bottom) {

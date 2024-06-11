@@ -41,6 +41,7 @@ public class TransitionRefiner {
 	
 	// minimum threshold to call this peak as useful for identification purposes
 	public static final float identificationCorrelationThreshold=0.75f;
+	public static final float weakIdentificationCorrelationThreshold=0.5f;
 	
 	public static void main(String[] args) {
 		ArrayList<float[]> chromatograms=new ArrayList<float[]>();

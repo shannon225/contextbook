@@ -224,6 +224,7 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 
 
 			float[] correlationSumAcrossTime=new float[medianChromatogram.length];
+			float[] numberOfHighlyCorrelatedFragments=new float[medianChromatogram.length];
 			for (int i = 0; i < transposeChromatograms.length; i++) {
 				float[] correlationAcrossTime=new float[transposeChromatograms[i].length];
 				for (int j = 0; j < transposeChromatograms[i].length-movingAverageLength; j++) {
@@ -236,6 +237,15 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 						if (Float.isNaN(correlationAcrossTime[center])) {
 							correlationAcrossTime[center]=0.0f;
 						}
+					}
+					if (correlationAcrossTime[center]>TransitionRefiner.quantitativeCorrelationThreshold) {
+						numberOfHighlyCorrelatedFragments[center]+=1.0f;
+					} else if (correlationAcrossTime[center]>TransitionRefiner.identificationCorrelationThreshold) {
+						numberOfHighlyCorrelatedFragments[center]+=0.1f;
+					} else if (correlationAcrossTime[center]>TransitionRefiner.weakIdentificationCorrelationThreshold) {
+						numberOfHighlyCorrelatedFragments[center]+=0.01f;
+					} else if (correlationAcrossTime[center]>0.0f) {
+						numberOfHighlyCorrelatedFragments[center]+=0.001f;
 					}
 				}
 				correlationSumAcrossTime=General.add(correlationSumAcrossTime, correlationAcrossTime);
@@ -262,7 +272,13 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 					}
 				}
 			}
-			primary=General.multiply(primary, correlationSumAcrossTime);
+			
+			if (parameters.getInstrument().hasOrbitrapFragments()) {
+				primary=General.multiply(primary, correlationSumAcrossTime);
+			} else {
+				// additional tuning for higher-noise instruments
+				primary=General.multiply(General.multiply(primary, correlationSumAcrossTime), numberOfHighlyCorrelatedFragments);
+			}
 
 //			traces.add(new XYTrace(General.divide(retentionTimes, 60f), correlationSumAcrossTime, GraphType.boldline, getTaskName(), Color.black, 4f));
 //			traces.add(new XYTrace(General.divide(retentionTimes, 60f), primary, GraphType.boldline, getTaskName(), Color.red, 4f));

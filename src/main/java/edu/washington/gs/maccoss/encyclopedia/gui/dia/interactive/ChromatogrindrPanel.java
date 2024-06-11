@@ -8,6 +8,7 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Frame;
 import java.awt.Graphics2D;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
@@ -56,6 +57,7 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.RowFilter;
+import javax.swing.SpringLayout;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -66,6 +68,7 @@ import javax.swing.table.TableRowSorter;
 
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.annotations.XYTextAnnotation;
+import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.panel.CrosshairOverlay;
 import org.jfree.chart.plot.Crosshair;
@@ -73,6 +76,7 @@ import org.jfree.chart.plot.XYPlot;
 import org.jfree.ui.RectangleEdge;
 import org.jfree.ui.TextAnchor;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.IsotopicDistributionCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeptideXYPoint;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefinementData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefiner;
@@ -82,6 +86,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.parameters.InstrumentSpecificSearchParameters;
@@ -94,12 +99,14 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.FragmentIonConsistencyCharter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.PercentageLayout;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingWorkerProgress;
 import edu.washington.gs.maccoss.encyclopedia.gui.massspec.ChromatogramCharter;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
+import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.CategoricalData;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.EditableXYPoint;
@@ -132,7 +139,6 @@ public class ChromatogrindrPanel extends JPanel {
 	private final FileChooserPanel diaFileChooser;
 	private final FileChooserPanel libraryFileChooser;
 	private final JSplitPane mainSplit=new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-	private final JSplitPane tableSplit=new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 	
 	private final JTable peptideTable;
 	private final TableRowSorter<TableModel> rowSorter;
@@ -231,152 +237,10 @@ public class ChromatogrindrPanel extends JPanel {
 				+ "ATSITVTGSGSC[+57.021464]R	37.35	2	\n" + "VSNQVAVNMYK	47.48	2	\n"
 				+ "QLGELLTDGVR	65.94	2	\n" + "EADASPASAGIC[+57.021464]R	37.79	2	\n"
 				+ "TPLHMAASEGHASIVEVLLK	74.64	3	\n");
-		
-		/*browser.pasteTable("ELNVMFIETSAK	75.89	2	\n" + "QHYVLAGASGSPGEEVAIRPSTAPR	53.64	4	\n"
-				+ "ALLPILQWHK	81.15	2	\n" + "IATEFNQLQFHAVQSK	62.84	3	\n"
-				+ "EQM[+15.994915]QPTHPIR	24.31	2	\n" + "LDNTTAAVQELGR	53.34	2	\n"
-				+ "EDGTIFHPHSGLC[+57.021464]LSAYR	55.27	3	\n" + "TVTPAMVEGIYK	73.42	2	\n"
-				+ "IPGIYVLSLEIGK	89.67	2	\n" + "LTAYAM[+15.994915]TIPFVR	74.86	2	\n"
-				+ "LTSPVINTSLDTK	59.47	2	\n" + "LDLTGTSGTAVPAR	53.99	2	\n" + "DYTEGWVEFR	73.85	2	\n"
-				+ "IAALENELTFLR	83.55	2	\n" + "DFQYNEEEMK	49.04	2	\n" + "SPPSAGYLVMVSR	67.14	2	\n"
-				+ "LEELELDEQQK	53.37	2	\n" + "APGFAHLAGLDK	57.70	2	\n"
-				+ "KVVLMQC[+57.021464]NIESVEEGVK	62.32	3	\n" + "LSKDQFALAMYFIQQK	88.02	3	\n"
-				+ "MATYLTGELTATSEDYK	69.09	3	\n" + "QLC[+57.021464]EMEAC[+57.021464]R	38.90	2	\n"
-				+ "RIIDDSEITKEDDALWPPPDR	66.88	4	\n" + "LSSLGGVNSLGVSSLEHITHSLLGR	90.05	4	\n"
-				+ "HVAMTLLDTEQSYVESLR	78.91	3	\n" + "TSSEPEFNSLPR	54.43	2	\n" + "LQDEGQEAEGEK	26.93	2	\n"
-				+ "NVTEMAMNPHIK	49.05	2	\n" + "EQHGLQLQSEINQLHSK	54.39	3	\n"
-				+ "QQLPTFLQQMQNPDTLSAMSNPR	74.63	4	\n" + "SIIQQHNLETLENDIK	66.66	3	\n"
-				+ "HEM[+15.994915]LPEFYK	51.64	2	\n" + "KTDFSWEEERNFGASLLLPGLK	84.37	4	\n"
-				+ "PAMLHLPSEQGAPETLQR	61.66	3	\n" + "GGTFQM[+15.994915]GGSSSHNRPSGSNVDTLLR	47.76	4	\n"
-				+ "EQGLRDIASTPHELYR	60.82	3	\n" + "SC[+57.021464]C[+57.021464]TFC[+57.021464]GVLR	56.53	2	\n"
-				+ "GQVTGALLLSVVGGK	83.71	2	\n" + "MHIAQDINQDNLQLFLNSYNGRR	76.48	4	\n"
-				+ "IHQQELEVGISSHQPSFAALNR	61.81	4	\n" + "KNENLQNLLC[+57.021464]GSGAGVISK	70.50	3	\n"
-				+ "TYVSPTHVGSGAYGSVC[+57.021464]SAIDKR	58.51	4	\n" + "VGDAIPAVEVFEGEPGNKVNLAELFK	92.47	4	\n"
-				+ "FNAC[+57.021464]FESVATNIDEIYK	82.51	3	\n" + "LASTNSSVLGADLPSSMKEK	59.06	3	\n"
-				+ "HKPGIVQETTFDLGGDIHSGTALPTSK	70.41	4	\n" + "FGTFPGNYVAPV	83.12	2	\n"
-				+ "SSYIVSQIAVAYHNIR	75.14	3	\n" + "YQLEIKIPETYPFNPPK	83.52	3	\n"
-				+ "GRANHSAFLFGFGDGGGGPTQTMLDR	80.74	4	\n" + "TNSQLDTSIQR	39.53	2	\n"
-				+ "TGFTPLHIAAHYENLNVAQLLLNR	88.35	4	\n"
-				+ "QPTFC[+57.021464]SHC[+57.021464]TDFIWGFGK	86.85	3	\n"
-				+ "RPFAVTTQSFGSNAEGQHSGFGPQPNPEK	56.71	5	\n"
-				+ "AAVHYTVGC[+57.021464]LC[+57.021464]EEVALDK	63.54	3	\n" + "DIKPENLLISHNDVLK	72.72	3	\n"
-				+ "DSQMQNPYSR	36.72	2	\n" + "RPQAVIEDAVATSGVSTLSSTVSHDSQSAHR	64.52	5	\n"
-				+ "LVRPEVDVMC[+57.021464]TAFHDNEETFLK	78.27	4	\n" + "QNLEPLFDSYTSELRR	70.25	3	\n"
-				+ "VSSVPNTSQSYAK	36.36	2	\n" + "AEYINFLENLK	83.85	2	\n"
-				+ "QMSVKEDLDKVEPAVIEAQNAVK	73.54	4	\n" + "LDAYKADDPTMGEGPDK	44.20	3	\n"
-				+ "IHNEMASTSDK	26.19	2	\n" + "TVLMLADQM[+15.994915]ISR	66.40	2	\n"
-				+ "GQVLPAHTLLNTVDVELIYEGVK	93.21	4	\n" + "KFEEGSFANSTDQEPTRPQPGGGDVR	49.02	4	\n"
-				+ "SSESEFTQYTTHHILK	53.73	3	\n" + "EQLSLPAEFPDK	69.29	2	\n"
-				+ "GGLGGGYGGASGM[+15.994915]GGITAVTVNQSLLSPLVLEVDPNIQAVR	92.40	6	\n"
-				+ "EWYIGYYQGR	68.72	2	\n" + "FNAESQGC[+57.021464]NHEEDAGVR	33.28	3	\n"
-				+ "SANFLDHLYVGIPRPSGEK	74.71	3	\n" + "SVYHQLFMSSLLMDLK	92.46	3	\n"
-				+ "RNPAGSVVMER	36.03	2	\n" + "LVLVSPTSEQYDSLLR	80.28	3	\n"
-				+ "SLC[+57.021464]PETWPTWAGRPQDGVAVLVR	83.32	4	\n"
-				+ "TAASGIPYHSEVPVSLKEAVC[+57.021464]EVALDYKK	81.91	5	\n"
-				+ "GTDLWLGVDALGLNIYEKDDKLTPK	87.57	4	\n" + "IVLPGNFLYC[+57.021464]TFYGR	93.70	3	\n"
-				+ "DDKESVPISDTIIPAVPPPTDLR	75.96	4	\n" + "LGTVYC[+57.021464]QASFPGANIIGNK	74.88	3	\n"
-				+ "SEEEQSSSSVKKDETNVK	25.71	3	\n" + "TGTYRQLFHPEQLITGKEDAANNYAR	61.93	5	\n"
-				+ "KTGVAGEDMQDNSGTYGK	33.97	3	\n" + "KVIDQQNGLYR	38.14	2	\n" + "SASLVVPSDIPK	53.32	2	\n"
-				+ "QC[+57.021464]C[+57.021464]VLFDFVSDPLSDLK	97.64	3	\n"
-				+ "LAQLEEAKQASIQHIQNAIDTEK	68.53	4	\n" + "MVFFVQNEPPHQIFK	74.71	3	\n"
-				+ "LEVERDNLAQDLATVR	73.22	3	\n" + "VALGNTWKENLTELSGGQR	68.33	3	\n"
-				+ "DVFGTNQLVGC[+57.021464]R	63.35	2	\n" + "DVQM[+15.994915]LQDAISK	55.22	2	\n"
-				+ "ENALQDSILAR	61.71	2	\n" + "DHPFGFVAVPTKNPDGTMNLMNWEC[+57.021464]AIPGKK	82.83	5	\n"
-				+ "LEQC[+57.021464]PLQLNNPFNEYSK	76.26	3	\n"
-				+ "LSQERPGVLLNQFPC[+57.021464]ENLLTVK	78.55	4	\n" + "KGLPDQELFSLNEGVR	75.20	3	\n"
-				+ "QDPGDNWEEGGGGGGGMEK	42.15	3	\n" + "EALELTDTGLLSGSEER	73.99	3	\n"
-				+ "NQIKVDLVDENFTELR	73.35	3	\n" + "YHDSDEATAAR	23.83	2	\n" + "EWEEAELQAK	50.77	2	\n"
-				+ "VC[+57.021464]LYPGFVDVK	70.15	2	\n" + "FRPLQLETINVTM[+15.994915]AGK	68.68	3	\n"
-				+ "AELQAQLAALSTK	66.30	2	\n" + "EAFLVNSDLTLR	75.89	2	\n" + "EALQSDLLEMK	67.72	2	\n"
-				+ "C[+57.021464]TC[+57.021464]GFSAIMNR	58.74	2	\n" + "VMPIC[+57.021464]LPSKDYAEVGR	59.91	3	\n"
-				+ "STPYSAYDPETYTGHWK	61.76	3	\n" + "ETVVISPPC[+57.021464]TGSSEHWKPELEEK	60.30	4	\n"
-				+ "VRFLEQQNAALAAEVNR	62.25	3	\n" + "LC[+57.021464]DSGELVAIKK	47.99	2	\n"
-				+ "AFENLLGQALTK	78.65	2	\n" + "VC[+57.021464]DAC[+57.021464]FNDLQG	57.96	2	\n"
-				+ "NLAATLQDIETK	68.54	2	\n" + "KC[+57.021464]NLVPTDEITVYYK	64.79	3	\n"
-				+ "SPNNFLSYYR	61.50	2	\n" + "DSVASTITGVMDK	65.86	2	\n" + "ELDREAQAEYLLQVR	63.42	3	\n"
-				+ "GVPNVISEDTLK	61.50	2	\n" + "KLAPEEC[+57.021464]FSPLDLFNK	83.28	3	\n"
-				+ "LVIVSLMELFK	104.72	2	\n" + "MQYAPNTQVEILPQGHESPIFK	72.76	4	\n"
-				+ "NSAEAIIHGLSSLTAC[+57.021464]QLR	82.76	3	\n" + "RLSEDYGVLKTDEGIAYR	57.45	3	\n"
-				+ "KIPVFHNGSTPTLGETPK	51.84	3	\n" + "EPVC[+57.021464]AALNSAILESQNLPK	80.59	3	\n"
-				+ "NIFHLFHDVVPTYHK	72.07	3	\n" + "KVADALTNAVAHVDDMPNALSALSDLHAHK	83.90	5	\n"
-				+ "TTANLAVDVIASSFGQTR	86.77	3	\n" + "DENSQLVAIVLR	82.51	2	\n"
-				+ "DNVGEEVDAEQLIQEAC[+57.021464]R	76.20	3	\n" + "HIAEDADRKYEEVAR	35.87	3	\n"
-				+ "LVHTNEVTVLLGDNWFAK	84.85	3	\n" + "WC[+57.021464]FLDATTASR	72.39	2	\n"
-				+ "SFVHPKPGAAGSVGAGLIPISSELC[+57.021464]YR	73.89	4	\n" + "GKLDGNQDLIR	39.72	2	\n"
-				+ "DGTGVVEFVRK	51.73	2	\n" + "KVQGGALEDSQLVAGVAFKK	60.86	3	\n"
-				+ "TVIEQQPVLC[+57.021464]EVFC[+57.021464]R	79.69	3	\n" + "NRLLPQGLAVYASPENK	61.12	3	\n"
-				+ "AC[+57.021464]PHMATC[+57.021464]GNVLFEGR	55.49	3	\n" + "MVSGM[+15.994915]YLGELVR	79.25	2	\n"
-				+ "AFYNNVLGEYEEYITK	82.26	3	\n" + "HSMLFIEASAK	57.02	2	\n"
-				+ "VLPVYMNC[+57.021464]LLK	81.17	2	\n" + "DVGAQILLHSHK	50.35	2	\n"
-				+ "GQTC[+57.021464]VVHYTGMLEDGK	54.03	3	\n" + "THGTC[+57.021464]AENFYR	36.70	2	\n"
-				+ "KAHGLLAEENR	31.28	2	\n" + "SNIVTSINFSK	61.40	2	\n"
-				+ "DLKPENLLC[+57.021464]M[+15.994915]GPELVK	72.48	3	\n"
-				+ "C[+57.021464]AQSAYC[+57.021464]NTK	25.65	2	\n" + "GSSYLGIPFNPSK	72.52	2	\n"
-				+ "RVDFHDVQDYADNIK	59.26	3	\n" + "EGEETLRIEDILEVIEK	93.97	3	\n"
-				+ "ILC[+57.021464]HMQLSSAQVEQLR	60.10	3	\n" + "IM[+15.994915]GLDLPDGGHLTHGYMSDVKR	60.87	4	\n"
-				+ "NMINTFVPSGK	63.45	2	\n" + "SISLLC[+57.021464]LEGLQK	81.11	2	\n"
-				+ "NTFYETLPVAINGNGPTK	73.16	3	\n" + "EAEAAFLNVYK	65.82	2	\n" + "TATATLMLQNR	52.11	2	\n"
-				+ "SVAC[+57.021464]DVGYPALK	55.60	2	\n" + "DLFNVDAFKLESLEAK	85.86	3	\n"
-				+ "LQAFGNEC[+57.021464]SIEQMEHVR	62.48	3	\n" + "VC[+57.021464]IEHHTFFR	46.96	2	\n"
-				+ "LQEMEILYKK	55.75	2	\n" + "LQGC[+57.021464]VSVQVNAGPLAYAR	64.61	3	\n"
-				+ "AVWDAFC[+57.021464]ANR	67.62	2	\n" + "SNSLSEQLAINTSPDAVK	60.13	3	\n"
-				+ "KAYWQVHLDQVEVASGLTLC[+57.021464]K	75.61	4	\n" + "YSISLSPPEQQK	57.70	2	\n"
-				+ "HLQPSQAQPETSIFDVLK	75.82	3	\n" + "RAQAATWANDGLDAEPSK	48.16	3	\n"
-				+ "LLEVTADLAER	65.60	2	\n" + "KGPSFADMEVLYWTHVK	80.05	3	\n" + "HTAFATFPNEK	47.26	2	\n"
-				+ "TTHQDEEVFK	33.68	2	\n" + "VTLILELLQHK	85.50	2	\n" + "GPSFADMEVLYWTHVK	85.61	3	\n"
-				+ "EASADLSPYVR	52.23	2	\n" + "EQLELFQNIRPLFINK	86.97	3	\n" + "LTDTTFLPSSK	58.35	2	\n"
-				+ "SIHQIRPSC[+57.021464]AFPVC[+57.021464]HDTEER	46.07	4	\n"
-				+ "EQC[+57.021464]DFSNSLK	43.67	2	\n" + "TAWVFDDKYKRPGYGAYDAFK	66.81	4	\n"
-				+ "IPM[+15.994915]PVNFNEPLSMLQR	79.76	3	\n" + "IC[+57.021464]LSISGHHPETWQPSWSIR	78.29	4	\n"
-				+ "GIEDDLMDLIK	91.68	2	\n" + "ELIQKELTIGSK	53.28	2	\n"
-				+ "IQDLKPQC[+57.021464]VVFLNIPR	78.15	3	\n" + "TTVTQSVADSLK	53.67	2	\n"
-				+ "LQLQGLDLSSR	68.34	2	\n" + "MEEGGNLGGLIK	58.57	2	\n"
-				+ "SC[+57.021464]LLHQFIEK	58.05	2	\n" + "LPPYSAGDGAELSTPGGKLPR	58.63	3	\n"
-				+ "TPDSFEESQGEEIGKVER	49.08	3	\n" + "SGPIFIVVPNGK	73.97	2	\n"
-				+ "YYYDGDMIC[+57.021464]K	53.86	2	\n" + "LADGGATNQGRVEIFYR	59.76	3	\n"
-				+ "LREMLIC[+57.021464]TNMEDLREQTHTR	64.61	4	\n" + "KQLAEQEELER	35.71	2	\n"
-				+ "DIPPILRPSLHSETWEIPFEK	75.87	4	\n" + "LQFLAGC[+57.021464]FGLGTVGHTGGK	74.35	3	\n"
-				+ "YGLLPSHASYL	72.56	2	\n" + "MRGEAEAFAIGAR	50.76	2	\n" + "YWEMMPPTILIDLLKK	104.06	3	\n"
-				+ "TTLADC[+57.021464]LISSNGIISSR	77.79	3	\n" + "VLSGLGGAAASSHR	40.19	2	\n"
-				+ "SGMYTVAMAYC[+57.021464]GSGNNK	59.50	3	\n" + "RDLMAC[+57.021464]AQTGSGK	34.77	2	\n"
-				+ "ATFSPIVTVEPR	68.07	2	\n" + "M[+15.994915]GITEYNNQC[+57.021464]R	40.36	2	\n"
-				+ "YTSQLPPLTAFILPSGGK	93.52	3	\n" + "IC[+57.021464]TGQVPSAEDEPAPKK	39.62	3	\n"
-				+ "IYEGAYHVLHK	42.78	2	\n" + "TVIVNM[+15.994915]VDVAK	51.89	2	\n"
-				+ "DTPGC[+57.021464]ATTPPHSQASSVR	33.18	3	\n" + "ITHYNYLILSK	63.38	2	\n"
-				+ "EGTEAEPLPLR	54.72	2	\n" + "EKPPGASVELVEYLESR	82.25	3	\n"
-				+ "DIQNTQC[+57.021464]LLNVEHLSAGC[+57.021464]PHVTLQFADSK	80.70	5	\n"
-				+ "LRSEMIEAIR	51.05	2	\n" + "DAVEKPQEFTIVAFVK	79.07	3	\n" + "DWQSYYYHHPQDRDR	44.97	3	\n"
-				+ "MHEDINEEWISDKTR	51.27	3	\n" + "KLTAGEAC[+57.021464]AQGLVTEVFPDSTFQK	83.32	4	\n"
-				+ "HLIPAANTGESKVFYYK	57.81	3	\n" + "YRWVEQHLGPQFVER	66.26	3	\n"
-				+ "LVHPGVAEVVFVK	64.35	2	\n" + "EVDALDGLC[+57.021464]SR	57.14	2	\n"
-				+ "LTRDDVIQIC[+57.021464]GPADGIR	61.97	3	\n" + "INLAAATHSAPPFPAAVGSQR	70.88	3	\n"
-				+ "RLDDSLLYLR	68.06	2	\n" + "VILEDVAMLHIKPDQFTYTSDHFETIMK	83.98	5	\n"
-				+ "QAIKELPQFATGENLPR	64.80	3	\n" + "NAGPIANYLQQVMQEAR	90.15	3	\n"
-				+ "LFFFMAPPHQLEFIQK	89.84	3	\n" + "AIGVGLGFELQR	74.40	2	\n"
-				+ "VSGLM[+15.994915]MANHTSISSLFER	76.91	3	\n"
-				+ "DVLHQNFESYKPEVQELIC[+57.021464]VADR	82.89	4	\n"
-				+ "QLILVGDHC[+57.021464]QLGPVVM[+15.994915]C[+57.021464]K	66.93	3	\n"
-				+ "FHFFEDQLR	65.01	2	\n" + "MILEIQSMQGK	57.00	2	\n" + "ILMAIDSELVDR	76.17	2	\n"
-				+ "THNVHVEIEQR	32.61	2	\n" + "QISRPSAAGINLM[+15.994915]IGSTR	59.60	3	\n"
-				+ "EGTFQGLISLR	76.30	2	\n" + "LAAQPLC[+57.021464]MTQPTASGTLR	63.09	3	\n"
-				+ "ERFQFPAQVTDVSENAK	64.65	3	\n" + "HPALSPVYLGLLTDWGQR	89.66	3	\n"
-				+ "FNHEQHEYYHTHIPNIFQK	55.81	4	\n" + "TLVEQLLSLLNSSPGPPTR	105.20	3	\n"
-				+ "NLLQLC[+57.021464]PQSLEALAVR	89.89	3	\n" + "FGVEQDVDMVFASFIRK	95.97	3	\n"
-				+ "SHC[+57.021464]IAEVENDEM[+15.994915]PADLPSLAADFVESKDVC[+57.021464]K	73.80	5	\n"
-				+ "ITVVGVGQVGM[+15.994915]AC[+57.021464]AISILGK	84.22	3	\n" + "VWDLQAALDPR	79.26	2	\n"
-				+ "GTELWLGVDALGLNIYEHDDKLTPK	86.26	4	\n" + "ISIVENC[+57.021464]FGAAGQPLTIPGR	79.13	3	\n"
-				+ "VPIWDQDIQFLPGSQK	85.15	3	\n" + "VESTDVSDLLHQYREANQ	67.86	3	\n"
-				+ "NHEEEM[+15.994915]KDLR	23.09	2	\n" + "PSLSHLLSQYYGAGVAR	78.44	3	\n"
-				+ "LTPVSLSNSPIK	62.43	2	\n" + "ILEDVVGVPEK	61.62	2	\n"
-				+ "GDFFPPERPQQLPHGLGGIGMGLGPGGQPIDANHLNK	76.21	6	\n" + "VEGTDGHEAFLLTEGSEEK	57.66	3	\n"
-				+ "KINESTQNWHQLENIGNFIK	76.36	4	\n" + "VLDLIVNGISINSAYTSK	85.03	3	\n"
-				+ "WLISTDLDQPAAIAVNPK	83.56	3	\n"
-				);
-		*/
 	}
 
 	public static void launchBrowserPanel(final ChromatogrindrPanel browser) {
-		final JFrame dialog=new JFrame("Chromatogrindr Browser");
+		final JFrame dialog=new JFrame("Chromatogrind Reanalysis Browser");
 
 		JMenuBar bar=new JMenuBar();
 		JMenu fileMenu=new JMenu("File");
@@ -918,6 +782,7 @@ public class ChromatogrindrPanel extends JPanel {
 		InteractivePeptidePrecursor entry=peptideModel.getSelectedRow(peptideTable.convertRowIndexToModel(selection[0]));
 		resetPeptide(entry);
 	}
+	
 	public void resetPeptide(final InteractivePeptidePrecursor entry) {
 		int location=mainSplit.getDividerLocation();
 		if (location<=5) {
@@ -949,13 +814,13 @@ public class ChromatogrindrPanel extends JPanel {
 			
 			// get precursor traces
 			ArrayList<PrecursorScan> precursors=dia.getPrecursors(minRTInSec, maxRTInSec);
-			Collections.sort(precursors);
 			ArrayList<PrecursorScan> trimmedPrecursors=new ArrayList<>();
 			for (PrecursorScan spectrum : precursors) {
 				if (entry.getPrecursorMZ()>spectrum.getIsolationWindowLower()&&entry.getPrecursorMZ()<spectrum.getIsolationWindowUpper()) {
 					trimmedPrecursors.add(spectrum);
 				}
 			}
+			Collections.sort(trimmedPrecursors);
 			precursors=trimmedPrecursors;
 			XYTraceInterface[] traceArray=ChromatogramExtractor.extractPrecursorChromatograms(parameters.getPrecursorTolerance(), entry.getPrecursorMZ(), entry.getPrecursorCharge(), precursors, true, false);
 			for (int i = 0; i < traceArray.length; i++) {
@@ -1019,6 +884,47 @@ public class ChromatogrindrPanel extends JPanel {
 			}
 			fragmentTraces=getTraces(primaryIonObjects, data.getChromatograms(), data.getCorrelationArray(), retentionTimes, data.getRange(), -Float.MAX_VALUE);
 			
+			
+			final ChartPanel chartPanel = getChromatogramChartPanel(entry, fragmentTraces, precursorTraces, data.getRange());
+	        
+			dataPanel.add(chartPanel);
+			
+			JPanel rightInfoPanel=new JPanel(new GridLayout(0, 1));
+			rightInfoPanel.setBackground(Color.WHITE);
+			dataPanel.add(rightInfoPanel);
+
+			// precursor delta mass
+			PrecursorScanMap precursorMap=new PrecursorScanMap(precursors);
+			MassTolerance precursorTolerance = parameters.getPrecursorTolerance();
+			double precursorMz=parameters.getAAConstants().getChargedMass(entry.getPeptideModSeq(), entry.getPrecursorCharge());
+			Pair<float[], TFloatArrayList[]> precursorIntegrations=precursorMap.integrateIsotopePacket(precursorMz, data.getRange(), entry.getPrecursorCharge(), parameters.getPrecursorTolerance());
+			ArrayList<CategoricalData> deltaPrecursorMassByIonList=new ArrayList<CategoricalData>();
+			for (int j = 0; j < precursorIntegrations.y.length; j++) {
+				float[] deltaArray;
+				if (precursorIntegrations.y[j].size()==0) {
+					deltaArray=new float[] {0.0f};
+				} else {
+					deltaArray=precursorIntegrations.y[j].toArray();
+				}
+				deltaPrecursorMassByIonList.add(new CategoricalData(ChromatogramExtractor.getIsotopeShortName(j), deltaArray, ChromatogramExtractor.isotopeColors[j]));
+			}
+			
+			String deltaPrecursorMassAxis=precursorTolerance.isRelativeTolerance()?"Delta Mass (PPM)":"Delta Mass (AMU)";
+
+			PercentageLayout layout = new PercentageLayout(0, 2);
+			layout.setColFraction(0, 0.33);
+			layout.setColFraction(1, 0.67);
+			JPanel deltaMassPanelGroup=new JPanel(layout);
+			
+			rightInfoPanel.add(deltaMassPanelGroup);
+			
+			ChartPanel deltaPrecursorMassPanel=Charter.getBoxplotChart("Delta Mass", "Ions", deltaPrecursorMassAxis, 16, 16, deltaPrecursorMassByIonList.toArray(new CategoricalData[0]), true);
+			ValueAxis precursorAxis=deltaPrecursorMassPanel.getChart().getCategoryPlot().getRangeAxis();
+			precursorAxis.setRange(-precursorTolerance.getToleranceThreshold(), precursorTolerance.getToleranceThreshold());
+			deltaPrecursorMassPanel.getChart().setTitle("Precursor");
+			deltaMassPanelGroup.add(deltaPrecursorMassPanel);
+			
+			// fragment delta mass
 			float minCorrelation=getMinimumCorrelation(data.getCorrelationArray());
 			ArrayList<CategoricalData> deltaMassByIonList=new ArrayList<CategoricalData>();
 			for (int j = 0; j < primaryIonObjects.length; j++) {
@@ -1034,22 +940,14 @@ public class ChromatogrindrPanel extends JPanel {
 				}				
 			}
 			
-			final ChartPanel chartPanel = getChromatogramChartPanel(entry, fragmentTraces, precursorTraces, data.getRange());
-	        
-			dataPanel.add(chartPanel);
-			
-			JPanel rightInfoPanel=new JPanel(new GridLayout(0, 1));
-			rightInfoPanel.setBackground(Color.WHITE);
-			dataPanel.add(rightInfoPanel);
-			
 			MassTolerance fragmentTolerance = parameters.getFragmentTolerance();
 			String deltaMassAxis=fragmentTolerance.isRelativeTolerance()?"Delta Mass (PPM)":"Delta Mass (AMU)";
 			
 			ChartPanel deltaMassPanel=Charter.getBoxplotChart("Delta Mass", "Ions", deltaMassAxis, 16, 16, deltaMassByIonList.toArray(new CategoricalData[0]), true);
 			ValueAxis axis=deltaMassPanel.getChart().getCategoryPlot().getRangeAxis();
 			axis.setRange(-fragmentTolerance.getToleranceThreshold(), fragmentTolerance.getToleranceThreshold());
-			rightInfoPanel.add(deltaMassPanel);
-			deltaMassPanel.getChart().setTitle((String)null);
+			deltaMassPanel.getChart().setTitle("Fragments");
+			deltaMassPanelGroup.add(deltaMassPanel);
 			
 			if (reference!=null) {
 				ArrayList<LibraryEntry> references=reference.getEntries(entry.getPeptideModSeq(), entry.getPrecursorCharge(), false);
@@ -1080,10 +978,29 @@ public class ChromatogrindrPanel extends JPanel {
 						ChartPanel rtPanel=Charter.getChart("Library Retention Time", "Acquired Retention Time", false, targetRT, backgroundRTs);
 						rightInfoPanel.add(rtPanel);
 					}
+
+					PercentageLayout fraglayout = new PercentageLayout(0, 2);
+					fraglayout.setColFraction(0, 0.33);
+					fraglayout.setColFraction(1, 0.67);
+					JPanel fragPanelGroup=new JPanel(fraglayout);
+					rightInfoPanel.add(fragPanelGroup);
+
+					// pad out for -1
+					float[] predictedIsotopeDistribution=IsotopicDistributionCalculator.getIsotopeDistribution(entry.getPeptideModSeq(), parameters.getAAConstants());
+					predictedIsotopeDistribution=General.concatenate(new float[] {0f}, predictedIsotopeDistribution);
+					
+					ArrayList<XYTrace> precursorButterflyTraces=FragmentIonConsistencyCharter.getPrecursorButterfly(ChromatogramExtractor.isotopes, precursorIntegrations.x, predictedIsotopeDistribution, ChromatogramExtractor.isotopeColors);
+					precursorButterflyTraces.add(new XYTrace(new float[] {-1.5f,  2.5f}, new float[] {0.0f, 0.0f}, GraphType.line, "base", Color.DARK_GRAY, 1f));
+					ChartPanel chartPanelPrecursorButterfly = Charter.getChart("Precursor", "Relative Intensity", false, precursorButterflyTraces.toArray(new XYTrace[0]));
+					((NumberAxis)chartPanelPrecursorButterfly.getChart().getXYPlot().getRangeAxis()).getAutoRangeIncludesZero();
+					chartPanelPrecursorButterfly.getChart().getXYPlot().getDomainAxis().setRange(-1.5, 2.5);
+					chartPanelPrecursorButterfly.getChart().getXYPlot().getRangeAxis().setRange(-1.15, 1.15);
+	
+					fragPanelGroup.add(chartPanelPrecursorButterfly);
 	
 					LibraryEntry butterfly=FragmentIonConsistencyCharter.getButterfly(acq, ref);
 					ChartPanel chartPanelButterfly = Charter.getChart(new AnnotatedLibraryEntry(butterfly, parameters, true));
-
+					
 					Font font=new Font(Charter.BASE_FONT_NAME, Font.PLAIN, 18);
 					XYTextAnnotation acquiredAnnotation = new XYTextAnnotation("Acquired", 10.0, 1.0);
 					XYTextAnnotation libraryAnnotation = new XYTextAnnotation("Library", 10.0, -1.0);
@@ -1095,8 +1012,12 @@ public class ChromatogrindrPanel extends JPanel {
 					libraryAnnotation.setFont(font);
 					chartPanelButterfly.getChart().getXYPlot().addAnnotation(acquiredAnnotation);
 					chartPanelButterfly.getChart().getXYPlot().addAnnotation(libraryAnnotation);
+					chartPanelButterfly.getChart().getXYPlot().getRangeAxis().setRange(-1.15, 1.15);
+					chartPanelButterfly.getChart().getXYPlot().getRangeAxis().setLabel("Relative Intensity");
+					chartPanelButterfly.getChart().setTitle((String)null);
+					
 
-					rightInfoPanel.add(chartPanelButterfly);
+					fragPanelGroup.add(chartPanelButterfly);
 				}
 			}
 

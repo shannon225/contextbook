@@ -140,8 +140,8 @@ public class Charter {
 						1136, 1661, 1544, 1620, 1210, 1770, 1297, 2086, 1635, 1117, 1432, 1652, 2143, 3766, 5043, 2124, 54156, 1310, 1240},
 				GraphType.spectrum, "Trace4");
 
-		ExtendedChartPanel chart=getChart("M/Z", "Intensity", false, trace, trace2, trace3);
-		chart=getChart("M/Z", "Intensity", false, trace4, new XYGraphingTrace(trace4, GraphType.point, "Trace4"));
+		ExtendedChartPanel chart=getChart("m/z", "Intensity", false, trace, trace2, trace3);
+		chart=getChart("m/z", "Intensity", false, trace4, new XYGraphingTrace(trace4, GraphType.point, "Trace4"));
 		launchChart(chart, "Title!");
 
 		// writeAsPDF(chart.getChart(), new
@@ -403,14 +403,14 @@ public class Charter {
 	}
 
 	public static ExtendedChartPanel getChart(LibraryEntry trace) {
-		ExtendedChartPanel chart=getChart("M/Z", "Intensity", false, trace);
+		ExtendedChartPanel chart=getChart("m/z", "Intensity", false, trace);
 		chart.getChart().setTitle(trace.getSpectrumName());
 		return chart;
 	}
 
 	public static ExtendedChartPanel getChart(Spectrum spec) {
 		XYTrace trace=spec instanceof XYTrace?(XYTrace)spec:new XYTrace(spec);
-		ExtendedChartPanel chart=getChart("M/Z", "Intensity", false, trace);
+		ExtendedChartPanel chart=getChart("m/z", "Intensity", false, trace);
 		chart.getChart().setTitle(spec.getSpectrumName());
 		return chart;
 	}
@@ -423,7 +423,7 @@ public class Charter {
 			trace=new XYTrace(spec);
 		}
 		
-		ExtendedChartPanel chart=getChart("M/Z", "Intensity", false, trace);
+		ExtendedChartPanel chart=getChart("m/z", "Intensity", false, trace);
 		chart.getChart().setTitle(title);
 		return chart;
 	}

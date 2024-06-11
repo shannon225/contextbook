@@ -4,9 +4,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 
+import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.list.array.TFloatArrayList;
 
 //@Immutable
@@ -28,12 +30,74 @@ public class PrecursorScanMap {
 		this.rts=rts.toArray();
 	}
 	
+	public Pair<float[], TFloatArrayList[]> integrateIsotopePacket(double mz, Range rtRange, byte charge, MassTolerance tolerance) {
+		float[] summedIntensity=new float[isotopes.length];
+		TFloatArrayList[] deltaMasses=new TFloatArrayList[isotopes.length];
+		for (int i = 0; i < deltaMasses.length; i++) {
+			deltaMasses[i]=new TFloatArrayList();
+		}
+		
+		int index=Arrays.binarySearch(rts, rtRange.getStart());
+		if (index<0) {
+			// insertion point
+			index=-(index+1);
+		}
+		if (index<0) index=0;
+		if (index>=precursors.size()) return new Pair<float[], TFloatArrayList[]>(summedIntensity, deltaMasses);
+		
+		Peak[] previousIsotopeIntensities = null;
+		
+		// integrate exclusively (only scans within the range
+		for (int i = index+1; i < rts.length; i++) {
+			if (rtRange.contains(rts[i])) {
+				Peak[] isotopeIntensities = getPacket(precursors.get(i), mz, charge, tolerance);
+				if (previousIsotopeIntensities==null) {
+					previousIsotopeIntensities=isotopeIntensities;
+					continue;
+				}
+				
+				float deltaTime=rts[i]-rts[i-1];
+				
+				for (int j = 0; j < isotopeIntensities.length; j++) {
+					float area=deltaTime*(isotopeIntensities[j].getIntensity()+previousIsotopeIntensities[j].getIntensity())/2.0f;
+					summedIntensity[j]+=area;
+					
+					double target=mz+(isotopes[j]*MassConstants.neutronMass/charge);
+					double deltaMass=isotopeIntensities[j].getMass()-target;
+					if (tolerance.isRelativeTolerance()) {
+						deltaMasses[j].add((float)(1000000.0*deltaMass/target));
+					} else {
+						deltaMasses[j].add((float)deltaMass);
+					}
+				}
+				isotopeIntensities=previousIsotopeIntensities;
+			} else {
+				// outside range
+				break;
+			}
+		}
+		
+		if (General.sum(summedIntensity)==0.0f&&previousIsotopeIntensities!=null) {
+			// in case there's only one point
+			for (int j = 0; j < previousIsotopeIntensities.length; j++) {
+				summedIntensity[j]=previousIsotopeIntensities[j].intensity;
+			}
+		}
+		
+		return new Pair<float[], TFloatArrayList[]>(summedIntensity, deltaMasses);
+	}
+	
 	public Peak[] getIsotopePacket(double mz, float rt, byte charge, MassTolerance tolerance) {
 		if (rts.length==0) return new Peak[0];
 		
 		PrecursorScan scan=getNearestScan(mz, rt);
 		if (scan==null) return new Peak[0];
 		
+		Peak[] isotopeIntensities = getPacket(scan, mz, charge, tolerance);
+		return isotopeIntensities;
+	}
+
+	private Peak[] getPacket(PrecursorScan scan, double mz, byte charge, MassTolerance tolerance) {
 		float[] intensities=scan.getIntensityArray();
 		double[] masses=scan.getMassArray();
 		
