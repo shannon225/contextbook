@@ -425,8 +425,10 @@ public class Scribe {
 			for (AbstractScoringResult result : data) {
 				float s=result.getBestScore();
 				AbstractScoringResult rescore=result.rescore(filter);
-				if (s>rescore.getBestScore()) rtAdjustedCount++;
-				resultList.add(rescore);
+				if (rescore!=null) {
+					if (s>rescore.getBestScore()) rtAdjustedCount++;
+					resultList.add(rescore);
+				}
 			}
 			Logger.logLine("Updated "+rtAdjustedCount+"/"+data.size()+" PSMs based on retention time fitting.");
 			resultList.add(AbstractScoringResult.POISON_RESULT);

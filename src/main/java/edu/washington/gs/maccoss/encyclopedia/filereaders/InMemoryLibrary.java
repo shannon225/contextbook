@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -18,13 +17,17 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursor;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 
 public class InMemoryLibrary implements LibraryInterface {
 	private final ArrayList<LibraryEntry> entries;
 		
 	public InMemoryLibrary(ArrayList<LibraryEntry> entries) {
 		this.entries=entries;
+	}
+	
+	@Override
+	public int size() {
+		return entries.size();
 	}
 	
 	@Override

@@ -23,6 +23,9 @@ public class TDCPeptideScoringResult extends AbstractScoringResult {
 	}
 	
 	public AbstractScoringResult rescore(ScoredPSMFilterInterface filter) {
+		
+		if (goodStripes.size()==0) return null;
+		
 		LibraryEntry entry=getEntry();
 		AbstractScoringResult newResult;
 		if (filter instanceof ScoredPSMFilter||filter instanceof TargeteDecoyPSMFilter) {
@@ -33,8 +36,6 @@ public class TDCPeptideScoringResult extends AbstractScoringResult {
 		newResult.setTrace(trace);
 		
 		boolean anyFoundWithRTFilter=false;
-		
-		if (goodStripes.size()==0) return newResult;
 		
 		/* assumes sorted in order, first is best scoring! */
 		ScoredPSM startingBest=goodStripes.get(0);

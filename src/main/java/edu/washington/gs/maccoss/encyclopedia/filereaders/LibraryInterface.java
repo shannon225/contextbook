@@ -24,6 +24,7 @@ public interface LibraryInterface {
 //	HashMap<String, String> getAccessions(Collection<String> peptideSeqs) throws IOException, SQLException, DataFormatException;
 //	Range getMinMaxMZ() throws IOException, SQLException;
 	String getName();
+	int size() throws IOException, SQLException;
 	Optional<Path> getSource(SearchParameters parameters);
 	public List<Path> getSourceFiles() throws IOException, SQLException;
 }

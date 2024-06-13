@@ -131,39 +131,39 @@ public enum InstrumentSpecificSearchParameters {
 		return new MassTolerance(Double.parseDouble(params.get("-ftol")), toleranceType);
 	}
 	
-	public boolean hasOrbitrapPrecursors() {
+	public boolean hasLowresPrecursors() {
 		switch (this) {
 		case OrbitrapOrbitrap:
-			return true;
+			return false;
 		case ToF:
 			return false;
 		case OrbitrapAstral:
-			return true;
+			return false;
 		case IontrapIontrap:
-			return false;
-		case OrbitrapIontrap:
 			return true;
-		case IontrapOrbitrap:
+		case OrbitrapIontrap:
 			return false;
+		case IontrapOrbitrap:
+			return true;
 		default:
 			return false;
 		}
 	}
 	
-	public boolean hasOrbitrapFragments() {
+	public boolean hasLowresFragments() {
 		switch (this) {
 		case OrbitrapOrbitrap:
-			return true;
+			return false;
 		case ToF:
 			return false;
 		case OrbitrapAstral:
 			return false;
 		case IontrapIontrap:
-			return false;
-		case OrbitrapIontrap:
-			return false;
-		case IontrapOrbitrap:
 			return true;
+		case OrbitrapIontrap:
+			return true;
+		case IontrapOrbitrap:
+			return false;
 		default:
 			return false;
 		}

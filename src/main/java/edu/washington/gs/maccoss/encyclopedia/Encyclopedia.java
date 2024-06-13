@@ -505,7 +505,9 @@ public class Encyclopedia {
 			BlockingQueue<AbstractScoringResult> resultList=rescoredResultsConsumer.getResultsQueue();
 			for (AbstractScoringResult result : data) {
 				AbstractScoringResult rescore=result.rescore(filter);
-				resultList.add(rescore);
+				if (rescore!=null) {
+					resultList.add(rescore);
+				}
 			}
 			resultList.add(AbstractScoringResult.POISON_RESULT);
 			finalWriteConsumerThread.join();

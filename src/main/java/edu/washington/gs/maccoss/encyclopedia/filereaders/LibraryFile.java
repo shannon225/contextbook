@@ -309,6 +309,27 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			return Optional.empty();
 		}
 	}
+	
+	@Override
+	public int size() throws IOException, SQLException {
+		Connection c=getConnection();
+		try {
+			Statement s=c.createStatement();
+			try {
+				ResultSet rs=s.executeQuery("select count(*) from entries");
+				while (rs.next()) {
+					int key=rs.getInt(1);
+					return key;
+				}
+				
+			} finally {
+				s.close();
+			}
+		} finally {
+			c.close();
+		}
+		return -1;
+	}
 
 	public HashMap<String, String> getMetadata() throws IOException, SQLException {
 		Connection c=getConnection();

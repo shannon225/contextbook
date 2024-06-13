@@ -258,16 +258,21 @@ public class EncyclopediaTwo {
 		LibraryScoringFactory taskFactory=job.getTaskFactory();
 		SearchParameters parameters=taskFactory.getParameters();
 	
-		ProgressIndicator subProgress=new SubProgressIndicator(progress, 0.05f);
-
+		float fraction;
 		LibraryInterface prealignmentLibrary;
 		if (job.getLibrary()==job.getPrealignmentLibrary()) {
 			Logger.logLine("Pre-alignment library and search library are the same so no alignment necessary.");
 			prealignmentLibrary=job.getPrealignmentLibrary();
+			fraction=0.5f;
 		} else {
 			Logger.logLine("Aligning pre-alignment library to "+job.getLibrary().getName());
 			prealignmentLibrary=LibraryUtilities.getReferenceCorrectedLibrary(job.getPrealignmentLibrary(), job.getLibrary());
+			int preAlignSize = prealignmentLibrary.size();
+			fraction=preAlignSize/(float)(preAlignSize+job.getLibrary().size());
 		}
+		
+		float percentage = Math.min(0.5f, fraction*2f)-0.05f;
+		ProgressIndicator subProgress=new SubProgressIndicator(progress, percentage);
 
 		Logger.logLine("Calculating pre-alignment features for "+job.getLibrary().getName());
 		SaveResultsConsumer saveResultsConsumer=generateFeatureFile(subProgress, prealignmentLibrary, job, stripefile, Optional.empty());
@@ -281,7 +286,7 @@ public class EncyclopediaTwo {
 			return;
 		}
 
-		subProgress=new SubProgressIndicator(progress, 0.9f);
+		subProgress=new SubProgressIndicator(progress, 1.0f-percentage-0.05f);
 		Logger.logLine("Calculating post-alignment features for "+job.getLibrary().getName());
 		saveResultsConsumer=generateFeatureFile(subProgress, job.getLibrary(), job, stripefile, Optional.ofNullable(mprophetResults));
 
@@ -528,7 +533,9 @@ public class EncyclopediaTwo {
 			BlockingQueue<AbstractScoringResult> resultList=rescoredResultsConsumer.getResultsQueue();
 			for (AbstractScoringResult result : data) {
 				AbstractScoringResult rescore=result.rescore(filter);
-				resultList.add(rescore);
+				if (rescore!=null) {
+					resultList.add(rescore);
+				}
 			}
 			resultList.add(AbstractScoringResult.POISON_RESULT);
 			finalWriteConsumerThread.join();

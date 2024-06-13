@@ -33,6 +33,11 @@ public class MockLibrary implements LibraryInterface {
 	}
 	
 	@Override
+	public int size() {
+		return entries.length;
+	}
+	
+	@Override
 	public String getName() {
 		return "Testing library of "+entries.length+" entries";
 	}
