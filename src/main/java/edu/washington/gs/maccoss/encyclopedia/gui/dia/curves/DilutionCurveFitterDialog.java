@@ -49,7 +49,7 @@ public class DilutionCurveFitterDialog extends JDialog {
 	public static void launchDilutionCurveFitterDialog(Component root) {
 		JFrame frame = (JFrame)SwingUtilities.getRoot(root);
 		
-		final JDialog dialog=new JDialog(frame, "DIA to PRM Dialog", true);
+		final JDialog dialog=new JDialog(frame, "PRM Scheduler", true);
 
 		final FileChooserPanel libraryFileChooser=new FileChooserPanel(null, "Global Library", new SimpleFilenameFilter(".dlib", ".elib"), true);
 		final FileChooserPanel singleFileChooser=new FileChooserPanel(null, "Alignment Search Result", new SimpleFilenameFilter(".dlib", ".elib"), true);
