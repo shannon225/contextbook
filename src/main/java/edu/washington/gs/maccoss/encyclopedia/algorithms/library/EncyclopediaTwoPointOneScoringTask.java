@@ -1,6 +1,5 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.library;
 
-import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -14,7 +13,6 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.AuxillaryPSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.EValueCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.IsotopicDistributionCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.PeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.TDCPeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.TargeteDecoyPSMFilter;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.MProphetResult;
@@ -27,11 +25,8 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
-import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
-import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
@@ -43,7 +38,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.FloatPair;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredIndex;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.CosineGaussian;
@@ -162,6 +156,7 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 			}
 			
 			float[] predictedIsotopeDistribution=IsotopicDistributionCalculator.getIsotopeDistribution(entry.getPeptideModSeq(), parameters.getAAConstants());
+			predictedIsotopeDistribution=IsotopicDistributionCalculator.normalizeToMax(predictedIsotopeDistribution);
 			
 			// extract chromatograms
 			double[][] allMasses=new double[super.stripes.size()][];
@@ -469,9 +464,9 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 				float deltaFragmentMass=auxScorer.getFragmentDeltaMassIndex()>=0?bestAuxScores[auxScorer.getFragmentDeltaMassIndex()]:0.0f;
 				result.addStripe(entry, bestScore, bestAuxScores, deltaPrecursorMass, deltaFragmentMass, bestStripe);
 			}
-			result.sort(1);
 			
 		}
+		result.trim(1);
 		resultsQueue.add(result);
 		return Nothing.NOTHING;
 	}

@@ -69,7 +69,7 @@ public class PeptideScoringResult extends AbstractScoringResult {
 		goodStripes.add(new ScoredPSM(entry, stripe, score, auxScoreArray, deltaPrecursorMass, deltaFragmentMass));
 	}
 	
-	public void sort(int trimToN) {
+	public void trim(int trimToN) {
 		Collections.sort(goodStripes);
 		Collections.reverse(goodStripes);
 		while (goodStripes.size()>trimToN) {

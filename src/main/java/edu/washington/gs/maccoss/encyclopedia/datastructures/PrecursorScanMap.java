@@ -119,7 +119,7 @@ public class PrecursorScanMap {
 				
 			}
 			
-			isotopeIntensities[i]=new Peak(bestMz, intensity);
+			isotopeIntensities[i]=new Peak(bestMz, bestPeakIntensity);
 		}
 		return isotopeIntensities;
 	}

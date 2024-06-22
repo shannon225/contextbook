@@ -17,7 +17,6 @@ import gnu.trove.list.array.TFloatArrayList;
 public class TDCPeptideScoringResult extends AbstractScoringResult {
 	
 	private final ArrayList<ScoredPSM> goodStripes=new ArrayList<ScoredPSM>();
-	private XYTraceInterface trace=null;
 	
 	public TDCPeptideScoringResult() {
 	}
@@ -30,7 +29,6 @@ public class TDCPeptideScoringResult extends AbstractScoringResult {
 		} else {
 			newResult=new RescoredPeptideScoringResult(entry);
 		}
-		newResult.setTrace(trace);
 		
 		boolean anyFoundWithRTFilter=false;
 		
@@ -77,7 +75,7 @@ public class TDCPeptideScoringResult extends AbstractScoringResult {
 		goodStripes.add(new ScoredPSM(entry, stripe, score, auxScoreArray, deltaPrecursorMass, deltaFragmentMass));
 	}
 	
-	public void sort(int trimToN) {
+	public void trim(int trimToN) {
 		Collections.sort(goodStripes);
 		Collections.reverse(goodStripes);
 		while (goodStripes.size()>trimToN) {
@@ -111,11 +109,11 @@ public class TDCPeptideScoringResult extends AbstractScoringResult {
 	}
 	
 	public void setTrace(XYTraceInterface trace) {
-		this.trace=trace;
+		throw new EncyclopediaException("Trace not saved");
 	}
 	
 	public XYTraceInterface getTrace() {
-		return trace;
+		throw new EncyclopediaException("Trace not recorded");
 	}
 	
 	public boolean hasScoredResults() {
