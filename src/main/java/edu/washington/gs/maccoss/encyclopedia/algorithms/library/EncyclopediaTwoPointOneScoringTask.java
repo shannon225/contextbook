@@ -156,6 +156,7 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 			}
 			
 			float[] predictedIsotopeDistribution=IsotopicDistributionCalculator.getIsotopeDistribution(entry.getPeptideModSeq(), parameters.getAAConstants());
+			predictedIsotopeDistribution=IsotopicDistributionCalculator.normalizeToMax(predictedIsotopeDistribution);
 			
 			// extract chromatograms
 			double[][] allMasses=new double[super.stripes.size()][];
@@ -463,9 +464,9 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 				float deltaFragmentMass=auxScorer.getFragmentDeltaMassIndex()>=0?bestAuxScores[auxScorer.getFragmentDeltaMassIndex()]:0.0f;
 				result.addStripe(entry, bestScore, bestAuxScores, deltaPrecursorMass, deltaFragmentMass, bestStripe);
 			}
-			result.sort(1);
 			
 		}
+		result.trim(1);
 		resultsQueue.add(result);
 		return Nothing.NOTHING;
 	}

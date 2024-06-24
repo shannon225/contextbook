@@ -15,11 +15,11 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 
 public class EncyclopediaTwoScorer implements EncyclopediaScorer {
 	private final SearchParameters parameters;
-	private final EncyclopediaTwoAuxillaryPSMScorer auxScorer;
+	private final EncyclopediaTwoPointOneAuxillaryPSMScorer auxScorer;
 
 	public EncyclopediaTwoScorer(SearchParameters parameters) {
 		this.parameters=parameters;
-		auxScorer=new EncyclopediaTwoAuxillaryPSMScorer(parameters);
+		auxScorer=new EncyclopediaTwoPointOneAuxillaryPSMScorer(parameters);
 	}
 
 	/*
@@ -31,7 +31,7 @@ public class EncyclopediaTwoScorer implements EncyclopediaScorer {
 	}
 
 	@Override
-	public EncyclopediaTwoAuxillaryPSMScorer getAuxScorer() {
+	public EncyclopediaTwoPointOneAuxillaryPSMScorer getAuxScorer() {
 		return auxScorer;
 	}
 	

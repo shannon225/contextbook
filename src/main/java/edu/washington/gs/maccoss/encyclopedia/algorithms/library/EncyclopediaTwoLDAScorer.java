@@ -29,7 +29,7 @@ public class EncyclopediaTwoLDAScorer implements EncyclopediaScorer {
 			scoreIndexConvertingArray=new int[featureNames.size()];
 			Arrays.fill(scoreIndexConvertingArray, -1);
 
-			String[] auxScoreNames=EncyclopediaTwoAuxillaryPSMScorer.getScoreNames();
+			String[] auxScoreNames=EncyclopediaTwoPointOneAuxillaryPSMScorer.getScoreNames();
 			for (int i = 0; i < scoreIndexConvertingArray.length; i++) {
 				String scoreName=featureNames.get(i);
 				for (int j = 0; j < auxScoreNames.length; j++) {
@@ -54,7 +54,7 @@ public class EncyclopediaTwoLDAScorer implements EncyclopediaScorer {
 	}
 
 	@Override
-	public EncyclopediaTwoAuxillaryPSMScorer getAuxScorer() {
+	public EncyclopediaTwoPointOneAuxillaryPSMScorer getAuxScorer() {
 		return mainScorer.getAuxScorer();
 	}
 

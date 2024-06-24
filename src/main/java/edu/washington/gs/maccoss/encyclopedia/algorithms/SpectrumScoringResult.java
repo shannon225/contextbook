@@ -74,7 +74,7 @@ public class SpectrumScoringResult extends AbstractScoringResult {
 		throw new EncyclopediaException("Unexpected addStripe in SpectrumScoringResult. You can only addPeptide to a SpectrumScoringResult (DDA)");	
 	}
 	
-	public void sort(int trimToN) {
+	public void trim(int trimToN) {
 		Collections.sort(goodPeptides);
 		Collections.reverse(goodPeptides);
 		while (goodPeptides.size()>trimToN) {
