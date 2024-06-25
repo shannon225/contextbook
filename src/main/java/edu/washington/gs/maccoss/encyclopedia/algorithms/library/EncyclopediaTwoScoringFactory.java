@@ -45,6 +45,10 @@ public class EncyclopediaTwoScoringFactory implements LibraryScoringFactory {
 		return new ScoringResultsToTSVConsumer(outputFile, diaFile, EncyclopediaTwoPointOneAuxillaryPSMScorer.getScoreNames(), resultsQueue, parameters);
 	}
 
+	public PeptideScoringResultsConsumer getResultsConsumer(File outputFile, String[] scoreNames, BlockingQueue<AbstractScoringResult> resultsQueue, StripeFileInterface diaFile, LibraryInterface library) {
+		return new ScoringResultsToTSVConsumer(outputFile, diaFile, scoreNames, resultsQueue, parameters);
+	}
+
 	@Override
 	public AbstractLibraryScoringTask getScoringTask(PSMScorer scorer, ArrayList<LibraryEntry> entries, ArrayList<FragmentScan> stripes, Range precursorIsolationRange, float dutyCycle, PrecursorScanMap precursors, BlockingQueue<AbstractScoringResult> resultsQueue) {
 		//return new EncyclopediaTwoScoringTask(scorer, entries, stripes, precursorIsolationRange, dutyCycle, precursors, resultsQueue, parameters);

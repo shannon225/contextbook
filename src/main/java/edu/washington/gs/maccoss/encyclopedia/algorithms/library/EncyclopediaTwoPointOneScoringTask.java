@@ -366,7 +366,7 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 					
 					//Spectrum acquiredPeak=getSpectrum(allMasses[index], integrations, stripe.getScanStartTime(), stripe.getPrecursorMZ());
 					
-					float[] auxScoreArray=auxScorer.score(entry, stripe, predictedIsotopeDistribution, precursors);
+					float[] auxScoreArray=scorer.auxScore(entry, stripe, predictedIsotopeDistribution, precursors);
 					
 					// ADDITIONAL AUX SCORES (make sure to add titles)
 					
@@ -407,9 +407,9 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 						//correlationToPlusOne=Correlation.getPearsons(precursorPlusOne, median);
 					}
 					
-					auxScoreArray=General.concatenate(new float[] {score}, auxScoreArray, new float[] {evalue, correlationToGaussian, 
+					auxScoreArray=General.concatenate(new float[] {score}, new float[] {evalue, correlationToGaussian, 
 							correlationToPrecursor, isIntegratedSignal, isIntegratedPrecursor,
-							numPeaksWithGoodCorrelation});
+							numPeaksWithGoodCorrelation}, auxScoreArray); // auxScoreArray must be last
 					
 					// block out a 40 scan window
 					for (int j=lowerWindow; j<=upperWindow; j++) {

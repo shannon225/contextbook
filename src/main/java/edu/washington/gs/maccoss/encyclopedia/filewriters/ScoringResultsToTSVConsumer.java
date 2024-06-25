@@ -2,9 +2,11 @@ package edu.washington.gs.maccoss.encyclopedia.filewriters;
 
 import java.io.File;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractScoringResult;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.RecalibratedPeptideScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.RecalibratedSpectrumScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.RescoredPeptideScoringResult;
@@ -21,6 +23,8 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
 
 public class ScoringResultsToTSVConsumer extends AbstractScoringResultsToTSVConsumer {
 	public static final String deltaRTName="deltaRT";
+	public static final String deltaMS1Name="ms1MassError";
+	public static final String deltaMS2Name="ms2MassError";
 	
 	private final String[] scoreNames;
 	private final SearchParameters params;
@@ -50,7 +54,7 @@ public class ScoringResultsToTSVConsumer extends AbstractScoringResultsToTSVCons
 					if (result instanceof RescoredPeptideScoringResult||result instanceof RescoredSpectrumScoringResult) {
 						writer.print(deltaRTName+"\t");//discriminantScore\t");
 					} else if (result instanceof RecalibratedPeptideScoringResult||result instanceof RecalibratedSpectrumScoringResult) {
-						writer.print(deltaRTName+"\tms1MassError\tms2MassError\t");//discriminantScore\t");
+						writer.print(deltaRTName+"\t"+deltaMS1Name+"\t"+deltaMS2Name+"\t");//discriminantScore\t");
 					}
 					writer.print("numMissedCleavage\tpepLength\tcharge1\tcharge2\tcharge3\tcharge4\tprecursorMz\tprecursorMass\tRTinMin\tsequence\tProteins");
 					// Percolator assumes linux line endings on Mac!

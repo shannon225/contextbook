@@ -268,21 +268,20 @@ public class EncyclopediaTwoPointOneAuxillaryPSMScorer extends EncyclopediaAuxil
 	}
 
 	public static String[] getScoreNames() {
-		return new String[] {"primary", "HyperScore", "xCorrLib", "xCorrModel", "scribe", "numberOfMatchingPeaks", 
+		return new String[] {"primary", "evalue", "correlationToGaussian", "correlationToPrecursor", "isIntegratedSignal", "isIntegratedPrecursor", 
+				"numPeaksWithGoodCorrelation", "HyperScore", "xCorrLib", "xCorrModel", "scribe", "numberOfMatchingPeaks", 
 				"numberOfMatchingPeaksAboveThreshold", "averageFragmentDeltaMasses", "isotopeDotProduct", 
-				"averageParentDeltaMass", "lnSp", "maxLadderLength", 
-				"evalue", "correlationToGaussian", "correlationToPrecursor", "isIntegratedSignal", "isIntegratedPrecursor", 
-				"numPeaksWithGoodCorrelation"};
+				"averageParentDeltaMass", "lnSp", "maxLadderLength"};
 	}
 	
 	@Override
 	public int getFragmentDeltaMassIndex() {
-		return 6;
+		return 6; // in score array, not in names
 	}
 	
 	@Override
 	public int getParentDeltaMassIndex() {
-		return 8;
+		return 8; // in score array, not in names
 	}
 	
 	@Override

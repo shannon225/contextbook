@@ -33,6 +33,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaSco
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaTwoJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaTwoLDAScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaTwoScorer;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaTwoScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackground;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryBackgroundInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
@@ -327,7 +328,17 @@ public class EncyclopediaTwo {
 		}
 		Collections.sort(ranges);
 
-		PeptideScoringResultsConsumer writeResultsConsumer=taskFactory.getResultsConsumer(featureFile, new LinkedBlockingQueue<AbstractScoringResult>(), stripefile, library);
+		assert(taskFactory instanceof EncyclopediaTwoScoringFactory);
+		PSMScorer scorer = taskFactory.getLibraryScorer(null);
+		assert(scorer instanceof EncyclopediaTwoScorer);
+		scorer=new EncyclopediaTwoLDAScorer((EncyclopediaTwoScorer)scorer, prelimAnalysis);
+		
+		PeptideScoringResultsConsumer writeResultsConsumer;
+		if (taskFactory instanceof EncyclopediaTwoScoringFactory) {
+			writeResultsConsumer=((EncyclopediaTwoScoringFactory)taskFactory).getResultsConsumer(featureFile, scorer.getAuxScoreNames(null), new LinkedBlockingQueue<AbstractScoringResult>(), stripefile, library);
+		} else {
+			writeResultsConsumer=taskFactory.getResultsConsumer(featureFile, new LinkedBlockingQueue<AbstractScoringResult>(), stripefile, library);
+		}
 		PSMConsumer saveResultsConsumer=new PSMConsumer(new LinkedBlockingQueue<AbstractScoringResult>(), parameters.getAAConstants());
 		
 		BlockingQueue<AbstractScoringResult> resultsQueue=new LinkedBlockingQueue<AbstractScoringResult>();
@@ -389,10 +400,6 @@ public class EncyclopediaTwo {
 				ExecutorService executor = new ThreadPoolExecutor(cores, cores, Long.MAX_VALUE, TimeUnit.NANOSECONDS, workQueue, threadFactory);
 
 				int count = 0;
-				LibraryBackgroundInterface background = new LibraryBackground(entries);
-				PSMScorer scorer = taskFactory.getLibraryScorer(background);
-				assert(scorer instanceof EncyclopediaTwoScorer);
-				scorer=new EncyclopediaTwoLDAScorer((EncyclopediaTwoScorer)scorer, prelimAnalysis);
 
 				for (LibraryEntry entry : entries) {
 					count++;

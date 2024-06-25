@@ -4,14 +4,21 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Optional;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMInterface;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.ScoredPSM;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.SimplePSM;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeptideXYPoint;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.TargeteDecoyPSMFilter;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.MProphetResult;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursor;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.ScoringResultsToTSVConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakScores;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
 public class EncyclopediaTwoLDAScorer implements EncyclopediaScorer {
 	private final EncyclopediaTwoScorer mainScorer;
@@ -65,10 +72,19 @@ public class EncyclopediaTwoLDAScorer implements EncyclopediaScorer {
 	
 	@Override
 	public float[] auxScore(LibraryEntry entry, Spectrum spectrum, float[] predictedIsotopeDistribution, PrecursorScanMap precursors) {
-		return mainScorer.getAuxScorer().score(entry, spectrum, predictedIsotopeDistribution, precursors);
+		float[] auxScores = mainScorer.getAuxScorer().score(entry, spectrum, predictedIsotopeDistribution, precursors);
+		if (ldaScorer.isPresent()) {
+			PeptideXYPoint xyPoint=new PeptideXYPoint(entry.getScanStartTime()/60f, spectrum.getScanStartTime()/60f, entry.isDecoy(), entry.getPeptideModSeq());
+			PSMInterface psm=new SimplePSM(entry, auxScores[getParentDeltaMassIndex()], auxScores[getFragmentDeltaMassIndex()], xyPoint);
+			return General.concatenate(auxScores, ldaScorer.get().y.getAdditionalScores(psm));
+		}
+		return auxScores;
 	}
 	@Override
 	public String[] getAuxScoreNames(LibraryEntry entry) {
+		if (ldaScorer.isPresent()) {
+			return General.concatenate(mainScorer.getAuxScorer().getScoreNames(entry), new String[] {ScoringResultsToTSVConsumer.deltaRTName, ScoringResultsToTSVConsumer.deltaMS1Name, ScoringResultsToTSVConsumer.deltaMS2Name});
+		}
 		return mainScorer.getAuxScorer().getScoreNames(entry);
 	}
 
