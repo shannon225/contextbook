@@ -1,7 +1,8 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.alignment;
 
 import com.google.common.collect.ImmutableList;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.ScoredPSM;
+
+import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
@@ -47,9 +48,9 @@ public class AbstractRetentionTimeFilter implements RetentionTimeAlignmentInterf
 	}
 
 	@Override
-	public void makePlots(SearchParameters params, ArrayList<ScoredPSM> psms, Optional<File> saveFileSeed) {
+	public void makePlots(SearchParameters params, ArrayList<PSMInterface> psms, Optional<File> saveFileSeed) {
 		ArrayList<XYPoint> rts=new ArrayList<>();
-		for (ScoredPSM psm : psms) {
+		for (PSMInterface psm : psms) {
 			rts.add(psm.getRTData());
 		}
 		plot(rts, saveFileSeed);
@@ -258,18 +259,18 @@ public class AbstractRetentionTimeFilter implements RetentionTimeAlignmentInterf
 
 	
 	@Override
-	public boolean passesFilter(ScoredPSM psm) {
-		float modelRT=psm.getLibraryEntry().getScanStartTime()/60f;
-		float actualRT=psm.getMSMS().getScanStartTime()/60f;
+	public boolean passesFilter(PSMInterface psm) {
+		float modelRT=(float)psm.getRTData().x;
+		float actualRT=(float)psm.getRTData().y;
 		boolean passes=this.getProbabilityFitsModel(actualRT, modelRT)>=getRejectionPValue();
 
 		return passes;
 	}
 
 	@Override
-	public float[] getAdditionalScores(ScoredPSM psm) {
-		float modelRT=psm.getLibraryEntry().getScanStartTime()/60f;
-		float actualRT=psm.getMSMS().getScanStartTime()/60f;
+	public float[] getAdditionalScores(PSMInterface psm) {
+		float modelRT=(float)psm.getRTData().x;
+		float actualRT=(float)psm.getRTData().y;
 
 		float deltaRT=Math.abs(this.getDelta(actualRT, modelRT));
 		return new float[] {deltaRT};

@@ -26,8 +26,8 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import edu.washington.gs.maccoss.encyclopedia.SearchToBLIB.OutputFormat;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractScoringResult;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.ScoredPSM;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.TargeteDecoyPSMFilter;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaTwoJobData;
@@ -45,7 +45,6 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.RetentionTimeComparator;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.parameters.InstrumentSpecificSearchParameters;
@@ -55,8 +54,8 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.LibraryUtilities;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.PSMConsumer;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PeptideScoringResultsConsumer;
-import edu.washington.gs.maccoss.encyclopedia.filewriters.SaveResultsConsumer;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.TeeResultsConsumer;
 import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
@@ -77,7 +76,6 @@ public class EncyclopediaTwo {
 	public static final String INPUT_DIA_TAG="-i";
 	public static final String BACKGROUND_FASTA_TAG="-f";
 	public static final String QUIET_MODE_ARG = "-quiet";
-	private static final RetentionTimeComparator rtComparator=new RetentionTimeComparator();
 	public static final boolean useSqrt=false;
 
 	public static void main(String[] args) {
@@ -275,7 +273,7 @@ public class EncyclopediaTwo {
 		ProgressIndicator subProgress=new SubProgressIndicator(progress, percentage);
 
 		Logger.logLine("Calculating pre-alignment features for "+job.getLibrary().getName());
-		SaveResultsConsumer saveResultsConsumer=generateFeatureFile(subProgress, prealignmentLibrary, job, stripefile, Optional.empty());
+		PSMConsumer saveResultsConsumer=generateFeatureFile(subProgress, prealignmentLibrary, job, stripefile, Optional.empty());
 
 		Logger.logLine("Assessing FDR...");
 		Pair<MProphetResult, TargeteDecoyPSMFilter> mprophetResults=firstPassFDR(subProgress, job, stripefile, saveResultsConsumer);
@@ -309,7 +307,7 @@ public class EncyclopediaTwo {
 		Logger.logLine(""); 
 	}
 
-	static SaveResultsConsumer generateFeatureFile(ProgressIndicator progress, LibraryInterface library, EncyclopediaTwoJobData job, StripeFileInterface stripefile, Optional<Pair<MProphetResult, TargeteDecoyPSMFilter>> prelimAnalysis) throws IOException, SQLException, DataFormatException, InterruptedException {
+	static PSMConsumer generateFeatureFile(ProgressIndicator progress, LibraryInterface library, EncyclopediaTwoJobData job, StripeFileInterface stripefile, Optional<Pair<MProphetResult, TargeteDecoyPSMFilter>> prelimAnalysis) throws IOException, SQLException, DataFormatException, InterruptedException {
 
 		LibraryScoringFactory taskFactory=job.getTaskFactory();
 		SearchParameters parameters=taskFactory.getParameters();
@@ -330,7 +328,7 @@ public class EncyclopediaTwo {
 		Collections.sort(ranges);
 
 		PeptideScoringResultsConsumer writeResultsConsumer=taskFactory.getResultsConsumer(featureFile, new LinkedBlockingQueue<AbstractScoringResult>(), stripefile, library);
-		SaveResultsConsumer saveResultsConsumer=new SaveResultsConsumer(new LinkedBlockingQueue<AbstractScoringResult>());
+		PSMConsumer saveResultsConsumer=new PSMConsumer(new LinkedBlockingQueue<AbstractScoringResult>(), parameters.getAAConstants());
 		
 		BlockingQueue<AbstractScoringResult> resultsQueue=new LinkedBlockingQueue<AbstractScoringResult>();
 		TeeResultsConsumer teeConsumer=new TeeResultsConsumer(resultsQueue, writeResultsConsumer, saveResultsConsumer);
@@ -497,7 +495,7 @@ public class EncyclopediaTwo {
 		return subset;
 	}
 
-	public static Pair<MProphetResult, TargeteDecoyPSMFilter> firstPassFDR(ProgressIndicator progress, EncyclopediaTwoJobData job, StripeFileInterface stripefile, SaveResultsConsumer saveResultsConsumer) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
+	public static Pair<MProphetResult, TargeteDecoyPSMFilter> firstPassFDR(ProgressIndicator progress, EncyclopediaTwoJobData job, StripeFileInterface stripefile, PSMConsumer saveResultsConsumer) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
 		SearchParameters parameters=job.getParameters();
 		
 		try {
@@ -509,7 +507,7 @@ public class EncyclopediaTwo {
 			ArrayList<PercolatorPeptide> passingPeptides=result.getPassingPeptides();
 			Logger.logLine("First pass: "+passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100f)+"% FDR");
 			
-			ArrayList<AbstractScoringResult> data=saveResultsConsumer.getSavedResults();
+			ArrayList<PSMInterface> data=saveResultsConsumer.getSavedResults();
 			ArrayList<PercolatorPeptide> decoyPeptides = getDecoyPeptides(job, parameters, passingPeptides.size());
 			TargeteDecoyPSMFilter filter=getRescoringModel(passingPeptides, decoyPeptides, data, job, false);
 			
@@ -522,24 +520,11 @@ public class EncyclopediaTwo {
 		}
 	}
 	
-	public static Pair<ArrayList<PercolatorPeptide>, TargeteDecoyPSMFilter> repercolatePeptides(ProgressIndicator progress, EncyclopediaTwoJobData job, StripeFileInterface stripefile, SaveResultsConsumer saveResultsConsumer, TargeteDecoyPSMFilter filter) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
+	public static Pair<ArrayList<PercolatorPeptide>, TargeteDecoyPSMFilter> repercolatePeptides(ProgressIndicator progress, EncyclopediaTwoJobData job, StripeFileInterface stripefile, PSMConsumer saveResultsConsumer, TargeteDecoyPSMFilter filter) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
 		SearchParameters parameters=job.getParameters();
 		
 		try {
-			ArrayList<AbstractScoringResult> data=saveResultsConsumer.getSavedResults();
-			PeptideScoringResultsConsumer rescoredResultsConsumer=job.getTaskFactory().getResultsConsumer(job.getPercolatorFiles().getInputTSV(), new LinkedBlockingQueue<AbstractScoringResult>(), stripefile, job.getLibrary());
-			Thread finalWriteConsumerThread=new Thread(rescoredResultsConsumer);
-			finalWriteConsumerThread.start();
-			BlockingQueue<AbstractScoringResult> resultList=rescoredResultsConsumer.getResultsQueue();
-			for (AbstractScoringResult result : data) {
-				AbstractScoringResult rescore=result.rescore(filter);
-				if (rescore!=null) {
-					resultList.add(rescore);
-				}
-			}
-			resultList.add(AbstractScoringResult.POISON_RESULT);
-			finalWriteConsumerThread.join();
-			rescoredResultsConsumer.close();
+			ArrayList<PSMInterface> data=saveResultsConsumer.getSavedResults();
 			
 			ArrayList<PercolatorPeptide> passingPeptides;
 			if (parameters.isUsePercolator()) {
@@ -582,9 +567,9 @@ public class EncyclopediaTwo {
 		return decoyPeptides;
 	}
 
-	public static TargeteDecoyPSMFilter getRescoringModel(ArrayList<PercolatorPeptide> passingPeptides, ArrayList<PercolatorPeptide> decoyPeptides, ArrayList<AbstractScoringResult> data, EncyclopediaTwoJobData job, boolean finalPass) {
-		ArrayList<ScoredPSM> passingPSMs = passingPeptides(passingPeptides, data);
-		ArrayList<ScoredPSM> decoyPSMs = passingPeptides(decoyPeptides, data);
+	public static TargeteDecoyPSMFilter getRescoringModel(ArrayList<PercolatorPeptide> passingPeptides, ArrayList<PercolatorPeptide> decoyPeptides, ArrayList<PSMInterface> data, EncyclopediaTwoJobData job, boolean finalPass) {
+		ArrayList<PSMInterface> passingPSMs = passingPeptides(passingPeptides, data);
+		ArrayList<PSMInterface> decoyPSMs = passingPeptides(decoyPeptides, data);
 		
 		Logger.logLine("Generating retention time mapping using "+passingPSMs.size()+"/"+passingPeptides.size()+" target and "+decoyPSMs.size()+"/"+decoyPeptides.size()+" decoy points...");
 		TargeteDecoyPSMFilter filter=new TargeteDecoyPSMFilter(job.getParameters(), passingPSMs, decoyPSMs);
@@ -594,21 +579,18 @@ public class EncyclopediaTwo {
 		return filter;
 	}
 
-	private static ArrayList<ScoredPSM> passingPeptides(ArrayList<PercolatorPeptide> passingPeptides, ArrayList<AbstractScoringResult> data) {
+	private static ArrayList<PSMInterface> passingPeptides(ArrayList<PercolatorPeptide> passingPeptides, ArrayList<PSMInterface> data) {
 		HashSet<String> passingSeqs=new HashSet<String>();
 		for (PercolatorPeptide pass : passingPeptides) {
 			passingSeqs.add(PercolatorPeptide.getPeptideSequence(pass.getPsmID())+"+"+PercolatorPeptide.getCharge(pass.getPsmID()));
 		}
 
-		ArrayList<ScoredPSM> passingPSMs=new ArrayList<>();
+		ArrayList<PSMInterface> passingPSMs=new ArrayList<>();
 		
-		for (AbstractScoringResult result : data) {
-			if (result.hasScoredResults()) {
-				ScoredPSM psm=result.getScoredMSMS();
-				String peptideModSeq=result.getEntry().getPeptideModSeq();
-				if (passingSeqs.contains(peptideModSeq+"+"+result.getEntry().getPrecursorCharge())) {
-					passingPSMs.add(psm);
-				}
+		for (PSMInterface result : data) {
+			String peptideModSeq=result.getLibraryEntry().getPeptideModSeq();
+			if (passingSeqs.contains(peptideModSeq+"+"+result.getLibraryEntry().getPrecursorCharge())) {
+				passingPSMs.add(result);
 			}
 		}
 		return passingPSMs;

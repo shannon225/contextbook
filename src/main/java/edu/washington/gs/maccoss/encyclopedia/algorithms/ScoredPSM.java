@@ -5,7 +5,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 
-public class ScoredPSM implements Comparable<ScoredPSM> {
+public class ScoredPSM implements Comparable<ScoredPSM>, PSMInterface {
 	private final LibraryEntry entry;
 	private final FragmentScan msms;
 	private final float primaryScore;

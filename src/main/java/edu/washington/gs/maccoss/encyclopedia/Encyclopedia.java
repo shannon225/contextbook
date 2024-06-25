@@ -27,6 +27,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ScoredPSM;
 import edu.washington.gs.maccoss.encyclopedia.SearchToBLIB.OutputFormat;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractScoringResult;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeptideXYPoint;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeFilter;
@@ -535,7 +536,7 @@ public class Encyclopedia {
 			passingSeqs.add(PercolatorPeptide.getPeptideData(pass.getPsmID()));
 		}
 
-		ArrayList<ScoredPSM> passingPSMs=new ArrayList<>();
+		ArrayList<PSMInterface> passingPSMs=new ArrayList<>();
 		
 		for (AbstractScoringResult result : data) {
 			if (result.hasScoredResults()) {

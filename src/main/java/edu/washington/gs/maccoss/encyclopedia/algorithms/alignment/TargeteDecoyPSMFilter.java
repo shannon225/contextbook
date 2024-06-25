@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Optional;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMInterface;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ScoredPSM;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
@@ -14,17 +15,17 @@ public class TargeteDecoyPSMFilter implements ScoredPSMFilterInterface {
 	private final MassErrorFilter fragmentFilter;
 	private final SearchParameters params;
 
-	public TargeteDecoyPSMFilter(SearchParameters params, ArrayList<ScoredPSM> passingPSMs, ArrayList<ScoredPSM> decoyPSMs) {
+	public TargeteDecoyPSMFilter(SearchParameters params, ArrayList<PSMInterface> passingPSMs, ArrayList<PSMInterface> decoyPSMs) {
 		this.params=params;
 		
 		ArrayList<XYPoint> rtPoints=new ArrayList<XYPoint>();
 		ArrayList<XYPoint> precursorPoints=new ArrayList<XYPoint>();
 		ArrayList<XYPoint> fragmentPoints=new ArrayList<XYPoint>();
 		
-		for (ScoredPSM psm : passingPSMs) {
+		for (PSMInterface psm : passingPSMs) {
 			String peptideModSeq=psm.getLibraryEntry().getPeptideModSeq();
-			boolean isDecoy=psm.getLibraryEntry().isDecoy();
-			float acquiredRT=psm.getMSMS().getScanStartTime()/60f;
+			boolean isDecoy=psm.getRTData().isDecoy();
+			float acquiredRT=(float)psm.getRTData().y;
 
 			if (!isDecoy) {
 				rtPoints.add(psm.getRTData());
@@ -38,7 +39,7 @@ public class TargeteDecoyPSMFilter implements ScoredPSMFilterInterface {
 		}
 
 		ArrayList<XYPoint> decoyRTPoints=new ArrayList<XYPoint>();
-		for (ScoredPSM psm : decoyPSMs) {
+		for (PSMInterface psm : decoyPSMs) {
 			decoyRTPoints.add(psm.getRTData()); 
 		}
 		
@@ -53,34 +54,34 @@ public class TargeteDecoyPSMFilter implements ScoredPSMFilterInterface {
 	}
 	
 	@Override
-	public void makePlots(SearchParameters params, ArrayList<ScoredPSM> psms, Optional<File> saveFileSeed) {
+	public void makePlots(SearchParameters params, ArrayList<PSMInterface> psms, Optional<File> saveFileSeed) {
 		ArrayList<XYPoint> ms1Errors=new ArrayList<>();
-		for (ScoredPSM psm : psms) {
+		for (PSMInterface psm : psms) {
 			if (params.getPrecursorTolerance().getToleranceThreshold()!=psm.getDeltaPrecursorMass()) {
-				ms1Errors.add(new XYPoint(psm.getMSMS().getScanStartTime()/60f, psm.getDeltaPrecursorMass()));
+				ms1Errors.add(new XYPoint(psm.getRTData().y, psm.getDeltaPrecursorMass()));
 			}
 		}
 		precursorFilter.plot(ms1Errors, saveFileSeed);	
 		
 		ArrayList<XYPoint> ms2Errors=new ArrayList<>();
-		for (ScoredPSM psm : psms) {
+		for (PSMInterface psm : psms) {
 			if (params.getFragmentTolerance().getToleranceThreshold()!=psm.getDeltaFragmentMass()) {
-				ms2Errors.add(new XYPoint(psm.getMSMS().getScanStartTime()/60f, psm.getDeltaFragmentMass()));
+				ms2Errors.add(new XYPoint(psm.getRTData().y, psm.getDeltaFragmentMass()));
 			}
 		}
 		fragmentFilter.plot(ms2Errors, saveFileSeed);	
 		
 		ArrayList<XYPoint> rts=new ArrayList<>();
-		for (ScoredPSM psm : psms) {
+		for (PSMInterface psm : psms) {
 			rts.add(psm.getRTData());
 		}
 		rtFilter.plot(rts, saveFileSeed);	
 	}
 	
 	@Override
-	public boolean passesFilter(ScoredPSM psm) {
-		float modelRT=psm.getLibraryEntry().getScanStartTime()/60f;
-		float actualRT=psm.getMSMS().getScanStartTime()/60f;
+	public boolean passesFilter(PSMInterface psm) {
+		float modelRT=(float)psm.getRTData().x;
+		float actualRT=(float)psm.getRTData().y;
 		boolean passes=rtFilter.getProbabilityFitsModel(actualRT, modelRT)>=rtFilter.getRejectionPValue();
 		
 		return passes;
@@ -95,9 +96,9 @@ public class TargeteDecoyPSMFilter implements ScoredPSMFilterInterface {
 	}
 	
 	@Override
-	public float[] getAdditionalScores(ScoredPSM psm) {
-		float modelRT=psm.getLibraryEntry().getScanStartTime()/60f;
-		float actualRT=psm.getMSMS().getScanStartTime()/60f;
+	public float[] getAdditionalScores(PSMInterface psm) {
+		float modelRT=(float)psm.getRTData().x;
+		float actualRT=(float)psm.getRTData().y;
 		
 		float deltaRT=Math.abs(rtFilter.getDelta(actualRT, modelRT));
 		float deltaPrecursor;

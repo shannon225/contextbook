@@ -4,16 +4,16 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Optional;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.ScoredPSM;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 
 public interface ScoredPSMFilterInterface {
 
-	boolean passesFilter(ScoredPSM psm);
+	boolean passesFilter(PSMInterface psm);
 	
 	float getYRT(float xrt);
 
-	float[] getAdditionalScores(ScoredPSM psm);
+	float[] getAdditionalScores(PSMInterface psm);
 
-	void makePlots(SearchParameters params, ArrayList<ScoredPSM> psms, Optional<File> saveFileSeed);
+	void makePlots(SearchParameters params, ArrayList<PSMInterface> psms, Optional<File> saveFileSeed);
 }
