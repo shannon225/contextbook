@@ -83,9 +83,8 @@ public class MProphetIT {
 		assertTrue("Got invalid pi0 from MProphet (" + pi0 + ")", 0.1 < pi0 && pi0 < 0.9);
 
 		Pair<ArrayList<PercolatorPeptide>, Float> decoyPair=PercolatorReader.getPassingPeptidesFromTSV(percolatorFiles.getPeptideDecoyFile(), threshold, aaConstants, true);
-		// assert there was at least one decoy
 		final int nDecoys = decoyPair.x.size();
-		assertTrue(nDecoys > 0);
+		assertTrue(nDecoys <= 2);
 
 		// check that the decoys/targets is less than the qvalue threshold
 		final int nTargets = origpair.getPassingPeptides().size();

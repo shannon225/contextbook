@@ -113,7 +113,11 @@ public class MProphetDataset {
 			}
 			targetScores.add(score);
 			double pvalue=nullDistribution.getComplementaryCDF(score);
-			targetPValues.add(pvalue);
+			if (Double.isNaN(pvalue)) {
+				targetPValues.add(1.0);
+			} else {
+				targetPValues.add(pvalue);
+			}
 		}
 		
 		double[] pValueArray = targetPValues.toArray();

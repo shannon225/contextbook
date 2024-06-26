@@ -92,7 +92,13 @@ public class MProphetReiter implements Runnable {
 			MProphetDataset trainingDataset=folds[0];
 			MProphetDataset testingDataset=folds[1];
 			
-			LinearDiscriminantAnalysis lda=seedModel;
+			LinearDiscriminantAnalysis lda;
+			if(General.checkNaN(seedModel.getCoefficients())||General.checkIfAllX(seedModel.getCoefficients(), 0.0)) {
+				lda=null;
+			} else {
+				lda=seedModel;
+			}
+			
 			int best=0;
 			for (int i = 0; i < numIterationsPerCalculation; i++) {
 				float targetFDR=0.01f;
@@ -112,7 +118,7 @@ public class MProphetReiter implements Runnable {
 					decoyData=new ArrayList<float[]>(decoyData.subList(0, scoredData.size()*1));
 				}
 				LinearDiscriminantAnalysis model=LinearDiscriminantAnalysis.buildModel(scoredData, decoyData);
-				if (!General.checkNaN(model.getCoefficients())) {
+				if (!General.checkNaN(model.getCoefficients())&&!General.checkIfAllX(model.getCoefficients(), 0.0)) {
 					// if we get NaNs, then fall back on wherever we were previously
 					lda=model;
 				} else {

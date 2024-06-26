@@ -99,7 +99,8 @@ public class MProphetFeatureReader {
 			
 			// prefer last in list (xCorrModel)
 			if (StringUtils.contains(columnNames, "peakZScore")) sortingScoreString="peakZScore";  
-			if (StringUtils.contains(columnNames, "peakBGScore")) sortingScoreString="peakBGScore";  
+			if (StringUtils.contains(columnNames, "peakBGScore")) sortingScoreString="peakBGScore"; 
+			if (StringUtils.contains(columnNames, "peakBGSScore")) sortingScoreString="peakBGSScore";  
 			if (StringUtils.contains(columnNames, "xTandem")) sortingScoreString="xTandem";  
 			if (StringUtils.contains(columnNames, "scribe")) sortingScoreString="scribe";  
 			if (StringUtils.contains(columnNames, "xCorrLib")) sortingScoreString="xCorrLib";  

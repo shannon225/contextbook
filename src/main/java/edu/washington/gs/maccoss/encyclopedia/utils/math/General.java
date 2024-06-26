@@ -42,6 +42,13 @@ public class General {
 		return false;
 	}
 	
+	public static boolean checkIfAllX(double[] values, double x) {
+		for (int i = 0; i < values.length; i++) {
+			if (x!=values[i]) return false;
+		}
+		return true;
+	}
+	
 	public static boolean checkNaN(double[] values) {
 		for (int i = 0; i < values.length; i++) {
 			if (Double.isNaN(values[i])) return true;
