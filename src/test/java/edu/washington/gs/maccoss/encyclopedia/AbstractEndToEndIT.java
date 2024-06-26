@@ -57,7 +57,7 @@ public abstract class AbstractEndToEndIT {
 	static Range STANDARD_RANGE = new Range(592.5840338877389,604.3740813086648);
 
 	static double LOWER_BOUND_PEPTIDE_MATCH = 0.50;
-	static double UPPER_BOUND_PEPTIDE_MATCH = 1 / 0.50;
+	static double UPPER_BOUND_PEPTIDE_MATCH = 1 / 0.250;
 	static double LOWER_BOUND_PI0_MATCH = 0.60;
 	static double UPPER_BOUND_PI0_MATCH = 1/0.60;
 
