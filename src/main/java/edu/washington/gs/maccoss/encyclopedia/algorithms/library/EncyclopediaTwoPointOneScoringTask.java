@@ -80,6 +80,7 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 		EncyclopediaScorer eScorer=(EncyclopediaScorer)scorer;
 		int movingAverageLength=Math.round(parameters.getExpectedPeakWidth()/dutyCycle);
 		for (LibraryEntry entry : super.entries) {
+			
 			if (parameters.getTopNTargetsUsed()>0) {
 				entry=entry.trimToNPeaks(parameters.getTopNTargetsUsed(), parameters.getAAConstants());
 			}
@@ -448,7 +449,6 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 						}
 						auxScoreArray[0]=score; // update score with LDA
 					}
-					
 					result.addStripe(entry, score, auxScoreArray, deltaPrecursorMass, deltaFragmentMass, stripe);
 					if (identifiedPeaks>peaksKept) {
 						// keep N+1 peaks
@@ -458,12 +458,15 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 				}
 			}
 			
-			if (identifiedPeaks==0) {
-				// add the best data if we can't find any valid peaks
-				float deltaPrecursorMass=auxScorer.getParentDeltaMassIndex()>=0?bestAuxScores[auxScorer.getParentDeltaMassIndex()]:0.0f;
-				float deltaFragmentMass=auxScorer.getFragmentDeltaMassIndex()>=0?bestAuxScores[auxScorer.getFragmentDeltaMassIndex()]:0.0f;
-				result.addStripe(entry, bestScore, bestAuxScores, deltaPrecursorMass, deltaFragmentMass, bestStripe);
-			}
+//			if (identifiedPeaks==0) {
+//				// add the best data if we can't find any valid peaks
+//				float deltaPrecursorMass=auxScorer.getParentDeltaMassIndex()>=0?bestAuxScores[auxScorer.getParentDeltaMassIndex()]:0.0f;
+//				float deltaFragmentMass=auxScorer.getFragmentDeltaMassIndex()>=0?bestAuxScores[auxScorer.getFragmentDeltaMassIndex()]:0.0f;
+//				if (entry.getPeptideModSeq().equals("VVDESDETENQEEKAK")||entry.getPeptideModSeq().equals("VAKEEQNETEDSEDVK")) {
+//					System.out.println(">"+entry.getPeptideModSeq()+" --> "+(bestStripe.getScanStartTime()/60f)+", "+bestScore);	
+//				}
+//				result.addStripe(entry, bestScore, bestAuxScores, deltaPrecursorMass, deltaFragmentMass, bestStripe);
+//			}
 			
 		}
 		result.trim(1);

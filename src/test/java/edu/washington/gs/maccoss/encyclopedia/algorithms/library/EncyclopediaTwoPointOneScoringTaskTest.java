@@ -1,10 +1,14 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.library;
 
+import java.io.File;
+import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMScorer;
@@ -17,10 +21,8 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
-import gnu.trove.list.array.TFloatArrayList;
-import gnu.trove.map.hash.TObjectFloatHashMap;
 import junit.framework.TestCase;
 
 public class EncyclopediaTwoPointOneScoringTaskTest extends TestCase {
@@ -29,26 +31,49 @@ public class EncyclopediaTwoPointOneScoringTaskTest extends TestCase {
 	private StripeFileInterface SINGLE_WINDOW_STRIPE_FILE=null;
 	
 	public static void main(String[] args) throws Exception {
-		EncyclopediaTwoPointOneScoringTaskTest test=new EncyclopediaTwoPointOneScoringTaskTest();
-		test.setUp();
-		if (false) {
-			AbstractScoringResult result=test.processPeptide("AHWTPFEGQK", (byte)2);
+		AbstractScoringResult result = testSearch("VVDESDETENQEEKAK", (byte)3);
+		
+		System.out.println(result.getBestScore());
+	}
+
+	private static AbstractScoringResult testSearch(String peptideModSeq, byte precursorCharge) throws IOException, SQLException, DataFormatException {
+		File diaFile=new File("/Users/searleb/Documents/encyclopedia/astral/20230406_OLEP08_MMCC_1ug_MB_24min_AS_10ms_4Th_I_1.dia");
+		File libFile=new File("/Users/searleb/Documents/encyclopedia/astral/HeLa.dlib");
+		LibraryFile library=new LibraryFile();
+		library.openFile(libFile);
+		
+		StripeFileInterface dia=new StripeFile();
+		dia.openFile(diaFile);
+		
+		HashMap<String, String> paramsMap=SearchParameterParser.getDefaultParameters();
+		SearchParameters parameters=SearchParameterParser.parseParameters(paramsMap);
+		
+		double pepMz=parameters.getAAConstants().getChargedMass(peptideModSeq, precursorCharge);
+		
+		PSMScorer scorer=new EncyclopediaTwoScorer(parameters);
+		ArrayList<LibraryEntry> targets=library.getEntries(peptideModSeq, precursorCharge, true);
+		
+		ArrayList<LibraryEntry> tasks=new ArrayList<LibraryEntry>();
+		for (LibraryEntry entry : targets) {
+			tasks.add(entry);
+			tasks.add(entry.getDecoy(parameters));
 		}
-		if (false) {
-			AbstractScoringResult result=test.processPeptide("SAGFHPSGSVLAVGTVTGR", (byte)3);
-		}
-		if (false) {
-			AbstractScoringResult result=test.processPeptide("SADESGQALLAAGHYASDEVREK", (byte)4);
-		}
-		if (false) {
-			AbstractScoringResult result=test.processPeptide("SIYEGDESFR", (byte)2);
-		}
-		if (false) {
-			AbstractScoringResult result=test.processPeptide("RNFILDQTNVSAAAQR", (byte)3);
-		}
-		if (true) {
-			AbstractScoringResult result=test.processPeptide("SSEHINEGETAMLVC[+57.021464]K", (byte)3);
-		}
+		
+		ArrayList<FragmentScan> stripes=dia.getStripes(pepMz, -Float.MAX_VALUE, Float.MAX_VALUE, true);
+		Collections.sort(stripes);
+		
+		Range precursorIsolationRange=new Range(600.523681640625, 602.523742675781);
+		float dutyCycle=1.88462436199188f;
+		
+		PrecursorScanMap precursors=new PrecursorScanMap(dia.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE));
+		BlockingQueue<AbstractScoringResult> resultsQueue=new LinkedBlockingQueue<AbstractScoringResult>();
+		
+		EncyclopediaTwoPointOneScoringTask task=new EncyclopediaTwoPointOneScoringTask(scorer, tasks, stripes, precursorIsolationRange, dutyCycle, precursors,
+				resultsQueue, parameters);
+		task.call();
+		
+		AbstractScoringResult result=resultsQueue.peek();
+		return result;
 	}
 
 	@Override
