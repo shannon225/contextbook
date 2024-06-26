@@ -51,6 +51,7 @@ public class MassErrorFilter extends AbstractMassErrorFilter {
 		for (int i=0; i<rts.size(); i++) {
 			XYPoint xyPoint=rts.get(i);
 			float delta=getCorrectedMassError(warper, (float)xyPoint.x, (float)xyPoint.y);
+			
 			deltas.add(delta);
 			if (delta>max) max=delta;
 			if (delta<min) min=delta;

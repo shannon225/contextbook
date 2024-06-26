@@ -76,7 +76,10 @@ public class EncyclopediaTwoLDAScorer implements EncyclopediaScorer {
 		if (ldaScorer.isPresent()) {
 			PeptideXYPoint xyPoint=new PeptideXYPoint(entry.getScanStartTime()/60f, spectrum.getScanStartTime()/60f, entry.isDecoy(), entry.getPeptideModSeq());
 			PSMInterface psm=new SimplePSM(entry, auxScores[getParentDeltaMassIndex()], auxScores[getFragmentDeltaMassIndex()], xyPoint);
-			return General.concatenate(auxScores, ldaScorer.get().y.getAdditionalScores(psm));
+			
+			float[] additionalScores = ldaScorer.get().y.getAdditionalScores(psm);
+
+			return General.concatenate(auxScores, additionalScores);
 		}
 		return auxScores;
 	}

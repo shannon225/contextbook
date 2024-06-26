@@ -407,6 +407,9 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 						//correlationToPlusOne=Correlation.getPearsons(precursorPlusOne, median);
 					}
 					
+					float deltaPrecursorMass=auxScorer.getParentDeltaMassIndex()>=0?auxScoreArray[auxScorer.getParentDeltaMassIndex()]:0.0f;
+					float deltaFragmentMass=auxScorer.getFragmentDeltaMassIndex()>=0?auxScoreArray[auxScorer.getFragmentDeltaMassIndex()]:0.0f;
+					
 					auxScoreArray=General.concatenate(new float[] {score}, new float[] {evalue, correlationToGaussian, 
 							correlationToPrecursor, isIntegratedSignal, isIntegratedPrecursor,
 							numPeaksWithGoodCorrelation}, auxScoreArray); // auxScoreArray must be last
@@ -428,9 +431,6 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 					
 					// don't add if we don't have enough quantitative ions (add below if it's still the best and there are no matches)
 					if (numPeaksWithGoodCorrelation<parameters.getMinNumOfQuantitativePeaks()) continue;
-					
-					float deltaPrecursorMass=auxScorer.getParentDeltaMassIndex()>=0?auxScoreArray[auxScorer.getParentDeltaMassIndex()]:0.0f;
-					float deltaFragmentMass=auxScorer.getFragmentDeltaMassIndex()>=0?auxScoreArray[auxScorer.getFragmentDeltaMassIndex()]:0.0f;
 					
 					
 					if (scorer instanceof EncyclopediaTwoLDAScorer) {
