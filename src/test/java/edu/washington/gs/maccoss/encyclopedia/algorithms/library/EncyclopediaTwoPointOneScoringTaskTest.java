@@ -112,9 +112,10 @@ public class EncyclopediaTwoPointOneScoringTaskTest extends TestCase {
 	public void testSinglePeptideAHWTPFEGQK() {
 		try {
 			AbstractScoringResult result=processPeptide("AHWTPFEGQK", (byte)2);
-			assertEquals("AHWTPFEGQK", result.getEntry().getPeptideModSeq());
 			assertTrue(result.getBestScore()<1f);
+			assertFalse(result.hasScoredResults());
 			ScoredPSM psm=result.getScoredMSMS();
+			assertNull(psm);
 			
 		} catch (Exception e) {
 			e.printStackTrace();

@@ -65,7 +65,11 @@ public class TDCPeptideScoringResult extends AbstractScoringResult {
 	 */
 	public LibraryEntry getEntry() {
 		/* assumes sorted in order, first is best scoring! */
-		return goodStripes.get(0).getLibraryEntry();
+		if (hasScoredResults()) {
+			return goodStripes.get(0).getLibraryEntry();
+		} else {
+			return null;
+		}
 	}
 
 	public void addStripe(float score, float[] auxScoreArray, float deltaPrecursorMass, float deltaFragmentMass, FragmentScan stripe) {
@@ -122,7 +126,11 @@ public class TDCPeptideScoringResult extends AbstractScoringResult {
 	}
 	
 	public ScoredPSM getScoredMSMS() {
-		return goodStripes.get(0);
+		if (hasScoredResults()) {
+			return goodStripes.get(0);
+		} else {
+			return null;
+		}
 	}
 	
 	public ArrayList<ScoredPSM> getGoodMSMSCandidates() {
