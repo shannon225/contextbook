@@ -51,7 +51,7 @@ public class PeptideRTPredictor {
     private static final AminoAcidConstants aaConstants=new AminoAcidConstants();
     
     public static void main2(String[] args) {
-    	File db=new File("/Users/searleb/Documents/encyclopedia/cartographer/chronologer/data/Chronologer_DB_220308_truncated.txt");
+    	File db=new File("/Users/searleb/Downloads/Chronologer_DB_220308.txt");
     	File saveLocation=new File(db.getParentFile(), "peptide_rt_model.dl4j");
     	
     	try {
@@ -89,23 +89,25 @@ public class PeptideRTPredictor {
     }
 
     public static void main(String[] args) {
-    	File db=new File("/Users/searleb/Documents/encyclopedia/cartographer/chronologer/data/Chronologer_DB_220308.txt");
+    	File db=new File("/Users/searleb/Downloads/Chronologer_DB_220308.txt");
     	File saveLocation=new File(db.getParentFile(), "peptide_rt_model.dl4j");
     	
     	ArrayList<ArrayList<DataSet>> dataSets = new ArrayList<>();
+    	ArrayList<String> dataSetNames = new ArrayList<>();
     	
     	TableParser.parseTSV(db, new TableParserMuscle() {
         	ArrayList<DataSet> currentDataSet=null;
         	String currentDataSetName=null;
+        	int count=0;
         	
 			@Override
 			public void processRow(Map<String, String> row) {
 				String source=row.get("Source");
 				if (!source.equals(currentDataSetName)) {
-					if (currentDataSetName!=null) return; //FIXME
 					
 					currentDataSet=new ArrayList<DataSet>();
 					dataSets.add(currentDataSet);
+					dataSetNames.add(source);
 					currentDataSetName=source;
 				}
 				
@@ -118,12 +120,9 @@ public class PeptideRTPredictor {
 	            
 	            INDArray output = Nd4j.create(new double[][]{new double[] {hirt}});
 	            currentDataSet.add(new DataSet(input, output));
-				
-				if (dataSets.size()%10000==0) {
-					int count=0;
-					for (ArrayList<DataSet> dataset : dataSets) {
-						count+=dataset.size();
-					}
+
+				count++;
+				if (count%10000==0) {
 			    	System.out.println("Loading "+count+"...");
 				}
 			}
@@ -132,7 +131,7 @@ public class PeptideRTPredictor {
 			public void cleanup() {
 			}
 		});
-    	System.out.println("Loaded "+dataSets.size()+" total examples");
+    	System.out.println("Loaded "+dataSets.size()+" total datasets");
 
         MultiLayerNetwork model=createModel(MAXIMUM_PEPTIDE_LENGTH * AMINO_ACID_COUNT, 1, 
         		EMBED_DIMENSION, KERNEL_SIZE, N_RESNET_BLOCKS);
@@ -143,8 +142,8 @@ public class PeptideRTPredictor {
 		ArrayList<DataSet>[] trimmedDataSets = new ArrayList[dataSets.size()];
     	ArrayList<XYTrace> traces=new ArrayList<XYTrace>();
         for(int e=0; e<NUM_EPOCHS; e++ ){
-        	System.out.println("Starting epoch "+e);
         	for (int d = 0; d < dataSets.size(); d++) {
+            	System.out.println("Starting epoch "+e+" ("+dataSetNames.get(d)+")");
         		ArrayList<DataSet> dataSet;
         		if (e==0) {
         			dataSet=dataSets.get(d);
@@ -180,14 +179,13 @@ public class PeptideRTPredictor {
                 trimmedDataSets[d]=trimmedData;
                 
                 ArrayList<XYPoint> histogram=PivotTableGenerator.createPivotTable(deltaArray, 25);
-                traces.add(new XYTrace(histogram, GraphType.boldline, "Epoch "+e));
+                traces.add(new XYTrace(histogram, GraphType.line, "Epoch "+e));
 			}
         	
-        	if (e%5==0) {
-        		Charter.launchChart("Delta HI", "Count", true, traces.toArray(new XYTrace[0]));
-        	}
+//        	if (e%5==0) {
+//        		Charter.launchChart("Delta HI", "Count", true, traces.toArray(new XYTrace[0]));
+//        	}
         }
-        
 
         try {
         	ModelSerializer.writeModel(model, saveLocation, true);
@@ -206,7 +204,7 @@ public class PeptideRTPredictor {
         for (int i = 0; i < aas.length; i++) {
             char aa = aas[i].charAt(0);
             if (aas[i].length()>1&&aa!='C') {
-            	return null;
+            	return null; // FIXME need to deal with other PTMs!
             }
             int index = AMINO_ACIDS.indexOf(aa);
             if (index >= 0) {
