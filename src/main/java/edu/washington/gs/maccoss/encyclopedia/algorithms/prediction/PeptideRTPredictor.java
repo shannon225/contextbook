@@ -4,6 +4,7 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.prediction;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Map;
 
 import org.deeplearning4j.datasets.iterator.utilty.ListDataSetIterator;
@@ -26,7 +27,8 @@ import org.nd4j.linalg.learning.config.Adam;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
@@ -49,10 +51,51 @@ public class PeptideRTPredictor {
     public static final int NUM_EPOCHS = 30;
     
     private static final AminoAcidConstants aaConstants=new AminoAcidConstants();
-    
+
+    public static void main(String[] args) {
+    	File db=new File("/Users/searleb/Downloads/Chronologer_DB_220308.txt");
+    	File saveLocation=new File(db.getParentFile(), "peptide_rt_model.dl4j");
+    	
+    	try {
+    		LibraryFile library=new LibraryFile();
+    		library.openFile(new File("/Users/searleb/Documents/damien/hela_multiple_replicates_raws/2017aug23/23aug2017_hela_serum_timecourse_pool_wide_001_170829031834.dia.elib"));
+    		ArrayList<LibraryEntry> entries=library.getAllEntries(false, aaConstants);
+
+            MultiLayerNetwork model = ModelSerializer.restoreMultiLayerNetwork(saveLocation);
+            System.out.println("Model loaded successfully.");
+            
+            long time=System.currentTimeMillis();
+            
+            ArrayList<INDArray> encodings=new ArrayList<INDArray>();
+            
+            for (LibraryEntry entry : entries) {
+				encodings.add(encode(entry.getPeptideModSeq()));
+			}
+            
+            INDArray inputData = Nd4j.concat(0, encodings.toArray(new INDArray[0]));
+            inputData = inputData.reshape(entries.size(), MAXIMUM_PEPTIDE_LENGTH * AMINO_ACID_COUNT);
+            INDArray output = model.output(inputData);
+
+            for (int i = 0; i < entries.size(); i++) {
+                System.out.println("Prediction for sequence " + entries.get(i).getPeptideModSeq() + "\t" + output.getDouble(i)+ "\t" + entries.get(i).getScanStartTime());
+            }
+            
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    	}
+    }
     public static void main2(String[] args) {
     	File db=new File("/Users/searleb/Downloads/Chronologer_DB_220308.txt");
     	File saveLocation=new File(db.getParentFile(), "peptide_rt_model.dl4j");
+    	
+    	try {
+    		LibraryFile library=new LibraryFile();
+    		library.openFile(new File("/Users/searleb/Documents/damien/hela_multiple_replicates_raws/2017aug23/23aug2017_hela_serum_timecourse_pool_wide_001_170829031834.dia.elib"));
+    		ArrayList<LibraryEntry> entries=library.getAllEntries(false, aaConstants);
+    		
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    	}
     	
     	try {
             // Load the model
@@ -88,7 +131,7 @@ public class PeptideRTPredictor {
         }
     }
 
-    public static void main(String[] args) {
+    public static void main3(String[] args) {
     	File db=new File("/Users/searleb/Downloads/Chronologer_DB_220308.txt");
     	File saveLocation=new File(db.getParentFile(), "peptide_rt_model.dl4j");
     	
