@@ -66,8 +66,12 @@ public class PivotTableGenerator {
 		
 		return traces;
 	}
-	
+
 	public static ArrayList<XYPoint> createPivotTable(float[] data) {
+		int binCount=data.length/25;
+		return createPivotTable(data, binCount);
+	}
+	public static ArrayList<XYPoint> createPivotTable(float[] data, int binCount) {
 		float actualMin=Float.MAX_VALUE;
 		float actualMax=-Float.MAX_VALUE;
 		
@@ -80,7 +84,6 @@ public class PivotTableGenerator {
 			}
 		}
 		
-		int binCount=data.length/25;
 		
 		return createPivotTable(data, actualMin, actualMax, (actualMax-actualMin)/binCount);
 	}
