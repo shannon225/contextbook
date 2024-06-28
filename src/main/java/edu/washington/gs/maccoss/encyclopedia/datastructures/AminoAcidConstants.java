@@ -313,6 +313,12 @@ public class AminoAcidConstants {
 					}
 				}
 
+				if (aa == 'E') {
+					if (tolerance.equals(-18.0, modificationMass)) { // pyro-glu
+						return -18.010565;
+					}
+				}
+
 				if (aa == 'Q') {
 					if (tolerance.equals(-17.0, modificationMass)) { // pyro-glu
 						return -17.026549;

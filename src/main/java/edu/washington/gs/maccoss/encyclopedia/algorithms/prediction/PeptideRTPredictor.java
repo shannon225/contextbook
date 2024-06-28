@@ -4,7 +4,6 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.prediction;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.Map;
 
 import org.deeplearning4j.datasets.iterator.utilty.ListDataSetIterator;
@@ -29,6 +28,7 @@ import org.nd4j.linalg.lossfunctions.LossFunctions;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
@@ -42,9 +42,7 @@ import gnu.trove.list.array.TFloatArrayList;
 
 public class PeptideRTPredictor {
 	private static final int MAX_BATCH_SIZE = 1024;
-	private static final String AMINO_ACIDS = "ACDEFGHIKLMNPQRSTVWY";
-    private static final int AMINO_ACID_COUNT = AMINO_ACIDS.length();
-    private static final int MAXIMUM_PEPTIDE_LENGTH = 35;
+    private static final int MAXIMUM_PEPTIDE_LENGTH = 50;
     public static final int EMBED_DIMENSION = 64;
     public static final int N_RESNET_BLOCKS = 3;
     public static final int KERNEL_SIZE = 7;
@@ -52,7 +50,7 @@ public class PeptideRTPredictor {
     
     private static final AminoAcidConstants aaConstants=new AminoAcidConstants();
 
-    public static void main(String[] args) {
+    public static void main3(String[] args) {
     	File db=new File("/Users/searleb/Downloads/Chronologer_DB_220308.txt");
     	File saveLocation=new File(db.getParentFile(), "peptide_rt_model.dl4j");
     	
@@ -69,11 +67,11 @@ public class PeptideRTPredictor {
             ArrayList<INDArray> encodings=new ArrayList<INDArray>();
             
             for (LibraryEntry entry : entries) {
-				encodings.add(encode(entry.getPeptideModSeq()));
+				encodings.add(EncodedAminoAcid.encode(entry.getPeptideModSeq(), aaConstants, MAXIMUM_PEPTIDE_LENGTH));
 			}
             
             INDArray inputData = Nd4j.concat(0, encodings.toArray(new INDArray[0]));
-            inputData = inputData.reshape(entries.size(), MAXIMUM_PEPTIDE_LENGTH * AMINO_ACID_COUNT);
+            inputData = inputData.reshape(entries.size(), MAXIMUM_PEPTIDE_LENGTH * EncodedAminoAcid.MAX_ENCODING_LENGTH);
             INDArray output = model.output(inputData);
 
             for (int i = 0; i < entries.size(); i++) {
@@ -101,6 +99,7 @@ public class PeptideRTPredictor {
             // Load the model
             MultiLayerNetwork model = ModelSerializer.restoreMultiLayerNetwork(saveLocation);
             System.out.println("Model loaded successfully.");
+        	char[] AAs="ARNDCEQGHLIKMFPSTWYV".toCharArray();
             
             long time=System.currentTimeMillis();
             for (int n = 0; n < 1000; n++) {	
@@ -110,14 +109,14 @@ public class PeptideRTPredictor {
 	            for (int i = 0; i < 1024; i++) {
 					char[] aas=new char[RandomGenerator.randomIndex(22, i)+8];
 					for (int j = 0; j < aas.length; j++) {
-						aas[j]=AMINO_ACIDS.charAt(RandomGenerator.randomIndex(AMINO_ACID_COUNT, j));
+						aas[j]=AAs[RandomGenerator.randomIndex(AAs.length, j)];
 					}
 					String sequence=new String(aas);
 					sequences.add(sequence);
-					encodings.add(encode(sequence));			
+					encodings.add(EncodedAminoAcid.encode(sequence, aaConstants, MAXIMUM_PEPTIDE_LENGTH));			
 				}
 	            INDArray inputData = Nd4j.concat(0, encodings.toArray(new INDArray[0]));
-	            inputData = inputData.reshape(sequences.size(), MAXIMUM_PEPTIDE_LENGTH * AMINO_ACID_COUNT);
+	            inputData = inputData.reshape(sequences.size(), MAXIMUM_PEPTIDE_LENGTH * EncodedAminoAcid.MAX_ENCODING_LENGTH);
 	            INDArray output = model.output(inputData);
 //	            for (int i = 0; i < sequences.size(); i++) {
 //	                System.out.println("Prediction for sequence " + (i + 1) + ": " + output.getDouble(i));
@@ -131,7 +130,7 @@ public class PeptideRTPredictor {
         }
     }
 
-    public static void main3(String[] args) {
+    public static void main(String[] args) {
     	File db=new File("/Users/searleb/Downloads/Chronologer_DB_220308.txt");
     	File saveLocation=new File(db.getParentFile(), "peptide_rt_model.dl4j");
     	
@@ -147,7 +146,7 @@ public class PeptideRTPredictor {
 			public void processRow(Map<String, String> row) {
 				String source=row.get("Source");
 				if (!source.equals(currentDataSetName)) {
-					
+					if (currentDataSetName!=null) return; // FIXME
 					currentDataSet=new ArrayList<DataSet>();
 					dataSets.add(currentDataSet);
 					dataSetNames.add(source);
@@ -158,7 +157,7 @@ public class PeptideRTPredictor {
 				float hirt=Float.parseFloat(row.get("HI"));
 
 		        // One-hot encode the sequences
-	            INDArray input = encode(peptideModSeq);
+	            INDArray input = EncodedAminoAcid.encode(peptideModSeq, aaConstants, MAXIMUM_PEPTIDE_LENGTH);
 	            if (input==null) return;
 	            
 	            INDArray output = Nd4j.create(new double[][]{new double[] {hirt}});
@@ -166,7 +165,7 @@ public class PeptideRTPredictor {
 
 				count++;
 				if (count%10000==0) {
-			    	System.out.println("Loading "+count+"...");
+					Logger.logLine("Loading "+count+"...");
 				}
 			}
 			
@@ -174,11 +173,16 @@ public class PeptideRTPredictor {
 			public void cleanup() {
 			}
 		});
-    	System.out.println("Loaded "+dataSets.size()+" total datasets");
+    	
+    	int count=0;
+    	for (ArrayList<DataSet> dataset : dataSets) {
+			count+=dataset.size();
+		}
+    	Logger.logLine("Loaded "+dataSets.size()+" datasets with "+count+" total peptides.");
 
-        MultiLayerNetwork model=createModel(MAXIMUM_PEPTIDE_LENGTH * AMINO_ACID_COUNT, 1, 
+        MultiLayerNetwork model=createModel(MAXIMUM_PEPTIDE_LENGTH * EncodedAminoAcid.MAX_ENCODING_LENGTH, 1, 
         		EMBED_DIMENSION, KERNEL_SIZE, N_RESNET_BLOCKS);
-        System.out.println(model.summary());
+        Logger.logLine(model.summary());
 
 
     	@SuppressWarnings("unchecked")
@@ -186,7 +190,7 @@ public class PeptideRTPredictor {
     	ArrayList<XYTrace> traces=new ArrayList<XYTrace>();
         for(int e=0; e<NUM_EPOCHS; e++ ){
         	for (int d = 0; d < dataSets.size(); d++) {
-            	System.out.println("Starting epoch "+e+" ("+dataSetNames.get(d)+")");
+            	Logger.logLine("Starting epoch "+e+" ("+dataSetNames.get(d)+")");
         		ArrayList<DataSet> dataSet;
         		if (e==0) {
         			dataSet=dataSets.get(d);
@@ -232,34 +236,13 @@ public class PeptideRTPredictor {
 
         try {
         	ModelSerializer.writeModel(model, saveLocation, true);
-        	System.out.println("Model saved successfully.");
+        	Logger.logLine("Model saved successfully.");
         } catch (IOException ioe) {
         	ioe.printStackTrace();
         }
     }
-
-    public static INDArray encode(String sequence) {
-    	String[] aas=PeptideUtils.getAAs(sequence, aaConstants);
-    	if (aas.length>MAXIMUM_PEPTIDE_LENGTH) return null;
-    	
-        INDArray encoded = Nd4j.zeros(MAXIMUM_PEPTIDE_LENGTH, AMINO_ACID_COUNT);
-        
-        for (int i = 0; i < aas.length; i++) {
-            char aa = aas[i].charAt(0);
-            if (aas[i].length()>1&&aa!='C') {
-            	return null; // FIXME need to deal with other PTMs!
-            }
-            int index = AMINO_ACIDS.indexOf(aa);
-            if (index >= 0) {
-                encoded.putScalar(new int[]{i, index}, 1.0);
-            } else {
-                return null;
-            }
-        }
-        return encoded.reshape(1, MAXIMUM_PEPTIDE_LENGTH * AMINO_ACID_COUNT);
-    }
     
-    public static MultiLayerNetwork createModel(int inputSize, int outputSize, int embedDim, int kernelSize, int resnetBlocks) {
+    private static MultiLayerNetwork createModel(int inputSize, int outputSize, int embedDim, int kernelSize, int resnetBlocks) {
     	NeuralNetConfiguration.ListBuilder builder = new NeuralNetConfiguration.Builder()
                 .updater(new Adam(0.001))
                 .list();
