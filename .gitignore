@@ -3,3 +3,4 @@
 /catalina.base_IS_UNDEFINED/
 .metadata/**
 .classpath
+/bin/

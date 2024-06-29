@@ -25,6 +25,7 @@ import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.learning.config.Adam;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.TwoDimensionalKDE;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
@@ -34,25 +35,29 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.Function;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.PivotTableGenerator;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 import gnu.trove.list.array.TFloatArrayList;
 
 public class PeptideRTPredictor {
+	private static final int INITIAL_BATCH_SIZE = 64;
 	private static final int MAX_BATCH_SIZE = 1024;
+	private static final int EPOCHS_TO_2X_BATCH = 30;
     private static final int MAXIMUM_PEPTIDE_LENGTH = 50;
     public static final int EMBED_DIMENSION = 64;
     public static final int N_RESNET_BLOCKS = 3;
     public static final int KERNEL_SIZE = 7;
-    public static final int NUM_EPOCHS = 30;
+    public static final int NUM_EPOCHS = 100;
     
     private static final AminoAcidConstants aaConstants=new AminoAcidConstants();
 
     public static void main3(String[] args) {
     	File db=new File("/Users/searleb/Downloads/Chronologer_DB_220308.txt");
     	File saveLocation=new File(db.getParentFile(), "peptide_rt_model.dl4j");
+    	
+    	ArrayList<XYPoint> points=new ArrayList<XYPoint>();
     	
     	try {
     		LibraryFile library=new LibraryFile();
@@ -75,12 +80,22 @@ public class PeptideRTPredictor {
             INDArray output = model.output(inputData);
 
             for (int i = 0; i < entries.size(); i++) {
-                System.out.println("Prediction for sequence " + entries.get(i).getPeptideModSeq() + "\t" + output.getDouble(i)+ "\t" + entries.get(i).getScanStartTime());
+            	points.add(new XYPoint(output.getDouble(i), entries.get(i).getScanStartTime()));
+                //System.out.println("Prediction for sequence " + entries.get(i).getPeptideModSeq() + "\t" + output.getDouble(i)+ "\t" + entries.get(i).getScanStartTime());
+            }
+            
+    		TwoDimensionalKDE twoDimKDE=new TwoDimensionalKDE(points, 3000);
+    		Function rtWarper=twoDimKDE.trace();
+            for (int i = 0; i < entries.size(); i++) {
+            	System.out.println(entries.get(i).getPeptideModSeq()+"\t"+(float)output.getDouble(i)+"\t"+rtWarper.getXValue(entries.get(i).getScanStartTime()));
             }
             
     	} catch (Exception e) {
     		e.printStackTrace();
     	}
+
+		
+		
     }
     public static void main2(String[] args) {
     	File db=new File("/Users/searleb/Downloads/Chronologer_DB_220308.txt");
@@ -146,7 +161,6 @@ public class PeptideRTPredictor {
 			public void processRow(Map<String, String> row) {
 				String source=row.get("Source");
 				if (!source.equals(currentDataSetName)) {
-					if (currentDataSetName!=null) return; // FIXME
 					currentDataSet=new ArrayList<DataSet>();
 					dataSets.add(currentDataSet);
 					dataSetNames.add(source);
@@ -188,17 +202,23 @@ public class PeptideRTPredictor {
     	@SuppressWarnings("unchecked")
 		ArrayList<DataSet>[] trimmedDataSets = new ArrayList[dataSets.size()];
     	ArrayList<XYTrace> traces=new ArrayList<XYTrace>();
-        for(int e=0; e<NUM_EPOCHS; e++ ){
+    	int batchSize=INITIAL_BATCH_SIZE;
+    	
+        for(int e=1; e<=NUM_EPOCHS; e++ ){
+        	if (e%EPOCHS_TO_2X_BATCH==0) {
+        		batchSize=batchSize*2;
+        	}
+        	
         	for (int d = 0; d < dataSets.size(); d++) {
-            	Logger.logLine("Starting epoch "+e+" ("+dataSetNames.get(d)+")");
+            	Logger.logLine("Starting epoch "+e+" ("+dataSetNames.get(d)+"), batch size: "+batchSize);
         		ArrayList<DataSet> dataSet;
-        		if (e==0) {
+        		if (e==1) {
         			dataSet=dataSets.get(d);
         		} else {
         			dataSet=trimmedDataSets[d];
         		}
         		
-                DataSetIterator iterator = new ListDataSetIterator<>(dataSet, MAX_BATCH_SIZE);
+                DataSetIterator iterator = new ListDataSetIterator<>(dataSet, batchSize);
                 model.fit(iterator);
 
     			dataSet=dataSets.get(d);
@@ -278,8 +298,8 @@ public class PeptideRTPredictor {
     		        .build());
 		}
         
-        // dropout layer (keep 95% of changes)
-        builder.layer(new DropoutLayer.Builder(0.95).build());
+        // dropout layer (keep 90% of changes)
+        builder.layer(new DropoutLayer.Builder(0.9).build());
         
         // output layer
         builder.layer(new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
