@@ -89,6 +89,7 @@ public class SearchParameters implements XMLObject {
     protected final boolean integratePrecursors;
     protected final boolean adjustInferredRTBoundaries;
     protected final InstrumentSpecificSearchParameters instrument;
+    protected final boolean skipLibraryRetentionTime;
     
     public Optional<ArrayList<Range>> getPrecursorIsolationRanges() {
 		return precursorIsolationRanges;
@@ -99,7 +100,7 @@ public class SearchParameters implements XMLObject {
 			int percolatorTrainingIterations, DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, 
 			int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, int topNTargetsUsed, float minIntensity, float minIntensityNumIons, Optional<PeptideModification> localizingModification, ScoringBreadthType CASiLBreadthType, 
 			float getNumberOfExtraDecoyLibrariesSearched, boolean quantifyAcrossSamples, boolean verifyModificationIons, float rtWindowInMin, int minNumIntegratedRTPoints, boolean filterPeaklists, boolean doNotUseGlobalFDR, 
-			Optional<File> precursorIsolationRangeFile, Optional<File> percolatorModelFile, boolean normalizeByTIC, boolean subtractBackground, boolean maskBadIntegrations, boolean adjustInferredRTBoundaries, boolean integratePrecursors, InstrumentSpecificSearchParameters instrument, boolean enableAdvancedOptions) {
+			Optional<File> precursorIsolationRangeFile, Optional<File> percolatorModelFile, boolean normalizeByTIC, boolean subtractBackground, boolean maskBadIntegrations, boolean adjustInferredRTBoundaries, boolean skipLibraryRetentionTime, boolean integratePrecursors, InstrumentSpecificSearchParameters instrument, boolean enableAdvancedOptions) {
 		this.aaConstants=aaConstants;
 		this.fragType=fragType;
 		this.precursorTolerance=precursorTolerance;
@@ -141,6 +142,7 @@ public class SearchParameters implements XMLObject {
         this.subtractBackground=subtractBackground;
         this.maskBadIntegrations=maskBadIntegrations;
         this.adjustInferredRTBoundaries=adjustInferredRTBoundaries;
+        this.skipLibraryRetentionTime=skipLibraryRetentionTime;
         this.integratePrecursors=integratePrecursors;
         this.instrument=instrument;
         this.enableAdvancedOptions=enableAdvancedOptions;
@@ -595,5 +597,9 @@ public class SearchParameters implements XMLObject {
     
     public InstrumentSpecificSearchParameters getInstrument() {
 		return instrument;
+	}
+    
+    public boolean isSkipLibraryRetentionTime() {
+		return skipLibraryRetentionTime;
 	}
 }

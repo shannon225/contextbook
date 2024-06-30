@@ -279,6 +279,7 @@ public class ThesaurusParametersPanel extends JPanel implements ParametersPanelI
 				false,
 				false,
 				false,
+				false,
 				searchPanel.getInstrument(),
 				false
 		);

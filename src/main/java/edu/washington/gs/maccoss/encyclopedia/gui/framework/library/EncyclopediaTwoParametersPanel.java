@@ -289,6 +289,7 @@ public class EncyclopediaTwoParametersPanel extends JPanel implements Parameters
 				false,
 				false,
 				false,
+				false,
 				searchPanel.getInstrument(),
 				false
 		);

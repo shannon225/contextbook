@@ -295,6 +295,20 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 			FragmentScan bestStripe=null;
 			
 			TIntHashSet takenScans=new TIntHashSet();
+			
+			if (parameters.isSkipLibraryRetentionTime()) {
+				//remove the expected retention time
+				int index=Arrays.binarySearch(retentionTimes,entry.getScanStartTime());
+				if (index<0) index=-(index+1);
+				
+				int lowerWindow=Math.max(0, index-2*movingAverageLength);
+				int upperWindow=Math.min(super.stripes.size()-1, index+2*movingAverageLength);
+				// block out a 40 scan window
+				for (int j=lowerWindow; j<=upperWindow; j++) {
+					takenScans.add(j);
+				}
+			}
+			
 			int identifiedPeaks=0;
 			int consideredPeaks=0;
 			for (int i=goodStripes.size()-1; i>=0; i--) {
@@ -353,10 +367,16 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 					float[] precursor=new float[median.length];
 					float[] precursorPlusOne=new float[median.length];
 					float sumMedianInRange=0;
+					float maximumRT=-1.0f;
+					float maximumMedian=0.0f;
 					for (int j = 0; j < idealGaussian.length; j++) {
 						idealGaussian[j]=(float)gaussian.getPDF(localRetentionTimes[j]);
 						if (rtRange.contains(localRetentionTimes[j])) {
 							sumMedianInRange+=median[j];
+							if (median[j]>maximumMedian) {
+								maximumMedian=median[j];
+								maximumRT=localRetentionTimes[j];
+							}
 							
 							// zero outside peak
 							Peak[] peaks=precursors.getIsotopePacket(entry.getPrecursorMZ(), localRetentionTimes[j], entry.getPrecursorCharge(), parameters.getPrecursorTolerance());
@@ -390,7 +410,6 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 						}
 					}
 					
-
 					int isIntegratedSignal=0;
 					int isIntegratedPrecursor=0;
 					float correlationToGaussian=0.0f;
@@ -419,6 +438,14 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 					for (int j=lowerWindow; j<=upperWindow; j++) {
 						takenScans.add(j);
 					}
+
+					if (parameters.isSkipLibraryRetentionTime()&&maximumRT>=0.0f) {
+						// too close to the expected retention time
+						if (Math.abs(entry.getScanStartTime()-maximumRT)<parameters.getExpectedPeakWidth()) {
+							continue;
+						}
+					}
+					
 					if (bestStripe==null || score > bestScore) {
 						bestStripe=stripe;
 						bestAuxScores=auxScoreArray;

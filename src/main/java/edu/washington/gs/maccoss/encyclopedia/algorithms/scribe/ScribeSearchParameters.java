@@ -154,6 +154,7 @@ public class ScribeSearchParameters extends SearchParameters {
 			boolean subtractBackground,
 			boolean maskBadIntegrations,
 			boolean adjustInferredRTBoundaries,
+			boolean skipLibraryRetentionTime,
 			boolean integratePrecursors,
 			InstrumentSpecificSearchParameters instrument,
 			boolean enableAdvancedOptions
@@ -200,6 +201,7 @@ public class ScribeSearchParameters extends SearchParameters {
 				subtractBackground,
 				maskBadIntegrations,
 				adjustInferredRTBoundaries,
+				skipLibraryRetentionTime,
 				integratePrecursors,
 				instrument,
 				enableAdvancedOptions
@@ -249,6 +251,7 @@ public class ScribeSearchParameters extends SearchParameters {
 				params.isSubtractBackground(),
 				params.isMaskBadIntegrations(),
 				params.adjustInferredRTBoundaries(), 
+				params.isSkipLibraryRetentionTime(),
 				params.isIntegratePrecursors(),
 				params.getInstrument(),
 				params.isEnableAdvancedOptions()

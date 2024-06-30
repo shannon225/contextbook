@@ -4,6 +4,7 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.prediction;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Map;
 
 import org.deeplearning4j.datasets.iterator.utilty.ListDataSetIterator;
@@ -30,13 +31,10 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
-import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
-import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Function;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.PivotTableGenerator;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 import gnu.trove.list.array.TFloatArrayList;
@@ -53,12 +51,13 @@ public class PeptideRTPredictor {
     
     private static final AminoAcidConstants aaConstants=new AminoAcidConstants();
 
-    public static void main3(String[] args) {
+    public static void main(String[] args) {
     	File db=new File("/Users/searleb/Downloads/Chronologer_DB_220308.txt");
     	File saveLocation=new File(db.getParentFile(), "peptide_rt_model.dl4j");
     	
     	ArrayList<XYPoint> points=new ArrayList<XYPoint>();
     	
+    	double meanAbsoluteError=0.0;
     	try {
     		LibraryFile library=new LibraryFile();
     		library.openFile(new File("/Users/searleb/Documents/damien/hela_multiple_replicates_raws/2017aug23/23aug2017_hela_serum_timecourse_pool_wide_001_170829031834.dia.elib"));
@@ -87,16 +86,19 @@ public class PeptideRTPredictor {
     		TwoDimensionalKDE twoDimKDE=new TwoDimensionalKDE(points, 3000);
     		Function rtWarper=twoDimKDE.trace();
             for (int i = 0; i < entries.size(); i++) {
-            	System.out.println(entries.get(i).getPeptideModSeq()+"\t"+(float)output.getDouble(i)+"\t"+rtWarper.getXValue(entries.get(i).getScanStartTime()));
+            	meanAbsoluteError+=Math.abs(output.getDouble(i)-rtWarper.getXValue(entries.get(i).getScanStartTime()));
+            	//System.out.println(entries.get(i).getPeptideModSeq()+"\t"+(float)output.getDouble(i)+"\t"+rtWarper.getXValue(entries.get(i).getScanStartTime()));
             }
+            meanAbsoluteError=meanAbsoluteError/entries.size();
+
+            System.out.println("time per prediction: "+(System.currentTimeMillis()-time)+" msec for "+entries.size()+" peptides");
+            System.out.println("testing reserved "+meanAbsoluteError+" mean absolute error");
             
     	} catch (Exception e) {
     		e.printStackTrace();
     	}
-
-		
-		
     }
+    
     public static void main2(String[] args) {
     	File db=new File("/Users/searleb/Downloads/Chronologer_DB_220308.txt");
     	File saveLocation=new File(db.getParentFile(), "peptide_rt_model.dl4j");
@@ -145,7 +147,7 @@ public class PeptideRTPredictor {
         }
     }
 
-    public static void main(String[] args) {
+    public static void main3(String[] args) {
     	File db=new File("/Users/searleb/Downloads/Chronologer_DB_220308.txt");
     	File saveLocation=new File(db.getParentFile(), "peptide_rt_model.dl4j");
     	
@@ -198,67 +200,71 @@ public class PeptideRTPredictor {
         		EMBED_DIMENSION, KERNEL_SIZE, N_RESNET_BLOCKS);
         Logger.logLine(model.summary());
 
-
-    	@SuppressWarnings("unchecked")
-		ArrayList<DataSet>[] trimmedDataSets = new ArrayList[dataSets.size()];
-    	ArrayList<XYTrace> traces=new ArrayList<XYTrace>();
+		ArrayList<DataSet> trimmedDataSet = new ArrayList<DataSet>();
+    	
+    	// start with full dataset
+    	for (int i = 0; i < dataSets.size(); i++) {
+    		trimmedDataSet.addAll(dataSets.get(i));
+		}
+    	
     	int batchSize=INITIAL_BATCH_SIZE;
+    	double bestMeanAbsoluteError=Double.MAX_VALUE;
     	
         for(int e=1; e<=NUM_EPOCHS; e++ ){
         	if (e%EPOCHS_TO_2X_BATCH==0) {
         		batchSize=batchSize*2;
         	}
-        	
-        	for (int d = 0; d < dataSets.size(); d++) {
-            	Logger.logLine("Starting epoch "+e+" ("+dataSetNames.get(d)+"), batch size: "+batchSize);
-        		ArrayList<DataSet> dataSet;
-        		if (e==1) {
-        			dataSet=dataSets.get(d);
-        		} else {
-        			dataSet=trimmedDataSets[d];
-        		}
-        		
-                DataSetIterator iterator = new ListDataSetIterator<>(dataSet, batchSize);
-                model.fit(iterator);
+        	Logger.logLine("Starting epoch "+e+", batch size: "+batchSize);
+        	Collections.shuffle(trimmedDataSet);
 
-    			dataSet=dataSets.get(d);
-                DataSetIterator fullIterator = new ListDataSetIterator<>(dataSet, MAX_BATCH_SIZE);
-                INDArray results=model.output(fullIterator);
-                
-                TFloatArrayList deltas=new TFloatArrayList();
+            DataSetIterator iterator = new ListDataSetIterator<>(trimmedDataSet, batchSize);
+            model.fit(iterator);
+
+            trimmedDataSet.clear();
+
+            int totalCount=0;
+            double meanAbsoluteError=0.0;
+        	for (int d = 0; d < dataSets.size(); d++) {
+        		ArrayList<DataSet> dataSet=dataSets.get(d);
+	            DataSetIterator fullIterator = new ListDataSetIterator<>(dataSet, MAX_BATCH_SIZE);
+	            INDArray results=model.output(fullIterator);
+
+	            TFloatArrayList deltas=new TFloatArrayList();
                 for (int i = 0; i < dataSet.size(); i++) {
 					double prediction=results.getDouble(i);
 					double actual=dataSet.get(i).getLabels().getDouble(0);
 					deltas.add((float)(actual-prediction));
+					meanAbsoluteError+=Math.abs(actual-prediction);
 				}
+                totalCount+=deltas.size();
+                
                 float[] deltaArray=deltas.toArray();
                 float low=QuickMedian.select(deltaArray, 0.005f);
                 float high=QuickMedian.select(deltaArray, 0.995f);
-                ArrayList<DataSet> trimmedData=new ArrayList<DataSet>();
                 for (int i = 0; i < dataSet.size(); i++) {
 					double prediction=results.getDouble(i);
 					double actual=dataSet.get(i).getLabels().getDouble(0);
 					double delta=actual-prediction;
 					if (delta<high&&delta>low) {
-						trimmedData.add(dataSet.get(i));
+						trimmedDataSet.add(dataSet.get(i));
 					}
 				}
-                trimmedDataSets[d]=trimmedData;
-                
-                ArrayList<XYPoint> histogram=PivotTableGenerator.createPivotTable(deltaArray, 25);
-                traces.add(new XYTrace(histogram, GraphType.line, "Epoch "+e));
-			}
+        	}
         	
-//        	if (e%5==0) {
-//        		Charter.launchChart("Delta HI", "Count", true, traces.toArray(new XYTrace[0]));
-//        	}
-        }
+            meanAbsoluteError=meanAbsoluteError/totalCount;
+        	Logger.logLine("Epoch "+e+" mean absolute error: "+meanAbsoluteError+" from "+totalCount+" total peptides");
 
-        try {
-        	ModelSerializer.writeModel(model, saveLocation, true);
-        	Logger.logLine("Model saved successfully.");
-        } catch (IOException ioe) {
-        	ioe.printStackTrace();
+        	if (meanAbsoluteError<bestMeanAbsoluteError) {
+        		bestMeanAbsoluteError=meanAbsoluteError;
+	            try {
+	            	ModelSerializer.writeModel(model, saveLocation, true);
+	            	Logger.logLine("Model saved successfully.");
+	            } catch (IOException ioe) {
+	            	ioe.printStackTrace();
+	            }
+        	} else {
+            	Logger.logLine("Final model wasn't better, so skipping temporary save.");
+        	}
         }
     }
     
@@ -311,7 +317,7 @@ public class PeptideRTPredictor {
 
         MultiLayerNetwork model = new MultiLayerNetwork(builder.build());
         model.init();
-        model.setListeners(new ScoreIterationListener(10));
+        model.setListeners(new ScoreIterationListener(1000));
 
         return model;
     }

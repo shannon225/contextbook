@@ -172,7 +172,7 @@ public class PercolatorExecutorIT {
 						params.getNumberOfExtraDecoyLibrariesSearched(), params.isQuantifySameFragmentsAcrossSamples(),
 						params.isVerifyModificationIons(), params.getRtWindowInMin(), params.getMinNumIntegratedRTPoints(), params.isFilterPeaklists(), params.isDoNotUseGlobalFDR(),
 						params.getPrecursorIsolationRangeFile(), params.getPercolatorModelFile(), params.isNormalizeByTIC(),
-						params.isSubtractBackground(), params.isMaskBadIntegrations(), params.adjustInferredRTBoundaries(), params.isIntegratePrecursors(), params.getInstrument(), params.isEnableAdvancedOptions()
+						params.isSubtractBackground(), params.isMaskBadIntegrations(), params.adjustInferredRTBoundaries(), params.isSkipLibraryRetentionTime(), params.isIntegratePrecursors(), params.getInstrument(), params.isEnableAdvancedOptions()
 				);
 				this.testFdr = testFdr;
 			}

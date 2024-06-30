@@ -127,6 +127,7 @@ public class PecanParameterParser {
         final boolean subtractBackground;
         final boolean maskBadIntegrations;
         final boolean adjustInferredRTBoundaries;
+        final boolean skipLibraryRetentionTime;
         final boolean integratePrecursors;
         final boolean enableAdvancedOptions;
 
@@ -316,7 +317,8 @@ public class PecanParameterParser {
         maskBadIntegrations=ParsingUtils.getBoolean(SearchParameters.MASK_BAD_INTEGRATIONS, parameters, false);
         integratePrecursors=ParsingUtils.getBoolean(SearchParameters.INTEGRATE_PRECURSORS, parameters, false);
         adjustInferredRTBoundaries=ParsingUtils.getBoolean(SearchParameters.ADJUST_INFERRED_RT_BOUNDARIES, parameters, false);
-		normalizeByTIC = ParsingUtils.getBoolean("-normalizeByTIC", parameters, true);
+        normalizeByTIC = ParsingUtils.getBoolean("-normalizeByTIC", parameters, true);
+        skipLibraryRetentionTime = ParsingUtils.getBoolean("-skipLibraryRetentionTime", parameters, false);
 		enableAdvancedOptions = ParsingUtils.getBoolean(SearchParameters.ENABLE_ADVANCED_OPTIONS, parameters, false);
         String instrumentValue=parameters.get(SearchParameters.INSTRUMENT);
         InstrumentSpecificSearchParameters instrument=instrumentValue==null?InstrumentSpecificSearchParameters.OrbitrapOrbitrap:InstrumentSpecificSearchParameters.fromString(instrumentValue);
@@ -370,6 +372,7 @@ public class PecanParameterParser {
 				subtractBackground,
 				maskBadIntegrations,
 				adjustInferredRTBoundaries,
+				skipLibraryRetentionTime,
 				integratePrecursors,
 				instrument,
 				enableAdvancedOptions

@@ -209,6 +209,7 @@ public class PecanSearchParameters extends SearchParameters {
 			boolean subtractBackground,
 			boolean maskBadIntegrations,
 			boolean adjustInferredRTBoundaries,
+			boolean skipLibraryRetentionTime,
 			boolean integratePrecursors,
 			InstrumentSpecificSearchParameters instrument,
 			boolean enableAdvancedOptions) {
@@ -254,6 +255,7 @@ public class PecanSearchParameters extends SearchParameters {
 				subtractBackground,
 				maskBadIntegrations,
 				adjustInferredRTBoundaries,
+				skipLibraryRetentionTime,
 				integratePrecursors,
 				instrument,
 				enableAdvancedOptions
@@ -344,6 +346,7 @@ public class PecanSearchParameters extends SearchParameters {
 				false,
 				false,
 				false,
+				false,
 				instrument,
 				false
 		);
@@ -411,6 +414,7 @@ public class PecanSearchParameters extends SearchParameters {
 				Optional.empty(),
 				true,
 				true,
+				false,
 				false,
 				false,
 				false,
@@ -485,6 +489,7 @@ public class PecanSearchParameters extends SearchParameters {
 				false,
 				false,
 				false,
+				false,
 				InstrumentSpecificSearchParameters.OrbitrapOrbitrap,
 				false
 		);
@@ -555,6 +560,7 @@ public class PecanSearchParameters extends SearchParameters {
 				Optional.empty(),
 				true,
 				true,
+				false,
 				false,
 				false,
 				false,

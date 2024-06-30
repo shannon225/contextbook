@@ -94,6 +94,7 @@ public class XCordiaSearchParameters extends PecanSearchParameters {
 			boolean subtractBackground,
 			boolean maskBadIntegrations,
 			boolean adjustInferredRTBoundaries,
+			boolean skipLibraryRetentionTime,
 			boolean integratePrecursors,
 			InstrumentSpecificSearchParameters instrument,
 			boolean enableAdvancedOptions
@@ -147,6 +148,7 @@ public class XCordiaSearchParameters extends PecanSearchParameters {
 				subtractBackground,
 				maskBadIntegrations,
 				adjustInferredRTBoundaries,
+				skipLibraryRetentionTime,
 				integratePrecursors,
 				instrument,
 				enableAdvancedOptions
@@ -263,6 +265,7 @@ public class XCordiaSearchParameters extends PecanSearchParameters {
 				params.isSubtractBackground(),
 				params.isMaskBadIntegrations(),
 				params.adjustInferredRTBoundaries(), 
+				params.isSkipLibraryRetentionTime(),
 				params.isIntegratePrecursors(),
 				params.getInstrument(),
 				params.isEnableAdvancedOptions()

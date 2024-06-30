@@ -69,6 +69,7 @@ public class SearchParameterParser {
 		map.put(SearchParameters.INTEGRATE_PRECURSORS, "false");
 		map.put(SearchParameters.ADJUST_INFERRED_RT_BOUNDARIES, "false");
 		map.put(SearchParameters.MIN_NUM_INTEGRATED_RT_POINTS, Integer.toString(SearchParameters.DEFAULT_MIN_NUM_INTEGRATED_RT_POINTS));
+		map.put("-skipLibraryRetentionTime", "false");
 		return map;
 	}
 	
@@ -157,6 +158,7 @@ public class SearchParameterParser {
         final boolean integratePrecursors;
         final boolean adjustInferredRTBoundaries;
         final boolean enableAdvancedOptions;
+        final boolean skipLibraryRetentionTime;
         final Optional<File> percolatorModelFile;
         final Optional<File> precursorIsolationRangeFile;
 		
@@ -383,7 +385,8 @@ public class SearchParameterParser {
         integratePrecursors=ParsingUtils.getBoolean(SearchParameters.INTEGRATE_PRECURSORS, parameters, false);
         adjustInferredRTBoundaries=ParsingUtils.getBoolean(SearchParameters.ADJUST_INFERRED_RT_BOUNDARIES, parameters, false);
         enableAdvancedOptions=ParsingUtils.getBoolean(SearchParameters.ENABLE_ADVANCED_OPTIONS, parameters, false);
-        
+        skipLibraryRetentionTime=ParsingUtils.getBoolean("-skipLibraryRetentionTime", parameters, false);
+		 
         String instrumentValue=parameters.get(SearchParameters.INSTRUMENT);
         InstrumentSpecificSearchParameters instrument=instrumentValue==null?InstrumentSpecificSearchParameters.OrbitrapOrbitrap:InstrumentSpecificSearchParameters.fromString(instrumentValue);
 
@@ -429,6 +432,7 @@ public class SearchParameterParser {
 				subtractBackground,
 				maskBadIntegrations,
 				adjustInferredRTBoundaries,
+				skipLibraryRetentionTime,
 				integratePrecursors,
 				instrument,
 				enableAdvancedOptions

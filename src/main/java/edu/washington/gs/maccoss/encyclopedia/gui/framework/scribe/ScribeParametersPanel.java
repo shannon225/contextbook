@@ -268,6 +268,7 @@ public class ScribeParametersPanel extends JPanel implements ParametersPanelInte
 				false,
 				false,
 				false,
+				false,
 				searchPanel.getInstrument(),
 				false
 		);

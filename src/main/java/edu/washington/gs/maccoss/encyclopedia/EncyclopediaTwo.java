@@ -257,42 +257,47 @@ public class EncyclopediaTwo {
 		LibraryScoringFactory taskFactory=job.getTaskFactory();
 		SearchParameters parameters=taskFactory.getParameters();
 	
-		float fraction;
-		LibraryInterface prealignmentLibrary;
-		if (job.getLibrary()==job.getPrealignmentLibrary()) {
-			Logger.logLine("Pre-alignment library and search library are the same so no alignment necessary.");
-			prealignmentLibrary=job.getPrealignmentLibrary();
-			fraction=0.5f;
-		} else {
-			Logger.logLine("Aligning pre-alignment library to "+job.getLibrary().getName());
-			prealignmentLibrary=LibraryUtilities.getReferenceCorrectedLibrary(job.getPrealignmentLibrary(), job.getLibrary());
-			int preAlignSize = prealignmentLibrary.size();
-			fraction=preAlignSize/(float)(preAlignSize+job.getLibrary().size());
-		}
+		Pair<MProphetResult, TargeteDecoyPSMFilter> mprophetResults=null;
+		float percentage=0.0f;
 		
-		float percentage = Math.min(0.5f, fraction*2f)-0.05f;
-		ProgressIndicator subProgress=new SubProgressIndicator(progress, percentage);
-
-		Logger.logLine("Calculating pre-alignment features for "+job.getLibrary().getName());
-		PSMConsumer saveResultsConsumer=generateFeatureFile(subProgress, prealignmentLibrary, job, stripefile, Optional.empty());
-
-		Logger.logLine("Assessing FDR...");
-		Pair<MProphetResult, TargeteDecoyPSMFilter> mprophetResults=firstPassFDR(subProgress, job, stripefile, saveResultsConsumer);
-
-		if (mprophetResults.getX().getPassingPeptides().size()==0) {
-			Logger.errorLine("Found zero peptides after pre-alignment, consider searching a different pre-alignment library!");
-			Logger.errorLine("Exiting early from failed analysis.");
-			return;
+		if (!parameters.isSkipLibraryRetentionTime()) {
+			float fraction=0.0f;
+			LibraryInterface prealignmentLibrary;
+			if (job.getLibrary()==job.getPrealignmentLibrary()) {
+				Logger.logLine("Pre-alignment library and search library are the same so no alignment necessary.");
+				prealignmentLibrary=job.getPrealignmentLibrary();
+				fraction=0.5f;
+			} else {
+				Logger.logLine("Aligning pre-alignment library to "+job.getLibrary().getName());
+				prealignmentLibrary=LibraryUtilities.getReferenceCorrectedLibrary(job.getPrealignmentLibrary(), job.getLibrary());
+				int preAlignSize = prealignmentLibrary.size();
+				fraction=preAlignSize/(float)(preAlignSize+job.getLibrary().size());
+			}
+			
+			percentage = Math.min(0.5f, fraction*2f)-0.05f;
+			ProgressIndicator subProgress1=new SubProgressIndicator(progress, percentage);
+	
+			Logger.logLine("Calculating pre-alignment features for "+job.getLibrary().getName());
+			PSMConsumer saveResultsConsumer1=generateFeatureFile(subProgress1, prealignmentLibrary, job, stripefile, Optional.empty());
+	
+			Logger.logLine("Assessing FDR...");
+			mprophetResults=firstPassFDR(subProgress1, job, stripefile, saveResultsConsumer1);
+	
+			if (mprophetResults.getX().getPassingPeptides().size()==0) {
+				Logger.errorLine("Found zero peptides after pre-alignment, consider searching a different pre-alignment library!");
+				Logger.errorLine("Exiting early from failed analysis.");
+				return;
+			}
 		}
 
-		subProgress=new SubProgressIndicator(progress, 1.0f-percentage-0.05f);
+		SubProgressIndicator subProgress2=new SubProgressIndicator(progress, 1.0f-percentage-0.05f);
 		Logger.logLine("Calculating post-alignment features for "+job.getLibrary().getName());
-		saveResultsConsumer=generateFeatureFile(subProgress, job.getLibrary(), job, stripefile, Optional.ofNullable(mprophetResults));
+		PSMConsumer saveResultsConsumer2=generateFeatureFile(subProgress2, job.getLibrary(), job, stripefile, Optional.ofNullable(mprophetResults));
 
-		subProgress=new SubProgressIndicator(progress, 0.05f);
+		SubProgressIndicator subProgress3=new SubProgressIndicator(progress, 0.05f);
 		Logger.logLine("Assessing FDR...");
 		//percolatorResults=percolatePeptides(subProgress, job, stripefile, saveResultsConsumer);
-		Pair<ArrayList<PercolatorPeptide>, TargeteDecoyPSMFilter> percolatorResults=repercolatePeptides(subProgress, job, stripefile, saveResultsConsumer, mprophetResults.getY());
+		Pair<ArrayList<PercolatorPeptide>, TargeteDecoyPSMFilter> percolatorResults=repercolatePeptides(subProgress3, job, stripefile, saveResultsConsumer2);
 		
 		ArrayList<PercolatorPeptide> passingPeptides=percolatorResults.getX();
 		
@@ -301,7 +306,7 @@ public class EncyclopediaTwo {
 		ArrayList<SearchJobData> jobs=new ArrayList<SearchJobData>();
 		jobs.add(job);
 		
-		SearchToBLIB.convertElib(subProgress, job, elibFile, parameters, parameters.isIntegratePrecursors());
+		SearchToBLIB.convertElib(subProgress3, job, elibFile, parameters, parameters.isIntegratePrecursors());
 		
 		progress.update("Found "+passingPeptides.size()+" peptides identified at "+(job.getParameters().getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 		Logger.logLine("Finished analysis! "+passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100f)+"% FDR ("+(Math.round((System.currentTimeMillis()-startTime)/1000f/6f)/10f)+" minutes)");
@@ -527,7 +532,7 @@ public class EncyclopediaTwo {
 		}
 	}
 	
-	public static Pair<ArrayList<PercolatorPeptide>, TargeteDecoyPSMFilter> repercolatePeptides(ProgressIndicator progress, EncyclopediaTwoJobData job, StripeFileInterface stripefile, PSMConsumer saveResultsConsumer, TargeteDecoyPSMFilter filter) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
+	public static Pair<ArrayList<PercolatorPeptide>, TargeteDecoyPSMFilter> repercolatePeptides(ProgressIndicator progress, EncyclopediaTwoJobData job, StripeFileInterface stripefile, PSMConsumer saveResultsConsumer) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
 		SearchParameters parameters=job.getParameters();
 		
 		try {
@@ -549,7 +554,7 @@ public class EncyclopediaTwo {
 			}
 			
 			ArrayList<PercolatorPeptide> decoyPeptides = getDecoyPeptides(job, parameters, passingPeptides.size());
-			filter=getRescoringModel(passingPeptides, decoyPeptides, data, job, true);
+			TargeteDecoyPSMFilter filter=getRescoringModel(passingPeptides, decoyPeptides, data, job, true);
 			
 			progress.update(passingPeptides.size()+" peptides identified at "+(parameters.getPercolatorThreshold()*100.0f)+"% FDR", 1.0f);
 			return new Pair<ArrayList<PercolatorPeptide>, TargeteDecoyPSMFilter>(passingPeptides, filter);

@@ -447,7 +447,7 @@ public class ResultsBrowserPanel extends JPanel {
 				double[] massArray=entry.getMassArray();
 				boolean[] quantifiedIonsArray=entry.getQuantifiedIonsArray();
 				
-				float rtRange=parameters.getLocalizingModification().isPresent()?dia.getGradientLength()/20.0f:(2f*parameters.getExpectedPeakWidth());
+				float rtRange=parameters.getLocalizingModification().isPresent()?dia.getGradientLength()/20.0f:(20f*parameters.getExpectedPeakWidth());
 				
 				ArrayList<FragmentScan> stripes=dia.getStripes(entry.getPrecursorMZ(), targetRT-rtRange, targetRT+rtRange, false);
 				Collections.sort(stripes);
