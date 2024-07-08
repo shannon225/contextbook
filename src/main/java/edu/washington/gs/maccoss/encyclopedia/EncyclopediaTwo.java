@@ -552,7 +552,7 @@ public class EncyclopediaTwo {
 				MProphetResult result=MProphetReiter.executeMProphetTSV(mprophetData, job.getParameters().getPercolatorThreshold(), job.getParameters().getAAConstants(), 1);
 				passingPeptides=result.getPassingPeptides();
 			}
-			
+			// FIXME THIS NEVER REALIGNS THE RETENTION TIMES
 			ArrayList<PercolatorPeptide> decoyPeptides = getDecoyPeptides(job, parameters, passingPeptides.size());
 			TargeteDecoyPSMFilter filter=getRescoringModel(passingPeptides, decoyPeptides, data, job, true);
 			

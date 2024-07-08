@@ -71,7 +71,11 @@ public class StringUtils {
 
 		String[] newNames=new String[names.length];
 		for (int i=0; i<newNames.length; i++) {
-			newNames[i]=names[i].substring(pre, names[i].length()-post);
+			if (pre==names[i].length()) {
+				newNames[i]=names[i];
+			} else {
+				newNames[i]=names[i].substring(pre, names[i].length()-post);
+			}
 		}
 		return newNames;
 	}

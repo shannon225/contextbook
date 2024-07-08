@@ -15,7 +15,6 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import edu.washington.gs.maccoss.encyclopedia.Encyclopedia;
-import edu.washington.gs.maccoss.encyclopedia.EncyclopediaTwo;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorVersion;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
@@ -254,6 +253,7 @@ public class SearchParameters implements XMLObject {
 		}
 		sb.append(" -rtWindowInMin "+rtWindowInMin+"\n");
         sb.append(" -filterPeaklists "+filterPeaklists+"\n");
+        sb.append(" -skipLibraryRetentionTime "+skipLibraryRetentionTime+"\n");
 		sb.append(" -precursorIsolationRangeFile "+(precursorIsolationRangeFile.isPresent()?precursorIsolationRangeFile.get().getAbsolutePath():NO_FILE)+"\n");
 		sb.append(" -percolatorModelFile "+(percolatorModelFile.isPresent()?percolatorModelFile.get().getAbsolutePath():NO_FILE)+"\n");
 		sb.append(" "+INSTRUMENT+" "+instrument.toString()+"\n");
@@ -307,6 +307,7 @@ public class SearchParameters implements XMLObject {
 		}
 		map.put("-rtWindowInMin", rtWindowInMin+"");
         map.put("-filterPeaklists", filterPeaklists+"");
+        map.put("-skipLibraryRetentionTime", skipLibraryRetentionTime+"");
         map.put("-precursorIsolationRangeFile", (precursorIsolationRangeFile.isPresent()?precursorIsolationRangeFile.get().getAbsolutePath():NO_FILE));
         map.put("-percolatorModelFile", (percolatorModelFile.isPresent()?percolatorModelFile.get().getAbsolutePath():NO_FILE));
         map.put(INSTRUMENT, instrument.toString());

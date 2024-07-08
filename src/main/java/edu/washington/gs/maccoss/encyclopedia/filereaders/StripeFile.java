@@ -46,10 +46,12 @@ import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.Version;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import gnu.trove.map.hash.TIntObjectHashMap;
+import gnu.trove.procedure.TIntObjectProcedure;
 
 public class StripeFile extends SQLFile implements StripeFileInterface {
 	public static final DateFormat m_ISO8601Local = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-	private static final Version MOST_RECENT_VERSION = new Version(0, 6, 0);
+	private static final Version MOST_RECENT_VERSION = new Version(0, 7, 0);
 
 	private static final String UNKNOWN_VALUE="unknown";
 	public static final String FILELOCATION_ATTRIBUTE="filelocation";
@@ -70,6 +72,8 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	private boolean isOpen=false;
 
 	private final HashMap<Range, WindowData> ranges=new HashMap<Range, WindowData>();
+
+	private final TIntObjectHashMap<String> fractionNames=new TIntObjectHashMap<String>();
 
 	private final boolean isOpenFileInPlace;
 
@@ -143,10 +147,19 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 	public HashMap<Range, WindowData> getRanges() {
 		return (HashMap<Range, WindowData>)ranges.clone();
 	}
+	
+	public TIntObjectHashMap<String> getFractionNames() {
+		return new TIntObjectHashMap<String>(fractionNames);
+	}
 
 	public void setRanges(HashMap<Range, WindowData> ranges) {
 		this.ranges.clear();
 		this.ranges.putAll(ranges);
+	}
+	
+	public void setFractionNames(TIntObjectHashMap<String> fractionNames) {
+		this.fractionNames.clear();
+		this.fractionNames.putAll(fractionNames);
 	}
 
 	/* (non-Javadoc)
@@ -157,6 +170,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 		this.userFile=userFile;
 		openFile();
 		loadRanges();
+		loadFractionNames();
 		isOpen=true;
 	}
 
@@ -180,6 +194,27 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 					Optional<Range> range=(ionMobilityStart==null||ionMobilityStop==null)?Optional.empty():Optional.of(new Range(ionMobilityStart, ionMobilityStop));
 					
 					ranges.put(new Range(start, stop), new WindowData(dutyCycle, numWindows, range));
+				}
+			} finally {
+				s.close();
+			}
+		} finally {
+			c.close();
+		}
+	}
+
+	public void loadFractionNames() throws IOException, SQLException {
+		Connection c = getConnection();
+		try {
+			Statement s=c.createStatement();
+			try {
+				ResultSet rs=s.executeQuery("select fraction, name from fractions");
+
+				while (rs.next()) {
+					int fraction=rs.getInt(1);
+					String name=rs.getString(2);
+					
+					fractionNames.put(fraction, name);
 				}
 			} finally {
 				s.close();
@@ -231,6 +266,40 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 		}
 	}
 
+	public void writeFractionNames() throws IOException, SQLException {
+		Connection c = getConnection();
+		try {
+			PreparedStatement prep=c.prepareStatement("insert into fractions (Fraction, Name) VALUES (?,?)");
+			try {
+				if (fractionNames.size()>0) {
+					fractionNames.forEachEntry(new TIntObjectProcedure<String>() {
+						@Override
+						public boolean execute(int a, String b) {
+							try {
+								prep.setInt(1, a);
+								prep.setString(2, b);
+	
+								prep.addBatch();
+								
+								return true;
+							} catch (SQLException e) {
+								Logger.logException(e);
+								return false;
+							}
+						}
+					});
+					prep.executeBatch();
+					prep.close();
+					c.commit();
+				}
+			} finally {
+				prep.close();
+			}
+		} finally {
+			c.close();
+		}
+	}
+
 	public void openFile() throws IOException, SQLException {
 		if (isOpenFileInPlace) {
 			if (userFile==null) {
@@ -267,6 +336,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 
 	public void saveFile() throws IOException, SQLException {
 		writeRanges();
+		writeFractionNames();
 
 		if (userFile!=null) {
 			setFileVersion();
@@ -906,6 +976,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 				s.execute("create table if not exists ranges ( Start float not null, Stop float not null, DutyCycle float not null, NumWindows int, IonMobilityStart float, IonMobilityStop float )");
 				s.execute("create table if not exists spectra ( Fraction int not null, SpectrumName string not null, PrecursorName string, SpectrumIndex int not null, ScanStartTime float not null, IonInjectionTime float, IsolationWindowLower float not null, IsolationWindowCenter float not null, IsolationWindowUpper float not null, PrecursorCharge int not null, MassEncodedLength int not null, MassArray blob not null, IntensityEncodedLength int not null, IntensityArray blob not null, IonMobilityArrayEncodedLength int, IonMobilityArray blob, primary key (SpectrumIndex) )");
 				s.execute("create table if not exists precursor ( Fraction int not null, SpectrumName string not null, SpectrumIndex int not null, ScanStartTime float not null, IonInjectionTime float, IsolationWindowLower float not null, IsolationWindowUpper float not null, MassEncodedLength int not null, MassArray blob not null, IntensityEncodedLength int not null, IntensityArray blob not null, IonMobilityArrayEncodedLength int, IonMobilityArray blob, TIC float, primary key (SpectrumIndex) )");
+				s.execute("create table if not exists fractions ( Fraction int not null, Name string not null, primary key (Fraction) )");
 
 				s.execute("create index if not exists \"spectra_index_isolation_window_lower\" on \"spectra\" (\"IsolationWindowLower\" ASC)");
 				s.execute("create index if not exists \"spectra_index_isolation_window_upper\" on \"spectra\" (\"IsolationWindowUpper\" ASC)");

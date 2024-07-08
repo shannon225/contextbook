@@ -23,6 +23,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import gnu.trove.list.array.TFloatArrayList;
+import gnu.trove.map.hash.TIntObjectHashMap;
 
 public class StripeFileMerger {
 	private static final String FILENAME_DELIMITER = ";";
@@ -51,8 +52,12 @@ public class StripeFileMerger {
 		stripeFile.openFile();
 		HashMap<Range, WindowData> dutyCycleMap=new HashMap<>();
 		
+		TIntObjectHashMap<String> fractionNames=new TIntObjectHashMap<String>();
+		
 		int scanIndex=0;
 		for (int i = 0; i < fs.length; i++) {
+			fractionNames.put(i, fs[i].getName());
+			
 			progress.update("Adding "+fs[i].getName()+" to merged file", i/(fs.length+1.0f));
 			Logger.logLine("Adding "+fs[i].getName()+" to merged file ("+(i+1)+" of "+fs.length+")...");
 			StripeFileInterface thisStripeFile=StripeFileGenerator.getFile(fs[i], parameters);
@@ -90,6 +95,7 @@ public class StripeFileMerger {
 
 		stripeFile.setFileName(newFile.getName(), null, newFile.getAbsolutePath());
 		stripeFile.setRanges(dutyCycleMap);
+		stripeFile.setFractionNames(fractionNames);
 
 		stripeFile.saveAsFile(newFile);
 		stripeFile.close();
