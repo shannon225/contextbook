@@ -13,6 +13,10 @@ program="encyclopedia";
 #fi
 
 branch=$(git symbolic-ref --short HEAD);
+if [ $branch == "master" ]; then
+	branch="develop";
+fi
+
 let "year=`date +%Y`-2020";
 current=${year}.`date +%-m.%-d`;
 let "next=${year}+1";
