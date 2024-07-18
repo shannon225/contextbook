@@ -27,4 +27,9 @@ public class VersionTest extends TestCase {
 		assertFalse(v2.amIAbove(v2));
 	}
 
+	public void testAltVersion() {
+		assertEquals("1.2.0-SNAPSHOT", new Version("1.2.0-SNAPSHOT").toString());
+		assertEquals("1.2.0-SNAPSHOT", new Version("1.2.0-develop-SNAPSHOT").toString());
+		assertEquals("1.2.0-SNAPSHOT", new Version("1.2.0-stable-SNAPSHOT").toString());
+	}
 }

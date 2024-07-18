@@ -30,7 +30,12 @@ TAG=${program}-${branch}-${current}
 mvn versions:set -DnewVersion="${current}"
 git commit -am "Update to version for release ${program}-${branch}-${current}."
 git tag "${TAG}" # optional
-mvn clean package -DbuildJars;
+mvn -Djavacpp.platform.custom -Djavacpp.platform.host \
+	-Djavacpp.platform.macosx-x86_64 \
+	-Djavacpp.platform.macosx-arm64 \
+	-Djavacpp.platform.linux-x86_64 \
+	-Djavacpp.platform.windows-x86_64 \
+	clean package -DbuildJars;
 mvn versions:set -DnewVersion="${next}-${branch}-SNAPSHOT"
 git commit -am "Update to next SNAPSHOT version."
 
