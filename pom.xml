@@ -530,6 +530,11 @@
 			<groupId>org.bytedeco</groupId>
 			<artifactId>openblas</artifactId>
 			<version>0.3.21-1.5.8</version>
+		
+		<dependency>
+			<groupId>org.json</groupId>
+			<artifactId>json</artifactId>
+			<version>20240303</version>
 		</dependency>
 	</dependencies>
 </project>

@@ -182,7 +182,7 @@ public class PrositCSVWriter {
 		Logger.logLine("Finished writing "+total+" peptides to Prosit CSV!");
 	}
 
-	protected static HashSet<PeptidePrecursor>  getPeptidesFromFASTA(File fasta, DigestionEnzyme enzyme, byte minCharge, byte maxCharge, int maxMissedCleavages, Range mzRange) {
+	protected static HashSet<PeptidePrecursor> getPeptidesFromFASTA(File fasta, DigestionEnzyme enzyme, byte minCharge, byte maxCharge, int maxMissedCleavages, Range mzRange) {
 		HashSet<PeptidePrecursor> allPeptides=new HashSet<>();
 		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
 		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(fasta, parameters);
@@ -299,7 +299,7 @@ public class PrositCSVWriter {
 	}
 	
 	// http://proteomicsnews.blogspot.com/2014/06/normalized-collision-energy-calculation.html
-	protected static float convertNCE(float nce, byte charge, byte defaultCharge) {
+	public static float convertNCE(float nce, byte charge, byte defaultCharge) {
 		return nce*getChargeFactor(defaultCharge)/getChargeFactor(charge);
 	}
 
