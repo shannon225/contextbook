@@ -14,6 +14,8 @@ public class CLIConverter {
 			ConvertPrositCSVToLibrary.main(args);
 		} else if (arguments.containsKey("-libtoblib")||arguments.containsKey("-libraryToBlib")) {
 			ConvertLibraryToBlib.main(args);
+		} else if (arguments.containsKey("-fastatokoinalibrary")||arguments.containsKey("-fastaToKoinaLibrary")) {
+			ConvertFastaToKoinaPrositLibrary.main(args);
 		} else if (arguments.containsKey("-fastatoprositcsv")||arguments.containsKey("-fastaToPrositCSV")) {
 			ConvertFastaToPrositCSV.main(args);
 		} else if (arguments.containsKey("-msptolib")||arguments.containsKey("-mspToLib")) {

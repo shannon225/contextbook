@@ -22,6 +22,38 @@ public class MatrixMath {
 		}
 		System.out.println("]");
 	}
+	
+	public static float[][] reshape(float[] a, int r, int c) {
+		assert(a.length==r*c);
+		
+		float[][] d=new float[r][];
+		for (int i = 0; i < d.length; i++) {
+			d[i]=new float[c];
+		}
+		for (int j = 0; j < c; j++) {
+			for (int i = 0; i < r; i++) {
+				int index=j+i*c;
+				d[i][j]=a[index];
+			}
+		}
+		return d;
+	}
+	
+	public static double[][] reshape(double[] a, int r, int c) {
+		assert(a.length==r*c);
+		
+		double[][] d=new double[r][];
+		for (int i = 0; i < d.length; i++) {
+			d[i]=new double[c];
+		}
+		for (int j = 0; j < c; j++) {
+			for (int i = 0; i < r; i++) {
+				int index=j+i*c;
+				d[i][j]=a[index];
+			}
+		}
+		return d;
+	}
 
 	public static double[][] calculateCovarianceMatrix(double[][] matrix) {
 		double[] mean=new double[matrix[0].length];
@@ -41,7 +73,7 @@ public class MatrixMath {
 	 * @param a
 	 * @return
 	 */
-	public static double[][] invert(double a[][]) {
+	public static double[][] invert(double[][] a) {
 		int n=a.length;
 		double x[][]=new double[n][n];
 		double b[][]=new double[n][n];

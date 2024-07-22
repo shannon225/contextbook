@@ -493,20 +493,20 @@ public class SearchPanel extends JPanel {
 			bar.add(convertMenu);
 		}
 		
-		JMenuItem fastaToProsit=new JMenuItem("Create Prosit CSV from FASTA", convertDBIcon);
+		JMenuItem fastaToProsit=new JMenuItem("Create Prosit Library from FASTA with Koina", convertDBIcon);
 		fastaToProsit.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				SearchPanelUtilities.convertFastaForProsit(SearchPanel.this);
+				SearchPanelUtilities.convertFastaForProsit(SearchPanel.this, getJobProcessor(), getVisibleTab().getParameters());
 			}
 		});
 		convertMenu.add(fastaToProsit);
 		
-		JMenuItem libraryToProsit=new JMenuItem("Create Prosit CSV from Library", convertDBIcon);
+		JMenuItem libraryToProsit=new JMenuItem("Create Prosit Library from Library with Koina", convertDBIcon);
 		libraryToProsit.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				SearchPanelUtilities.convertLibraryForProsit(SearchPanel.this);
+				SearchPanelUtilities.convertLibraryForProsit(SearchPanel.this, getJobProcessor(), getVisibleTab().getParameters());
 			}
 		});
 		convertMenu.add(libraryToProsit);

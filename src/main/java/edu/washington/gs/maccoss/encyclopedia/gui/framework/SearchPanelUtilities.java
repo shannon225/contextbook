@@ -77,6 +77,7 @@ import edu.washington.gs.maccoss.encyclopedia.filewriters.MSPWriter;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PrositCSVWriter;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.StripeFileMerger;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.StripeFileTrimmer;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.web.KoinaLibraryPredictionClient;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.curves.DilutionCurveFitterDialog;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.curves.TargetedSchedulerDialog;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.AboutDialog;
@@ -1077,10 +1078,9 @@ public class SearchPanelUtilities {
 		dialog.setVisible(true);
 	}
 	
-	public static void convertFastaForProsit(Component root) {
+	public static void convertFastaForProsit(Component root, JobProcessor processor, SearchParameters params) {
 		final JFrame frame = (JFrame)SwingUtilities.getRoot(root);
-		final JDialog dialog=new JDialog(frame, "Convert FASTA to Prosit CSV", true);
-		
+		final JDialog dialog=new JDialog(frame, "Convert FASTA to Prosit Library", true);
 		
 		final FileChooserPanel fastaFileChooser=new FileChooserPanel(null, "FASTA", new SimpleFilenameFilter(".fas", ".fasta"), true);
 
@@ -1144,18 +1144,19 @@ public class SearchPanelUtilities {
 					dialog.setVisible(false);
 					dialog.dispose();
 					
-					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame) SwingUtilities.getWindowAncestor(root), "Please wait...", "Creating Prosit CSV File") {
+					WorkerJob job=new WorkerJob() {
 						@Override
-						protected Nothing doInBackgroundForReal() throws Exception {
-							PrositCSVWriter.writeCSV(fastaFile, enzyme, defaultNCE, defaultCharge, minCharge, maxCharge, maxMissedCleavages, new Range(minimumMz, maximumMz), isAdjustNCEForDIA, isAddDecoys);
-							return Nothing.NOTHING;
+						public String getJobTitle() {
+							return "Creating Prosit Library from "+fastaFile.getName();
 						}
 
 						@Override
-						protected void doneForReal(Nothing t) {
+						public void runJob(ProgressIndicator progress) throws Exception {
+							KoinaLibraryPredictionClient.writeLibrary(null, fastaFile, enzyme, defaultNCE, defaultCharge, minCharge, maxCharge, maxMissedCleavages, new Range(minimumMz, maximumMz), isAdjustNCEForDIA, isAddDecoys, params, progress);
 						}
 					};
-					worker.execute();
+					processor.addJob(job);
+					
 				} else {
 					JOptionPane.showMessageDialog(frame, "You must specify a FASTA file!", "Incomplete options!", JOptionPane.WARNING_MESSAGE, convertDBIcon);
 				}
@@ -1174,7 +1175,7 @@ public class SearchPanelUtilities {
 		
 		JPanel mainpane=new JPanel(new BorderLayout());
 		final JLabel text=new JLabel(AboutDialog.citationIcon);
-		text.setText("<html><p style=\"font-size:10px; font-family: Helvetica, sans-serif\">"+"This function will <i>in silico</i> digest peptides from your FASTA and create an input file for Prosit. If you use this feature, please cite <a href=\"https://www.nature.com/articles/s41467-020-15346-1\">Searle et al, 2020</a>.");
+		text.setText("<html><p style=\"font-size:10px; font-family: Helvetica, sans-serif\">"+"This function will <i>in silico</i> digest peptides from your FASTA and create a Prosit library using Koina. If you use this feature, please cite <a href=\"https://www.nature.com/articles/s41467-020-15346-1\">Searle et al, 2020</a>.");
 		text.setBackground(Color.WHITE);
 		text.setOpaque(true);
 		text.addMouseListener(new MouseListener() {
@@ -1342,7 +1343,7 @@ public class SearchPanelUtilities {
 		dialog.setVisible(true);
 	}
 	
-	public static void convertLibraryForProsit(Component root) {
+	public static void convertLibraryForProsit(Component root, JobProcessor processor, SearchParameters params) {
 		final JFrame frame = (JFrame)SwingUtilities.getRoot(root);
 		final JDialog dialog=new JDialog(frame, "Convert Library to Prosit CSV", true);
 		
@@ -1377,21 +1378,23 @@ public class SearchPanelUtilities {
 				if (libraryFile!=null&&libraryFile.exists()) {
 					dialog.setVisible(false);
 					dialog.dispose();
-					
-					SwingWorkerProgress<Nothing> worker=new SwingWorkerProgress<Nothing>((Frame) SwingUtilities.getWindowAncestor(root), "Please wait...", "Creating Prosit CSV File") {
+
+					WorkerJob job=new WorkerJob() {
 						@Override
-						protected Nothing doInBackgroundForReal() throws Exception {
-							LibraryFile library=new LibraryFile();
-							library.openFile(libraryFile);
-							PrositCSVWriter.writeCSV(library, defaultNCE, defaultCharge, isAdjustNCEForDIA, isAddDecoys);
-							return Nothing.NOTHING;
+						public String getJobTitle() {
+							return "Creating Prosit Library from "+libraryFile.getName();
 						}
 
 						@Override
-						protected void doneForReal(Nothing t) {
+						public void runJob(ProgressIndicator progress) throws Exception {
+							LibraryFile library=new LibraryFile();
+							library.openFile(libraryFile);
+							//PrositCSVWriter.writeCSV(library, defaultNCE, defaultCharge, isAdjustNCEForDIA, isAddDecoys);
+							KoinaLibraryPredictionClient.writeLibrary(null, library, defaultNCE, defaultCharge, isAdjustNCEForDIA, isAddDecoys, params, progress);
 						}
 					};
-					worker.execute();
+					processor.addJob(job);
+					
 				} else {
 					JOptionPane.showMessageDialog(frame, "You must specify a library file!", "Incomplete options!", JOptionPane.WARNING_MESSAGE, convertDBIcon);
 				}

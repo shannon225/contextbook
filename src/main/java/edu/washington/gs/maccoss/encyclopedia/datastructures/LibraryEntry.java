@@ -119,7 +119,7 @@ public class LibraryEntry implements Comparable<PeptidePrecursor>, SpectrumWithC
 		ArrayList<PeakChromatogram> peaks=new ArrayList<>();
 		int numPeaks=Math.min(massArray.length, correlationArray.length);
 		for (int i=0; i<numPeaks; i++) {
-			if (intensityArray[i]>0||keepNegativeIntensities) {
+			if ((intensityArray[i]>0||keepNegativeIntensities)&&massArray[i]>0) {
 				peaks.add(new PeakChromatogram(massArray[i], intensityArray[i], correlationArray[i], quantifiedIonsArray[i]));
 			}
 		}
