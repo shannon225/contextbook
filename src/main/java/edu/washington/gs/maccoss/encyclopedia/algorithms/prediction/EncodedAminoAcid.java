@@ -51,7 +51,9 @@ public enum EncodedAminoAcid {
 	KTMT10(38),
 	nAc(39),
 	nTMT0(40),
-	nTMT10(41);
+	nTMT10(41),
+	n(42),
+	c(43);
 	
 	public static int MAX_ENCODING_LENGTH=45; 
 	
@@ -107,6 +109,8 @@ public enum EncodedAminoAcid {
 			case nAc: return "[+42]";
 			case nTMT0: return "[+224]";
 			case nTMT10: return "[+229]";
+			case n: return "";
+			case c: return "";
 			default: throw new EncyclopediaException("Unexpected amino acid ["+getIndex()+"]!");
 		}
 	}
@@ -116,6 +120,7 @@ public enum EncodedAminoAcid {
 			case nAc: return true;
 			case nTMT0: return true;
 			case nTMT10: return true;
+			case n: return true;
 			default: return false;
 		}
 	}
@@ -144,6 +149,8 @@ public enum EncodedAminoAcid {
 		char[] ca=sequence.toCharArray();
 		
 		ArrayList<EncodedAminoAcid> aas=new ArrayList<EncodedAminoAcid>();
+		aas.add(n);
+		
 		int i=0;
 		while (i<ca.length) {
 			char c='n';
@@ -169,12 +176,14 @@ public enum EncodedAminoAcid {
 			}
 			
 			if (c=='n') {
+				aas.clear(); // remove previous 'n'
 				aas.add(getNTermMod(mass));
 			
 			} else {
 				aas.add(getAA(c, mass));
 			}
 		}
+		aas.add(c);
 		return aas.toArray(new EncodedAminoAcid[0]);
 	}
 
@@ -214,6 +223,8 @@ public enum EncodedAminoAcid {
 				case 'V': return V;
 				case 'W': return W;
 				case 'Y': return Y;
+				case 'n': return n;
+				case 'c': return c;
 				
 				default: throw new EncyclopediaException("Unexpected amino acid "+aa+"["+mass+"]!");
 			}
