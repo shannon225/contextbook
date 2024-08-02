@@ -282,6 +282,8 @@ public class KoinaLibraryPredictionClient {
 		AminoAcidConstants constants = new AminoAcidConstants();
 		KoinaLibraryPredictionClient client=new KoinaLibraryPredictionClient(true);
 		
+		library.dropIndices();
+		
 		int count=0;
 		int start=0;
 		while (true) {
@@ -302,10 +304,14 @@ public class KoinaLibraryPredictionClient {
 				returnList.add(entry);
 			}
 			library.addEntries(returnList);
+			library.addProteinsFromEntries(returnList);
+			
 			Logger.logLine("Processed "+count+" of "+peptides.size());
 			start=stop;
 			progress.update("Processed "+count+" of "+peptides.size(), count/(float)peptides.size());
 		}
+		
+		library.createIndices();
 		return count;
 	}
 	
