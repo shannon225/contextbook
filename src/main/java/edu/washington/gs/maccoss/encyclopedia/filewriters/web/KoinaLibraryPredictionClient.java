@@ -42,6 +42,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.MatrixMath;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
+import edu.washington.gs.maccoss.encyclopedia.utils.threading.RunnableWithExceptions;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.SubProgressIndicator;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
@@ -90,8 +91,8 @@ public class KoinaLibraryPredictionClient {
 			library.close();
 			
 			Logger.logLine("Finished writing "+total+" peptides to Prosit library!");
-		} catch (IOException | SQLException | DataFormatException e) {
-			
+		} catch (IOException | SQLException | DataFormatException | InterruptedException e) {
+			throw new EncyclopediaException("Unexpected error with Koina", e);
 		}
 	}
 	
@@ -114,8 +115,8 @@ public class KoinaLibraryPredictionClient {
 			library.close();
 			
 			Logger.logLine("Finished writing "+total+" peptides to Prosit library!");
-		} catch (IOException | SQLException e) {
-			
+		} catch (IOException | SQLException | InterruptedException e) {
+			throw new EncyclopediaException("Unexpected error with Koina", e);
 		}
 	}
 	
@@ -277,7 +278,7 @@ public class KoinaLibraryPredictionClient {
 		this.isHCD=isHCD;
 	}
 	
-	private static int loadPredictionsIntoLibrary(ArrayList<KoinaPrecursor> peptides, LibraryFile library, ProgressIndicator progress) throws IOException, SQLException {
+	private static int loadPredictionsIntoLibrary(ArrayList<KoinaPrecursor> peptides, LibraryFile library, ProgressIndicator progress) throws IOException, SQLException, InterruptedException {
 		SearchParameters params=SearchParameterParser.getDefaultParametersObject();
 		AminoAcidConstants constants = new AminoAcidConstants();
 		KoinaLibraryPredictionClient client=new KoinaLibraryPredictionClient(true);
@@ -286,6 +287,9 @@ public class KoinaLibraryPredictionClient {
 		
 		int count=0;
 		int start=0;
+		// track existing thread and runnable for finishing and  exceptions
+		Thread prevThread=null;
+		RunnableWithExceptions prevRunnable=null;
 		while (true) {
 			if (start>=peptides.size()) {
 				break;
@@ -294,31 +298,72 @@ public class KoinaLibraryPredictionClient {
 			int stop=Math.min(peptides.size(), start+BATCH_SIZE);
 			List<KoinaPrecursor> subList=peptides.subList(start, stop);
 			
+			// try koina twice in a row before failing
+			ArrayList<LibraryEntry> returnList=new ArrayList<LibraryEntry>();
 			try {
 				runKoinaOnBatch(client, subList);
-			} catch (Exception e) {
 
+				for (KoinaPrecursor precursor : subList) {
+					count++;
+					AnnotatedLibraryEntry entry=precursor.toEntry(constants, params);
+					returnList.add(entry);
+				}
+				
+			} catch (Exception e) {
 				try {
 					Logger.errorLine("Ran into a Koina error, trying a second time!");
 					runKoinaOnBatch(client, subList);
+
+					returnList.clear();
+					for (KoinaPrecursor precursor : subList) {
+						count++;
+						AnnotatedLibraryEntry entry=precursor.toEntry(constants, params);
+						returnList.add(entry);
+					}
+					
 				} catch (Exception e2) {
 					Logger.errorLine("Ran into a second Koina error, failing!");
 					throw new EncyclopediaException(e2);
 				}
 			}
 
-			ArrayList<LibraryEntry> returnList=new ArrayList<LibraryEntry>();
-			for (KoinaPrecursor precursor : subList) {
-				count++;
-				AnnotatedLibraryEntry entry=precursor.toEntry(constants, params);
-				returnList.add(entry);
+			// Join previous because we can't have two of these threads running at the same time!
+			// This is because they write to the library, which is not thread safe
+			if (prevThread!=null) {
+				prevThread.join();
+				Optional<Exception> maybeException = prevRunnable.getException();
+				if (maybeException.isPresent()) {
+					throw new EncyclopediaException(maybeException.get());
+				}
 			}
-			library.addEntries(returnList);
-			library.addProteinsFromEntries(returnList);
+			
+			prevRunnable=new RunnableWithExceptions() {
+				@Override
+				public void run() {
+					try {
+						library.addEntries(returnList);
+						library.addProteinsFromEntries(returnList);
+					} catch (IOException | SQLException e) {
+						setException(e);
+					}
+				}
+				
+			};
+			prevThread=new Thread(prevRunnable);
+			prevThread.start();
 			
 			Logger.logLine("Processed "+count+" of "+peptides.size());
 			start=stop;
 			progress.update("Processed "+count+" of "+peptides.size(), count/(float)peptides.size());
+		}
+		
+		// finish previous writing thread if still dangling
+		if (prevThread!=null) {
+			prevThread.join();
+			Optional<Exception> maybeException = prevRunnable.getException();
+			if (maybeException.isPresent()) {
+				throw new EncyclopediaException(maybeException.get());
+			}
 		}
 		
 		library.createIndices();
@@ -328,6 +373,7 @@ public class KoinaLibraryPredictionClient {
 	private static void runKoinaOnBatch(KoinaLibraryPredictionClient client, List<KoinaPrecursor> subList)
 			throws InterruptedException {
 		try {
+			// run all three queries at the same time in separate threads
 			Thread t1=new Thread(new Runnable() {
 				@Override
 				public void run() {
@@ -352,10 +398,12 @@ public class KoinaLibraryPredictionClient {
 			});
 			t3.start();
 			
+			// wait up to 60 seconds to join the threads
 			t1.join(60*1000);
 			t2.join(60*1000);
 			t3.join(60*1000);
 
+			// only succeed if they all are done!
 			boolean allSucceeded=!t1.isAlive()&&!t2.isAlive()&&!t1.isAlive();
 			
 			if (!allSucceeded) {
@@ -363,7 +411,7 @@ public class KoinaLibraryPredictionClient {
 			}
 
 		} catch (Exception e) { 
-			throw new EncyclopediaException("Failed on Koina Job", e);
+			throw new EncyclopediaException("Failed query on Koina Job", e);
 		}
 	}
 	
