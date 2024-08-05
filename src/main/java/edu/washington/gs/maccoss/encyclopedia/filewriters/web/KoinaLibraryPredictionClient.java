@@ -42,6 +42,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.MatrixMath;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
+import edu.washington.gs.maccoss.encyclopedia.utils.threading.RunnableWithExceptions;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.SubProgressIndicator;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
@@ -90,8 +91,8 @@ public class KoinaLibraryPredictionClient {
 			library.close();
 			
 			Logger.logLine("Finished writing "+total+" peptides to Prosit library!");
-		} catch (IOException | SQLException | DataFormatException e) {
-			
+		} catch (IOException | SQLException | DataFormatException | InterruptedException e) {
+			throw new EncyclopediaException("Unexpected error with Koina", e);
 		}
 	}
 	
@@ -114,8 +115,8 @@ public class KoinaLibraryPredictionClient {
 			library.close();
 			
 			Logger.logLine("Finished writing "+total+" peptides to Prosit library!");
-		} catch (IOException | SQLException e) {
-			
+		} catch (IOException | SQLException | InterruptedException e) {
+			throw new EncyclopediaException("Unexpected error with Koina", e);
 		}
 	}
 	
@@ -277,13 +278,18 @@ public class KoinaLibraryPredictionClient {
 		this.isHCD=isHCD;
 	}
 	
-	private static int loadPredictionsIntoLibrary(ArrayList<KoinaPrecursor> peptides, LibraryFile library, ProgressIndicator progress) throws IOException, SQLException {
+	private static int loadPredictionsIntoLibrary(ArrayList<KoinaPrecursor> peptides, LibraryFile library, ProgressIndicator progress) throws IOException, SQLException, InterruptedException {
 		SearchParameters params=SearchParameterParser.getDefaultParametersObject();
 		AminoAcidConstants constants = new AminoAcidConstants();
 		KoinaLibraryPredictionClient client=new KoinaLibraryPredictionClient(true);
 		
+		library.dropIndices();
+		
 		int count=0;
 		int start=0;
+		// track existing thread and runnable for finishing and  exceptions
+		Thread prevThread=null;
+		RunnableWithExceptions prevRunnable=null;
 		while (true) {
 			if (start>=peptides.size()) {
 				break;
@@ -292,21 +298,121 @@ public class KoinaLibraryPredictionClient {
 			int stop=Math.min(peptides.size(), start+BATCH_SIZE);
 			List<KoinaPrecursor> subList=peptides.subList(start, stop);
 			
-			client.postPeptideIntensities(subList);
-			client.postPeptideRTs(subList);
-
+			// try koina twice in a row before failing
 			ArrayList<LibraryEntry> returnList=new ArrayList<LibraryEntry>();
-			for (KoinaPrecursor precursor : subList) {
-				count++;
-				AnnotatedLibraryEntry entry=precursor.toEntry(constants, params);
-				returnList.add(entry);
+			try {
+				runKoinaOnBatch(client, subList);
+
+				for (KoinaPrecursor precursor : subList) {
+					count++;
+					AnnotatedLibraryEntry entry=precursor.toEntry(constants, params);
+					returnList.add(entry);
+				}
+				
+			} catch (Exception e) {
+				try {
+					Logger.errorLine("Ran into a Koina error, trying a second time!");
+					runKoinaOnBatch(client, subList);
+
+					returnList.clear();
+					for (KoinaPrecursor precursor : subList) {
+						count++;
+						AnnotatedLibraryEntry entry=precursor.toEntry(constants, params);
+						returnList.add(entry);
+					}
+					
+				} catch (Exception e2) {
+					Logger.errorLine("Ran into a second Koina error, failing!");
+					throw new EncyclopediaException(e2);
+				}
 			}
-			library.addEntries(returnList);
+
+			// Join previous because we can't have two of these threads running at the same time!
+			// This is because they write to the library, which is not thread safe
+			if (prevThread!=null) {
+				prevThread.join();
+				Optional<Exception> maybeException = prevRunnable.getException();
+				if (maybeException.isPresent()) {
+					throw new EncyclopediaException(maybeException.get());
+				}
+			}
+			
+			prevRunnable=new RunnableWithExceptions() {
+				@Override
+				public void run() {
+					try {
+						library.addEntries(returnList);
+						library.addProteinsFromEntries(returnList);
+					} catch (IOException | SQLException e) {
+						setException(e);
+					}
+				}
+				
+			};
+			prevThread=new Thread(prevRunnable);
+			prevThread.start();
+			
 			Logger.logLine("Processed "+count+" of "+peptides.size());
 			start=stop;
 			progress.update("Processed "+count+" of "+peptides.size(), count/(float)peptides.size());
 		}
+		
+		// finish previous writing thread if still dangling
+		if (prevThread!=null) {
+			prevThread.join();
+			Optional<Exception> maybeException = prevRunnable.getException();
+			if (maybeException.isPresent()) {
+				throw new EncyclopediaException(maybeException.get());
+			}
+		}
+		
+		library.createIndices();
 		return count;
+	}
+
+	private static void runKoinaOnBatch(KoinaLibraryPredictionClient client, List<KoinaPrecursor> subList)
+			throws InterruptedException {
+		try {
+			// run all three queries at the same time in separate threads
+			Thread t1=new Thread(new Runnable() {
+				@Override
+				public void run() {
+					client.postPeptideIntensities(subList);
+				}
+			});
+			t1.start();
+	
+			Thread t2=new Thread(new Runnable() {
+				@Override
+				public void run() {
+					client.postPeptideRTs(subList);
+				}
+			});
+			t2.start();
+	
+			Thread t3=new Thread(new Runnable() {
+				@Override
+				public void run() {
+					client.postPeptideIonMobilities(subList);
+				}
+			});
+			t3.start();
+			
+			// wait up to 60 seconds to join the threads
+			t1.join(60*1000);
+			t2.join(60*1000);
+			t3.join(60*1000);
+
+			// only succeed if they all are done!
+			boolean allSucceeded=!t1.isAlive()&&!t2.isAlive()&&!t1.isAlive();
+			
+			if (!allSucceeded) {
+				throw new EncyclopediaException("Timed out on Koina job");
+			}
+
+		} catch (Exception e) { 
+			throw new EncyclopediaException("Failed query on Koina Job", e);
+		}
 	}
 	
 	private URL getFragmentationURL() {
@@ -321,11 +427,89 @@ public class KoinaLibraryPredictionClient {
 		}
 	}
 	
+	private URL getIMSURL() {
+		try {
+			return new URL("https://koina.wilhelmlab.org:443/v2/models/IM2Deep/infer");
+		} catch (MalformedURLException e) {
+			throw new EncyclopediaException("Error getting Koina URL", e);
+		}
+	}
+	
 	private URL getRTURL() {
 		try {
 			return new URL("https://koina.wilhelmlab.org/v2/models/Prosit_2019_irt/infer");
 		} catch (MalformedURLException e) {
 			throw new EncyclopediaException("Error getting Koina URL", e);
+		}
+	}
+
+	/**
+	 * 
+	 * @param peptides
+	 * @return 
+	 */
+	private void postPeptideIonMobilities(List<KoinaPrecursor> peptides) {
+		ArrayList<String> pepseqs=new ArrayList<String>();
+		TFloatArrayList NCEs=new TFloatArrayList();
+		TIntArrayList charges=new TIntArrayList();
+		for (KoinaPrecursor pep : peptides) {
+			pepseqs.add(pep.prositSequence);
+			NCEs.add(pep.nce);
+			charges.add(pep.charge);
+		}
+		
+		try {
+			URL url=getIMSURL();
+			
+			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+	
+	        // Set request method to POST
+	        conn.setRequestMethod("POST");
+	        conn.setRequestProperty("Content-Type", "application/json; utf-8");
+	        conn.setRequestProperty("Accept", "application/json");
+	        conn.setDoOutput(true);
+	
+	        // Create JSON body
+	        JSONObject jsonBody = new JSONObject();
+	        jsonBody.put("id", "EncyclopeDIA_query");
+	
+	        JSONArray inputsArray = new JSONArray();
+	
+	        JSONObject peptideSequences = new JSONObject();
+	        peptideSequences.put("name", "peptide_sequences");
+	        peptideSequences.put("shape", new JSONArray("["+peptides.size()+",1]"));
+	        peptideSequences.put("datatype", "BYTES");
+	        peptideSequences.put("data", new JSONArray(pepseqs.toArray(new String[0])));
+	        inputsArray.put(peptideSequences);
+	        
+	        jsonBody.put("inputs", inputsArray);
+	        JSONObject precursorCharges = new JSONObject();
+	        precursorCharges.put("name", "precursor_charges");
+	        precursorCharges.put("shape", new JSONArray("["+peptides.size()+",1]"));
+	        precursorCharges.put("datatype", "INT32");
+	        precursorCharges.put("data", new JSONArray(charges.toArray()));
+	        inputsArray.put(precursorCharges);
+	    	
+	        // Write JSON body to request
+	        try (OutputStream os = conn.getOutputStream()) {
+	            byte[] input = jsonBody.toString().getBytes("utf-8");
+	            os.write(input, 0, input.length);
+	        }
+
+            StringBuilder response = new StringBuilder();
+	        // Read the response
+	        try (BufferedReader br = new BufferedReader(
+	                new InputStreamReader(conn.getInputStream(), "utf-8"))) {
+	            String responseLine;
+	            while ((responseLine = br.readLine()) != null) {
+	                response.append(responseLine.trim());
+	            }
+	        }
+
+	        parseIMSData(response.toString(), peptides);
+	        
+		} catch (IOException ioe) {
+			throw new EncyclopediaException("IO error getting Koina result", ioe);
 		}
 	}
 
@@ -481,6 +665,33 @@ public class KoinaLibraryPredictionClient {
 		}
 	}
 
+    private static void parseIMSData(String json, List<KoinaPrecursor> peptides) {
+        json=removeGroupingBrackets(json);
+        String[] pairs = splitJsonElements(json);
+        
+        String outputs=getSelectedElement(pairs, "\"outputs\":");
+        String[] keyValue = outputs.split(":", 2);
+        String value = keyValue[1].trim();
+
+        value = removeArrayBrackets(value);
+        String[] outputPairs = splitJsonElements(value);
+
+        String irts=getSelectedElement(outputPairs, "{\"name\":\"ccs\",");
+        irts = removeGroupingBrackets(irts);
+        String[] irtPairs = splitJsonElements(irts);
+        String irtdata=getSelectedElement(irtPairs, "\"data\":");
+        String[] irtdataKeyValue = irtdata.split(":", 2);
+        String irtdataValue = removeArrayBrackets(irtdataKeyValue[1]);
+        TFloatArrayList irtdataArrayList=new TFloatArrayList();
+        for (String num : irtdataValue.split(",")) {
+        	irtdataArrayList.add(Float.parseFloat(num));
+		}
+        for (int i = 0; i < peptides.size(); i++) {
+        	KoinaPrecursor precursor=peptides.get(i);
+        	precursor.setIMS(irtdataArrayList.get(i));
+		}
+    }
+
     private static void parseRTData(String json, List<KoinaPrecursor> peptides) {
         json=removeGroupingBrackets(json);
         String[] pairs = splitJsonElements(json);
@@ -608,9 +819,10 @@ public class KoinaLibraryPredictionClient {
 		private final String prositSequence;
 		private final float nce;
 		private final byte charge;
-		private float iRT=Float.NEGATIVE_INFINITY;
-		private float[] intensities=null;
-		private double[] mzs=null;
+		private volatile float iRT=Float.NEGATIVE_INFINITY;
+		private volatile float IMS=Float.NEGATIVE_INFINITY;
+		private volatile float[] intensities=null;
+		private volatile double[] mzs=null;
 		HashSet<String> accessions=new HashSet<String>();
 		
 		public KoinaPrecursor(String peptideSequence, float nce, byte charge) {
@@ -625,6 +837,10 @@ public class KoinaLibraryPredictionClient {
 
 		public void addAccessions(HashSet<String> multipleaccessions) {
 			accessions.addAll(multipleaccessions);
+		}
+		
+		public void setIMS(float IMS) {
+			this.IMS = IMS;
 		}
 		
 		public void setiRT(float iRT) {
@@ -666,8 +882,14 @@ public class KoinaLibraryPredictionClient {
 			String peptideModSeq=prositSequence.replace("C[UNIMOD:4]", "C[+57.0]");
 			double precursorMZ=constants.getChargedMass(peptideModSeq, charge);
 			
-			LibraryEntry e=new LibraryEntry("Prosit", accessions, precursorMZ, charge, peptideModSeq, 1, iRT * 60f,
-					0.0f, mzs, intensities, Optional.empty(), constants);
+			LibraryEntry e;
+			if (Float.isInfinite(IMS)) {
+				e=new LibraryEntry("Prosit", accessions, precursorMZ, charge, peptideModSeq, 1, iRT * 60f,
+						0.0f, mzs, intensities, Optional.empty(), constants);
+			} else {
+				e=new LibraryEntry("Prosit", accessions, precursorMZ, charge, peptideModSeq, 1, iRT * 60f,
+						0.0f, mzs, intensities, Optional.of(IMS), constants);
+			}
 			return new AnnotatedLibraryEntry(e, params);
 		}
 	}
