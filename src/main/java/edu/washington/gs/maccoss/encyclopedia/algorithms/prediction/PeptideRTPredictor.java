@@ -98,54 +98,6 @@ public class PeptideRTPredictor {
     		e.printStackTrace();
     	}
     }
-    
-    public static void main2(String[] args) {
-    	File db=new File("/Users/searleb/Downloads/Chronologer_DB_220308.txt");
-    	File saveLocation=new File(db.getParentFile(), "peptide_rt_model.dl4j");
-    	
-    	try {
-    		LibraryFile library=new LibraryFile();
-    		library.openFile(new File("/Users/searleb/Documents/damien/hela_multiple_replicates_raws/2017aug23/23aug2017_hela_serum_timecourse_pool_wide_001_170829031834.dia.elib"));
-    		ArrayList<LibraryEntry> entries=library.getAllEntries(false, aaConstants);
-    		
-    	} catch (Exception e) {
-    		e.printStackTrace();
-    	}
-    	
-    	try {
-            // Load the model
-            MultiLayerNetwork model = ModelSerializer.restoreMultiLayerNetwork(saveLocation);
-            System.out.println("Model loaded successfully.");
-        	char[] AAs="ARNDCEQGHLIKMFPSTWYV".toCharArray();
-            
-            long time=System.currentTimeMillis();
-            for (int n = 0; n < 1000; n++) {	
-	            ArrayList<INDArray> encodings=new ArrayList<INDArray>();
-	            ArrayList<String> sequences=new ArrayList<String>();
-	            
-	            for (int i = 0; i < 1024; i++) {
-					char[] aas=new char[RandomGenerator.randomIndex(22, i)+8];
-					for (int j = 0; j < aas.length; j++) {
-						aas[j]=AAs[RandomGenerator.randomIndex(AAs.length, j)];
-					}
-					String sequence=new String(aas);
-					sequences.add(sequence);
-					encodings.add(EncodedAminoAcid.encode(sequence, aaConstants, MAXIMUM_PEPTIDE_LENGTH));			
-				}
-	            INDArray inputData = Nd4j.concat(0, encodings.toArray(new INDArray[0]));
-	            inputData = inputData.reshape(sequences.size(), MAXIMUM_PEPTIDE_LENGTH * EncodedAminoAcid.MAX_ENCODING_LENGTH);
-	            INDArray output = model.output(inputData);
-//	            for (int i = 0; i < sequences.size(); i++) {
-//	                System.out.println("Prediction for sequence " + (i + 1) + ": " + output.getDouble(i));
-//	            }
-	            
-	            System.out.println((n+1)+"--> "+(System.currentTimeMillis()-time)/1000f+" total sec, "+(System.currentTimeMillis()-time)/(n+1)+" msec per 1024");
-			}
-            
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 
     public static void main3(String[] args) {
     	File db=new File("/Users/searleb/Downloads/Chronologer_DB_220308.txt");

@@ -522,11 +522,6 @@
 			<version>1.0.0-M2.1</version>
 		</dependency>
 		<dependency>
-			<groupId>org.nd4j</groupId>
-			<artifactId>nd4j-native</artifactId>
-			<version>1.0.0-M2.1</version>
-		</dependency>
-		<dependency>
 			<groupId>org.bytedeco</groupId>
 			<artifactId>openblas</artifactId>
 			<version>0.3.21-1.5.8</version>
