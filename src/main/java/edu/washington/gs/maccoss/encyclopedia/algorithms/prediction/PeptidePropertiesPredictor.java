@@ -57,7 +57,12 @@ public class PeptidePropertiesPredictor {
     	AminoAcidConstants aaConstants=parameters.getAAConstants();
 
 		HashMap<String, DataSet> dataSetBySequence=new HashMap<String, DataSet>();
-    	for (File f : dir.listFiles(new SimpleFilenameFilter(".dlib"))) {
+    	File[] listFiles = dir.listFiles(new SimpleFilenameFilter(".dlib"));
+    	
+    	// FIXME
+    	listFiles=new File[] {new File(dir, "UP000005640_9606.fasta.lys-n.z3_nce33.dlib.z3_nce33.dlib")};
+    	
+		for (File f : listFiles) {
     		String rtName=f.getName().substring(0, f.getName().length()-".z3_nce33.dlib".length())+".txt_rts.txt";
     		Logger.logLine("Reading RT file: "+rtName);
 
@@ -84,7 +89,7 @@ public class PeptidePropertiesPredictor {
 				String key=entry.getPeptideModSeq()+"_"+entry.getPrecursorCharge();
 				if (rtByPeptideModSeq.contains(entry.getPeptideModSeq())) {
 					PeptideEncoding encoding=new PeptideEncoding(entry, rtByPeptideModSeq.get(entry.getPeptideModSeq()), parameters);
-					dataSetBySequence.put(key, new DataSet(encoding.encodeInput(parameters), encoding.encodeResult()));
+					dataSetBySequence.put(key, encoding.encodeDataset(parameters));
 				} else {
 					Logger.errorLine("Missing retention time for "+key);
 				}
@@ -132,73 +137,6 @@ public class PeptidePropertiesPredictor {
         		bestMeanAbsoluteError=meanAbsoluteError;
 	            try {
 	            	ModelSerializer.writeModel(model, modelLocation, true);
-	            	Logger.logLine("Model saved successfully.");
-	            } catch (IOException ioe) {
-	            	ioe.printStackTrace();
-	            }
-        	} else {
-            	Logger.logLine("Final model wasn't better, so skipping temporary save.");
-        	}
-        }
-    }
-    
-    public static void mainPartialModelTraining(String[] args) throws Exception {
-    	File f=new File("/Users/searleb/Documents/encyclopedia/prosit_examples_final/UP000005640_9606.fasta.trypsin.z6_nce33.dlib.z3_nce33.dlib");
-    	File saveLocation=new File(f.getParentFile(), "peptide_prediction_model.dl4j");
-    	SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
-    	LibraryFile library=new LibraryFile();
-		library.openFile(f);
-		ArrayList<LibraryEntry> entries=library.getAllEntries(false, aaConstants);
-		
-		HashMap<String, DataSet> dataSets=new HashMap<String, DataSet>();
-		for (LibraryEntry entry : entries) {
-			String key=entry.getPeptideModSeq()+"_"+entry.getPrecursorCharge();
-			PeptideEncoding encoding=new PeptideEncoding(entry, entry.getScanStartTime(), parameters);
-
-			dataSets.put(key, new DataSet(encoding.encodeInput(parameters), encoding.encodeResult()));
-		}
-		
-    	Logger.logLine("Loaded "+dataSets.size()+" total peptides.");
-
-        MultiLayerNetwork model=createModel(PeptideEncoding.ENCODED_INPUT_SIZE, PeptideEncoding.ENCODED_OUTPUT_SIZE, EMBED_DIMENSION, KERNEL_SIZE, N_RESNET_BLOCKS);
-        Logger.logLine(model.summary());
-        
-
-    	int batchSize=INITIAL_BATCH_SIZE;
-    	double bestMeanAbsoluteError=Double.MAX_VALUE;
-    	
-    	ArrayList<DataSet> dataSet=new ArrayList<DataSet>(dataSets.values());
-        for(int e=1; e<=NUM_EPOCHS; e++ ){
-        	if (e%EPOCHS_TO_2X_BATCH==0) {
-        		batchSize=batchSize*2;
-        	}
-        	Logger.logLine("Starting epoch "+e+", batch size: "+batchSize);
-        	Collections.shuffle(dataSet);
-
-            DataSetIterator iterator = new ListDataSetIterator<>(dataSet, batchSize);
-            model.fit(iterator);
-            
-            int totalCount=0;
-            double meanAbsoluteError=0.0;
-            DataSetIterator fullIterator = new ListDataSetIterator<>(dataSet, MAX_BATCH_SIZE);
-            INDArray results=model.output(fullIterator);
-
-            TFloatArrayList deltas=new TFloatArrayList();
-            for (int i = 0; i < dataSet.size(); i++) {
-				double prediction=results.getDouble(i);
-				double actual=dataSet.get(i).getLabels().getDouble(0);
-				deltas.add((float)(actual-prediction));
-				meanAbsoluteError+=Math.abs(actual-prediction);
-			}
-            totalCount+=deltas.size();
-        	
-            meanAbsoluteError=meanAbsoluteError/totalCount;
-        	Logger.logLine("Epoch "+e+" mean absolute error: "+meanAbsoluteError+" from "+totalCount+" total peptides");
-
-        	if (meanAbsoluteError<bestMeanAbsoluteError) {
-        		bestMeanAbsoluteError=meanAbsoluteError;
-	            try {
-	            	ModelSerializer.writeModel(model, saveLocation, true);
 	            	Logger.logLine("Model saved successfully.");
 	            } catch (IOException ioe) {
 	            	ioe.printStackTrace();
