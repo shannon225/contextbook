@@ -23,12 +23,10 @@ import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
-import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.learning.config.Adam;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
@@ -37,9 +35,6 @@ import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.IonType;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
@@ -51,12 +46,6 @@ public class PeptidePropertiesPredictor {
     public static final int N_RESNET_BLOCKS = 3;
     public static final int KERNEL_SIZE = 7;
     public static final int NUM_EPOCHS = 8;
-
-    private static final int MAX_CHARGE=6;
-    private static final int MAX_PEPTIDE_LENGTH=32; // number of termini + 30
-    
-    private static final int ENCODED_INPUT_SIZE=MAX_PEPTIDE_LENGTH*EncodedAminoAcid.MAX_ENCODING_LENGTH+MAX_CHARGE;
-    private static final int ENCODED_OUTPUT_SIZE=MAX_PEPTIDE_LENGTH*4+2;
     
     private static final AminoAcidConstants aaConstants=new AminoAcidConstants();
 
@@ -66,11 +55,14 @@ public class PeptidePropertiesPredictor {
     	
     	SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
     	AminoAcidConstants aaConstants=parameters.getAAConstants();
-    	
-    	TObjectFloatHashMap<String> rtByPeptideModSeq=new TObjectFloatHashMap<String>();
-    	for (File f : dir.listFiles(new SimpleFilenameFilter(".txt_rts.txt"))) {
-    		Logger.logLine("Reading RT file: "+f.getName());
-    		TableParser.parseTSV(f, new TableParserMuscle() {
+
+		HashMap<String, DataSet> dataSetBySequence=new HashMap<String, DataSet>();
+    	for (File f : dir.listFiles(new SimpleFilenameFilter(".dlib"))) {
+    		String rtName=f.getName().substring(0, f.getName().length()-".z3_nce33.dlib".length())+".txt_rts.txt";
+    		Logger.logLine("Reading RT file: "+rtName);
+
+        	TObjectFloatHashMap<String> rtByPeptideModSeq=new TObjectFloatHashMap<String>();
+    		TableParser.parseTSV(new File(f.getParent(), rtName), new TableParserMuscle() {
 				
 				@Override
 				public void processRow(Map<String, String> row) {
@@ -83,14 +75,8 @@ public class PeptidePropertiesPredictor {
 				public void cleanup() {
 				}
 			});
-    	}
-    	
-    	Logger.logLine("Read RTs for "+rtByPeptideModSeq.size()+" total peptides.");
-
-		HashMap<String, DataSet> dataSetBySequence=new HashMap<String, DataSet>();
-    	for (File f : dir.listFiles(new SimpleFilenameFilter(".dlib"))) {
-    		Logger.logLine("Reading Library file: "+f.getName());
     		
+    		Logger.logLine("Reading Library file: "+f.getName());
     		LibraryFile library=new LibraryFile();
     		library.openFile(f);
     		ArrayList<LibraryEntry> entries=library.getAllEntries(false, aaConstants);
@@ -108,7 +94,7 @@ public class PeptidePropertiesPredictor {
 
     	Logger.logLine("Loaded data "+dataSetBySequence.size()+" total precursors.");
 
-        MultiLayerNetwork model=createModel(ENCODED_INPUT_SIZE, ENCODED_OUTPUT_SIZE, EMBED_DIMENSION, KERNEL_SIZE, N_RESNET_BLOCKS);
+        MultiLayerNetwork model=createModel(PeptideEncoding.ENCODED_INPUT_SIZE, PeptideEncoding.ENCODED_OUTPUT_SIZE, EMBED_DIMENSION, KERNEL_SIZE, N_RESNET_BLOCKS);
         Logger.logLine(model.summary());
         
         int batchSize=INITIAL_BATCH_SIZE;
@@ -174,7 +160,7 @@ public class PeptidePropertiesPredictor {
 		
     	Logger.logLine("Loaded "+dataSets.size()+" total peptides.");
 
-        MultiLayerNetwork model=createModel(ENCODED_INPUT_SIZE, ENCODED_OUTPUT_SIZE, EMBED_DIMENSION, KERNEL_SIZE, N_RESNET_BLOCKS);
+        MultiLayerNetwork model=createModel(PeptideEncoding.ENCODED_INPUT_SIZE, PeptideEncoding.ENCODED_OUTPUT_SIZE, EMBED_DIMENSION, KERNEL_SIZE, N_RESNET_BLOCKS);
         Logger.logLine(model.summary());
         
 
@@ -223,90 +209,10 @@ public class PeptidePropertiesPredictor {
         }
     }
     
-    private static class PeptideEncoding {
-    	private final String peptideModSeq;
-    	private final byte charge;
-    	private final float rtInSec;
-    	private final float ims;
-    	private final float[] bp1=new float[MAX_PEPTIDE_LENGTH];
-    	private final float[] bp2=new float[MAX_PEPTIDE_LENGTH];
-    	private final float[] yp1=new float[MAX_PEPTIDE_LENGTH];
-    	private final float[] yp2=new float[MAX_PEPTIDE_LENGTH];
-    	
-
-    	public INDArray encodeInput(SearchParameters parameters) {
-        	EncodedAminoAcid[] aas=EncodedAminoAcid.getAAs(peptideModSeq, parameters.getAAConstants());
-        	
-            INDArray encoded = Nd4j.zeros(MAX_PEPTIDE_LENGTH, EncodedAminoAcid.MAX_ENCODING_LENGTH);
-            
-            int start=aas[0].isNTerm()?0:1;
-            for (int i = start; i < aas.length; i++) {
-                encoded.putScalar(new int[]{i, aas[i].getIndex()}, 1.0);
-            }
-            
-            INDArray encodedCharge=Nd4j.zeros(1, MAX_CHARGE);
-            encodedCharge.putScalar(new int[] {0, charge-1}, 1.0);
-            
-            INDArray reshape = encoded.reshape(1, MAX_PEPTIDE_LENGTH * EncodedAminoAcid.MAX_ENCODING_LENGTH);
-            
-			return Nd4j.concat(1, reshape, encodedCharge);
-    	}
-    	
-    	public INDArray encodeResult() {
-    		INDArray bp1array=Nd4j.create(bp1);
-    		INDArray bp2array=Nd4j.create(bp2);
-    		INDArray yp1array=Nd4j.create(yp1);
-    		INDArray yp2array=Nd4j.create(yp2);
-    		INDArray scalar=Nd4j.create(new float[] {rtInSec, ims});
-			
-			INDArray encoded=Nd4j.concat(0, bp1array, bp2array, yp1array, yp2array, scalar);
-			return encoded.reshape(1, encoded.length());
-    	}
-    	
-    	public PeptideEncoding(LibraryEntry entry, float rtInSec, SearchParameters parameters) {
-    		this.peptideModSeq=entry.getPeptideModSeq();
-    		this.charge=entry.getPrecursorCharge();
-    		this.rtInSec=rtInSec;
-    		this.ims=entry.getIonMobility().get();
-    		
-			double[] massArray = entry.getMassArray();
-			float[] intensityArray=entry.getIntensityArray();
-    		FragmentationModel model=PeptideUtils.getPeptideModel(entry.getPeptideModSeq(), parameters.getAAConstants());
-    		for (FragmentIon fragmentIon : model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge(), true)) {
-				byte fragcharge=IonType.getCharge(fragmentIon.getType());
-				if (fragcharge>3||fragcharge<1) {
-					continue;
-				}
-				IonType type=IonType.getCanonicalIonType(fragmentIon.getType());
-				float[] array=null;
-				if (type==IonType.b) {
-					switch (fragcharge) {
-						case 1: array=bp1; break;
-						case 2: array=bp2; break;
-						default: break;
-					}
-				} else if (type==IonType.y) {
-					switch (fragcharge) {
-						case 1: array=yp1; break;
-						case 2: array=yp2; break;
-						default: break;
-					}
-				}
-				if (array==null) {
-					continue;
-				}
-				
-				float intensity=parameters.getFragmentTolerance().getMaxIntensity(massArray, intensityArray, fragmentIon.getMass());
-				int fragindex=fragmentIon.getIndex();
-				
-				array[fragindex]=intensity;
-    		}
-		}
-    }
-    
     private static MultiLayerNetwork createModel(int inputSize, int outputSize, int embedDim, int kernelSize, int resnetBlocks) {
     	NeuralNetConfiguration.ListBuilder builder = new NeuralNetConfiguration.Builder()
                 .updater(new Adam(0.001))
+                .dataType(PeptideEncoding.DEFAULT_DATA_TYPE)
                 .list();
 
         // embedding layer
