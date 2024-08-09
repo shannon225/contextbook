@@ -39,6 +39,7 @@ import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
 public class PeptidePropertiesPredictor {
+	private static final int REPORTING_BATCH_SIZE = 1000;
 	private static final int INITIAL_BATCH_SIZE = 64;
 	private static final int MAX_BATCH_SIZE = 1024;
 	private static final int EPOCHS_TO_2X_BATCH = 2;
@@ -60,9 +61,12 @@ public class PeptidePropertiesPredictor {
     	File[] listFiles = dir.listFiles(new SimpleFilenameFilter(".dlib"));
     	
     	// FIXME
-    	listFiles=new File[] {new File(dir, "UP000005640_9606.fasta.lys-n.z3_nce33.dlib.z3_nce33.dlib")};
+    	//listFiles=new File[] {new File(dir, "UP000005640_9606.fasta.lys-n.z3_nce33.dlib.z3_nce33.dlib")};
     	
 		for (File f : listFiles) {
+			if (f.getName().indexOf(".trypsin")<0) {
+				continue;
+			}
     		String rtName=f.getName().substring(0, f.getName().length()-".z3_nce33.dlib".length())+".txt_rts.txt";
     		Logger.logLine("Reading RT file: "+rtName);
 
@@ -197,7 +201,7 @@ public class PeptidePropertiesPredictor {
 
         MultiLayerNetwork model = new MultiLayerNetwork(builder.build());
         model.init();
-        model.setListeners(new ScoreIterationListener(100));
+        model.setListeners(new ScoreIterationListener(REPORTING_BATCH_SIZE));
 
         return model;
     }
