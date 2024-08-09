@@ -42,13 +42,11 @@ public class PeptidePropertiesPredictor {
 	private static final int REPORTING_BATCH_SIZE = 1000;
 	private static final int INITIAL_BATCH_SIZE = 64;
 	private static final int MAX_BATCH_SIZE = 1024;
-	private static final int EPOCHS_TO_2X_BATCH = 2;
+	private static final int EPOCHS_TO_2X_BATCH = 3;
     public static final int EMBED_DIMENSION = 128;
     public static final int N_RESNET_BLOCKS = 3;
-    public static final int KERNEL_SIZE = 7;
-    public static final int NUM_EPOCHS = 8;
-    
-    private static final AminoAcidConstants aaConstants=new AminoAcidConstants();
+    public static final int KERNEL_SIZE = 9;
+    public static final int NUM_EPOCHS = 10;
 
     public static void main(String[] args) throws Exception {
     	File dir=new File("/Users/searleb/Documents/encyclopedia/prosit_examples_final/");
