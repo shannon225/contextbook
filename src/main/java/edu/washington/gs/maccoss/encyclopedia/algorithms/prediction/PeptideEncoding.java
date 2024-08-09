@@ -1,15 +1,23 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.prediction;
 
-import org.nd4j.linalg.dataset.DataSet;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Optional;
+
 import org.nd4j.linalg.api.buffer.DataType;
 import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.factory.Nd4j;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.IonType;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
@@ -18,7 +26,7 @@ public class PeptideEncoding {
 	public static final int MAX_CHARGE=6;
     public static final int MAX_PEPTIDE_LENGTH=32; // number of termini + 30
     
-    public static final int ENCODED_INPUT_SIZE=MAX_PEPTIDE_LENGTH*EncodedAminoAcid.MAX_ENCODING_LENGTH+MAX_CHARGE;
+    public static final int ENCODED_INPUT_SIZE=MAX_PEPTIDE_LENGTH*AminoAcidEncoding.MAX_ENCODING_LENGTH+MAX_CHARGE;
     public static final int ENCODED_OUTPUT_SIZE=MAX_PEPTIDE_LENGTH*4+2;
     
 	private final String peptideModSeq;
@@ -31,7 +39,7 @@ public class PeptideEncoding {
 	private final float[] yp2=new float[MAX_PEPTIDE_LENGTH];
 	
 	public DataSet encodeDataset(SearchParameters parameters) {
-		EncodedAminoAcid[] aas=EncodedAminoAcid.getAAs(peptideModSeq, parameters.getAAConstants());
+		AminoAcidEncoding[] aas=AminoAcidEncoding.getAAs(peptideModSeq, parameters.getAAConstants());
 		//System.out.println("Input: "+encodeInput(aas).shapeInfoToString());
 		//System.out.println("Output: "+encodeResult().shapeInfoToString());
 		//System.out.println("Input Mask: "+encodeInputMask(aas).shapeInfoToString());
@@ -47,7 +55,7 @@ public class PeptideEncoding {
     	//return new DataSet(encodeInput(aas), encodeResult());
 	}
 	
-	public INDArray encodeInputMask(EncodedAminoAcid[] aas) {
+	public INDArray encodeInputMask(AminoAcidEncoding[] aas) {
     	float[] mask=new float[ENCODED_INPUT_SIZE];
         int start=aas[0].isNTerm()?0:1;
         for (int i = start; i < aas.length; i++) {
@@ -56,14 +64,23 @@ public class PeptideEncoding {
             	mask[index]=1.0f;
         	}
         }
-        for (int i = MAX_PEPTIDE_LENGTH*EncodedAminoAcid.MAX_ENCODING_LENGTH; i < ENCODED_INPUT_SIZE; i++) {
+        for (int i = MAX_PEPTIDE_LENGTH*AminoAcidEncoding.MAX_ENCODING_LENGTH; i < ENCODED_INPUT_SIZE; i++) {
         	mask[i]=1.0f;
 		}
         
         return Nd4j.create(mask, new long[] {1, ENCODED_INPUT_SIZE}, DEFAULT_DATA_TYPE);
 	}
 
-	public INDArray encodeInput(EncodedAminoAcid[] aas) {
+	public INDArray encodeInput(AminoAcidEncoding[] aas) {
+		return encodeInput(aas, charge);
+	}
+	
+	public static INDArray encodeInput(String peptideModSeq, byte charge, AminoAcidConstants constants) {
+		AminoAcidEncoding[] aas=AminoAcidEncoding.getAAs(peptideModSeq, constants);
+		return encodeInput(aas, charge);
+	}
+
+	public static INDArray encodeInput(AminoAcidEncoding[] aas, byte charge) {
     	float[] data=new float[ENCODED_INPUT_SIZE];
 
         int start=aas[0].isNTerm()?0:1;
@@ -85,12 +102,12 @@ public class PeptideEncoding {
         }
         
         // set charge
-        data[MAX_PEPTIDE_LENGTH*EncodedAminoAcid.MAX_ENCODING_LENGTH+charge-1]=1.0f;
+        data[MAX_PEPTIDE_LENGTH*AminoAcidEncoding.MAX_ENCODING_LENGTH+charge-1]=1.0f;
     	
         return Nd4j.create(data, new long[] {1, ENCODED_INPUT_SIZE}, DEFAULT_DATA_TYPE);
 	}
 	
-	public INDArray encodeResultMask(EncodedAminoAcid[] aas) {
+	public INDArray encodeResultMask(AminoAcidEncoding[] aas) {
 		float[] mask=new float[MAX_PEPTIDE_LENGTH];
         for (int i = 0; i < aas.length; i++) {
         	mask[i]=1.0f;
@@ -143,5 +160,60 @@ public class PeptideEncoding {
 			
 			array[fragindex]=intensity;
 		}
+	}
+	
+	public static LibraryEntry outputToEntry(String peptideModSeq, byte charge, HashSet<String> accessions, INDArray output, AminoAcidConstants constants) {
+		FragmentationModel model=PeptideUtils.getPeptideModel(peptideModSeq, constants);
+		FragmentIon[] bIons=model.getBIons(false);
+		FragmentIon[] bp2Ions=FragmentationModel.getPlus2s(bIons);
+		FragmentIon[] yIons=model.getYIons(false);
+		FragmentIon[] yp2Ions=FragmentationModel.getPlus2s(yIons);
+		
+		ArrayList<Peak> peaks=new ArrayList<Peak>();
+		
+		float[] data=output.toFloatVector();
+		
+		int index=0;
+		for (int i = 0; i < bIons.length; i++) {
+			if (data[index]>0) {
+				Peak p=new Peak(bIons[i].getMass(), data[index]);
+				peaks.add(p);
+			}
+			index++;
+		}
+		index=MAX_PEPTIDE_LENGTH;
+		for (int i = 0; i < bp2Ions.length; i++) {
+			if (data[index]>0) {
+				Peak p=new Peak(bp2Ions[i].getMass(), data[index]);
+				peaks.add(p);
+			}
+			index++;
+		}
+		index=MAX_PEPTIDE_LENGTH*2;
+		for (int i = 0; i < yIons.length; i++) {
+			if (data[index]>0) {
+				Peak p=new Peak(yIons[i].getMass(), data[index]);
+				peaks.add(p);
+			}
+			index++;
+		}
+		index=MAX_PEPTIDE_LENGTH*3;
+		for (int i = 0; i < yp2Ions.length; i++) {
+			if (data[index]>0) {
+				Peak p=new Peak(yp2Ions[i].getMass(), data[index]);
+				peaks.add(p);
+			}
+			index++;
+		}
+		
+		Collections.sort(peaks);
+		Triplet<double[], float[], Optional<float[]>> triplet=Peak.toArrays(peaks);
+		double[] massArray=triplet.x;
+		float[] intensityArray=triplet.y;
+		
+		float rtInSec=data[data.length-2];
+		float ionMobility=data[data.length-1];
+		
+		return new LibraryEntry(peptideModSeq, accessions, model.getChargedMass(charge), charge, peptideModSeq, 0, rtInSec, 0.0f, massArray, intensityArray, Optional.of(ionMobility), constants);
 	}
 }

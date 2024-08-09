@@ -71,11 +71,11 @@ public class PeptideRTPredictor {
             ArrayList<INDArray> encodings=new ArrayList<INDArray>();
             
             for (LibraryEntry entry : entries) {
-				encodings.add(EncodedAminoAcid.encode(entry.getPeptideModSeq(), aaConstants, MAXIMUM_PEPTIDE_LENGTH));
+				encodings.add(AminoAcidEncoding.encode(entry.getPeptideModSeq(), aaConstants, MAXIMUM_PEPTIDE_LENGTH));
 			}
             
             INDArray inputData = Nd4j.concat(0, encodings.toArray(new INDArray[0]));
-            inputData = inputData.reshape(entries.size(), MAXIMUM_PEPTIDE_LENGTH * EncodedAminoAcid.MAX_ENCODING_LENGTH);
+            inputData = inputData.reshape(entries.size(), MAXIMUM_PEPTIDE_LENGTH * AminoAcidEncoding.MAX_ENCODING_LENGTH);
             INDArray output = model.output(inputData);
 
             for (int i = 0; i < entries.size(); i++) {
@@ -125,7 +125,7 @@ public class PeptideRTPredictor {
 				float hirt=Float.parseFloat(row.get("HI"));
 
 		        // One-hot encode the sequences
-	            INDArray input = EncodedAminoAcid.encode(peptideModSeq, aaConstants, MAXIMUM_PEPTIDE_LENGTH);
+	            INDArray input = AminoAcidEncoding.encode(peptideModSeq, aaConstants, MAXIMUM_PEPTIDE_LENGTH);
 	            if (input==null) return;
 	            
 	            INDArray output = Nd4j.create(new double[][]{new double[] {hirt}});
@@ -148,7 +148,7 @@ public class PeptideRTPredictor {
 		}
     	Logger.logLine("Loaded "+dataSets.size()+" datasets with "+count+" total peptides.");
 
-        MultiLayerNetwork model=createModel(MAXIMUM_PEPTIDE_LENGTH * EncodedAminoAcid.MAX_ENCODING_LENGTH, 1, 
+        MultiLayerNetwork model=createModel(MAXIMUM_PEPTIDE_LENGTH * AminoAcidEncoding.MAX_ENCODING_LENGTH, 1, 
         		EMBED_DIMENSION, KERNEL_SIZE, N_RESNET_BLOCKS);
         Logger.logLine(model.summary());
 

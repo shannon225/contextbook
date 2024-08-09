@@ -39,7 +39,7 @@ public class PeptideEncodingTest extends TestCase {
 		
 		for (LibraryEntry entry : entries) {
 			PeptideEncoding encoding=new PeptideEncoding(entry, entry.getScanStartTime(), parameters);
-			EncodedAminoAcid[] aas=EncodedAminoAcid.getAAs(entry.getPeptideModSeq(), parameters.getAAConstants());
+			AminoAcidEncoding[] aas=AminoAcidEncoding.getAAs(entry.getPeptideModSeq(), parameters.getAAConstants());
 			INDArray encodeInput = encoding.encodeInput(aas);
 			INDArray encodeResult = encoding.encodeResult();
 			

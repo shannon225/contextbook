@@ -9,7 +9,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 
-public enum EncodedAminoAcid {
+public enum AminoAcidEncoding {
 	// can't start at 0, that's for empty values!
 	A(1),
 	C(2),
@@ -58,7 +58,7 @@ public enum EncodedAminoAcid {
 	public static int MAX_ENCODING_LENGTH=45; 
 	
 	private final int index;
-	private EncodedAminoAcid(int index) {
+	private AminoAcidEncoding(int index) {
 		this.index=index;
 	}
 	
@@ -133,7 +133,7 @@ public enum EncodedAminoAcid {
 	 * @return
 	 */
     public static INDArray encode(String sequence, AminoAcidConstants aminoAcidConstants, int maxPeptideLength) {
-    	EncodedAminoAcid[] aas=EncodedAminoAcid.getAAs(sequence, aminoAcidConstants);
+    	AminoAcidEncoding[] aas=AminoAcidEncoding.getAAs(sequence, aminoAcidConstants);
     	if (aas.length>maxPeptideLength) return null;
     	
         INDArray encoded = Nd4j.zeros(maxPeptideLength, MAX_ENCODING_LENGTH);
@@ -145,10 +145,10 @@ public enum EncodedAminoAcid {
         return encoded.reshape(1, maxPeptideLength * MAX_ENCODING_LENGTH);
     }
 	
-	public static EncodedAminoAcid[] getAAs(String sequence, AminoAcidConstants aminoAcidConstants) {
+	public static AminoAcidEncoding[] getAAs(String sequence, AminoAcidConstants aminoAcidConstants) {
 		char[] ca=sequence.toCharArray();
 		
-		ArrayList<EncodedAminoAcid> aas=new ArrayList<EncodedAminoAcid>();
+		ArrayList<AminoAcidEncoding> aas=new ArrayList<AminoAcidEncoding>();
 		aas.add(n);
 		
 		int i=0;
@@ -184,7 +184,7 @@ public enum EncodedAminoAcid {
 			}
 		}
 		aas.add(c);
-		return aas.toArray(new EncodedAminoAcid[0]);
+		return aas.toArray(new AminoAcidEncoding[0]);
 	}
 
     private static boolean isUppercaseAlphabetic(char c) {
@@ -192,7 +192,7 @@ public enum EncodedAminoAcid {
     }
 
 	private static final MassTolerance tolerance=new MassTolerance(1.0); // 1 ppm is about the accuracy of floats
-	public static EncodedAminoAcid getNTermMod(double mass) {
+	public static AminoAcidEncoding getNTermMod(double mass) {
 		if (tolerance.equals(mass, 42.010565)) return nAc;
 		if (tolerance.equals(mass, 224.152478)) return nTMT0;
 		if (tolerance.equals(mass, 229.162932)) return nTMT10;
@@ -200,7 +200,7 @@ public enum EncodedAminoAcid {
 		throw new EncyclopediaException("Unexpected n-term modification ["+mass+"]!");
 	}
 	
-	public static EncodedAminoAcid getAA(char aa, double mass) {
+	public static AminoAcidEncoding getAA(char aa, double mass) {
 		if (mass==0.0) {
 			switch (aa) {
 				case 'A': return A;
