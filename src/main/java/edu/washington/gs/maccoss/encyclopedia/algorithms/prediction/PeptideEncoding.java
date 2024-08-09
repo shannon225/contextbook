@@ -14,7 +14,8 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
 public class PeptideEncoding {
-    public static final DataType DEFAULT_DATA_TYPE = DataType.FLOAT;
+    private static final float MINIMUM_INTENSITY_THRESHOLD_FOR_TRAINING = 0.05f;
+	public static final DataType DEFAULT_DATA_TYPE = DataType.FLOAT;
 	public static final int MAX_CHARGE=6;
     public static final int MAX_PEPTIDE_LENGTH=32; // number of termini + 30
     
@@ -113,6 +114,8 @@ public class PeptideEncoding {
 		
 		double[] massArray = entry.getMassArray();
 		float[] intensityArray=entry.getIntensityArray();
+		float intensityThreshold=General.max(intensityArray)*MINIMUM_INTENSITY_THRESHOLD_FOR_TRAINING;
+		
 		FragmentationModel model=PeptideUtils.getPeptideModel(entry.getPeptideModSeq(), parameters.getAAConstants());
 		for (FragmentIon fragmentIon : model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge(), true)) {
 			byte fragcharge=IonType.getCharge(fragmentIon.getType());
@@ -141,7 +144,9 @@ public class PeptideEncoding {
 			float intensity=parameters.getFragmentTolerance().getMaxIntensity(massArray, intensityArray, fragmentIon.getMass());
 			int fragindex=fragmentIon.getIndex();
 			
-			array[fragindex]=intensity;
+			if (intensity>intensityThreshold) {
+				array[fragindex]=intensity;
+			}
 		}
 	}
 }
