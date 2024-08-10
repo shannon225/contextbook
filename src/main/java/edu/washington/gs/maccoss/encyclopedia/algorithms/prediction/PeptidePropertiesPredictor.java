@@ -192,7 +192,7 @@ public class PeptidePropertiesPredictor {
         builder.layer(new DropoutLayer.Builder(0.9).build());
         
         // output layer
-        builder.layer(new OutputLayer.Builder(LossFunctions.LossFunction.MEAN_ABSOLUTE_ERROR)
+        builder.layer(new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
                 .nIn(embedDim)
                 .nOut(outputSize)
                 .activation(Activation.IDENTITY)
