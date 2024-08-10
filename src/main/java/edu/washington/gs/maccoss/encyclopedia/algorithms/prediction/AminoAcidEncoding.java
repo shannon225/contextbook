@@ -8,6 +8,7 @@ import org.nd4j.linalg.factory.Nd4j;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 
 public enum AminoAcidEncoding {
 	// can't start at 0, that's for empty values!
@@ -294,5 +295,13 @@ public enum AminoAcidEncoding {
 				default: throw new EncyclopediaException("Unexpected amino acid "+aa+"["+mass+"]!");
 			}
 		}
+	}
+	
+	public static String getPeptideModSeq(AminoAcidEncoding[] aas, AminoAcidConstants constants) {
+		StringBuilder sb=new StringBuilder();
+		for (int i = 0; i < aas.length; i++) {
+			sb.append(aas[i].toString());
+		}
+		return PeptideUtils.getCorrectedMasses(sb.toString(), constants);
 	}
 }

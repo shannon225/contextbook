@@ -8,7 +8,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.deeplearning4j.datasets.iterator.utilty.ListDataSetIterator;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
 import org.deeplearning4j.nn.conf.layers.Convolution1DLayer;
 import org.deeplearning4j.nn.conf.layers.DenseLayer;
@@ -21,7 +20,6 @@ import org.deeplearning4j.optimize.listeners.ScoreIterationListener;
 import org.deeplearning4j.util.ModelSerializer;
 import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.api.ndarray.INDArray;
-import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
 import org.nd4j.linalg.learning.config.Adam;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
@@ -35,6 +33,7 @@ import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
@@ -55,11 +54,11 @@ public class PeptidePropertiesPredictor {
     	SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
     	AminoAcidConstants aaConstants=parameters.getAAConstants();
 
-		HashMap<String, DataSet> dataSetBySequence=new HashMap<String, DataSet>();
+		HashMap<String, PeptideEncoding> peptideEncodingBySequence=new HashMap<String, PeptideEncoding>();
     	File[] listFiles = dir.listFiles(new SimpleFilenameFilter(".dlib"));
     	
     	// FIXME
-    	//listFiles=new File[] {new File(dir, "UP000005640_9606.fasta.lys-n.z3_nce33.dlib.z3_nce33.dlib")};
+    	listFiles=new File[] {new File(dir, "UP000005640_9606.fasta.trypsin.z1_nce33.dlib.z3_nce33.dlib")};
     	
 		for (File f : listFiles) {
 			if (f.getName().indexOf(".trypsin")<0) {
@@ -91,7 +90,7 @@ public class PeptidePropertiesPredictor {
 				String key=entry.getPeptideModSeq()+"_"+entry.getPrecursorCharge();
 				if (rtByPeptideModSeq.contains(entry.getPeptideModSeq())) {
 					PeptideEncoding encoding=new PeptideEncoding(entry, rtByPeptideModSeq.get(entry.getPeptideModSeq()), parameters);
-					dataSetBySequence.put(key, encoding.encodeDataset(parameters));
+					peptideEncodingBySequence.put(key, encoding);
 				} else {
 					Logger.errorLine("Missing retention time for "+key);
 				}
@@ -99,15 +98,19 @@ public class PeptidePropertiesPredictor {
     		library.close();
     	}
 
-    	Logger.logLine("Loaded data "+dataSetBySequence.size()+" total precursors.");
+		Runtime instance=Runtime.getRuntime();
+		long usedMemory=instance.totalMemory()-instance.freeMemory();
+	 	Logger.logLine((usedMemory/1048576)+" of "+(instance.maxMemory()/1048576)+" MB used");
+
+    	Logger.logLine("Loaded data "+peptideEncodingBySequence.size()+" total precursors.");
 
         MultiLayerNetwork model=createModel(PeptideEncoding.ENCODED_INPUT_SIZE, PeptideEncoding.ENCODED_OUTPUT_SIZE, EMBED_DIMENSION, KERNEL_SIZE, N_RESNET_BLOCKS);
         Logger.logLine(model.summary());
         
         int batchSize=INITIAL_BATCH_SIZE;
-    	double bestMeanAbsoluteError=Double.MAX_VALUE;
+    	double bestAverageContrastAngle=-Double.MAX_VALUE;
     	
-    	ArrayList<DataSet> dataSet=new ArrayList<DataSet>(dataSetBySequence.values());
+    	ArrayList<PeptideEncoding> dataSet=new ArrayList<PeptideEncoding>(peptideEncodingBySequence.values());
         for(int e=1; e<=NUM_EPOCHS; e++ ){
         	if (e%EPOCHS_TO_2X_BATCH==0) {
         		batchSize=batchSize*2;
@@ -115,28 +118,27 @@ public class PeptidePropertiesPredictor {
         	Logger.logLine("Starting epoch "+e+", batch size: "+batchSize);
         	Collections.shuffle(dataSet);
 
-            DataSetIterator iterator = new ListDataSetIterator<>(dataSet, batchSize);
+            DataSetIterator iterator = new PeptideEncodingDataSetIterator(dataSet, batchSize);
             model.fit(iterator);
             
-            int totalCount=0;
-            double meanAbsoluteError=0.0;
-            DataSetIterator fullIterator = new ListDataSetIterator<>(dataSet, MAX_BATCH_SIZE);
+            DataSetIterator fullIterator = new PeptideEncodingDataSetIterator(dataSet, MAX_BATCH_SIZE);
             INDArray results=model.output(fullIterator);
+            results=results.reshape(dataSet.size(), PeptideEncoding.ENCODED_OUTPUT_SIZE);
 
-            TFloatArrayList deltas=new TFloatArrayList();
+            TFloatArrayList spectralContrastAngles=new TFloatArrayList();
             for (int i = 0; i < dataSet.size(); i++) {
-				double prediction=results.getDouble(i);
-				double actual=dataSet.get(i).getLabels().getDouble(0);
-				deltas.add((float)(actual-prediction));
-				meanAbsoluteError+=Math.abs(actual-prediction);
-			}
-            totalCount+=deltas.size();
-        	
-            meanAbsoluteError=meanAbsoluteError/totalCount;
-        	Logger.logLine("Epoch "+e+" mean absolute error: "+meanAbsoluteError+" from "+totalCount+" total peptides");
+    			INDArray row=results.getRow(i);
+				PeptideEncoding peptideEncoding = dataSet.get(i);
+				float spectralContrastAngle=peptideEncoding.score(row);
 
-        	if (meanAbsoluteError<bestMeanAbsoluteError) {
-        		bestMeanAbsoluteError=meanAbsoluteError;
+				spectralContrastAngles.add(spectralContrastAngle);
+			}
+        	float averageContrastAngle=General.mean(spectralContrastAngles.toArray());
+            
+        	Logger.logLine("Epoch "+e+" mean contrast angle: "+averageContrastAngle+" from "+spectralContrastAngles.size()+" total peptides");
+
+        	if (averageContrastAngle>bestAverageContrastAngle) {
+        		bestAverageContrastAngle=averageContrastAngle;
 	            try {
 	            	ModelSerializer.writeModel(model, modelLocation, true);
 	            	Logger.logLine("Model saved successfully.");
@@ -190,7 +192,7 @@ public class PeptidePropertiesPredictor {
         builder.layer(new DropoutLayer.Builder(0.9).build());
         
         // output layer
-        builder.layer(new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
+        builder.layer(new OutputLayer.Builder(LossFunctions.LossFunction.MEAN_ABSOLUTE_ERROR)
                 .nIn(embedDim)
                 .nOut(outputSize)
                 .activation(Activation.IDENTITY)

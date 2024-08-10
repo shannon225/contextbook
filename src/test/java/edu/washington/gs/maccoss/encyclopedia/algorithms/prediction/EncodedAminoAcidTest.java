@@ -16,6 +16,18 @@ public class EncodedAminoAcidTest extends TestCase {
 		assertEquals("[+229],N,V,E,E,L,N,K[+229],", toString(AminoAcidEncoding.getAAs("[+229.162932]NVEELNK[+229.162932]", constants)));
 		assertEquals(",N,V,E,E,L,N,K,", toString(AminoAcidEncoding.getAAs("NVEELNK", constants)));
 	}
+	public void testPeptideModSeq() {
+		AminoAcidConstants constants=new AminoAcidConstants();
+		assertEquals("Q[-17.026549]AHLC[+57.0214635]VLASNC[+57.0214635]DEPMYVK", AminoAcidEncoding.getPeptideModSeq(AminoAcidEncoding.getAAs("Q[-17.026549]AHLC[+57.021464]VLASNC[+57.021464]DEPMYVK", constants), constants));
+		assertEquals("S[+42.010565][+79.966331]GSSSVAAM[+15.994915]K", AminoAcidEncoding.getPeptideModSeq(AminoAcidEncoding.getAAs("[+42.010565]S[+79.966331]GSSSVAAM[+15.994915]K", constants), constants));
+		assertEquals("S[+42.010565]LLDGLASS[+79.966331]PRAPLQSSK", AminoAcidEncoding.getPeptideModSeq(AminoAcidEncoding.getAAs("[+42.010565]SLLDGLASS[+79.966331]PRAPLQSSK", constants), constants));
+		assertEquals("NDIK[+42.010565]LAAK[+42.010565]LIHTLDDR", AminoAcidEncoding.getPeptideModSeq(AminoAcidEncoding.getAAs("NDIK[+42.010565]LAAK[+42.010565]LIHTLDDR", constants), constants));
+		assertEquals("K[+42.010565]PPK[+42.010565]YER", AminoAcidEncoding.getPeptideModSeq(AminoAcidEncoding.getAAs("K[+42.010565]PPK[+42.010565]YER", constants), constants));
+		assertEquals("K[+42.010565]PPK[+42.010565]YER", AminoAcidEncoding.getPeptideModSeq(AminoAcidEncoding.getAAs("[+42.010565]KPPK[+42.010565]YER", constants), constants));
+		assertEquals("TLYDESC[+57.0214635]SK[+114.042927]EIQM[+15.994915]AVLLK", AminoAcidEncoding.getPeptideModSeq(AminoAcidEncoding.getAAs("TLYDESC[+57.0214635]SK[+114.042927]EIQM[+15.994915]AVLLK", constants), constants));
+		//assertEquals("N[+229.162932]VEELNK[+229.162932]", AminoAcidEncoding.toString(AminoAcidEncoding.getAAs("[+229.162932]NVEELNK[+229.162932]", constants), constants));
+		assertEquals("NVEELNK", AminoAcidEncoding.getPeptideModSeq(AminoAcidEncoding.getAAs("NVEELNK", constants), constants));
+	}
 	
 	public String toString(AminoAcidEncoding[] aas) {
 		StringBuilder sb=new StringBuilder();
