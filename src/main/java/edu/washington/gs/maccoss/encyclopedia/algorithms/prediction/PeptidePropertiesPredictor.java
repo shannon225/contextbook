@@ -58,12 +58,12 @@ public class PeptidePropertiesPredictor {
     	File[] listFiles = dir.listFiles(new SimpleFilenameFilter(".dlib"));
     	
     	// FIXME
-    	listFiles=new File[] {new File(dir, "UP000005640_9606.fasta.trypsin.z1_nce33.dlib.z3_nce33.dlib")};
+    	//listFiles=new File[] {new File(dir, "UP000005640_9606.fasta.trypsin.z1_nce33.dlib.z3_nce33.dlib")};
     	
 		for (File f : listFiles) {
-			if (f.getName().indexOf(".trypsin")<0) {
-				continue;
-			}
+//			if (f.getName().indexOf(".trypsin")<0) {
+//				continue;
+//			}
     		String rtName=f.getName().substring(0, f.getName().length()-".z3_nce33.dlib".length())+".txt_rts.txt";
     		Logger.logLine("Reading RT file: "+rtName);
 
