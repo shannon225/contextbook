@@ -172,7 +172,7 @@ public class PeptideEncoding {
 			}
 			
 			float intensity=parameters.getFragmentTolerance().getMaxIntensity(massArray, intensityArray, fragmentIon.getMass());
-			int fragindex=fragmentIon.getIndex();
+			int fragindex=fragmentIon.getIndex()-1;
 			
 			if (intensity>intensityThreshold) {
 				array[fragindex]=intensity;

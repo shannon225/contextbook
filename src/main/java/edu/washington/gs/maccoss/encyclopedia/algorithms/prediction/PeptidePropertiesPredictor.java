@@ -29,11 +29,14 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.PivotTableGenerator;
 import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
@@ -58,41 +61,48 @@ public class PeptidePropertiesPredictor {
     	File[] listFiles = dir.listFiles(new SimpleFilenameFilter(".dlib"));
     	
     	// FIXME
-    	//listFiles=new File[] {new File(dir, "UP000005640_9606.fasta.trypsin.z1_nce33.dlib.z3_nce33.dlib")};
+    	//listFiles=new File[] {new File(dir, "pan_human_library.dlib")};
     	
 		for (File f : listFiles) {
 //			if (f.getName().indexOf(".trypsin")<0) {
 //				continue;
 //			}
-    		String rtName=f.getName().substring(0, f.getName().length()-".z3_nce33.dlib".length())+".txt_rts.txt";
-    		Logger.logLine("Reading RT file: "+rtName);
-
         	TObjectFloatHashMap<String> rtByPeptideModSeq=new TObjectFloatHashMap<String>();
-    		TableParser.parseTSV(new File(f.getParent(), rtName), new TableParserMuscle() {
-				
-				@Override
-				public void processRow(Map<String, String> row) {
-					String peptideModSeq=row.get("PeptideModSeq");
-					float rtInSec=Float.parseFloat(row.get("Pred_HI"))*60f;
-					rtByPeptideModSeq.put(peptideModSeq, rtInSec);
-				}
-				
-				@Override
-				public void cleanup() {
-				}
-			});
+    		String rtName=f.getName().substring(0, f.getName().length()-".z3_nce33.dlib".length())+".txt_rts.txt";
+    		File rtFile = new File(f.getParent(), rtName);
+    		if (rtFile.exists()) {
+	    		Logger.logLine("Reading RT file: "+rtName);
+	
+				TableParser.parseTSV(rtFile, new TableParserMuscle() {
+					
+					@Override
+					public void processRow(Map<String, String> row) {
+						String peptideModSeq=row.get("PeptideModSeq");
+						float rtInSec=Float.parseFloat(row.get("Pred_HI"))*60f;
+						rtByPeptideModSeq.put(peptideModSeq, rtInSec);
+					}
+					
+					@Override
+					public void cleanup() {
+					}
+				});
+    		}
     		
     		Logger.logLine("Reading Library file: "+f.getName());
     		LibraryFile library=new LibraryFile();
     		library.openFile(f);
     		ArrayList<LibraryEntry> entries=library.getAllEntries(false, aaConstants);
     		for (LibraryEntry entry : entries) {
+    			if (entry.getPrecursorCharge()>PeptideEncoding.MAX_CHARGE||entry.getPeptideSeq().length()>(PeptideEncoding.MAX_PEPTIDE_LENGTH-2)) {
+    				continue;
+    			}
 				String key=entry.getPeptideModSeq()+"_"+entry.getPrecursorCharge();
 				if (rtByPeptideModSeq.contains(entry.getPeptideModSeq())) {
 					PeptideEncoding encoding=new PeptideEncoding(entry, rtByPeptideModSeq.get(entry.getPeptideModSeq()), parameters);
 					peptideEncodingBySequence.put(key, encoding);
 				} else {
-					Logger.errorLine("Missing retention time for "+key);
+					PeptideEncoding encoding=new PeptideEncoding(entry, entry.getRetentionTimeInSec(), parameters);
+					peptideEncodingBySequence.put(key, encoding);
 				}
 			}
     		library.close();
@@ -111,6 +121,7 @@ public class PeptidePropertiesPredictor {
     	double bestAverageContrastAngle=-Double.MAX_VALUE;
     	
     	ArrayList<PeptideEncoding> dataSet=new ArrayList<PeptideEncoding>(peptideEncodingBySequence.values());
+    	ArrayList<XYTrace> traces=new ArrayList<XYTrace>();
         for(int e=1; e<=NUM_EPOCHS; e++ ){
         	if (e%EPOCHS_TO_2X_BATCH==0) {
         		batchSize=batchSize*2;
@@ -125,17 +136,21 @@ public class PeptidePropertiesPredictor {
             INDArray results=model.output(fullIterator);
             results=results.reshape(dataSet.size(), PeptideEncoding.ENCODED_OUTPUT_SIZE);
 
-            TFloatArrayList spectralContrastAngles=new TFloatArrayList();
+            TFloatArrayList contrastAngles=new TFloatArrayList();
             for (int i = 0; i < dataSet.size(); i++) {
     			INDArray row=results.getRow(i);
 				PeptideEncoding peptideEncoding = dataSet.get(i);
 				float spectralContrastAngle=peptideEncoding.score(row);
 
-				spectralContrastAngles.add(spectralContrastAngle);
+				contrastAngles.add(spectralContrastAngle);
 			}
-        	float averageContrastAngle=General.mean(spectralContrastAngles.toArray());
+        	double averageContrastAngle=0.0;
+        	for (int i = 0; i < contrastAngles.size(); i++) {
+				averageContrastAngle+=contrastAngles.get(i);
+			}
+        	averageContrastAngle=averageContrastAngle/contrastAngles.size();
             
-        	Logger.logLine("Epoch "+e+" mean contrast angle: "+averageContrastAngle+" from "+spectralContrastAngles.size()+" total peptides");
+        	Logger.logLine("Epoch "+e+" mean contrast angle: "+averageContrastAngle+" from "+contrastAngles.size()+" total peptides");
 
         	if (averageContrastAngle>bestAverageContrastAngle) {
         		bestAverageContrastAngle=averageContrastAngle;
@@ -148,6 +163,11 @@ public class PeptidePropertiesPredictor {
         	} else {
             	Logger.logLine("Final model wasn't better, so skipping temporary save.");
         	}
+        	
+        	XYTrace thisTrace=new XYTrace(PivotTableGenerator.createPivotTable(contrastAngles.toArray(), -1f, 1f, 0.01f), GraphType.area, "Epoch "+e);
+        	traces.add(thisTrace);
+        	
+        	Charter.launchChart(Charter.getChart("Epoch", "ContrastAngle", true, traces.toArray(new XYTrace[0])), "Traces");
         }
     }
     

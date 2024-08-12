@@ -1,6 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.prediction;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
@@ -11,7 +12,8 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.Correlation;
 import junit.framework.TestCase;
 
 public class PeptideEncodingTest extends TestCase {
@@ -42,13 +44,17 @@ public class PeptideEncodingTest extends TestCase {
 			INDArray encodeInput = encoding.encodeInput();
 			INDArray encodeResult = encoding.encodeResult();
 			
-			System.out.println("Input: ");
-			System.out.println(General.toString(encodeInput.toFloatVector()));
-
-			System.out.println("\nOutput: ");
-			System.out.println(encodeResult);
+//			System.out.println("Input: ");
+//			System.out.println(General.toString(encodeInput.toFloatVector()));
+//
+//			System.out.println("\nOutput: ");
+//			System.out.println(encodeResult);
 			
-			break;
+			assertEquals(1.0f, encoding.score(encodeResult));
+			
+			LibraryEntry result=encoding.outputToEntry(new HashSet<String>(), encodeResult, aaConstants);
+			System.out.println(Correlation.getSpectralAngle(entry, result, new MassTolerance(10)));
+			
 		}
 	}
 
