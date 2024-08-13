@@ -42,17 +42,17 @@ import gnu.trove.list.array.TFloatArrayList;
 public class PeptideRTPredictor {
 	private static final int INITIAL_BATCH_SIZE = 64;
 	private static final int MAX_BATCH_SIZE = 1024;
-	private static final int EPOCHS_TO_2X_BATCH = 30;
-    private static final int MAXIMUM_PEPTIDE_LENGTH = 50;
+	private static final int EPOCHS_TO_2X_BATCH = 3;
     public static final int EMBED_DIMENSION = 64;
     public static final int N_RESNET_BLOCKS = 3;
     public static final int KERNEL_SIZE = 7;
-    public static final int NUM_EPOCHS = 100;
+    public static final int NUM_EPOCHS = 10;
     
     private static final AminoAcidConstants aaConstants=new AminoAcidConstants();
 
-    public static void main(String[] args) {
-    	File db=new File("/Users/searleb/Downloads/Chronologer_DB_220308.txt");
+    public static void main2(String[] args) {
+    	File db=new File("C:\\Users\\searl\\Documents\\projects\\Chronologer_DB_220308.txt");
+    	db=new File("C:\\Users\\searl\\Downloads\\combined.txt\\combined.txt");
     	File saveLocation=new File(db.getParentFile(), "peptide_rt_model.dl4j");
     	
     	ArrayList<XYPoint> points=new ArrayList<XYPoint>();
@@ -71,11 +71,11 @@ public class PeptideRTPredictor {
             ArrayList<INDArray> encodings=new ArrayList<INDArray>();
             
             for (LibraryEntry entry : entries) {
-				encodings.add(AminoAcidEncoding.encode(entry.getPeptideModSeq(), aaConstants, MAXIMUM_PEPTIDE_LENGTH));
+				encodings.add(AminoAcidEncoding.encode(entry.getPeptideModSeq(), aaConstants, PeptideRTEncoding.MAXIMUM_PEPTIDE_LENGTH));
 			}
             
             INDArray inputData = Nd4j.concat(0, encodings.toArray(new INDArray[0]));
-            inputData = inputData.reshape(entries.size(), MAXIMUM_PEPTIDE_LENGTH * AminoAcidEncoding.MAX_ENCODING_LENGTH);
+            inputData = inputData.reshape(entries.size(), PeptideRTEncoding.MAXIMUM_PEPTIDE_LENGTH * AminoAcidEncoding.MAX_ENCODING_LENGTH);
             INDArray output = model.output(inputData);
 
             for (int i = 0; i < entries.size(); i++) {
@@ -99,15 +99,16 @@ public class PeptideRTPredictor {
     	}
     }
 
-    public static void main3(String[] args) {
-    	File db=new File("/Users/searleb/Downloads/Chronologer_DB_220308.txt");
+    public static void main(String[] args) {
+    	File db=new File("C:\\Users\\searl\\Documents\\projects\\Chronologer_DB_220308.txt");
+    	db=new File("C:\\Users\\searl\\Downloads\\combined.txt\\combined.txt");
     	File saveLocation=new File(db.getParentFile(), "peptide_rt_model.dl4j");
     	
-    	ArrayList<ArrayList<DataSet>> dataSets = new ArrayList<>();
+    	ArrayList<ArrayList<PeptideRTEncoding>> dataSets = new ArrayList<>();
     	ArrayList<String> dataSetNames = new ArrayList<>();
     	
     	TableParser.parseTSV(db, new TableParserMuscle() {
-        	ArrayList<DataSet> currentDataSet=null;
+        	ArrayList<PeptideRTEncoding> currentDataSet=null;
         	String currentDataSetName=null;
         	int count=0;
         	
@@ -115,7 +116,7 @@ public class PeptideRTPredictor {
 			public void processRow(Map<String, String> row) {
 				String source=row.get("Source");
 				if (!source.equals(currentDataSetName)) {
-					currentDataSet=new ArrayList<DataSet>();
+					currentDataSet=new ArrayList<PeptideRTEncoding>();
 					dataSets.add(currentDataSet);
 					dataSetNames.add(source);
 					currentDataSetName=source;
@@ -123,16 +124,14 @@ public class PeptideRTPredictor {
 				
 				String peptideModSeq=row.get("PeptideModSeq");
 				float hirt=Float.parseFloat(row.get("HI"));
-
-		        // One-hot encode the sequences
-	            INDArray input = AminoAcidEncoding.encode(peptideModSeq, aaConstants, MAXIMUM_PEPTIDE_LENGTH);
-	            if (input==null) return;
-	            
-	            INDArray output = Nd4j.create(new double[][]{new double[] {hirt}});
-	            currentDataSet.add(new DataSet(input, output));
+				
+				AminoAcidEncoding[] aas=AminoAcidEncoding.getAAs(peptideModSeq, aaConstants);
+		    	if (aas.length>PeptideRTEncoding.MAXIMUM_PEPTIDE_LENGTH) return;
+		    	
+				currentDataSet.add(new PeptideRTEncoding(aas, hirt));
 
 				count++;
-				if (count%10000==0) {
+				if (count%1000000==0) {
 					Logger.logLine("Loading "+count+"...");
 				}
 			}
@@ -143,16 +142,16 @@ public class PeptideRTPredictor {
 		});
     	
     	int count=0;
-    	for (ArrayList<DataSet> dataset : dataSets) {
+    	for (ArrayList<PeptideRTEncoding> dataset : dataSets) {
 			count+=dataset.size();
 		}
     	Logger.logLine("Loaded "+dataSets.size()+" datasets with "+count+" total peptides.");
 
-        MultiLayerNetwork model=createModel(MAXIMUM_PEPTIDE_LENGTH * AminoAcidEncoding.MAX_ENCODING_LENGTH, 1, 
+        MultiLayerNetwork model=createModel(PeptideRTEncoding.MAXIMUM_PEPTIDE_LENGTH * AminoAcidEncoding.MAX_ENCODING_LENGTH, 1, 
         		EMBED_DIMENSION, KERNEL_SIZE, N_RESNET_BLOCKS);
         Logger.logLine(model.summary());
 
-		ArrayList<DataSet> trimmedDataSet = new ArrayList<DataSet>();
+		ArrayList<PeptideRTEncoding> trimmedDataSet = new ArrayList<PeptideRTEncoding>();
     	
     	// start with full dataset
     	for (int i = 0; i < dataSets.size(); i++) {
@@ -169,7 +168,7 @@ public class PeptideRTPredictor {
         	Logger.logLine("Starting epoch "+e+", batch size: "+batchSize);
         	Collections.shuffle(trimmedDataSet);
 
-            DataSetIterator iterator = new ListDataSetIterator<>(trimmedDataSet, batchSize);
+            DataSetIterator iterator = new EncodedDataSetIterator(trimmedDataSet, batchSize);
             model.fit(iterator);
 
             trimmedDataSet.clear();
@@ -177,15 +176,15 @@ public class PeptideRTPredictor {
             int totalCount=0;
             double meanAbsoluteError=0.0;
         	for (int d = 0; d < dataSets.size(); d++) {
-        		ArrayList<DataSet> dataSet=dataSets.get(d);
-	            DataSetIterator fullIterator = new ListDataSetIterator<>(dataSet, MAX_BATCH_SIZE);
+        		ArrayList<PeptideRTEncoding> dataSet=dataSets.get(d);
+	            DataSetIterator fullIterator = new EncodedDataSetIterator(dataSet, MAX_BATCH_SIZE);
 	            INDArray results=model.output(fullIterator);
 
 	            TFloatArrayList deltas=new TFloatArrayList();
                 for (int i = 0; i < dataSet.size(); i++) {
 					double prediction=results.getDouble(i);
-					double actual=dataSet.get(i).getLabels().getDouble(0);
-					deltas.add((float)(actual-prediction));
+					float actual=dataSet.get(i).getHiRT();
+					deltas.add(actual-(float)prediction);
 					meanAbsoluteError+=Math.abs(actual-prediction);
 				}
                 totalCount+=deltas.size();
@@ -195,7 +194,7 @@ public class PeptideRTPredictor {
                 float high=QuickMedian.select(deltaArray, 0.995f);
                 for (int i = 0; i < dataSet.size(); i++) {
 					double prediction=results.getDouble(i);
-					double actual=dataSet.get(i).getLabels().getDouble(0);
+					float actual=dataSet.get(i).getHiRT();
 					double delta=actual-prediction;
 					if (delta<high&&delta>low) {
 						trimmedDataSet.add(dataSet.get(i));

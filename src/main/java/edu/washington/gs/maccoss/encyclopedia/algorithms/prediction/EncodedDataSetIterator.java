@@ -7,12 +7,12 @@ import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.dataset.api.DataSetPreProcessor;
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
 
-public class PeptideEncodingDataSetIterator implements DataSetIterator {
+public class EncodedDataSetIterator implements DataSetIterator {
     private static final long serialVersionUID = 1L;
     final private int batch;
-	private final ArrayList<PeptideEncoding> peptides;
+	private final ArrayList<? extends DataSetEncoding> peptides;
 
-	public PeptideEncodingDataSetIterator(ArrayList<PeptideEncoding> peptides, int batch) {
+	public EncodedDataSetIterator(ArrayList<? extends DataSetEncoding> peptides, int batch) {
 		this.peptides = peptides;
         this.batch = batch;
 	}

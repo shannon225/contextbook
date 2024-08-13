@@ -137,14 +137,18 @@ public enum AminoAcidEncoding {
     	AminoAcidEncoding[] aas=AminoAcidEncoding.getAAs(sequence, aminoAcidConstants);
     	if (aas.length>maxPeptideLength) return null;
     	
-        INDArray encoded = Nd4j.zeros(maxPeptideLength, MAX_ENCODING_LENGTH);
+        return encode(maxPeptideLength, aas);
+    }
+
+	public static INDArray encode(int maxPeptideLength, AminoAcidEncoding[] aas) {
+		INDArray encoded = Nd4j.zeros(maxPeptideLength, MAX_ENCODING_LENGTH);
         
         int start=aas[0].isNTerm()?0:1;
         for (int i = start; i < aas.length; i++) {
             encoded.putScalar(new int[]{i, aas[i].index}, 1.0);
         }
         return encoded.reshape(1, maxPeptideLength * MAX_ENCODING_LENGTH);
-    }
+	}
 	
 	public static AminoAcidEncoding[] getAAs(String sequence, AminoAcidConstants aminoAcidConstants) {
 		char[] ca=sequence.toCharArray();

@@ -51,7 +51,7 @@ public class PeptidePropertiesPredictor {
     public static final int NUM_EPOCHS = 10;
 
     public static void main(String[] args) throws Exception {
-    	File dir=new File("/Users/searleb/Documents/encyclopedia/prosit_examples_final/");
+    	File dir=new File("C:\\Users\\searl\\Documents\\projects\\prosit_examples_final\\");
     	File modelLocation=new File(dir, "peptide_prediction_model.dl4j");
     	
     	SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
@@ -129,10 +129,10 @@ public class PeptidePropertiesPredictor {
         	Logger.logLine("Starting epoch "+e+", batch size: "+batchSize);
         	Collections.shuffle(dataSet);
 
-            DataSetIterator iterator = new PeptideEncodingDataSetIterator(dataSet, batchSize);
+            DataSetIterator iterator = new EncodedDataSetIterator(dataSet, batchSize);
             model.fit(iterator);
             
-            DataSetIterator fullIterator = new PeptideEncodingDataSetIterator(dataSet, MAX_BATCH_SIZE);
+            DataSetIterator fullIterator = new EncodedDataSetIterator(dataSet, MAX_BATCH_SIZE);
             INDArray results=model.output(fullIterator);
             results=results.reshape(dataSet.size(), PeptideEncoding.ENCODED_OUTPUT_SIZE);
 

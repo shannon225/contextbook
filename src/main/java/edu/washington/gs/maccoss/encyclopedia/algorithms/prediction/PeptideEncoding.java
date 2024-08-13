@@ -22,7 +22,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Correlation;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
-public class PeptideEncoding {
+public class PeptideEncoding implements DataSetEncoding {
     private static final float MINIMUM_INTENSITY_THRESHOLD_FOR_TRAINING = 0.05f;
 	public static final DataType DEFAULT_DATA_TYPE = DataType.FLOAT;
 	public static final int MAX_CHARGE=6;
