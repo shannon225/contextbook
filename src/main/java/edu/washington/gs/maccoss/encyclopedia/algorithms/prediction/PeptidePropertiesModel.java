@@ -12,7 +12,11 @@ import org.nd4j.linalg.factory.Nd4j;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursorWithProteins;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.WindowingSchemeWizard;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.Correlation;
 
 public class PeptidePropertiesModel {
 	private static PeptidePropertiesModel staticModel=null; 
@@ -52,7 +56,11 @@ public class PeptidePropertiesModel {
         for (int i = 0; i < outputData.rows(); i++) {
 			INDArray row=outputData.getRow(i);
 			PeptidePrecursorWithProteins peptide=predictedPrecursors.get(i);
-			entries.add(PeptideEncoding.outputToEntry(peptide.getPeptideModSeq(), peptide.getPrecursorCharge(), peptide.getAccessions(), row, constants));
+			LibraryEntry prediction = PeptideEncoding.outputToEntry(peptide.getPeptideModSeq(), peptide.getPrecursorCharge(), peptide.getAccessions(), row, constants);
+			entries.add(prediction);
+
+			//PeptideEncoding encoding=new PeptideEncoding((LibraryEntry)peptide, ((LibraryEntry)peptide).getRetentionTime()/60f, SearchParameterParser.getDefaultParametersObject());
+			//System.out.println(encoding.score(row)+"\t"+Correlation.getSpectralAngle(prediction, (LibraryEntry)peptide, new MassTolerance(10)));
 		}
         return entries;
 	}
