@@ -15,6 +15,8 @@ import gnu.trove.map.hash.TCharDoubleHashMap;
 
 public class AdjustLibraryForPTMs {
 	private static final boolean IS_FIXED=true;
+	private static final boolean IS_COMBINED=false;
+	
 	public static void main(String[] args) {
 		HashMap<String, String> arguments= CommandLineParser.parseArguments(args);
 		if (arguments.containsKey("-h")||arguments.containsKey("-help")||arguments.containsKey("--help")) {
@@ -25,6 +27,7 @@ public class AdjustLibraryForPTMs {
 			Logger.timelessLogLine("\t-ptm\tcomma delimited modifications (for example \"K=8.014199,R=10.008269\")");
 			Logger.timelessLogLine("Other Parameters: ");
 			Logger.timelessLogLine("\t-fixed\t(default: "+IS_FIXED+")");
+			Logger.timelessLogLine("\t-combineWithUnmodified\t(default: "+IS_COMBINED+")");
 		} else {
 			convert(arguments);
 		}
@@ -61,12 +64,13 @@ public class AdjustLibraryForPTMs {
 		}
 		
 		boolean isFixed=ParsingUtils.getBoolean("-fixed", arguments, IS_FIXED);
+		boolean combineWithUnmodified=ParsingUtils.getBoolean("-combineWithUnmodified", arguments, IS_COMBINED);
 			
 		try {
 			if (inputFile.exists()) {
 
 				LibraryInterface library=BlibToLibraryConverter.getFile(inputFile);
-				LibraryUtilities.modifyLibrary(outputFile, ptms, isFixed, library);
+				LibraryUtilities.modifyLibrary(outputFile, ptms, isFixed, combineWithUnmodified, library);
 			} else {
 				Logger.logLine("You must specify an existing ELIB or DLIB library file!");
 			}

@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -23,6 +22,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideAccessionMatchingTrie;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursor;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.InMemoryLibrary;
@@ -36,40 +36,89 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.LibraryEntryModifie
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakChromatogram;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import gnu.trove.list.array.TDoubleArrayList;
-import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 
 public class LibraryUtilities {
 	private static final int TOTAL_NUMBER_OF_ENTRIES_AT_A_TIME = 1000000;
 
-	public static void modifyLibrary(final File saveFile, TCharDoubleHashMap modMasses, boolean isFixed, LibraryInterface library) throws IOException, SQLException, DataFormatException {
+	public static void modifyLibrary(final File saveFile, TCharDoubleHashMap modMasses, boolean isFixed, boolean combineWithUnmodified, LibraryInterface library) throws IOException, SQLException, DataFormatException {
 		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
 		
 		LibraryFile saveLibrary=new LibraryFile();
 		saveLibrary.openFile();
+		saveLibrary.dropIndices();
 		
-		ArrayList<LibraryEntry> toWrite=new ArrayList<>();
 		int count=0;
-		for (LibraryEntry entry : library.getAllEntries(false, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()))) {
-			count++;
+		int toWriteCount=0;
+		HashMap<String, HashSet<String>> targetAccessionsByPeptide=new HashMap<>();
+		HashMap<String, HashSet<String>> decoyAccessionsByPeptide=new HashMap<>();
+		
+		float previous=0.0f;
+		for (float i = 400; i <= 1000; i+=100) {
+			Range r=new Range(previous, i);
+			Logger.logLine("Modifying "+r+" m/z");
+			previous=i;
+
+			int[] countData = modifyAndWriteRange(r, saveLibrary, modMasses, isFixed, combineWithUnmodified, library, targetAccessionsByPeptide, decoyAccessionsByPeptide, parameters);
+			count+=countData[0];
+			toWriteCount+=countData[1];
+			
+		}
+		Range r=new Range(previous, Float.MAX_VALUE);
+		Logger.logLine("Modifying "+r+" m/z");
+
+		int[] countData = modifyAndWriteRange(r, saveLibrary, modMasses, isFixed, combineWithUnmodified, library, targetAccessionsByPeptide, decoyAccessionsByPeptide, parameters);
+		count+=countData[0];
+		toWriteCount+=countData[1];
+
+		Logger.logLine("Saving peptide-to-protein mappings");
+		saveLibrary.addProteinsFromEntries(targetAccessionsByPeptide, decoyAccessionsByPeptide);
+		
+		Logger.logLine("Created "+toWriteCount+" peptides from "+count+" target sequences. Writing to ["+saveFile.getAbsolutePath()+"]...");
+		
+		saveLibrary.createIndices();
+		saveLibrary.saveAsFile(saveFile);
+		
+		saveLibrary.close();
+	}
+
+	private static int[] modifyAndWriteRange(Range r, LibraryFile saveLibrary, TCharDoubleHashMap modMasses,
+			boolean isFixed, boolean combineWithUnmodified, LibraryInterface library, HashMap<String, HashSet<String>> targetAccessionsByPeptide,
+			HashMap<String, HashSet<String>> decoyAccessionsByPeptide, SearchParameters parameters)
+			throws IOException, SQLException, DataFormatException {
+		ArrayList<LibraryEntry> entries = library.getEntries(r, false, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()));
+		ArrayList<LibraryEntry> toWrite=new ArrayList<>();
+		for (LibraryEntry entry : entries) {
 			if (isFixed) {
 				toWrite.add(LibraryEntryModifier.modifyModelAtEverySite(entry, modMasses, false, parameters));
 			} else {
 				toWrite.addAll(LibraryEntryModifier.modifyModelAtEachSite(entry, modMasses, true, parameters));
 			}
+			if (combineWithUnmodified) {
+				toWrite.add(entry);
+			}
+			
+			// add to accession maps
+			HashMap<String, HashSet<String>> map;
+			if (entry.isDecoy()) {
+				map=decoyAccessionsByPeptide;
+			} else {
+				map=targetAccessionsByPeptide;
+			}
+			
+			HashSet<String> accessions=map.get(entry.getPeptideSeq());
+			if (accessions==null) {
+				accessions=new HashSet<>();
+				map.put(entry.getPeptideSeq(), accessions);
+			}
+			accessions.addAll(entry.getAccessions());
 		}
-		Logger.logLine("Created "+toWrite.size()+" peptides from "+count+" target sequences. Writing to ["+saveFile.getAbsolutePath()+"]...");
-		
-		saveLibrary.dropIndices();
 		saveLibrary.addEntries(toWrite);
-		saveLibrary.addProteinsFromEntries(toWrite);
-		saveLibrary.createIndices();
-		saveLibrary.saveAsFile(saveFile);
-		
-		saveLibrary.close();
+
+		int[] countData=new int[] {entries.size(), toWrite.size()};
+		return countData;
 	}
 	
 	public static void extractSampleSpecificLibraries(ProgressIndicator progress, File saveDir, Optional<HashMap<String, double[]>> targetTransitions, LibraryInterface library, final SearchParameters parameters) throws IOException, SQLException, DataFormatException {

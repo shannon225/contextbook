@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.deeplearning4j.datasets.iterator.utilty.ListDataSetIterator;
@@ -36,7 +37,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Function;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 import gnu.trove.list.array.TFloatArrayList;
 
 public class PeptideRTPredictor {
@@ -51,7 +51,7 @@ public class PeptideRTPredictor {
     
     private static final AminoAcidConstants aaConstants=new AminoAcidConstants();
 
-    public static void main(String[] args) {
+    public static void main3(String[] args) {
     	File db=new File("/Users/searleb/Downloads/Chronologer_DB_220308.txt");
     	File saveLocation=new File(db.getParentFile(), "peptide_rt_model.dl4j");
     	
@@ -99,12 +99,14 @@ public class PeptideRTPredictor {
     	}
     }
 
-    public static void main3(String[] args) {
-    	File db=new File("/Users/searleb/Downloads/Chronologer_DB_220308.txt");
+    public static void main(String[] args) {
+    	File db=new File("/Users/searleb/Documents/encyclopedia/prosit_examples_final/combined.txt");
+    	//File db=new File("/Users/searleb/Downloads/Chronologer_DB_220308.txt");
     	File saveLocation=new File(db.getParentFile(), "peptide_rt_model.dl4j");
     	
     	ArrayList<ArrayList<DataSet>> dataSets = new ArrayList<>();
     	ArrayList<String> dataSetNames = new ArrayList<>();
+    	HashMap<String, String> nameMap=new HashMap<>();
     	
     	TableParser.parseTSV(db, new TableParserMuscle() {
         	ArrayList<DataSet> currentDataSet=null;
@@ -113,7 +115,12 @@ public class PeptideRTPredictor {
         	
 			@Override
 			public void processRow(Map<String, String> row) {
-				String source=row.get("Source");
+				String origsource=row.get("Source");
+				String source=nameMap.get(origsource);
+				if (source==null) {
+					source=Integer.toString(nameMap.size());
+					nameMap.put(origsource, source);
+				}
 				if (!source.equals(currentDataSetName)) {
 					currentDataSet=new ArrayList<DataSet>();
 					dataSets.add(currentDataSet);

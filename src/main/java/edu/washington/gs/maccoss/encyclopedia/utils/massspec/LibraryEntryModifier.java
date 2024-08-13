@@ -14,8 +14,8 @@ import gnu.trove.map.hash.TCharDoubleHashMap;
 
 public class LibraryEntryModifier {
 	public static void main(String[] args) throws Exception {
-		File inputFile=new File("/Users/searle.30/Documents/students/ariana/v3_library_exploris.elib");
-		File outputFile=new File("/Users/searle.30/Documents/students/ariana/v3_library_exploris_dimethyl.dlib");
+		File inputFile=new File("/Users/searleb/Documents/students/teera/mapms/uniprot_mouse_2024Aug12.fasta.trypsin.z3_nce33.dlib");
+		File outputFile=new File("/Users/searleb/Documents/students/teera/mapms/uniprot_mouse_2024Aug12.fasta.trypsin.z3_nce33_combined.dlib");
 
 		TCharDoubleHashMap ptms=new TCharDoubleHashMap();
 		//ptms.put('K',8.014199);
@@ -42,7 +42,7 @@ public class LibraryEntryModifier {
 //		ptms.put('P', 15.9949);
 		
 		LibraryInterface library=BlibToLibraryConverter.getFile(inputFile);
-		LibraryUtilities.modifyLibrary(outputFile, ptms, true, library);
+		LibraryUtilities.modifyLibrary(outputFile, ptms, true, true, library);
 	}
 	
 	public static LibraryEntry modifyModelAtEverySite(LibraryEntry entry, TCharDoubleHashMap fixedMods, boolean changePTMs, SearchParameters parameters) {

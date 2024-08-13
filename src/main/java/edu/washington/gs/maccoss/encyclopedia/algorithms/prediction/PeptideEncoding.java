@@ -181,7 +181,7 @@ public class PeptideEncoding {
 	}
 	
 	public float score(INDArray output) {
-		INDArray expected=encodeResult();		
+		INDArray expected=encodeResult();
 		return Correlation.getSpectralContrastAngle(expected.toFloatVector(), output.toFloatVector());
 	}
 	
