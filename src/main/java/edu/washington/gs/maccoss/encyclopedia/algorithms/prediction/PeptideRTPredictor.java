@@ -49,7 +49,7 @@ public class PeptideRTPredictor {
     
     private static final AminoAcidConstants aaConstants=new AminoAcidConstants();
 
-    public static void main2(String[] args) {
+    public static void main(String[] args) {
     	File db=new File("C:\\Users\\searl\\Documents\\projects\\Chronologer_DB_220308.txt");
     	db=new File("C:\\Users\\searl\\Downloads\\combined.txt\\combined.txt");
     	File saveLocation=new File(db.getParentFile(), "peptide_rt_model.dl4j");
@@ -59,7 +59,7 @@ public class PeptideRTPredictor {
     	double meanAbsoluteError=0.0;
     	try {
     		LibraryFile library=new LibraryFile();
-    		library.openFile(new File("/Users/searleb/Documents/damien/hela_multiple_replicates_raws/2017aug23/23aug2017_hela_serum_timecourse_pool_wide_001_170829031834.dia.elib"));
+    		library.openFile(new File(db.getParentFile(), "23aug2017_hela_serum_timecourse_pool_wide_001_170829031834.dia.encyclopedia2.txt.elib"));
     		ArrayList<LibraryEntry> entries=library.getAllEntries(false, aaConstants);
 
             MultiLayerNetwork model = ModelSerializer.restoreMultiLayerNetwork(saveLocation);
@@ -98,7 +98,7 @@ public class PeptideRTPredictor {
     	}
     }
 
-    public static void main(String[] args) {
+    public static void main2(String[] args) {
     	File db=new File("C:\\Users\\searl\\Documents\\projects\\Chronologer_DB_220308.txt");
     	db=new File("C:\\Users\\searl\\Downloads\\combined.txt\\combined.txt");
     	File saveLocation=new File(db.getParentFile(), "peptide_rt_model.dl4j");
