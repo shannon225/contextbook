@@ -1,14 +1,13 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.prediction;
 
 
+import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
-import org.deeplearning4j.datasets.iterator.utilty.ListDataSetIterator;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
 import org.deeplearning4j.nn.conf.layers.Convolution1DLayer;
 import org.deeplearning4j.nn.conf.layers.DenseLayer;
@@ -21,7 +20,6 @@ import org.deeplearning4j.optimize.listeners.ScoreIterationListener;
 import org.deeplearning4j.util.ModelSerializer;
 import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.api.ndarray.INDArray;
-import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.learning.config.Adam;
@@ -31,8 +29,11 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.TwoDimensiona
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Function;
@@ -42,22 +43,21 @@ import gnu.trove.list.array.TFloatArrayList;
 public class PeptideRTPredictor {
 	private static final int INITIAL_BATCH_SIZE = 64;
 	private static final int MAX_BATCH_SIZE = 1024;
-	private static final int EPOCHS_TO_2X_BATCH = 3;
     public static final int EMBED_DIMENSION = 64;
     public static final int N_RESNET_BLOCKS = 3;
     public static final int KERNEL_SIZE = 7;
+	private static final int EPOCHS_TO_2X_BATCH = 3;
     public static final int NUM_EPOCHS = 10;
     
     private static final AminoAcidConstants aaConstants=new AminoAcidConstants();
 
     public static void main(String[] args) {
     	File db=new File("C:\\Users\\searl\\Documents\\projects\\Chronologer_DB_220308.txt");
-    	db=new File("C:\\Users\\searl\\Downloads\\combined.txt\\combined.txt");
+    	//db=new File("C:\\Users\\searl\\Downloads\\combined.txt\\combined.txt");
     	File saveLocation=new File(db.getParentFile(), "peptide_rt_model.dl4j");
     	
     	ArrayList<XYPoint> points=new ArrayList<XYPoint>();
     	
-    	double meanAbsoluteError=0.0;
     	try {
     		LibraryFile library=new LibraryFile();
     		library.openFile(new File(db.getParentFile(), "23aug2017_hela_serum_timecourse_pool_wide_001_170829031834.dia.encyclopedia2.txt.elib"));
@@ -85,23 +85,40 @@ public class PeptideRTPredictor {
             
     		TwoDimensionalKDE twoDimKDE=new TwoDimensionalKDE(points, 3000);
     		Function rtWarper=twoDimKDE.trace();
+    		ArrayList<XYPoint> xyPoints=new ArrayList<>();
+    		ArrayList<XYPoint> deltaPoints=new ArrayList<>();
+    		
+        	double actualMAE=0.0;
+        	double hiMAE=0.0;
             for (int i = 0; i < entries.size(); i++) {
-            	meanAbsoluteError+=Math.abs(output.getDouble(i)-rtWarper.getXValue(entries.get(i).getScanStartTime()));
+            	double prediction = output.getDouble(i);
+				double delta = entries.get(i).getScanStartTime()-rtWarper.getYValue((float)prediction);
+				actualMAE+=Math.abs(delta);
+				double deltaHI = rtWarper.getXValue(entries.get(i).getScanStartTime())-prediction;
+				hiMAE+=Math.abs(deltaHI);
+				
+				deltaPoints.add(new XYPoint(entries.get(i).getScanStartTime()/60f, delta/60f));
+				xyPoints.add(new XYPoint(prediction, entries.get(i).getScanStartTime()/60f));
             	//System.out.println(entries.get(i).getPeptideModSeq()+"\t"+(float)output.getDouble(i)+"\t"+rtWarper.getXValue(entries.get(i).getScanStartTime()));
             }
-            meanAbsoluteError=meanAbsoluteError/entries.size();
+            actualMAE=actualMAE/entries.size();
+            hiMAE=hiMAE/entries.size();
 
             System.out.println("time per prediction: "+(System.currentTimeMillis()-time)+" msec for "+entries.size()+" peptides");
-            System.out.println("testing reserved "+meanAbsoluteError+" mean absolute error");
+            System.out.println("testing reserved "+actualMAE+" seconds mean absolute error");
+            System.out.println("testing reserved "+hiMAE+" %ACN mean absolute error");
+            
+            Charter.launchChart("RT (Min)", "Delta RT (Min)", false, new XYTrace(deltaPoints, GraphType.tinypoint, "Delta", new Color(1f, 0f, 0f, 0.1f), 1f));
+            Charter.launchChart("Prediction (HI)", "RT (Min)", false, new XYTrace(xyPoints, GraphType.tinypoint, "Values", new Color(1f, 0f, 0f, 0.1f), 1f));
             
     	} catch (Exception e) {
     		e.printStackTrace();
     	}
     }
 
-    public static void main2(String[] args) {
+    public static void main2(String[] args) throws IOException {
     	File db=new File("C:\\Users\\searl\\Documents\\projects\\Chronologer_DB_220308.txt");
-    	db=new File("C:\\Users\\searl\\Downloads\\combined.txt\\combined.txt");
+    	//db=new File("C:\\Users\\searl\\Downloads\\combined.txt\\combined.txt");
     	File saveLocation=new File(db.getParentFile(), "peptide_rt_model.dl4j");
     	
     	ArrayList<ArrayList<PeptideRTEncoding>> dataSets = new ArrayList<>();
@@ -146,9 +163,28 @@ public class PeptideRTPredictor {
 			count+=dataset.size();
 		}
     	Logger.logLine("Loaded "+dataSets.size()+" datasets with "+count+" total peptides.");
+        
+        int numEpochs = NUM_EPOCHS;
+    	int epochsTo2xBatch = EPOCHS_TO_2X_BATCH;
+    	if (count<3000000) {
+    		// less than 3M, so go for longer
+    		numEpochs=numEpochs*10;
+    		epochsTo2xBatch=epochsTo2xBatch*10;
+    	}
+        Logger.logLine("Training plan: "+numEpochs+" epochs with "+epochsTo2xBatch+" between batch size increases.");
 
-        MultiLayerNetwork model=createModel(PeptideRTEncoding.MAXIMUM_PEPTIDE_LENGTH * AminoAcidEncoding.MAX_ENCODING_LENGTH, 1, 
-        		EMBED_DIMENSION, KERNEL_SIZE, N_RESNET_BLOCKS);
+        MultiLayerNetwork model;
+        if (saveLocation.exists()&&saveLocation.canRead()) {
+            model = ModelSerializer.restoreMultiLayerNetwork(saveLocation);
+            model.setIterationCount(0);
+            model.setListeners(new ScoreIterationListener(1000));
+            Logger.logLine("Existing model loaded successfully.");
+        } else {
+        	// create new model
+	        model=createModel(PeptideRTEncoding.MAXIMUM_PEPTIDE_LENGTH * AminoAcidEncoding.MAX_ENCODING_LENGTH, 1, 
+	        		EMBED_DIMENSION, KERNEL_SIZE, N_RESNET_BLOCKS);
+            Logger.logLine("New model created.");
+        }
         Logger.logLine(model.summary());
 
 		ArrayList<PeptideRTEncoding> trimmedDataSet = new ArrayList<PeptideRTEncoding>();
@@ -161,8 +197,8 @@ public class PeptideRTPredictor {
     	int batchSize=INITIAL_BATCH_SIZE;
     	double bestMeanAbsoluteError=Double.MAX_VALUE;
     	
-        for(int e=1; e<=NUM_EPOCHS; e++ ){
-        	if (e%EPOCHS_TO_2X_BATCH==0) {
+		for(int e=1; e<=numEpochs; e++ ){
+			if (e%epochsTo2xBatch==0) {
         		batchSize=batchSize*2;
         	}
         	Logger.logLine("Starting epoch "+e+", batch size: "+batchSize);
