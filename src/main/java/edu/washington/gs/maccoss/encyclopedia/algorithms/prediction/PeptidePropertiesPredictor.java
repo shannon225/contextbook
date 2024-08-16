@@ -3,10 +3,13 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.prediction;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.zip.DataFormatException;
 
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
 import org.deeplearning4j.nn.conf.layers.Convolution1DLayer;
@@ -25,17 +28,18 @@ import org.nd4j.linalg.learning.config.Adam;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
-import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.Correlation;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.PivotTableGenerator;
 import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TObjectFloatHashMap;
@@ -44,29 +48,57 @@ public class PeptidePropertiesPredictor {
 	private static final int REPORTING_BATCH_SIZE = 1000;
 	private static final int INITIAL_BATCH_SIZE = 64;
 	private static final int MAX_BATCH_SIZE = 1024;
-	private static final int EPOCHS_TO_2X_BATCH = 3;
+	private static final int EPOCHS_TO_2X_BATCH = 99999; // never increase
     public static final int EMBED_DIMENSION = 128;
-    public static final int N_RESNET_BLOCKS = 3;
+    public static final int N_RESNET_BLOCKS = 4;
     public static final int KERNEL_SIZE = 9;
-    public static final int NUM_EPOCHS = 10;
-
+    public static final int NUM_EPOCHS = 3; // only limited epochs with iterative training
+    
     public static void main(String[] args) throws Exception {
     	File dir=new File("C:\\Users\\searl\\Documents\\projects\\prosit_examples_final\\");
-    	File modelLocation=new File(dir, "peptide_prediction_model.dl4j");
+    	File saveLocation=new File(dir, "peptide_prediction_model.dl4j");
+    	if (saveLocation.exists()) {
+    		saveLocation.delete();
+    	}
+    	
+    	String[] datasetOrder=new String[] {
+        		"UP000005640_9606.fasta.trypsin.z2_nce33.dlib.z3_nce33.dlib",
+        		"UP000005640_9606.fasta.trypsin.z3_nce33.dlib.z3_nce33.dlib",
+        		"UP000005640_9606.fasta.trypsin.z4_nce33.dlib.z3_nce33.dlib",
+        		"UP000005640_9606.fasta.trypsin.z1_nce33.dlib.z3_nce33.dlib",
+        		"UP000005640_9606.fasta.trypsin.z5_nce33.dlib.z3_nce33.dlib",
+        		"UP000005640_9606.fasta.trypsin.z6_nce33.dlib.z3_nce33.dlib",
+        		"UP000005640_9606.fasta.lys-n.z3_nce33.dlib.z3_nce33.dlib",
+        		"UP000005640_9606.fasta.asp-n.z3_nce33.dlib.z3_nce33.dlib",
+        		"UP000005640_9606.fasta.chymotrypsin.z3_nce33.dlib.z3_nce33.dlib",
+        		"UP000005640_9606.fasta.glu-c.z3_nce33.dlib.z3_nce33.dlib",
+        };
+    	
+    	try {
+    		// start on the "easiest" libraries first	
+    		for (int i = 0; i < datasetOrder.length; i++) {
+				File[] listFiles=new File[i+1];
+				for (int j = 0; j < listFiles.length; j++) {
+					listFiles[j]=new File(dir, datasetOrder[j]);
+				}
+
+	    		runCycle(listFiles, saveLocation);
+			}
+    		
+    	} catch (IOException | SQLException | DataFormatException e) {
+    		Logger.errorLine("Found unexpected IO exception!");
+    		Logger.errorException(e);
+    	}
+    }
+    
+    private static void runCycle(File[] listFiles, File saveLocation) throws IOException, SQLException, DataFormatException {
     	
     	SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
     	AminoAcidConstants aaConstants=parameters.getAAConstants();
 
 		HashMap<String, PeptideEncoding> peptideEncodingBySequence=new HashMap<String, PeptideEncoding>();
-    	File[] listFiles = dir.listFiles(new SimpleFilenameFilter(".dlib"));
-    	
-    	// FIXME
-    	//listFiles=new File[] {new File(dir, "pan_human_library.dlib")};
     	
 		for (File f : listFiles) {
-//			if (f.getName().indexOf(".trypsin")<0) {
-//				continue;
-//			}
         	TObjectFloatHashMap<String> rtByPeptideModSeq=new TObjectFloatHashMap<String>();
     		String rtName=f.getName().substring(0, f.getName().length()-".z3_nce33.dlib".length())+".txt_rts.txt";
     		File rtFile = new File(f.getParent(), rtName);
@@ -114,7 +146,18 @@ public class PeptidePropertiesPredictor {
 
     	Logger.logLine("Loaded data "+peptideEncodingBySequence.size()+" total precursors.");
 
-        MultiLayerNetwork model=createModel(PeptideEncoding.ENCODED_INPUT_SIZE, PeptideEncoding.ENCODED_OUTPUT_SIZE, EMBED_DIMENSION, KERNEL_SIZE, N_RESNET_BLOCKS);
+       MultiLayerNetwork model;
+        if (saveLocation.exists()&&saveLocation.canRead()) {
+            model = ModelSerializer.restoreMultiLayerNetwork(saveLocation);
+            model.setIterationCount(0);
+            model.setListeners(new ScoreIterationListener(1000));
+            Logger.logLine("Existing model loaded successfully.");
+        } else {
+        	// create new model
+	        model=createModel(PeptideEncoding.ENCODED_INPUT_SIZE, PeptideEncoding.ENCODED_OUTPUT_SIZE, 
+	        		EMBED_DIMENSION, KERNEL_SIZE, N_RESNET_BLOCKS);
+            Logger.logLine("New model created.");
+        }
         Logger.logLine(model.summary());
         
         int batchSize=INITIAL_BATCH_SIZE;
@@ -140,9 +183,10 @@ public class PeptidePropertiesPredictor {
             for (int i = 0; i < dataSet.size(); i++) {
     			INDArray row=results.getRow(i);
 				PeptideEncoding peptideEncoding = dataSet.get(i);
-				float spectralContrastAngle=peptideEncoding.score(row);
-
-				contrastAngles.add(spectralContrastAngle);
+				//float spectralContrastAngle=peptideEncoding.score(row);
+				LibraryEntry predicted=peptideEncoding.outputToEntry(new HashSet<>(), row, aaConstants);
+				LibraryEntry original=peptideEncoding.encodingToEntry(new HashSet<>(), aaConstants);
+				contrastAngles.add((float)Correlation.getSpectralAngle(predicted, original, parameters.getFragmentTolerance()));
 			}
         	double averageContrastAngle=0.0;
         	for (int i = 0; i < contrastAngles.size(); i++) {
@@ -155,7 +199,7 @@ public class PeptidePropertiesPredictor {
         	if (averageContrastAngle>bestAverageContrastAngle) {
         		bestAverageContrastAngle=averageContrastAngle;
 	            try {
-	            	ModelSerializer.writeModel(model, modelLocation, true);
+	            	ModelSerializer.writeModel(model, saveLocation, true);
 	            	Logger.logLine("Model saved successfully.");
 	            } catch (IOException ioe) {
 	            	ioe.printStackTrace();

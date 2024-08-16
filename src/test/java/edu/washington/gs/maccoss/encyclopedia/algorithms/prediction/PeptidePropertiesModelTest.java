@@ -49,7 +49,7 @@ public class PeptidePropertiesModelTest extends TestCase {
 		}
     	ArrayList<LibraryEntry> predicted=model.predict(peptidesWithProteins, aaConstants);
 
-    	int index = 32;
+    	int index = 34;
 		LibraryEntry top=new AnnotatedLibraryEntry((LibraryEntry)peptidesWithProteins.get(index), parameters);
     	LibraryEntry bottom=new AnnotatedLibraryEntry(predicted.get(index), parameters);
     	System.out.println(bottom.getPeptideModSeq()+", +"+bottom.getPrecursorCharge());

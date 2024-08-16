@@ -185,6 +185,10 @@ public class PeptideEncoding implements DataSetEncoding {
 		return Correlation.getSpectralContrastAngle(expected.toFloatVector(), output.toFloatVector());
 	}
 	
+	public LibraryEntry encodingToEntry(HashSet<String> accessions, AminoAcidConstants constants) {
+		return outputToEntry(AminoAcidEncoding.getPeptideModSeq(aas, constants), charge, accessions, encodeResult(), constants);
+	}
+	
 	public LibraryEntry outputToEntry(HashSet<String> accessions, INDArray output, AminoAcidConstants constants) {
 		return outputToEntry(AminoAcidEncoding.getPeptideModSeq(aas, constants), charge, accessions, output, constants);
 	}
