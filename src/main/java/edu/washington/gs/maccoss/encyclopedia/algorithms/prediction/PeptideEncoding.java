@@ -1,35 +1,40 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.prediction;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
 
 import org.nd4j.linalg.api.buffer.DataType;
 import org.nd4j.linalg.api.ndarray.INDArray;
-import org.nd4j.linalg.dataset.DataSet;
+import org.nd4j.linalg.dataset.MultiDataSet;
 import org.nd4j.linalg.factory.Nd4j;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.IonType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.Correlation;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
-public class PeptideEncoding implements DataSetEncoding {
+public class PeptideEncoding implements MultiDataSetEncoding {
     private static final float MINIMUM_INTENSITY_THRESHOLD_FOR_TRAINING = 0.05f;
 	public static final DataType DEFAULT_DATA_TYPE = DataType.FLOAT;
 	public static final int MAX_CHARGE=6;
     public static final int MAX_PEPTIDE_LENGTH=32; // number of termini + 30
     
-    public static final int ENCODED_INPUT_SIZE=MAX_PEPTIDE_LENGTH*AminoAcidEncoding.MAX_ENCODING_LENGTH+MAX_CHARGE;
-    public static final int ENCODED_OUTPUT_SIZE=MAX_PEPTIDE_LENGTH*4+2;
+    public static final int ENCODED_INPUT_PEPTIDE_SIZE=MAX_PEPTIDE_LENGTH*AminoAcidEncoding.MAX_ENCODING_LENGTH;
+    public static final int ENCODED_INPUT_CHARGE_SIZE=MAX_CHARGE;
+    
+    public static final int ENCODED_OUTPUT_FRAGMENT_SIZE=MAX_PEPTIDE_LENGTH*4;
+    public static final int ENCODED_OUTPUT_IMS_SIZE=1;
+    public static final int ENCODED_OUTPUT_RT_SIZE=1;
     
 	private final AminoAcidEncoding[] aas;
 	private final byte charge;
@@ -40,7 +45,7 @@ public class PeptideEncoding implements DataSetEncoding {
 	private final float[] yp1;
 	private final float[] yp2;
 	
-	public DataSet encodeDataset() {
+	public MultiDataSet encodeDataset() {
 		//System.out.println("Input: "+encodeInput(aas).shapeInfoToString());
 		//System.out.println("Output: "+encodeResult().shapeInfoToString());
 		//System.out.println("Input Mask: "+encodeInputMask(aas).shapeInfoToString());
@@ -52,37 +57,20 @@ public class PeptideEncoding implements DataSetEncoding {
 		//Output Mask: Rank: 2, DataType: FLOAT, Offset: 0, Order: c, Shape: [1,130],  Stride: [1,1]
 						
 		// TODO why does the input mask need to be absent? 
-    	return new DataSet(encodeInput(), encodeResult(), null, encodeResultMask());
-    	//return new DataSet(encodeInput(aas), encodeResult());
-	}
-	
-	public INDArray encodeInputMask() {
-    	float[] mask=new float[ENCODED_INPUT_SIZE];
-        int start=aas[0].isNTerm()?0:1;
-        for (int i = start; i < aas.length; i++) {
-        	for (int j = 0; j < MAX_PEPTIDE_LENGTH; j++) {
-            	int index=i*MAX_PEPTIDE_LENGTH+j;
-            	mask[index]=1.0f;
-        	}
-        }
-        for (int i = MAX_PEPTIDE_LENGTH*AminoAcidEncoding.MAX_ENCODING_LENGTH; i < ENCODED_INPUT_SIZE; i++) {
-        	mask[i]=1.0f;
-		}
-        
-        return Nd4j.create(mask, new long[] {1, ENCODED_INPUT_SIZE}, DEFAULT_DATA_TYPE);
+		return new MultiDataSet(encodeInput(), encodeResult(), null, encodeResultMask());
 	}
 
-	public INDArray encodeInput() {
+	public INDArray[] encodeInput() {
 		return encodeInput(aas, charge);
 	}
 	
-	public static INDArray encodeInput(String peptideModSeq, byte charge, AminoAcidConstants constants) {
+	public static INDArray[] encodeInput(String peptideModSeq, byte charge, AminoAcidConstants constants) {
 		AminoAcidEncoding[] aas=AminoAcidEncoding.getAAs(peptideModSeq, constants);
 		return encodeInput(aas, charge);
 	}
 
-	public static INDArray encodeInput(AminoAcidEncoding[] aas, byte charge) {
-    	float[] data=new float[ENCODED_INPUT_SIZE];
+	public static INDArray[] encodeInput(AminoAcidEncoding[] aas, byte charge) {
+    	float[] data=new float[ENCODED_INPUT_PEPTIDE_SIZE];
 
         int start=aas[0].isNTerm()?0:1;
         for (int i = start; i < aas.length; i++) {
@@ -101,34 +89,46 @@ public class PeptideEncoding implements DataSetEncoding {
         	int index=i*MAX_PEPTIDE_LENGTH;
         	data[index]=1.0f;
         }
-        
+
         // set charge
-        data[MAX_PEPTIDE_LENGTH*AminoAcidEncoding.MAX_ENCODING_LENGTH+charge-1]=1.0f;
-    	
-        return Nd4j.create(data, new long[] {1, ENCODED_INPUT_SIZE}, DEFAULT_DATA_TYPE);
+        float[] chargeArray=new float[ENCODED_INPUT_CHARGE_SIZE];
+        Arrays.fill(chargeArray, -1.0f);
+        chargeArray[charge-1]=1.0f;
+        
+        return new INDArray[] {
+        		Nd4j.create(data, new long[] {1, AminoAcidEncoding.MAX_ENCODING_LENGTH*MAX_PEPTIDE_LENGTH}, DEFAULT_DATA_TYPE), 
+        		Nd4j.create(chargeArray, new long[] {1, ENCODED_INPUT_CHARGE_SIZE}, DEFAULT_DATA_TYPE)
+        };
 	}
 	
-	public INDArray encodeResultMask() {
+	public INDArray[] encodeResultMask() {
 		float[] mask=new float[MAX_PEPTIDE_LENGTH];
         for (int i = 0; i < aas.length; i++) {
         	mask[i]=1.0f;
         }
 
-		float[] data=General.concatenate(mask, mask, mask, mask, new float[] {1.0f, 1.0f});
-        return Nd4j.create(data, new long[] {1, ENCODED_OUTPUT_SIZE}, DEFAULT_DATA_TYPE);
+		float[] data=General.concatenate(mask, mask, mask, mask);
+
+		return new INDArray[] {
+				Nd4j.create(data, new long[] {1, ENCODED_OUTPUT_FRAGMENT_SIZE}, DEFAULT_DATA_TYPE),
+				Nd4j.create(new float[] {1.0f}, new long[] {1, ENCODED_OUTPUT_RT_SIZE}, DEFAULT_DATA_TYPE),
+				Nd4j.create(new float[] {1.0f}, new long[] {1, ENCODED_OUTPUT_IMS_SIZE}, DEFAULT_DATA_TYPE)
+		};
 	}
 	
-	public INDArray encodeResult() {
-		float[] data=new float[ENCODED_OUTPUT_SIZE];
-		data[data.length-2]=rtInSec;
-		data[data.length-1]=ims;
+	public INDArray[] encodeResult() {
+		float[] data=new float[ENCODED_OUTPUT_FRAGMENT_SIZE];
 		
 		System.arraycopy(bp1, 0, data, 0, bp1.length);
 		System.arraycopy(bp2, 0, data, MAX_PEPTIDE_LENGTH, bp2.length);
 		System.arraycopy(yp1, 0, data, MAX_PEPTIDE_LENGTH*2, yp1.length);
 		System.arraycopy(yp2, 0, data, MAX_PEPTIDE_LENGTH*3, yp2.length);
 		
-		return Nd4j.create(data, new long[] {1, ENCODED_OUTPUT_SIZE}, DEFAULT_DATA_TYPE);
+		return new INDArray[] {
+				Nd4j.create(data, new long[] {1, ENCODED_OUTPUT_FRAGMENT_SIZE}, DEFAULT_DATA_TYPE),
+				Nd4j.create(new float[] {rtInSec}, new long[] {1, ENCODED_OUTPUT_RT_SIZE}, DEFAULT_DATA_TYPE),
+				Nd4j.create(new float[] {ims}, new long[] {1, ENCODED_OUTPUT_IMS_SIZE}, DEFAULT_DATA_TYPE)
+		};
 	}
 	
 	public PeptideEncoding(LibraryEntry entry, float rtInSec, SearchParameters parameters) {
@@ -180,20 +180,31 @@ public class PeptideEncoding implements DataSetEncoding {
 		}
 	}
 	
-	public float score(INDArray output) {
-		INDArray expected=encodeResult();
-		return Correlation.getSpectralContrastAngle(expected.toFloatVector(), output.toFloatVector());
+	public float score(INDArray[] output) {
+		INDArray[] expected=encodeResult();
+		
+		throw new EncyclopediaException("Not IMPLEMENTED YET!!!!"); //FIXME
+		//return Correlation.getSpectralContrastAngle(expected.toFloatVector(), output.toFloatVector());
 	}
 	
 	public LibraryEntry encodingToEntry(HashSet<String> accessions, AminoAcidConstants constants) {
 		return outputToEntry(AminoAcidEncoding.getPeptideModSeq(aas, constants), charge, accessions, encodeResult(), constants);
 	}
 	
-	public LibraryEntry outputToEntry(HashSet<String> accessions, INDArray output, AminoAcidConstants constants) {
+	public LibraryEntry outputToEntry(HashSet<String> accessions, INDArray[] output, AminoAcidConstants constants) {
 		return outputToEntry(AminoAcidEncoding.getPeptideModSeq(aas, constants), charge, accessions, output, constants);
 	}
 	
-	public static LibraryEntry outputToEntry(String peptideModSeq, byte charge, HashSet<String> accessions, INDArray output, AminoAcidConstants constants) {
+	public static LibraryEntry outputToEntry(String peptideModSeq, byte charge, HashSet<String> accessions, INDArray[] output, AminoAcidConstants constants) {
+		float[] data=output[0].toFloatVector();
+		float rtInSec=output[1].getFloat(0);
+		float ionMobility=output[2].getFloat(0);
+		
+		return outputToEntry(peptideModSeq, data, rtInSec, ionMobility, charge, accessions, constants);
+	}
+
+	public static LibraryEntry outputToEntry(String peptideModSeq, float[] data, float rtInSec, float ionMobility,
+			byte charge, HashSet<String> accessions, AminoAcidConstants constants) {
 		FragmentationModel model=PeptideUtils.getPeptideModel(peptideModSeq, constants);
 		FragmentIon[] bIons=model.getBIons(false);
 		FragmentIon[] bp2Ions=FragmentationModel.getPlus2s(bIons);
@@ -201,8 +212,6 @@ public class PeptideEncoding implements DataSetEncoding {
 		FragmentIon[] yp2Ions=FragmentationModel.getPlus2s(yIons);
 		
 		ArrayList<Peak> peaks=new ArrayList<Peak>();
-		
-		float[] data=output.toFloatVector();
 		
 		int index=0;
 		for (int i = 0; i < bIons.length; i++) {
@@ -242,8 +251,6 @@ public class PeptideEncoding implements DataSetEncoding {
 		double[] massArray=triplet.x;
 		float[] intensityArray=triplet.y;
 		
-		float rtInSec=data[data.length-2];
-		float ionMobility=data[data.length-1];
 		
 		return new LibraryEntry(peptideModSeq, accessions, model.getChargedMass(charge), charge, peptideModSeq, 0, rtInSec, 0.0f, massArray, intensityArray, Optional.of(ionMobility), constants);
 	}

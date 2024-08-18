@@ -93,8 +93,8 @@ public class PeptidePropertiesModelTest extends TestCase {
 		}
 		for (LibraryEntry entry : entries) {
 			PeptideEncoding encoding=new PeptideEncoding(entry, entry.getScanStartTime(), parameters);
-			INDArray encodeInput = encoding.encodeInput();
-			INDArray encodeResult = encoding.encodeResult();
+			INDArray[] encodeInput = encoding.encodeInput();
+			INDArray[] encodeResult = encoding.encodeResult();
 			
 //			System.out.println("Input: ");
 //			System.out.println(General.toString(encodeInput.toFloatVector()));

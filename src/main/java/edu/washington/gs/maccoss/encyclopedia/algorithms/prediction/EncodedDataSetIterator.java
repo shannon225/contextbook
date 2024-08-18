@@ -8,7 +8,7 @@ import org.nd4j.linalg.dataset.api.DataSetPreProcessor;
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
 
 public class EncodedDataSetIterator implements DataSetIterator {
-    private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 1L;
     final private int batch;
 	private final ArrayList<? extends DataSetEncoding> peptides;
 

@@ -42,7 +42,7 @@ import gnu.trove.list.array.TFloatArrayList;
 
 public class PeptideRTPredictor {
 	private static final int INITIAL_BATCH_SIZE = 64;
-	private static final int MAX_BATCH_SIZE = 1024;
+	public static final int MAX_BATCH_SIZE = 1024;
     public static final int EMBED_DIMENSION = 64;
     public static final int N_RESNET_BLOCKS = 3;
     public static final int KERNEL_SIZE = 7;

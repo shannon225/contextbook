@@ -11,24 +11,26 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.zip.DataFormatException;
 
+import org.deeplearning4j.nn.conf.ComputationGraphConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
+import org.deeplearning4j.nn.conf.graph.MergeVertex;
+import org.deeplearning4j.nn.conf.inputs.InputType;
 import org.deeplearning4j.nn.conf.layers.Convolution1DLayer;
 import org.deeplearning4j.nn.conf.layers.DenseLayer;
 import org.deeplearning4j.nn.conf.layers.DropoutLayer;
 import org.deeplearning4j.nn.conf.layers.OutputLayer;
 import org.deeplearning4j.nn.conf.layers.ZeroPadding1DLayer;
-import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
+import org.deeplearning4j.nn.graph.ComputationGraph;
 import org.deeplearning4j.nn.weights.WeightInit;
 import org.deeplearning4j.optimize.listeners.ScoreIterationListener;
 import org.deeplearning4j.util.ModelSerializer;
 import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.api.ndarray.INDArray;
-import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
+import org.nd4j.linalg.dataset.api.iterator.MultiDataSetIterator;
 import org.nd4j.linalg.learning.config.Adam;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
@@ -47,15 +49,18 @@ import gnu.trove.map.hash.TObjectFloatHashMap;
 public class PeptidePropertiesPredictor {
 	private static final int REPORTING_BATCH_SIZE = 1000;
 	private static final int INITIAL_BATCH_SIZE = 64;
-	private static final int MAX_BATCH_SIZE = 1024;
+	public static final int MAX_BATCH_SIZE = 1024;
 	private static final int EPOCHS_TO_2X_BATCH = 99999; // never increase
     public static final int EMBED_DIMENSION = 128;
-    public static final int N_RESNET_BLOCKS = 4;
+    public static final int N_RESNET_BLOCKS = 3;
     public static final int KERNEL_SIZE = 9;
     public static final int NUM_EPOCHS = 3; // only limited epochs with iterative training
     
     public static void main(String[] args) throws Exception {
     	File dir=new File("C:\\Users\\searl\\Documents\\projects\\prosit_examples_final\\");
+    	
+    	// FIXME
+    	dir=new File("/Users/searleb/Downloads/");
     	File saveLocation=new File(dir, "peptide_prediction_model.dl4j");
     	if (saveLocation.exists()) {
     		saveLocation.delete();
@@ -73,6 +78,9 @@ public class PeptidePropertiesPredictor {
         		"UP000005640_9606.fasta.chymotrypsin.z3_nce33.dlib.z3_nce33.dlib",
         		"UP000005640_9606.fasta.glu-c.z3_nce33.dlib.z3_nce33.dlib",
         };
+    	
+    	// FIXME
+    	datasetOrder=new String[] {"pan_human_library.dlib"};
     	
     	try {
     		// start on the "easiest" libraries first	
@@ -146,16 +154,17 @@ public class PeptidePropertiesPredictor {
 
     	Logger.logLine("Loaded data "+peptideEncodingBySequence.size()+" total precursors.");
 
-       MultiLayerNetwork model;
+    	ComputationGraph model;
         if (saveLocation.exists()&&saveLocation.canRead()) {
-            model = ModelSerializer.restoreMultiLayerNetwork(saveLocation);
-            model.setIterationCount(0);
-            model.setListeners(new ScoreIterationListener(1000));
+            model = ModelSerializer.restoreComputationGraph(saveLocation);
+            model.getConfiguration().setIterationCount(0);
+            model.getConfiguration().setEpochCount(0);
+            model.setListeners(new ScoreIterationListener(REPORTING_BATCH_SIZE));
             Logger.logLine("Existing model loaded successfully.");
         } else {
         	// create new model
-	        model=createModel(PeptideEncoding.ENCODED_INPUT_SIZE, PeptideEncoding.ENCODED_OUTPUT_SIZE, 
-	        		EMBED_DIMENSION, KERNEL_SIZE, N_RESNET_BLOCKS);
+	        model=createModel(EMBED_DIMENSION, KERNEL_SIZE, N_RESNET_BLOCKS, 0.9f);
+            model.setListeners(new ScoreIterationListener(REPORTING_BATCH_SIZE));
             Logger.logLine("New model created.");
         }
         Logger.logLine(model.summary());
@@ -172,19 +181,24 @@ public class PeptidePropertiesPredictor {
         	Logger.logLine("Starting epoch "+e+", batch size: "+batchSize);
         	Collections.shuffle(dataSet);
 
-            DataSetIterator iterator = new EncodedDataSetIterator(dataSet, batchSize);
+        	MultiDataSetIterator iterator = new EncodedMultiDataSetIterator(dataSet, batchSize);
             model.fit(iterator);
             
-            DataSetIterator fullIterator = new EncodedDataSetIterator(dataSet, MAX_BATCH_SIZE);
-            INDArray results=model.output(fullIterator);
-            results=results.reshape(dataSet.size(), PeptideEncoding.ENCODED_OUTPUT_SIZE);
+            MultiDataSetIterator fullIterator = new EncodedMultiDataSetIterator(dataSet, MAX_BATCH_SIZE);
+            INDArray[] results=model.output(fullIterator);
+            
+            INDArray fragmentationResults=results[0].reshape(dataSet.size(), PeptideEncoding.ENCODED_OUTPUT_FRAGMENT_SIZE);
+            INDArray rtResults=results[1].reshape(dataSet.size(), PeptideEncoding.ENCODED_OUTPUT_RT_SIZE);
+            INDArray imsResults=results[2].reshape(dataSet.size(), PeptideEncoding.ENCODED_OUTPUT_IMS_SIZE);
 
             TFloatArrayList contrastAngles=new TFloatArrayList();
             for (int i = 0; i < dataSet.size(); i++) {
-    			INDArray row=results.getRow(i);
+    			INDArray fragRow=fragmentationResults.getRow(i);
+    			INDArray rtRow=rtResults.getRow(i);
+    			INDArray imsRow=imsResults.getRow(i);
 				PeptideEncoding peptideEncoding = dataSet.get(i);
 				//float spectralContrastAngle=peptideEncoding.score(row);
-				LibraryEntry predicted=peptideEncoding.outputToEntry(new HashSet<>(), row, aaConstants);
+				LibraryEntry predicted=peptideEncoding.outputToEntry(new HashSet<>(), new INDArray[] {fragRow, rtRow, imsRow}, aaConstants);
 				LibraryEntry original=peptideEncoding.encodingToEntry(new HashSet<>(), aaConstants);
 				contrastAngles.add((float)Correlation.getSpectralAngle(predicted, original, parameters.getFragmentTolerance()));
 			}
@@ -215,58 +229,73 @@ public class PeptidePropertiesPredictor {
         }
     }
     
-    private static MultiLayerNetwork createModel(int inputSize, int outputSize, int embedDim, int kernelSize, int resnetBlocks) {
-    	NeuralNetConfiguration.ListBuilder builder = new NeuralNetConfiguration.Builder()
+    private static ComputationGraph createModel(int embedDim, int kernelSize, int resnetBlocks, double dropRate) {
+        ComputationGraphConfiguration.GraphBuilder graph = new NeuralNetConfiguration.Builder()
+                .weightInit(WeightInit.XAVIER)
                 .updater(new Adam(0.001))
-                .dataType(PeptideEncoding.DEFAULT_DATA_TYPE)
-                .list();
-
-        // embedding layer
-        builder.layer(new DenseLayer.Builder()
-                .nIn(inputSize)
+                .graphBuilder()
+                .addInputs("sequence", "charge")
+                .setInputTypes(InputType.feedForward(AminoAcidEncoding.MAX_ENCODING_LENGTH*PeptideEncoding.MAX_PEPTIDE_LENGTH), 
+                		InputType.feedForward(PeptideEncoding.ENCODED_INPUT_CHARGE_SIZE));
+                
+        // Sequence embedding
+        graph.addLayer("seq_embedding", new DenseLayer.Builder()
+                .nIn(AminoAcidEncoding.MAX_ENCODING_LENGTH*PeptideEncoding.MAX_PEPTIDE_LENGTH)
                 .nOut(embedDim)
-                .activation(Activation.RELU)
-                .weightInit(WeightInit.XAVIER)
-                .build());
-        
-        // resnet blocks
-        for (int dilationRate = 1; dilationRate <=resnetBlocks; dilationRate++) {
-            builder.layer(new Convolution1DLayer.Builder()
-    		        .kernelSize(1)
-    		        .stride(1)
-    		        .nIn(embedDim)
-    		        .nOut(embedDim)
-    		        .activation(Activation.RELU)
-    		        .weightInit(WeightInit.XAVIER)
-    		        .build());
-            
-            builder.layer(new ZeroPadding1DLayer.Builder(dilationRate * (kernelSize - 1) / 2).build());
+                .build(), "sequence");
 
-            builder.layer(new Convolution1DLayer.Builder()
-    		        .kernelSize(kernelSize)
-    		        .stride(1)
-    		        .dilation(dilationRate)
-    		        .nOut(embedDim)
-    		        .activation(Activation.RELU)
-    		        .weightInit(WeightInit.XAVIER)
-    		        .build());
-		}
+        // Charge embedding
+        graph.addLayer("charge_embedding", new DenseLayer.Builder()
+		        .nIn(PeptideEncoding.MAX_CHARGE)
+		        .nOut(embedDim)
+		        .activation(Activation.IDENTITY)
+		        .build(), "charge");
         
-        // dropout layer (keep 90% of changes)
-        builder.layer(new DropoutLayer.Builder(0.9).build());
+        // Combine embeddings
+        graph.addVertex("merged", new MergeVertex(), "seq_embedding", "charge_embedding");
+
+        String previousLayer="merged";
+        // add ResNet blocks
+        for (int i = 1; i <= resnetBlocks; i++) {
+	        graph.addLayer("resnet_block_a_" + i, new Convolution1DLayer.Builder()
+	                .kernelSize(1).stride(1).dilation(i).nOut(embedDim)
+	                .activation(Activation.RELU).build(), previousLayer);
+	        
+	        graph.addLayer("resnet_block_b_" + i, new ZeroPadding1DLayer.Builder(i * (kernelSize - 1) / 2).build(), 
+	        		"resnet_block_a_" + i);
+	        
+	        graph.addLayer("resnet_block_c_" + i, new Convolution1DLayer.Builder()
+			        .kernelSize(kernelSize).stride(1).dilation(i).nOut(embedDim)
+			        .activation(Activation.RELU).weightInit(WeightInit.XAVIER)
+			        .build(), "resnet_block_b_"+i);
+	        previousLayer="resnet_block_c_" + i;
+        }
+
+        // Dropout layer (probability of retaining input activation)
+        graph.addLayer("dropout", new DropoutLayer.Builder(dropRate).build(), previousLayer);
         
-        // output layer
-        builder.layer(new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
-                .nIn(embedDim)
-                .nOut(outputSize)
+        // Output layers
+        graph.addLayer("fragmentation_output", new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
                 .activation(Activation.IDENTITY)
-                .weightInit(WeightInit.XAVIER)
-                .build());
+                .nOut(PeptideEncoding.ENCODED_OUTPUT_FRAGMENT_SIZE)
+                .build(), "dropout");
 
-        MultiLayerNetwork model = new MultiLayerNetwork(builder.build());
+        // Retention time output branch
+        graph.addLayer("ret_time_output", new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
+                .activation(Activation.IDENTITY)
+                .nOut(PeptideEncoding.ENCODED_OUTPUT_RT_SIZE)
+                .build(), "dropout");
+
+        // Ion mobility output branch
+        graph.addLayer("ion_mobility_output", new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
+                .activation(Activation.IDENTITY)
+                .nOut(PeptideEncoding.ENCODED_OUTPUT_IMS_SIZE)
+                .build(), "dropout");
+
+        graph.setOutputs("fragmentation_output", "ret_time_output", "ion_mobility_output");
+
+        ComputationGraph model = new ComputationGraph(graph.build());
         model.init();
-        model.setListeners(new ScoreIterationListener(REPORTING_BATCH_SIZE));
-
         return model;
     }
 }

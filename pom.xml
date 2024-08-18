@@ -577,12 +577,16 @@
 				nd4j-native</artifactId>
 			<version>1.0.0-M2.1</version>
 		</dependency>
+		
+		<!-- 	
 		<dependency>
 			<groupId>
 				org.nd4j</groupId>
 			<artifactId>nd4j-cuda-11.6</artifactId>
 			<version>1.0.0-M2.1</version>
 		</dependency>
+		 -->
+		 
 		<dependency>
 			<groupId>org.bytedeco</groupId>
 			<artifactId>cuda-platform-redist</artifactId>
