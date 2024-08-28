@@ -77,6 +77,7 @@ import edu.washington.gs.maccoss.encyclopedia.filewriters.MSPWriter;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PrositCSVWriter;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.StripeFileMerger;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.StripeFileTrimmer;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.web.KoinaFeaturePredictionModel;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.web.KoinaLibraryPredictionClient;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.curves.DilutionCurveFitterDialog;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.curves.TargetedSchedulerDialog;
@@ -1128,6 +1129,7 @@ public class SearchPanelUtilities {
 		okButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				ArrayList<KoinaFeaturePredictionModel> models = KoinaLibraryPredictionClient.getDefaultModels();
 				final File fastaFile=fastaFileChooser.getFile();
 				byte defaultNCE=((Number)defaultNCESpinner.getValue()).byteValue();
 				byte defaultCharge=((Number)defaultChargeSpinner.getValue()).byteValue();
@@ -1152,7 +1154,7 @@ public class SearchPanelUtilities {
 
 						@Override
 						public void runJob(ProgressIndicator progress) throws Exception {
-							KoinaLibraryPredictionClient.writeLibrary(null, fastaFile, enzyme, defaultNCE, defaultCharge, minCharge, maxCharge, maxMissedCleavages, new Range(minimumMz, maximumMz), isAdjustNCEForDIA, isAddDecoys, params, progress);
+							KoinaLibraryPredictionClient.writeLibrary(models, null, fastaFile, enzyme, defaultNCE, defaultCharge, minCharge, maxCharge, maxMissedCleavages, new Range(minimumMz, maximumMz), isAdjustNCEForDIA, isAddDecoys, params, progress);
 						}
 					};
 					processor.addJob(job);
@@ -1369,6 +1371,7 @@ public class SearchPanelUtilities {
 		okButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				ArrayList<KoinaFeaturePredictionModel> models = KoinaLibraryPredictionClient.getDefaultModels();
 				final File libraryFile=libraryFileChooser.getFile();
 				final byte defaultNCE=((Number)defaultNCESpinner.getValue()).byteValue();
 				final byte defaultCharge=((Number)defaultChargeSpinner.getValue()).byteValue();
@@ -1390,7 +1393,7 @@ public class SearchPanelUtilities {
 							LibraryFile library=new LibraryFile();
 							library.openFile(libraryFile);
 							//PrositCSVWriter.writeCSV(library, defaultNCE, defaultCharge, isAdjustNCEForDIA, isAddDecoys);
-							KoinaLibraryPredictionClient.writeLibrary(null, library, defaultNCE, defaultCharge, isAdjustNCEForDIA, isAddDecoys, params, progress);
+							KoinaLibraryPredictionClient.writeLibrary(models, null, library, defaultNCE, defaultCharge, isAdjustNCEForDIA, isAddDecoys, params, progress);
 						}
 					};
 					processor.addJob(job);

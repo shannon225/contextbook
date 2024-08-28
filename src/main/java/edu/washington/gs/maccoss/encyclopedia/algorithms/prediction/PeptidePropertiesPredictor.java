@@ -13,13 +13,15 @@ import java.util.zip.DataFormatException;
 
 import org.deeplearning4j.nn.conf.ComputationGraphConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
-import org.deeplearning4j.nn.conf.graph.MergeVertex;
+import org.deeplearning4j.nn.conf.graph.ElementWiseVertex;
+import org.deeplearning4j.nn.conf.graph.ElementWiseVertex.Op;
 import org.deeplearning4j.nn.conf.inputs.InputType;
 import org.deeplearning4j.nn.conf.layers.Convolution1DLayer;
 import org.deeplearning4j.nn.conf.layers.DenseLayer;
 import org.deeplearning4j.nn.conf.layers.DropoutLayer;
 import org.deeplearning4j.nn.conf.layers.OutputLayer;
 import org.deeplearning4j.nn.conf.layers.ZeroPadding1DLayer;
+import org.deeplearning4j.nn.conf.preprocessor.RnnToCnnPreProcessor;
 import org.deeplearning4j.nn.graph.ComputationGraph;
 import org.deeplearning4j.nn.weights.WeightInit;
 import org.deeplearning4j.optimize.listeners.ScoreIterationListener;
@@ -164,6 +166,7 @@ public class PeptidePropertiesPredictor {
         } else {
         	// create new model
 	        model=createModel(EMBED_DIMENSION, KERNEL_SIZE, N_RESNET_BLOCKS, 0.9f);
+	        //model=ResNetBuilder.createModel(EMBED_DIMENSION, KERNEL_SIZE, N_RESNET_BLOCKS, 0.9f);
             model.setListeners(new ScoreIterationListener(REPORTING_BATCH_SIZE));
             Logger.logLine("New model created.");
         }
@@ -252,11 +255,18 @@ public class PeptidePropertiesPredictor {
 		        .build(), "charge");
         
         // Combine embeddings
-        graph.addVertex("merged", new MergeVertex(), "seq_embedding", "charge_embedding");
+        graph.addVertex("merged", new ElementWiseVertex(Op.Product), "seq_embedding", "charge_embedding");
 
         String previousLayer="merged";
+        //graph.inputPreProcessor("resnet_block_a_1", new RnnToCnnPreProcessor(1, embedDim, 1));
+        
         // add ResNet blocks
         for (int i = 1; i <= resnetBlocks; i++) {
+//        	graph.addLayer("dense_"+i, new DenseLayer.Builder()
+//                    .nOut(embedDim)
+//                    .build(), previousLayer);
+//	        previousLayer="dense_"+i;
+        	
 	        graph.addLayer("resnet_block_a_" + i, new Convolution1DLayer.Builder()
 	                .kernelSize(1).stride(1).dilation(i).nOut(embedDim)
 	                .activation(Activation.RELU).build(), previousLayer);
