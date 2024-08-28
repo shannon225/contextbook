@@ -1,6 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.cli;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.TreeMap;
@@ -9,6 +10,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaToPrositCSVPar
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaToPrositCSVParametersParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.web.KoinaFeaturePredictionModel;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.web.KoinaLibraryPredictionClient;
 import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
@@ -44,6 +46,7 @@ public class ConvertFastaToKoinaPrositLibrary {
 			Logger.errorLine("You are required to specify a FASTA file (-i)");
 			System.exit(1);
 		}
+		ArrayList<KoinaFeaturePredictionModel> models = KoinaLibraryPredictionClient.getDefaultModels();
 
 		String outputFile = null;
 		if (arguments.containsKey("-o")) {
@@ -54,7 +57,7 @@ public class ConvertFastaToKoinaPrositLibrary {
 		FastaToPrositCSVParameters params= FastaToPrositCSVParametersParser.parseParameters(arguments);
 		try {
 			if (fastaFile.exists()) {
-				KoinaLibraryPredictionClient.writeLibrary(outputFile, fastaFile, params.getEnzyme(), params.getDefaultNCE(), params.getDefaultCharge(),
+				KoinaLibraryPredictionClient.writeLibrary(models, outputFile, fastaFile, params.getEnzyme(), params.getDefaultNCE(), params.getDefaultCharge(),
 						params.getMinCharge(), params.getMaxCharge(), params.getMaxMissedCleavage(), new Range(params.getMinMz(), params.getMaxMz()), 
 						params.isAdjustNCEForDIA(), params.isAddDecoys(), SearchParameterParser.getDefaultParametersObject(), new EmptyProgressIndicator(false));
 				
