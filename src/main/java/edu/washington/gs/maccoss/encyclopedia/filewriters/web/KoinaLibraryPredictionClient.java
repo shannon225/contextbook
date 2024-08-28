@@ -27,7 +27,10 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PrositCSVWriter;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.web.models.fragmentation.Prosit2020HCDModel;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.web.models.fragmentation.Prosit2023timsTOFModel;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.web.models.ims.AlphaPeptDeepIMSModel;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.web.models.ims.IM2DeepIMSModel;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.web.models.rt.DeepLCHelaRTModel;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.web.models.rt.Prosit2019RTModel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
@@ -52,7 +55,10 @@ public class KoinaLibraryPredictionClient {
 		precursors.add(new KoinaPrecursor("GAGSSEPVTGLDAK", 25f, (byte)2));
 		
 		AminoAcidConstants constants = new AminoAcidConstants();
-		ArrayList<KoinaFeaturePredictionModel> models = getDefaultModels();
+		ArrayList<KoinaFeaturePredictionModel> models=new ArrayList<KoinaFeaturePredictionModel>();
+		models.add(new Prosit2023timsTOFModel());
+		models.add(new DeepLCHelaRTModel());
+		models.add(new AlphaPeptDeepIMSModel());
 		KoinaLibraryPredictionClient client=new KoinaLibraryPredictionClient(models);
 		runKoinaOnBatch(client, precursors);
 		
