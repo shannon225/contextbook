@@ -26,9 +26,9 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PrositCSVWriter;
-import edu.washington.gs.maccoss.encyclopedia.filewriters.web.models.fragmentation.IM2DeepModel;
-import edu.washington.gs.maccoss.encyclopedia.filewriters.web.models.fragmentation.Prosit2019RTModel;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.web.models.fragmentation.Prosit2020HCDModel;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.web.models.ims.IM2DeepIMSModel;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.web.models.rt.Prosit2019RTModel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
@@ -66,7 +66,7 @@ public class KoinaLibraryPredictionClient {
 		ArrayList<KoinaFeaturePredictionModel> models=new ArrayList<KoinaFeaturePredictionModel>();
 		models.add(new Prosit2020HCDModel());
 		models.add(new Prosit2019RTModel());
-		models.add(new IM2DeepModel());
+		models.add(new IM2DeepIMSModel());
 		return models;
 	}
 	
