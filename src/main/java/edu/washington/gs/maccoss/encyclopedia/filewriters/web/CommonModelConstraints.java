@@ -35,21 +35,23 @@ public class CommonModelConstraints {
 		return true;
 	}
 	public static boolean canModelPeptideAlphaPeptDeep(AminoAcidEncoding[] aas, byte precursorCharge) {
-		if (precursorCharge<2||precursorCharge>4) {
+		if (precursorCharge<1||precursorCharge>6) {
 			return false;
 		}
-		if (aas.length<7||aas.length>35) return false;
+		if (aas.length<2||aas.length>198) return false;
 		
-		for (int i = 0; i < aas.length; i++) {
-			if (aas[i].getIndex()>22) {
-				if (aas[i]!=AminoAcidEncoding.nAc) { 
-					return false;
-				}
-			}
-		}
+		// no PTM constraint
+		
 		return true;
 	}
 	public static boolean canModelPeptideDeepLC(AminoAcidEncoding[] aas, byte precursorCharge) {
-		return true; // TODO is this really the case?!
+		if (precursorCharge<1||precursorCharge>6) {
+			return false;
+		}
+		if (aas.length<4||aas.length>60) return false;
+		
+		// no PTM constraint
+		
+		return true;
 	}
 }
