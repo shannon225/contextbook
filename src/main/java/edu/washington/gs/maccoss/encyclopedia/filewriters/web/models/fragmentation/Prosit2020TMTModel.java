@@ -14,6 +14,8 @@ import java.util.List;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.prediction.AminoAcidEncoding;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.web.CommonModelConstraints;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.web.KoinaPrecursor;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.web.PrositFragmentationPredictionModel;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
@@ -31,6 +33,11 @@ public class Prosit2020TMTModel extends PrositFragmentationPredictionModel {
 	public Prosit2020TMTModel(boolean isHCD) {
 		super();
 		this.isHCD = isHCD;
+	}
+	
+	@Override
+	public boolean canModelPeptide(AminoAcidEncoding[] aas, byte precursorCharge) {
+		return CommonModelConstraints.canModelPeptidePrositTMT(aas, precursorCharge);
 	}
 
 	@Override

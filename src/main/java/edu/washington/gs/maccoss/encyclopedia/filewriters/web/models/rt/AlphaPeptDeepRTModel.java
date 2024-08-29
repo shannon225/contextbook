@@ -3,6 +3,8 @@ package edu.washington.gs.maccoss.encyclopedia.filewriters.web.models.rt;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.prediction.AminoAcidEncoding;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.web.CommonModelConstraints;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.web.RTPredictionModel;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 
@@ -19,6 +21,11 @@ public class AlphaPeptDeepRTModel extends RTPredictionModel {
 		} catch (MalformedURLException e) {
 			throw new EncyclopediaException("Error getting Koina URL", e);
 		}
+	}
+	
+	@Override
+	public boolean canModelPeptide(AminoAcidEncoding[] aas, byte precursorCharge) {
+		return CommonModelConstraints.canModelPeptideAlphaPeptDeep(aas, precursorCharge);
 	}
 
 }

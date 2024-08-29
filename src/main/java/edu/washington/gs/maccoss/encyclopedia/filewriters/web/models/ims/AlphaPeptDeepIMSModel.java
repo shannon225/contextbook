@@ -3,6 +3,7 @@ package edu.washington.gs.maccoss.encyclopedia.filewriters.web.models.ims;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.prediction.AminoAcidEncoding;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.web.IMSPredictionModel;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 
@@ -19,6 +20,23 @@ public class AlphaPeptDeepIMSModel extends IMSPredictionModel {
 		} catch (MalformedURLException e) {
 			throw new EncyclopediaException("Error getting Koina URL", e);
 		}
+	}
+	
+	@Override
+	public boolean canModelPeptide(AminoAcidEncoding[] aas, byte precursorCharge) {
+		if (precursorCharge<2||precursorCharge>4) {
+			return false;
+		}
+		if (aas.length<7||aas.length>35) return false;
+		
+		for (int i = 0; i < aas.length; i++) {
+			if (aas[i].getIndex()>22) {
+				if (aas[i]!=AminoAcidEncoding.nAc) { 
+					return false;
+				}
+			}
+		}
+		return true;
 	}
 
 }

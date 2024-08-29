@@ -12,6 +12,7 @@ import java.util.List;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.prediction.AminoAcidEncoding;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
@@ -31,6 +32,11 @@ public abstract class PrositFragmentationPredictionModel implements KoinaFeature
 			peptides.get(i).setMzs(pair.getX());
 			peptides.get(i).setIntensities(pair.getY());
 		}
+	}
+	
+	@Override
+	public boolean canModelPeptide(AminoAcidEncoding[] aas, byte precursorCharge) {
+		return CommonModelConstraints.canModelPeptidePrositStandard(aas, precursorCharge);
 	}
     
     @Override
