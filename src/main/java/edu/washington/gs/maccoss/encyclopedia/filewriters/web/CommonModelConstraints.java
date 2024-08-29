@@ -9,9 +9,11 @@ public class CommonModelConstraints {
 			return false;
 		}
 		if (aas.length<7||aas.length>30) return false;
-		
+
 		for (int i = 0; i < aas.length; i++) {
-			if (aas[i].getIndex()>22) return false;
+			if (!aas[i].isStandardAminoAcid()&&aas[i]!=AminoAcidEncoding.Mox) {
+				return false;
+			}
 		}
 		return true;
 	}
@@ -26,10 +28,8 @@ public class CommonModelConstraints {
 		if (aas[0]!=AminoAcidEncoding.nTMT10) return false;
 		
 		for (int i = 1; i < aas.length; i++) {
-			if (aas[i].getIndex()>22) {
-				if (aas[i]!=AminoAcidEncoding.KTMT10) { 
-					return false;
-				}
+			if (!aas[i].isStandardAminoAcid()&&aas[i]!=AminoAcidEncoding.Mox&&aas[i]!=AminoAcidEncoding.KTMT10) { 
+				return false;
 			}
 		}
 		return true;

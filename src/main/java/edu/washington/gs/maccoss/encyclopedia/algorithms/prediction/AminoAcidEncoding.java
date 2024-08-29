@@ -64,6 +64,14 @@ public enum AminoAcidEncoding {
 		return index;
 	}
 	
+	/**
+	 * @return
+	 */
+	public boolean isStandardAminoAcid() {
+		if (index<=21||index==42||index==43) return true;
+		return false;
+	}
+	
 	public String toString() {
 		switch (this) {
 			case A: return "A";
