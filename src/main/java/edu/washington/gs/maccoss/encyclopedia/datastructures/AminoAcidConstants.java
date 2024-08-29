@@ -166,6 +166,23 @@ public class AminoAcidConstants {
 		return variableMods;
 	}
 	
+	public String toPeptideModSeq(String peptideSeq) {
+		char[] aas=peptideSeq.toCharArray();
+		StringBuilder sb=new StringBuilder();
+		for (int i = 0; i < aas.length; i++) {
+			sb.append(aas[i]);
+			double mod=fixedMods.get(aas[i]);
+			if (mod!=0.0) {
+				sb.append('[');
+				if (mod>0) sb.append('+');
+				sb.append(mod);
+				sb.append(']');
+			}
+		}
+		
+		return sb.toString();
+	}
+	
 	public String getFixedModString() {
 		final StringBuilder sb=new StringBuilder();
 		fixedMods.forEachEntry(new TCharDoubleProcedure() {

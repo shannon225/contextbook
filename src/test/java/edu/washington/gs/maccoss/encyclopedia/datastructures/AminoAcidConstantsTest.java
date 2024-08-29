@@ -22,6 +22,11 @@ public class AminoAcidConstantsTest extends TestCase {
 		System.out.println(PARAMETERS.getAAConstants().getMass(pep));
 	}
 	
+	public void testPeptideModSeq() {
+		String pep="AAGPLLTDECR";
+		assertEquals("AAGPLLTDEC[+57.0214635]R", PARAMETERS.getAAConstants().toPeptideModSeq(pep));
+	}
+	
 	public void testGetChargedMass() {
 		AminoAcidConstants NO_MODS = new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
 		String pep="MAREC[+57.0214635]YSPEPTIDESK";

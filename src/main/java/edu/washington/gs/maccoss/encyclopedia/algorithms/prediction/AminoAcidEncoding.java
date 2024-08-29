@@ -174,6 +174,13 @@ public enum AminoAcidEncoding {
 			default: return false;
 		}
 	}
+	
+	public boolean isCTerm() {
+		switch (this) {
+			case c: return true;
+			default: return false;
+		}
+	}
 
 	/**
 	 * NOTE: will return NULL if more AAs than maxPeptideLength
@@ -348,6 +355,36 @@ public enum AminoAcidEncoding {
 				default: throw new EncyclopediaException("Unexpected amino acid "+aa+"["+mass+"]!");
 			}
 		}
+	}
+
+	
+	/**
+	 * keeps termini in place
+	 */
+	public static AminoAcidEncoding[] reverse(AminoAcidEncoding[] aas) {
+		int start;
+		if (aas[0].isNTerm()) {
+			start=2;
+		} else {
+			start=1;
+		}
+		int stop;
+		if (aas[aas.length-1].isCTerm()) {
+			stop=aas.length-3;
+		} else {
+			stop=aas.length-2;
+		}
+		if (start>=aas.length) return aas;
+		if (stop<=0) return aas;
+		
+		while (start<=stop) {
+			AminoAcidEncoding c=aas[start];
+			aas[start]=aas[stop];
+			aas[stop]=c;
+			start++;
+			stop--;
+		}
+		return aas;
 	}
 	
 	public static String getPeptideModSeq(AminoAcidEncoding[] aas, AminoAcidConstants constants) {

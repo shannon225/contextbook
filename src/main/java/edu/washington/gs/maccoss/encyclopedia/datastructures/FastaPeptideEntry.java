@@ -14,7 +14,6 @@ import com.google.common.collect.ImmutableSortedSet;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.XMLObject;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.XMLUtils;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import gnu.trove.map.hash.TIntIntHashMap;
 
 public class FastaPeptideEntry implements Comparable<FastaPeptideEntry>, XMLObject {

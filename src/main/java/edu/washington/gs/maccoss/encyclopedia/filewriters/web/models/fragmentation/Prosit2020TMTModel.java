@@ -65,7 +65,7 @@ public class Prosit2020TMTModel extends PrositFragmentationPredictionModel {
 		TFloatArrayList NCEs=new TFloatArrayList();
 		TIntArrayList charges=new TIntArrayList();
 		for (KoinaPrecursor pep : peptides) {
-			pepseqs.add(pep.getPrositSequence());
+			pepseqs.add(pep.getKoinaSequence());
 			NCEs.add(pep.getNCE());
 			charges.add(pep.getCharge());
 		}

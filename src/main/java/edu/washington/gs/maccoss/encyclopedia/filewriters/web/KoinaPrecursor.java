@@ -3,13 +3,14 @@ package edu.washington.gs.maccoss.encyclopedia.filewriters.web;
 import java.util.HashSet;
 import java.util.Optional;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.prediction.AminoAcidEncoding;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 
 public class KoinaPrecursor {
-	private final String prositSequence;
+	private final AminoAcidEncoding[] aas;
 	private final float nce;
 	private final byte charge;
 	private volatile float iRT=Float.NEGATIVE_INFINITY;
@@ -18,14 +19,14 @@ public class KoinaPrecursor {
 	private volatile double[] mzs=null;
 	HashSet<String> accessions=new HashSet<String>();
 	
-	public KoinaPrecursor(String peptideSequence, float nce, byte charge) {
-		this.prositSequence=peptideSequence.replace("C", "C[UNIMOD:4]"); //FIXME ADD MODS
+	public KoinaPrecursor(AminoAcidEncoding[] aas, float nce, byte charge) {
+		this.aas=aas;
 		this.nce = nce;
 		this.charge = charge;
 	}
 	
-	public String getPrositSequence() {
-		return prositSequence;
+	public String getKoinaSequence() {
+		return AminoAcidEncoding.getUnimodSeq(aas);
 	}
 	public HashSet<String> getAccessions() {
 		return accessions;
@@ -63,7 +64,7 @@ public class KoinaPrecursor {
 	
 	@Override
 	public int hashCode() {
-		return prositSequence.hashCode()+16807*Float.hashCode(nce)+1771561*Byte.hashCode(charge);
+		return getKoinaSequence().hashCode()+16807*Float.hashCode(nce)+1771561*Byte.hashCode(charge);
 	}
 	
 	@Override
@@ -72,8 +73,9 @@ public class KoinaPrecursor {
 			return false;
 		}
 		KoinaPrecursor k=(KoinaPrecursor)obj;
-		if (!prositSequence.equals(k.prositSequence)) {
-			return false;
+		if (aas.length!=k.aas.length) return false;
+		for (int i = 0; i < aas.length; i++) {
+			if (aas[i]!=k.aas[i]) return false;
 		}
 		if (nce!=k.nce) {
 			return false;
@@ -85,7 +87,7 @@ public class KoinaPrecursor {
 	}
 	
 	public AnnotatedLibraryEntry toEntry(AminoAcidConstants constants, SearchParameters params) {
-		String peptideModSeq=prositSequence.replace("C[UNIMOD:4]", "C[+57.0]");
+		String peptideModSeq=AminoAcidEncoding.getPeptideModSeq(aas, constants);
 		double precursorMZ=constants.getChargedMass(peptideModSeq, charge);
 		
 		Optional<Float> maybeIMS;
