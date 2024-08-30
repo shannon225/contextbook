@@ -14,6 +14,7 @@ import java.util.zip.DataFormatException;
 import org.apache.commons.lang3.StringUtils;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.prediction.AminoAcidEncoding;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.prediction.NonstandardAminoAcidException;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
@@ -144,14 +145,19 @@ public class KoinaLibraryPredictionClient {
 		
 		for (LibraryEntry entry : allEntries) {
 			byte pepCharge=entry.getPrecursorCharge();
-			
-			AminoAcidEncoding[] aas=AminoAcidEncoding.getAAs(entry.getPeptideModSeq(), constants);
+
 			boolean passes=true;
-			for (KoinaFeaturePredictionModel model : models) {
-				if (!model.canModelPeptide(aas, pepCharge)) {
-					passes=false;
-					break;
+			AminoAcidEncoding[] aas=null;
+			try {
+				aas=AminoAcidEncoding.getAAs(entry.getPeptideModSeq(), constants);
+				for (KoinaFeaturePredictionModel model : models) {
+					if (!model.canModelPeptide(aas, pepCharge)) {
+						passes=false;
+						break;
+					}
 				}
+			} catch (NonstandardAminoAcidException e) {
+				passes=false;
 			}
 			if (!passes) continue;
 			
@@ -208,13 +214,18 @@ public class KoinaLibraryPredictionClient {
 						continue;
 					}
 
-					AminoAcidEncoding[] aas=AminoAcidEncoding.getAAs(peptideModSeq, constants);
 					boolean passes=true;
-					for (KoinaFeaturePredictionModel model : models) {
-						if (!model.canModelPeptide(aas, pepCharge)) {
-							passes=false;
-							break;
+					AminoAcidEncoding[] aas=null;
+					try {
+						aas=AminoAcidEncoding.getAAs(peptideModSeq, constants);
+						for (KoinaFeaturePredictionModel model : models) {
+							if (!model.canModelPeptide(aas, pepCharge)) {
+								passes=false;
+								break;
+							}
 						}
+					} catch (NonstandardAminoAcidException e) {
+						passes=false;
 					}
 					if (!passes) continue;
 

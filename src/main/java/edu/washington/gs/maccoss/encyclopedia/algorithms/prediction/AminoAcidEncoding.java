@@ -268,7 +268,7 @@ public enum AminoAcidEncoding {
 				case 'n': return n;
 				case 'c': return c;
 				
-				default: throw new EncyclopediaException("Unexpected amino acid "+aa+"["+mass+"]!");
+				default: throw new NonstandardAminoAcidException("Unexpected amino acid "+aa+"["+mass+"]!");
 			}
 			
 		} else {
@@ -333,7 +333,7 @@ public enum AminoAcidEncoding {
 				case 'P': return P;
 				case 'V': return V;
 					
-				default: throw new EncyclopediaException("Unexpected amino acid "+aa+"["+mass+"]!");
+				default: throw new NonstandardAminoAcidException("Unexpected amino acid "+aa+"["+mass+"]!");
 			}
 		}
 	}
