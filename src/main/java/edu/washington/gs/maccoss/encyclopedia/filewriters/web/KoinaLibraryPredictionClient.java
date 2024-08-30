@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.zip.DataFormatException;
@@ -21,7 +20,6 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursor;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
@@ -39,7 +37,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.RunnableWithExceptions;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.SubProgressIndicator;
@@ -83,7 +80,7 @@ public class KoinaLibraryPredictionClient {
 		try {
 			LibraryFile library=new LibraryFile();
 			library.openFile();
-			Logger.logLine("Starting to build Prosit Library: "+libFileName);
+			Logger.logLine("Starting to build Koina Library: "+libFileName);
 			
 			progress.update("Reading peptides from Library", 0.01f);
 			ArrayList<KoinaPrecursor> allPeptides=getPeptidesFromLibrary(models, inputLibrary, defaultNCE, defaultCharge, adjustNCEForDIA, addDecoys, params.getAAConstants());
@@ -96,7 +93,7 @@ public class KoinaLibraryPredictionClient {
 			library.saveAsFile(new File(libFileName));
 			library.close();
 			
-			Logger.logLine("Finished writing "+total+" peptides to Prosit library!");
+			Logger.logLine("Finished writing "+total+" peptides to Koina library!");
 		} catch (IOException | SQLException | DataFormatException | InterruptedException e) {
 			throw new EncyclopediaException("Unexpected error with Koina", e);
 		}
@@ -107,7 +104,7 @@ public class KoinaLibraryPredictionClient {
 		try {
 			LibraryFile library=new LibraryFile();
 			library.openFile();
-			Logger.logLine("Starting to build Prosit Library: "+libFileName);
+			Logger.logLine("Starting to build Koina Library: "+libFileName);
 
 			progress.update("Reading peptides from FASTA", 0.01f);
 			ArrayList<KoinaPrecursor> allPeptides=getPeptidesFromFASTA(models, fasta, enzyme, minCharge, maxCharge, maxMissedCleavages, mzRange, defaultNCE, defaultCharge, adjustNCEForDIA, addDecoys, params.getAAConstants());
@@ -120,7 +117,7 @@ public class KoinaLibraryPredictionClient {
 			library.saveAsFile(new File(libFileName));
 			library.close();
 			
-			Logger.logLine("Finished writing "+total+" peptides to Prosit library!");
+			Logger.logLine("Finished writing "+total+" peptides to Koina library!");
 		} catch (IOException | SQLException | InterruptedException e) {
 			throw new EncyclopediaException("Unexpected error with Koina", e);
 		}

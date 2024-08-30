@@ -107,7 +107,7 @@ public class KoinaPrecursor {
 			mzs=new double[0];
 			intensities=new float[0];
 		}
-		LibraryEntry e=new LibraryEntry("Prosit", accessions, precursorMZ, charge, peptideModSeq, 1, rtInSec,
+		LibraryEntry e=new LibraryEntry("Koina", accessions, precursorMZ, charge, peptideModSeq, 1, rtInSec,
 				0.0f, mzs, intensities, maybeIMS, constants);
 		
 		return new AnnotatedLibraryEntry(e, params);
