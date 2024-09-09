@@ -26,12 +26,9 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PrositCSVWriter;
-import edu.washington.gs.maccoss.encyclopedia.filewriters.web.models.fragmentation.Prosit2020HCDModel;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.web.models.fragmentation.Prosit2023timsTOFModel;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.web.models.ims.AlphaPeptDeepIMSModel;
-import edu.washington.gs.maccoss.encyclopedia.filewriters.web.models.ims.IM2DeepIMSModel;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.web.models.rt.DeepLCHelaRTModel;
-import edu.washington.gs.maccoss.encyclopedia.filewriters.web.models.rt.Prosit2019RTModel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
@@ -66,21 +63,16 @@ public class KoinaLibraryPredictionClient {
 			Charter.launchChart(entry);
 		}
 	}
-
-	public static ArrayList<KoinaFeaturePredictionModel> getDefaultModels() {
-		ArrayList<KoinaFeaturePredictionModel> models=new ArrayList<KoinaFeaturePredictionModel>();
-		models.add(new Prosit2020HCDModel());
-		models.add(new Prosit2019RTModel());
-		models.add(new IM2DeepIMSModel());
-		return models;
-	}
 	
 	public static void writeLibrary(ArrayList<KoinaFeaturePredictionModel> models, String libFileName, LibraryFile inputLibrary, int defaultNCE, byte defaultCharge, boolean adjustNCEForDIA, boolean addDecoys, SearchParameters params, ProgressIndicator progress) throws FileNotFoundException {
 		libFileName = checkLibName(libFileName, inputLibrary.getFile(), null, defaultNCE, defaultCharge);
 		try {
 			LibraryFile library=new LibraryFile();
 			library.openFile();
-			Logger.logLine("Starting to build Koina Library: "+libFileName);
+			Logger.logLine("Starting to build Koina Library: "+libFileName+", models used:");
+			for (KoinaFeaturePredictionModel model : models) {
+				Logger.logLine("\t"+model.getName()+" ("+model.getModelType()+")");
+			}
 			
 			progress.update("Reading peptides from Library", 0.01f);
 			ArrayList<KoinaPrecursor> allPeptides=getPeptidesFromLibrary(models, inputLibrary, defaultNCE, defaultCharge, adjustNCEForDIA, addDecoys, params.getAAConstants());
@@ -104,7 +96,10 @@ public class KoinaLibraryPredictionClient {
 		try {
 			LibraryFile library=new LibraryFile();
 			library.openFile();
-			Logger.logLine("Starting to build Koina Library: "+libFileName);
+			Logger.logLine("Starting to build Koina Library: "+libFileName+", models used:");
+			for (KoinaFeaturePredictionModel model : models) {
+				Logger.logLine("\t"+model.getName()+" ("+model.getModelType()+")");
+			}
 
 			progress.update("Reading peptides from FASTA", 0.01f);
 			ArrayList<KoinaPrecursor> allPeptides=getPeptidesFromFASTA(models, fasta, enzyme, minCharge, maxCharge, maxMissedCleavages, mzRange, defaultNCE, defaultCharge, adjustNCEForDIA, addDecoys, params.getAAConstants());

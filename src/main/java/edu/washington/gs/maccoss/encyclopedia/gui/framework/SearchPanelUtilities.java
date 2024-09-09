@@ -4,10 +4,12 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Desktop;
+import java.awt.Dimension;
 import java.awt.FileDialog;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Frame;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
@@ -24,6 +26,7 @@ import java.util.Optional;
 import java.util.StringTokenizer;
 
 import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -98,6 +101,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.StringUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.XMLObject;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 
 public class SearchPanelUtilities {
@@ -1089,6 +1093,16 @@ public class SearchPanelUtilities {
 		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
 		options.add(fastaFileChooser);
 
+		final JComboBox<KoinaFeaturePredictionModel> fragmentationModels=new JComboBox<KoinaFeaturePredictionModel>(KoinaFeaturePredictionModel.getFragmentationModels().toArray(new KoinaFeaturePredictionModel[0]));
+		final JComboBox<KoinaFeaturePredictionModel> imsModels=new JComboBox<KoinaFeaturePredictionModel>(KoinaFeaturePredictionModel.getIMSModels().toArray(new KoinaFeaturePredictionModel[0]));
+		final JComboBox<KoinaFeaturePredictionModel> rtModels=new JComboBox<KoinaFeaturePredictionModel>(KoinaFeaturePredictionModel.getRTModels().toArray(new KoinaFeaturePredictionModel[0]));
+
+		options.add(Box.createRigidArea(new Dimension(0, 20)));
+		options.add(new LabeledComponent("Fragmentation Model", fragmentationModels));
+		options.add(new LabeledComponent("CCS Model", imsModels));
+		options.add(new LabeledComponent("Retention Time Model", rtModels));
+		options.add(Box.createRigidArea(new Dimension(0, 20)));
+
 		final SpinnerModel defaultNCESpinner=new SpinnerNumberModel(FastaToPrositCSVParameters.DEFAULT_DEFAULT_NCE, FastaToPrositCSVParameters.MIN_DEFAULT_NCE, FastaToPrositCSVParameters.MAX_DEFAULT_NCE, 1);
 		final SpinnerModel defaultChargeSpinner=new SpinnerNumberModel(FastaToPrositCSVParameters.DEFAULT_DEFAULT_CHARGE, FastaToPrositCSVParameters.MIN_DEFAULT_CHARGE, FastaToPrositCSVParameters.MAX_DEFAULT_CHARGE, 1);
 		final SpinnerModel minChargeSpinner=new SpinnerNumberModel(FastaToPrositCSVParameters.DEFAULT_MIN_CHARGE, FastaToPrositCSVParameters.MIN_CHARGE, FastaToPrositCSVParameters.MAX_CHARGE, 1);
@@ -1129,7 +1143,11 @@ public class SearchPanelUtilities {
 		okButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				ArrayList<KoinaFeaturePredictionModel> models = KoinaLibraryPredictionClient.getDefaultModels();
+				ArrayList<KoinaFeaturePredictionModel> models = new ArrayList<KoinaFeaturePredictionModel>();
+				models.add((KoinaFeaturePredictionModel)fragmentationModels.getSelectedItem());
+				models.add((KoinaFeaturePredictionModel)imsModels.getSelectedItem());
+				models.add((KoinaFeaturePredictionModel)rtModels.getSelectedItem());
+				
 				final File fastaFile=fastaFileChooser.getFile();
 				byte defaultNCE=((Number)defaultNCESpinner.getValue()).byteValue();
 				byte defaultCharge=((Number)defaultChargeSpinner.getValue()).byteValue();
@@ -1215,7 +1233,7 @@ public class SearchPanelUtilities {
 		dialog.getContentPane().add(mainpane, BorderLayout.CENTER);
 		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 		dialog.pack(); 
-		dialog.setSize(500, 400);
+		dialog.setSize(500, 500);
 		dialog.setVisible(true);
 	}
 	
@@ -1356,6 +1374,16 @@ public class SearchPanelUtilities {
 		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
 		options.add(libraryFileChooser);
 
+		final JComboBox<KoinaFeaturePredictionModel> fragmentationModels=new JComboBox<KoinaFeaturePredictionModel>(KoinaFeaturePredictionModel.getFragmentationModels().toArray(new KoinaFeaturePredictionModel[0]));
+		final JComboBox<KoinaFeaturePredictionModel> imsModels=new JComboBox<KoinaFeaturePredictionModel>(KoinaFeaturePredictionModel.getIMSModels().toArray(new KoinaFeaturePredictionModel[0]));
+		final JComboBox<KoinaFeaturePredictionModel> rtModels=new JComboBox<KoinaFeaturePredictionModel>(KoinaFeaturePredictionModel.getRTModels().toArray(new KoinaFeaturePredictionModel[0]));
+
+		options.add(Box.createRigidArea(new Dimension(0, 20)));
+		options.add(new LabeledComponent("Fragmentation Model", fragmentationModels));
+		options.add(new LabeledComponent("CCS Model", imsModels));
+		options.add(new LabeledComponent("Retention Time Model", rtModels));
+		options.add(Box.createRigidArea(new Dimension(0, 20)));
+
 		final SpinnerModel defaultNCESpinner=new SpinnerNumberModel(FastaToPrositCSVParameters.DEFAULT_DEFAULT_NCE, FastaToPrositCSVParameters.MIN_DEFAULT_NCE, FastaToPrositCSVParameters.MAX_DEFAULT_NCE, 1);
 		final SpinnerModel defaultChargeSpinner=new SpinnerNumberModel(FastaToPrositCSVParameters.DEFAULT_DEFAULT_CHARGE, FastaToPrositCSVParameters.MIN_DEFAULT_CHARGE, FastaToPrositCSVParameters.MAX_DEFAULT_CHARGE, 1);
 		final JCheckBox isAdjustNCEForDIACheckbox=new JCheckBox("", FastaToPrositCSVParameters.DEFAULT_ADJUST_NCE_FOR_DIA);
@@ -1371,7 +1399,11 @@ public class SearchPanelUtilities {
 		okButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				ArrayList<KoinaFeaturePredictionModel> models = KoinaLibraryPredictionClient.getDefaultModels();
+				ArrayList<KoinaFeaturePredictionModel> models = new ArrayList<KoinaFeaturePredictionModel>();
+				models.add((KoinaFeaturePredictionModel)fragmentationModels.getSelectedItem());
+				models.add((KoinaFeaturePredictionModel)imsModels.getSelectedItem());
+				models.add((KoinaFeaturePredictionModel)rtModels.getSelectedItem());
+				
 				final File libraryFile=libraryFileChooser.getFile();
 				final byte defaultNCE=((Number)defaultNCESpinner.getValue()).byteValue();
 				final byte defaultCharge=((Number)defaultChargeSpinner.getValue()).byteValue();
@@ -1454,7 +1486,7 @@ public class SearchPanelUtilities {
 		dialog.getContentPane().add(mainpane, BorderLayout.CENTER);
 		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 		dialog.pack(); 
-		dialog.setSize(500, 250);
+		dialog.setSize(500, 350);
 		dialog.setVisible(true);
 	}
 	

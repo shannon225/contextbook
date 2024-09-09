@@ -38,6 +38,16 @@ public abstract class PrositFragmentationPredictionModel implements KoinaFeature
 	public boolean canModelPeptide(AminoAcidEncoding[] aas, byte precursorCharge) {
 		return CommonModelConstraints.canModelPeptidePrositStandard(aas, precursorCharge);
 	}
+	
+	@Override
+	public String getModelType() {
+		return KoinaFeaturePredictionModel.FRAGMENTATION_TYPE;
+	}
+	
+	@Override
+	public String getCodeName() {
+		return getName().replace(' ', '_');
+	}
     
     @Override
     public String toString() {

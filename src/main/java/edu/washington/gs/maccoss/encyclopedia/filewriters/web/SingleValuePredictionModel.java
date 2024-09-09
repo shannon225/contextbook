@@ -27,6 +27,11 @@ public abstract class SingleValuePredictionModel implements KoinaFeaturePredicti
     public String toString() {
     	return getName();
     }
+	
+	@Override
+	public String getCodeName() {
+		return getName().replace(' ', '_');
+	}
     
     @Override
 	public void updatePeptides(List<KoinaPrecursor> peptides) {
