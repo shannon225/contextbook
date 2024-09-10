@@ -55,7 +55,7 @@ public abstract class PrositFragmentationPredictionModel implements KoinaFeature
     }
 
     @Override
-    public void updatePeptides(List<KoinaPrecursor> peptides) {
+    public void updatePeptides(List<KoinaPrecursor> peptides, String baseURL) {
 		ArrayList<String> pepseqs=new ArrayList<String>();
 		TFloatArrayList NCEs=new TFloatArrayList();
 		TIntArrayList charges=new TIntArrayList();
@@ -66,7 +66,7 @@ public abstract class PrositFragmentationPredictionModel implements KoinaFeature
 		}
 		
 		try {
-			URL url=getURL();
+			URL url=getURL(baseURL);
 			
 			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 	

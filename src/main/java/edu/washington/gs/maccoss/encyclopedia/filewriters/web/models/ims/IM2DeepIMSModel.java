@@ -15,9 +15,9 @@ public class IM2DeepIMSModel extends IMSPredictionModel {
 	}
 
 	@Override
-	public URL getURL() {
+	public URL getURL(String baseURL) {
 		try {
-			return new URL("https://koina.wilhelmlab.org:443/v2/models/IM2Deep/infer");
+			return new URL(baseURL+"v2/models/IM2Deep/infer");
 		} catch (MalformedURLException e) {
 			throw new EncyclopediaException("Error getting Koina URL", e);
 		}

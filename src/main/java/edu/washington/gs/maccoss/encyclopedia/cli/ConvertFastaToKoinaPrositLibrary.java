@@ -3,7 +3,6 @@ package edu.washington.gs.maccoss.encyclopedia.cli;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
@@ -14,16 +13,15 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaToPrositCSVParame
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.web.KoinaFeaturePredictionModel;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.web.KoinaLibraryPredictionClient;
-import edu.washington.gs.maccoss.encyclopedia.filewriters.web.models.fragmentation.Prosit2020HCDModel;
-import edu.washington.gs.maccoss.encyclopedia.filewriters.web.models.ims.IM2DeepIMSModel;
-import edu.washington.gs.maccoss.encyclopedia.filewriters.web.models.rt.Prosit2019RTModel;
 import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 
 public class ConvertFastaToKoinaPrositLibrary {
+	private static final String HTTPS_KOINA_WILHELMLAB_ORG_443 = "https://koina.wilhelmlab.org:443/";
 	private static final String MODELS_FLAG = "-models";
+	private static final String URL_FLAG = "-url";
 	private static final String DELIM = ";";
 	public static void main(String[] args) {
 		HashMap<String, String> arguments= CommandLineParser.parseArguments(args);
@@ -44,6 +42,8 @@ public class ConvertFastaToKoinaPrositLibrary {
 				Logger.timelessLogLine("\t"+ General.formatCellToWidth(entry.getKey(), maxWidth)+" (default: "+entry.getValue()+")");
 			}
 			Logger.timelessLogLine("\t"+General.formatCellToWidth(MODELS_FLAG, maxWidth)+" (default: "+getModelParameter(KoinaFeaturePredictionModel.getDefaultModels())+")");
+			Logger.timelessLogLine("\t"+ General.formatCellToWidth(URL_FLAG, maxWidth)+" (default: "+HTTPS_KOINA_WILHELMLAB_ORG_443+")");
+			
 			Logger.timelessLogLine("\nAvailable Models: ");
 
 			Logger.timelessLogLine("\tFragmentation Models: ");
@@ -127,12 +127,17 @@ public class ConvertFastaToKoinaPrositLibrary {
 		if (arguments.containsKey("-o")) {
 			outputFile = arguments.get("-o");
 		}
+		
+		String baseURL=HTTPS_KOINA_WILHELMLAB_ORG_443;
+		if (arguments.containsKey(URL_FLAG)) {
+			baseURL = arguments.get(URL_FLAG);
+		}
 
 		File fastaFile = new File(arguments.get("-i"));
 		FastaToPrositCSVParameters params= FastaToPrositCSVParametersParser.parseParameters(arguments);
 		try {
 			if (fastaFile.exists()) {
-				KoinaLibraryPredictionClient.writeLibrary(models, outputFile, fastaFile, params.getEnzyme(), params.getDefaultNCE(), params.getDefaultCharge(),
+				KoinaLibraryPredictionClient.writeLibrary(baseURL, models, outputFile, fastaFile, params.getEnzyme(), params.getDefaultNCE(), params.getDefaultCharge(),
 						params.getMinCharge(), params.getMaxCharge(), params.getMaxMissedCleavage(), new Range(params.getMinMz(), params.getMaxMz()), 
 						params.isAdjustNCEForDIA(), params.isAddDecoys(), SearchParameterParser.getDefaultParametersObject(), new EmptyProgressIndicator(false));
 				

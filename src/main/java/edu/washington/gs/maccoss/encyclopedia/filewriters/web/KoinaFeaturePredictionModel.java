@@ -26,10 +26,16 @@ public interface KoinaFeaturePredictionModel {
 	public String getName();
 	public String getCodeName();
 	public String getModelType();
-	public URL getURL();
-	public void updatePeptides(List<KoinaPrecursor> peptides);
+	public URL getURL(String baseURL);
+	public void updatePeptides(List<KoinaPrecursor> peptides, String baseURL);
 	public boolean canModelPeptide(AminoAcidEncoding[] aas, byte precursorCharge);
 
+	/**
+	 * Retrieves the default set of Koina feature prediction models. This includes a fragmentation model,
+	 * an ion mobility spectrometry (IMS) model, and a retention time (RT) model.
+	 *
+	 * @return an ArrayList of the default KoinaFeaturePredictionModel objects.
+	 */
 	public static ArrayList<KoinaFeaturePredictionModel> getDefaultModels() {
 		ArrayList<KoinaFeaturePredictionModel> models=new ArrayList<KoinaFeaturePredictionModel>();
 		models.add(getDefaultModel(FRAGMENTATION_TYPE));
@@ -38,6 +44,13 @@ public interface KoinaFeaturePredictionModel {
 		return models;
 	}
 
+	/**
+	 * Retrieves the default model for a specific model type (e.g., FRAG, CCS, or RT).
+	 *
+	 * @param modelType the type of the model (e.g., FRAGMENTATION_TYPE, IMS_TYPE, or RT_TYPE).
+	 * @return the default KoinaFeaturePredictionModel corresponding to the modelType.
+	 * @throws EncyclopediaException if an unexpected model type is provided.
+	 */
 	public static KoinaFeaturePredictionModel getDefaultModel(String modelType) {
 		if (FRAGMENTATION_TYPE.equals(modelType)) {
 			return new Prosit2020HCDModel();
@@ -52,6 +65,14 @@ public interface KoinaFeaturePredictionModel {
 		throw new EncyclopediaException("Unexpected type ["+modelType+"]");
 	}
 	
+	/**
+	 * Retrieves a specific KoinaFeaturePredictionModel by its name and type.
+	 *
+	 * @param modelName the name of the model to retrieve.
+	 * @param modelType the type of the model (e.g., FRAGMENTATION_TYPE, IMS_TYPE, or RT_TYPE).
+	 * @return the KoinaFeaturePredictionModel corresponding to the modelName and modelType.
+	 * @throws EncyclopediaException if the model name or type is unexpected or not found.
+	 */
 	public static KoinaFeaturePredictionModel getModel(String modelName, String modelType) {
 		if (FRAGMENTATION_TYPE.equals(modelType)) {
 			for (KoinaFeaturePredictionModel model : getFragmentationModels()) {
@@ -72,6 +93,14 @@ public interface KoinaFeaturePredictionModel {
 		throw new EncyclopediaException("Unexpected model name: ["+modelName+"] for type ["+modelType+"]");
 	}
 	
+	/**
+	 * Retrieves a specific KoinaFeaturePredictionModel by its name. This method searches across all
+	 * types of models (fragmentation, IMS, and RT).
+	 *
+	 * @param modelName the name of the model to retrieve.
+	 * @return the KoinaFeaturePredictionModel corresponding to the modelName.
+	 * @throws EncyclopediaException if the model name is unexpected or not found.
+	 */
 	public static KoinaFeaturePredictionModel getModel(String modelName) {
 		for (KoinaFeaturePredictionModel model : getFragmentationModels()) {
 			if (model.getCodeName().equalsIgnoreCase(modelName)) return model;
@@ -87,8 +116,9 @@ public interface KoinaFeaturePredictionModel {
 	}
 	
 	/**
-	 * default model is first
-	 * @return
+	 * Retrieves a list of all available fragmentation models, with the default model listed first.
+	 *
+	 * @return an ArrayList of KoinaFeaturePredictionModel objects for fragmentation.
 	 */
 	public static ArrayList<KoinaFeaturePredictionModel> getFragmentationModels() {
 		ArrayList<KoinaFeaturePredictionModel> models=new ArrayList<KoinaFeaturePredictionModel>();
@@ -102,8 +132,9 @@ public interface KoinaFeaturePredictionModel {
 	}
 	
 	/**
-	 * default model is first
-	 * @return
+	 * Retrieves a list of all available IMS (ion mobility spectrometry) models, with the default model listed first.
+	 *
+	 * @return an ArrayList of KoinaFeaturePredictionModel objects for IMS.
 	 */
 	public static ArrayList<KoinaFeaturePredictionModel> getIMSModels() {
 		ArrayList<KoinaFeaturePredictionModel> models=new ArrayList<KoinaFeaturePredictionModel>();
@@ -113,8 +144,9 @@ public interface KoinaFeaturePredictionModel {
 	}
 	
 	/**
-	 * default model is first
-	 * @return
+	 * Retrieves a list of all available retention time (RT) models, with the default model listed first.
+	 *
+	 * @return an ArrayList of KoinaFeaturePredictionModel objects for RT.
 	 */
 	public static ArrayList<KoinaFeaturePredictionModel> getRTModels() {
 		ArrayList<KoinaFeaturePredictionModel> models=new ArrayList<KoinaFeaturePredictionModel>();

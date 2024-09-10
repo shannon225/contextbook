@@ -46,9 +46,9 @@ public class Prosit2020TMTModel extends PrositFragmentationPredictionModel {
 	}
 
 	@Override
-	public URL getURL() {
+	public URL getURL(String baseURL) {
 		try {
-			return new URL("https://koina.wilhelmlab.org:443/v2/models/Prosit_2020_intensity_TMT/infer");
+			return new URL(baseURL+"v2/models/Prosit_2020_intensity_TMT/infer");
 		} catch (MalformedURLException e) {
 			throw new EncyclopediaException("Error getting Koina URL", e);
 		}
@@ -60,7 +60,7 @@ public class Prosit2020TMTModel extends PrositFragmentationPredictionModel {
 	}
 
     @Override
-    public void updatePeptides(List<KoinaPrecursor> peptides) {
+    public void updatePeptides(List<KoinaPrecursor> peptides, String baseURL) {
 		ArrayList<String> pepseqs=new ArrayList<String>();
 		TFloatArrayList NCEs=new TFloatArrayList();
 		TIntArrayList charges=new TIntArrayList();
@@ -71,7 +71,7 @@ public class Prosit2020TMTModel extends PrositFragmentationPredictionModel {
 		}
 		
 		try {
-			URL url=getURL();
+			URL url=getURL(baseURL);
 			
 			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 	

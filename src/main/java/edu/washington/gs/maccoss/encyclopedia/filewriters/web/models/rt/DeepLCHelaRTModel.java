@@ -15,9 +15,9 @@ public class DeepLCHelaRTModel extends RTPredictionModel {
 	}
 
 	@Override
-	public URL getURL() {
+	public URL getURL(String baseURL) {
 		try {
-			return new URL("https://koina.wilhelmlab.org:443/v2/models/Deeplc_hela_hf/infer");
+			return new URL(baseURL+"v2/models/Deeplc_hela_hf/infer");
 		} catch (MalformedURLException e) {
 			throw new EncyclopediaException("Error getting Koina URL", e);
 		}

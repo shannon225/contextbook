@@ -1143,6 +1143,8 @@ public class SearchPanelUtilities {
 		okButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				String baseURL="https://koina.wilhelmlab.org:443/";
+				
 				ArrayList<KoinaFeaturePredictionModel> models = new ArrayList<KoinaFeaturePredictionModel>();
 				models.add((KoinaFeaturePredictionModel)fragmentationModels.getSelectedItem());
 				models.add((KoinaFeaturePredictionModel)imsModels.getSelectedItem());
@@ -1172,7 +1174,7 @@ public class SearchPanelUtilities {
 
 						@Override
 						public void runJob(ProgressIndicator progress) throws Exception {
-							KoinaLibraryPredictionClient.writeLibrary(models, null, fastaFile, enzyme, defaultNCE, defaultCharge, minCharge, maxCharge, maxMissedCleavages, new Range(minimumMz, maximumMz), isAdjustNCEForDIA, isAddDecoys, params, progress);
+							KoinaLibraryPredictionClient.writeLibrary(baseURL, models, null, fastaFile, enzyme, defaultNCE, defaultCharge, minCharge, maxCharge, maxMissedCleavages, new Range(minimumMz, maximumMz), isAdjustNCEForDIA, isAddDecoys, params, progress);
 						}
 					};
 					processor.addJob(job);
@@ -1399,6 +1401,8 @@ public class SearchPanelUtilities {
 		okButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				String baseURL="https://koina.wilhelmlab.org:443/";
+				
 				ArrayList<KoinaFeaturePredictionModel> models = new ArrayList<KoinaFeaturePredictionModel>();
 				models.add((KoinaFeaturePredictionModel)fragmentationModels.getSelectedItem());
 				models.add((KoinaFeaturePredictionModel)imsModels.getSelectedItem());
@@ -1425,7 +1429,7 @@ public class SearchPanelUtilities {
 							LibraryFile library=new LibraryFile();
 							library.openFile(libraryFile);
 							//PrositCSVWriter.writeCSV(library, defaultNCE, defaultCharge, isAdjustNCEForDIA, isAddDecoys);
-							KoinaLibraryPredictionClient.writeLibrary(models, null, library, defaultNCE, defaultCharge, isAdjustNCEForDIA, isAddDecoys, params, progress);
+							KoinaLibraryPredictionClient.writeLibrary(baseURL, models, null, library, defaultNCE, defaultCharge, isAdjustNCEForDIA, isAddDecoys, params, progress);
 						}
 					};
 					processor.addJob(job);
