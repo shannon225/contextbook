@@ -127,7 +127,7 @@ public class ConvertFastaToKoinaPrositLibrary {
 			outputFile = arguments.get("-o");
 		}
 		
-		String baseURL=HTTPS_KOINA_WILHELMLAB_ORG_443;
+		String baseURL=KoinaLibraryPredictionClient.HTTPS_KOINA_WILHELMLAB_ORG_443;
 		if (arguments.containsKey(URL_FLAG)) {
 			baseURL = arguments.get(URL_FLAG);
 		}
