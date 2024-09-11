@@ -41,7 +41,7 @@ public class ConvertFastaToKoinaPrositLibrary {
 				Logger.timelessLogLine("\t"+ General.formatCellToWidth(entry.getKey(), maxWidth)+" (default: "+entry.getValue()+")");
 			}
 			Logger.timelessLogLine("\t"+General.formatCellToWidth(MODELS_FLAG, maxWidth)+" (default: "+getModelParameter(KoinaFeaturePredictionModel.getDefaultModels())+")");
-			Logger.timelessLogLine("\t"+ General.formatCellToWidth(URL_FLAG, maxWidth)+" (default: "+HTTPS_KOINA_WILHELMLAB_ORG_443+")");
+			Logger.timelessLogLine("\t"+ General.formatCellToWidth(URL_FLAG, maxWidth)+" (default: "+KoinaLibraryPredictionClient.HTTPS_KOINA_WILHELMLAB_ORG_443+")");
 			
 			Logger.timelessLogLine("\nAvailable Models: ");
 
