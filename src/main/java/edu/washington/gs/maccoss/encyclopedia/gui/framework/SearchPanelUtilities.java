@@ -1143,7 +1143,7 @@ public class SearchPanelUtilities {
 		okButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				String baseURL="https://koina.wilhelmlab.org:443/";
+				String baseURL=KoinaLibraryPredictionClient.HTTPS_KOINA_WILHELMLAB_ORG_443;
 				
 				ArrayList<KoinaFeaturePredictionModel> models = new ArrayList<KoinaFeaturePredictionModel>();
 				models.add((KoinaFeaturePredictionModel)fragmentationModels.getSelectedItem());
@@ -1401,7 +1401,7 @@ public class SearchPanelUtilities {
 		okButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				String baseURL="https://koina.wilhelmlab.org:443/";
+				String baseURL=KoinaLibraryPredictionClient.HTTPS_KOINA_WILHELMLAB_ORG_443;
 				
 				ArrayList<KoinaFeaturePredictionModel> models = new ArrayList<KoinaFeaturePredictionModel>();
 				models.add((KoinaFeaturePredictionModel)fragmentationModels.getSelectedItem());

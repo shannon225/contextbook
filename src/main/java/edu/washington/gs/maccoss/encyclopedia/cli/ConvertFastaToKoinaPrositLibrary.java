@@ -19,7 +19,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 
 public class ConvertFastaToKoinaPrositLibrary {
-	private static final String HTTPS_KOINA_WILHELMLAB_ORG_443 = "https://koina.wilhelmlab.org:443/";
 	private static final String MODELS_FLAG = "-models";
 	private static final String URL_FLAG = "-url";
 	private static final String DELIM = ";";

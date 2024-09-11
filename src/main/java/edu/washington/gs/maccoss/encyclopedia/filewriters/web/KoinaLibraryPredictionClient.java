@@ -44,6 +44,8 @@ import gnu.trove.map.hash.TCharDoubleHashMap;
  * models and building a Koina library from provided precursors.
  */
 public class KoinaLibraryPredictionClient {
+	public static final String HTTPS_KOINA_WILHELMLAB_ORG_443 = "https://koina.wilhelmlab.org:443/";
+	
 	private static final int BATCH_SIZE=5000;
 	private static final int MICRO_BATCH_SIZE=1000;
 	private final ArrayList<KoinaFeaturePredictionModel> models=new ArrayList<KoinaFeaturePredictionModel>();
@@ -68,7 +70,7 @@ public class KoinaLibraryPredictionClient {
 		models.add(new DeepLCHelaRTModel());
 		models.add(new AlphaPeptDeepIMSModel());
 		KoinaLibraryPredictionClient client=new KoinaLibraryPredictionClient(models);
-		runKoinaOnBatch(client, precursors, "https://koina.wilhelmlab.org:443/");
+		runKoinaOnBatch(client, precursors, KoinaLibraryPredictionClient.HTTPS_KOINA_WILHELMLAB_ORG_443);
 		
 		for (KoinaPrecursor precursor : precursors) {
 			AnnotatedLibraryEntry entry=precursor.toEntry(constants, params);
