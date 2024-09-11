@@ -157,6 +157,15 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			return 0.0f;
 		return Float.parseFloat(value);
 	}
+	
+	public boolean isChromatogramLibrary() throws IOException, SQLException {
+		// TODO check if this works for DLIBs made by splitting quant reports (e.g., batch-corrected libraries)
+		String value=getMetadata().get("RT align between samples");
+		if (value==null) return false;
+		
+		// return true only if no RT alignment (e.g., not a quant report)
+		return !Boolean.getBoolean(value);
+	}
 
 	public void addRtAlignment(SearchJobData job, PeakLocationInferrerInterface inferrer) {
 		Optional.ofNullable(inferrer.getAlignmentData(job))

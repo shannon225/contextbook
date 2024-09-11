@@ -13,9 +13,9 @@ public class Prosit2020CIDModel extends PrositFragmentationPredictionModel {
 	}
 
 	@Override
-	public URL getURL() {
+	public URL getURL(String baseURL) {
 		try {
-			return new URL("https://koina.wilhelmlab.org/v2/models/Prosit_2020_intensity_CID/infer");
+			return new URL(baseURL+"v2/models/Prosit_2020_intensity_CID/infer");
 		} catch (MalformedURLException e) {
 			throw new EncyclopediaException("Error getting Koina URL", e);
 		}

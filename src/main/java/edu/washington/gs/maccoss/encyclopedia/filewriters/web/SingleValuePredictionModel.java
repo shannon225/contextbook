@@ -27,20 +27,25 @@ public abstract class SingleValuePredictionModel implements KoinaFeaturePredicti
     public String toString() {
     	return getName();
     }
+	
+	@Override
+	public String getCodeName() {
+		return getName().replace(' ', '_');
+	}
     
     @Override
-	public void updatePeptides(List<KoinaPrecursor> peptides) {
+	public void updatePeptides(List<KoinaPrecursor> peptides, String baseURL) {
 		ArrayList<String> pepseqs=new ArrayList<String>();
 		TFloatArrayList NCEs=new TFloatArrayList();
 		TIntArrayList charges=new TIntArrayList();
 		for (KoinaPrecursor pep : peptides) {
-			pepseqs.add(pep.getPrositSequence());
+			pepseqs.add(pep.getKoinaSequence());
 			NCEs.add(pep.getNCE());
 			charges.add(pep.getCharge());
 		}
 		
 		try {
-			URL url=getURL();
+			URL url=getURL(baseURL);
 			
 			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 	

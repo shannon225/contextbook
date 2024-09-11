@@ -3,22 +3,27 @@ package edu.washington.gs.maccoss.encyclopedia.filewriters.web.models.fragmentat
 import java.net.MalformedURLException;
 import java.net.URL;
 
-import edu.washington.gs.maccoss.encyclopedia.filewriters.web.RTPredictionModel;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.web.PrositFragmentationPredictionModel;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 
-public class Prosit2019RTModel extends RTPredictionModel {
+public class Prosit2023timsTOFModel extends PrositFragmentationPredictionModel {
 	@Override
 	public String getName() {
-		return "Prosit 2019 iRT";
+		return "Prosit 2023 timsTOF";
 	}
 
 	@Override
-	public URL getURL() {
+	public URL getURL(String baseURL) {
 		try {
-			return new URL("https://koina.wilhelmlab.org/v2/models/Prosit_2019_irt/infer");
+			return new URL(baseURL+"v2/models/Prosit_2023_intensity_timsTOF/infer");
 		} catch (MalformedURLException e) {
 			throw new EncyclopediaException("Error getting Koina URL", e);
 		}
+	}
+
+	@Override
+	public boolean useNCE() {
+		return true;
 	}
 
 }

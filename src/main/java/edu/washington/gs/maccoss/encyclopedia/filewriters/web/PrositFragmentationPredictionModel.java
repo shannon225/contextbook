@@ -12,6 +12,7 @@ import java.util.List;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.prediction.AminoAcidEncoding;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
@@ -32,6 +33,21 @@ public abstract class PrositFragmentationPredictionModel implements KoinaFeature
 			peptides.get(i).setIntensities(pair.getY());
 		}
 	}
+	
+	@Override
+	public boolean canModelPeptide(AminoAcidEncoding[] aas, byte precursorCharge) {
+		return CommonModelConstraints.canModelPeptidePrositStandard(aas, precursorCharge);
+	}
+	
+	@Override
+	public String getModelType() {
+		return KoinaFeaturePredictionModel.FRAGMENTATION_TYPE;
+	}
+	
+	@Override
+	public String getCodeName() {
+		return getName().replace(' ', '_');
+	}
     
     @Override
     public String toString() {
@@ -39,18 +55,18 @@ public abstract class PrositFragmentationPredictionModel implements KoinaFeature
     }
 
     @Override
-    public void updatePeptides(List<KoinaPrecursor> peptides) {
+    public void updatePeptides(List<KoinaPrecursor> peptides, String baseURL) {
 		ArrayList<String> pepseqs=new ArrayList<String>();
 		TFloatArrayList NCEs=new TFloatArrayList();
 		TIntArrayList charges=new TIntArrayList();
 		for (KoinaPrecursor pep : peptides) {
-			pepseqs.add(pep.getPrositSequence());
+			pepseqs.add(pep.getKoinaSequence());
 			NCEs.add(pep.getNCE());
 			charges.add(pep.getCharge());
 		}
 		
 		try {
-			URL url=getURL();
+			URL url=getURL(baseURL);
 			
 			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 	

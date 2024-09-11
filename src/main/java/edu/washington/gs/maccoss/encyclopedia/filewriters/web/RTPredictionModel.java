@@ -20,6 +20,11 @@ public abstract class RTPredictionModel extends SingleValuePredictionModel {
 	}
 	
 	@Override
+	public String getModelType() {
+		return KoinaFeaturePredictionModel.RT_TYPE;
+	}
+	
+	@Override
 	public void updateResults(List<KoinaPrecursor> peptides, float[] values) {
 		assert(peptides.size()==values.length);
 		for (int i = 0; i < peptides.size(); i++) {

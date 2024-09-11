@@ -67,6 +67,14 @@ public enum AminoAcidEncoding {
 		return index;
 	}
 	
+	/**
+	 * @return
+	 */
+	public boolean isStandardAminoAcid() {
+		if (index<=21||index==42||index==43) return true;
+		return false;
+	}
+	
 	public String toString() {
 		switch (this) {
 			case A: return "A";
@@ -116,6 +124,55 @@ public enum AminoAcidEncoding {
 		}
 	}
 	
+	public String toUnimodString() {
+		switch (this) {
+			case A: return "A";
+			case C: return "C";
+			case D: return "D";
+			case E: return "E";
+			case F: return "F";
+			case G: return "G";
+			case H: return "H";
+			case I: return "I";
+			case K: return "K";
+			case L: return "L";
+			case M: return "M";
+			case N: return "N";
+			case P: return "P";
+			case Q: return "Q";
+			case R: return "R";
+			case S: return "S";
+			case T: return "T";
+			case V: return "V";
+			case W: return "W";
+			case Y: return "Y";
+			case CCam: return "C[UNIMOD:4]";
+			case Mox: return "M[UNIMOD:35]";
+			case Wox: return "W[UNIMOD:35]";
+			case PyroCCam: return "C[UNIMOD:26]";
+			case PyroGlu: return "Q[UNIMOD:28]";
+			case SPhos: return "S[UNIMOD:21]";
+			case TPhos: return "T[UNIMOD:21]";
+			case YPhos: return "Y[UNIMOD:21]";
+			case KAc: return "K[UNIMOD:1]";
+			case KSucc: return "K[UNIMOD:64]";
+			case KUb: return "K[UNIMOD:121]";
+			case KMe: return "K[UNIMOD:34]";
+			case KDiMe: return "K[UNIMOD:36]";
+			case KTriMe: return "K[UNIMOD:37]";
+			case RMe: return "R[UNIMOD:34]";
+			case RDiMe: return "K[UNIMOD:36]";
+			case KTMT0: return "K[UNIMOD:739]";
+			case KTMT10: return "K[UNIMOD:737]";
+			case nAc: return "[UNIMOD:1]";
+			case nTMT0: return "[UNIMOD:739]-";
+			case nTMT10: return "[UNIMOD:737]";
+			case n: return "";
+			case c: return "";
+			default: throw new EncyclopediaException("Unexpected amino acid ["+getIndex()+"]!");
+		}
+	}
+	
 	public boolean isNTerm() {
 		switch (this) {
 			case nAc: return true;
@@ -148,6 +205,13 @@ public enum AminoAcidEncoding {
             encoded.putScalar(new int[]{i, aas[i].index}, 1.0);
         }
         return encoded.reshape(1, maxPeptideLength * MAX_ENCODING_LENGTH);
+	}
+	
+	public boolean isCTerm() {
+		switch (this) {
+			case c: return true;
+			default: return false;
+		}
 	}
 	
 	public static AminoAcidEncoding[] getAAs(String sequence, AminoAcidConstants aminoAcidConstants) {
@@ -231,7 +295,7 @@ public enum AminoAcidEncoding {
 				case 'n': return n;
 				case 'c': return c;
 				
-				default: throw new EncyclopediaException("Unexpected amino acid "+aa+"["+mass+"]!");
+				default: throw new NonstandardAminoAcidException("Unexpected amino acid "+aa+"["+mass+"]!");
 			}
 			
 		} else {
@@ -296,9 +360,39 @@ public enum AminoAcidEncoding {
 				case 'P': return P;
 				case 'V': return V;
 					
-				default: throw new EncyclopediaException("Unexpected amino acid "+aa+"["+mass+"]!");
+				default: throw new NonstandardAminoAcidException("Unexpected amino acid "+aa+"["+mass+"]!");
 			}
 		}
+	}
+
+	
+	/**
+	 * keeps termini in place
+	 */
+	public static AminoAcidEncoding[] reverse(AminoAcidEncoding[] aas) {
+		int start;
+		if (aas[0].isNTerm()) {
+			start=2;
+		} else {
+			start=1;
+		}
+		int stop;
+		if (aas[aas.length-1].isCTerm()) {
+			stop=aas.length-3;
+		} else {
+			stop=aas.length-2;
+		}
+		if (start>=aas.length) return aas;
+		if (stop<=0) return aas;
+		
+		while (start<=stop) {
+			AminoAcidEncoding c=aas[start];
+			aas[start]=aas[stop];
+			aas[stop]=c;
+			start++;
+			stop--;
+		}
+		return aas;
 	}
 	
 	public static String getPeptideModSeq(AminoAcidEncoding[] aas, AminoAcidConstants constants) {
@@ -307,5 +401,13 @@ public enum AminoAcidEncoding {
 			sb.append(aas[i].toString());
 		}
 		return PeptideUtils.getCorrectedMasses(sb.toString(), constants);
+	}
+	
+	public static String getUnimodSeq(AminoAcidEncoding[] aas) {
+		StringBuilder sb=new StringBuilder();
+		for (int i = 0; i < aas.length; i++) {
+			sb.append(aas[i].toUnimodString());
+		}
+		return sb.toString();
 	}
 }
