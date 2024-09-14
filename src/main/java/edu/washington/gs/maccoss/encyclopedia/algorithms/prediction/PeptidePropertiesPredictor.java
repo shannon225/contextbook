@@ -52,11 +52,11 @@ import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
 public class PeptidePropertiesPredictor {
-	private static final int REPORTING_BATCH_SIZE = 1000;
+	private static final int REPORTING_BATCH_SIZE = 10;
 	private static final int INITIAL_BATCH_SIZE = 64;
 	public static final int MAX_BATCH_SIZE = 1024;
 	private static final int EPOCHS_TO_2X_BATCH = 99999; // never increase
-    public static final int EMBED_DIMENSION = 128;
+    public static final int EMBED_DIMENSION = 64;
     public static final int N_RESNET_BLOCKS = 3;
     public static final int KERNEL_SIZE = 9;
     public static final int NUM_EPOCHS = 3; // only limited epochs with iterative training
@@ -65,7 +65,7 @@ public class PeptidePropertiesPredictor {
     	File dir=new File("C:\\Users\\searl\\Documents\\projects\\prosit_examples_final\\");
     	
     	// FIXME
-    	dir=new File("/Users/searleb/Downloads/");
+    	//dir=new File("/Users/searleb/Downloads/");
     	File saveLocation=new File(dir, "peptide_prediction_model.dl4j");
     	if (saveLocation.exists()) {
     		saveLocation.delete();
@@ -85,7 +85,7 @@ public class PeptidePropertiesPredictor {
         };
     	
     	// FIXME
-    	datasetOrder=new String[] {"trimmed_Trypsin.csv.dlib"};
+    	//datasetOrder=new String[] {"trimmed_Trypsin.csv.dlib"};
     	
     	try {
     		// start on the "easiest" libraries first	
@@ -235,112 +235,151 @@ public class PeptidePropertiesPredictor {
         }
 	}
 
-	private static ComputationGraph createModel(int embedDim, int kernelSize, int resnetBlocks, double dropRate) {
-		embedDim=32;
-		ComputationGraphConfiguration.GraphBuilder graph = new NeuralNetConfiguration.Builder()
-				.weightInit(WeightInit.XAVIER).updater(new Adam(0.001)).graphBuilder().addInputs("sequence", "charge")
-				.setInputTypes(
-						InputType.feedForward(
-								AminoAcidEncoding.MAX_ENCODING_LENGTH * PeptideEncoding.MAX_PEPTIDE_LENGTH),
-						InputType.feedForward(PeptideEncoding.ENCODED_INPUT_CHARGE_SIZE));
+    private static ComputationGraph createModel(int embedDim, int kernelSize, int resnetBlocks, double dropRate) {
+        ComputationGraphConfiguration.GraphBuilder graph = new NeuralNetConfiguration.Builder()
+                .weightInit(WeightInit.XAVIER)
+                .updater(new Adam(0.001))
+                .graphBuilder()
+                .addInputs("sequence", "charge")
+                .setInputTypes(
+                    InputType.feedForward(AminoAcidEncoding.MAX_ENCODING_LENGTH * PeptideEncoding.MAX_PEPTIDE_LENGTH),
+                    InputType.feedForward(PeptideEncoding.ENCODED_INPUT_CHARGE_SIZE)
+                );
 
-		// Sequence embedding
-		graph.addLayer("seq_embedding", new DenseLayer.Builder()
-				.nIn(AminoAcidEncoding.MAX_ENCODING_LENGTH * PeptideEncoding.MAX_PEPTIDE_LENGTH).nOut(embedDim).build(),
-				"sequence");
+        // Sequence embedding
+        graph.addLayer("seq_embedding", new DenseLayer.Builder()
+                .nIn(AminoAcidEncoding.MAX_ENCODING_LENGTH * PeptideEncoding.MAX_PEPTIDE_LENGTH)
+                .nOut(embedDim)
+                .build(), "sequence");
 
-		// Charge embedding
-		graph.addLayer("charge_embedding", new DenseLayer.Builder().nIn(PeptideEncoding.MAX_CHARGE).nOut(embedDim)
-				.activation(Activation.IDENTITY).build(), "charge");
+        // Charge embedding
+        graph.addLayer("charge_embedding", new DenseLayer.Builder()
+                .nIn(PeptideEncoding.MAX_CHARGE)
+                .nOut(embedDim)
+                .activation(Activation.IDENTITY)
+                .build(), "charge");
 
-		// Combine embeddings
-		graph.addVertex("merged", new MergeVertex(), "seq_embedding", "charge_embedding");
+        // Combine embeddings
+        graph.addVertex("merged", new MergeVertex(), "seq_embedding", "charge_embedding");
 
-		// Reshape merged output to [batchSize, channels=1, height=1, width=2*embedDim]
-		graph.addVertex("reshaped", new ReshapeVertex(-1, 1, 1, 2 * embedDim), "merged");
+        // Reshape merged output to [batchSize, channels=1, height=2*embedDim, width=1]
+        graph.addVertex("reshaped", new ReshapeVertex(-1, 1, 2 * embedDim, 1), "merged");
 
-		String previousLayer = "reshaped";
-		int[] filters = { 32, 32, 64 };
-		int[] kernelSizes = { kernelSize, 1 };
-		int[] strides = { 1, 1 };
+        String previousLayer = "reshaped";
+        int[] filters = {embedDim, embedDim, embedDim};
+        int stride = 1;
+        int dilation = 1; // Adjust as needed
 
-		for (int i = 1; i <= resnetBlocks; i++) {
-			previousLayer = convBlock(graph, kernelSizes, filters, Integer.toString(i), strides, previousLayer,
-					dropRate);
-		}
+        for (int i = 1; i <= resnetBlocks; i++) {
+            previousLayer = convBlock(graph, kernelSize, filters, Integer.toString(i), stride, dilation, previousLayer, dropRate);
+        }
 
-		graph.addLayer("global_pooling", new GlobalPoolingLayer.Builder().poolingType(PoolingType.AVG).build(),
-				previousLayer);
-		previousLayer = "global_pooling";
+        // Global pooling layer
+        graph.addLayer("global_pooling", new GlobalPoolingLayer.Builder()
+                .poolingType(PoolingType.AVG)
+                .build(), previousLayer);
+        previousLayer = "global_pooling";
 
-		int numChannelsAfterPooling = filters[2];
+        int numChannelsAfterPooling = filters[2];
 
-		// Output layers
-		graph.addLayer("fragmentation_output",
-				new OutputLayer.Builder(LossFunctions.LossFunction.MSE).activation(Activation.IDENTITY)
-						.nIn(numChannelsAfterPooling).nOut(PeptideEncoding.ENCODED_OUTPUT_FRAGMENT_SIZE).build(),
-				previousLayer);
+        // Output layers
+        graph.addLayer("fragmentation_output",
+                new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
+                        .activation(Activation.IDENTITY)
+                        .nIn(numChannelsAfterPooling)
+                        .nOut(PeptideEncoding.ENCODED_OUTPUT_FRAGMENT_SIZE)
+                        .build(),
+                previousLayer);
 
-		// Retention time output branch
-		graph.addLayer("ret_time_output",
-				new OutputLayer.Builder(LossFunctions.LossFunction.MSE).activation(Activation.IDENTITY)
-						.nIn(numChannelsAfterPooling).nOut(PeptideEncoding.ENCODED_OUTPUT_RT_SIZE).build(),
-				previousLayer);
+        // Retention time output branch
+        graph.addLayer("ret_time_output",
+                new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
+                        .activation(Activation.IDENTITY)
+                        .nIn(numChannelsAfterPooling)
+                        .nOut(PeptideEncoding.ENCODED_OUTPUT_RT_SIZE)
+                        .build(),
+                previousLayer);
 
-		// Ion mobility output branch
-		graph.addLayer("ion_mobility_output",
-				new OutputLayer.Builder(LossFunctions.LossFunction.MSE).activation(Activation.IDENTITY)
-						.nIn(numChannelsAfterPooling).nOut(PeptideEncoding.ENCODED_OUTPUT_IMS_SIZE).build(),
-				previousLayer);
+        // Ion mobility output branch
+        graph.addLayer("ion_mobility_output",
+                new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
+                        .activation(Activation.IDENTITY)
+                        .nIn(numChannelsAfterPooling)
+                        .nOut(PeptideEncoding.ENCODED_OUTPUT_IMS_SIZE)
+                        .build(),
+                previousLayer);
 
-		graph.setOutputs("fragmentation_output", "ret_time_output", "ion_mobility_output");
+        graph.setOutputs("fragmentation_output", "ret_time_output", "ion_mobility_output");
 
-		ComputationGraph model = new ComputationGraph(graph.build());
-		model.init();
-		return model;
-	}
+        ComputationGraph model = new ComputationGraph(graph.build());
+        model.init();
+        return model;
+    }
+    public static String convBlock(ComputationGraphConfiguration.GraphBuilder graph, int kernelSize, int[] filters,
+            String stage, int stride, int dilation, String input, double dropRate) {
+        String convName = "res" + stage + "_branch";
+        String batchName = "bn" + stage + "_branch";
+        String activationName = "act" + stage + "_branch";
+        String shortcutName = "short" + stage + "_branch";
 
-	public static String convBlock(ComputationGraphConfiguration.GraphBuilder graph, int[] kernelSize, int[] filters,
-			String stage, int[] stride, String input, double dropRate) {
-		String convName = "res" + stage + "_branch";
-		String batchName = "bn" + stage + "_branch";
-		String activationName = "act" + stage + "_branch";
-		String shortcutName = "short" + stage + "_branch";
+        // First convolutional layer in the main path
+        graph.addLayer(convName + "2a",
+                new ConvolutionLayer.Builder(new int[]{kernelSize, 1}, new int[]{stride, 1})
+                        .dilation(new int[]{dilation, 1})
+                        .nOut(filters[0])
+                        .convolutionMode(ConvolutionMode.Same)
+                        .dropOut(dropRate)
+                        .build(),
+                input)
+            .addLayer(batchName + "2a", new BatchNormalization.Builder()
+                    .nOut(filters[0]).build(), convName + "2a")
+            .addLayer(activationName + "2a", new ActivationLayer.Builder()
+                    .activation(Activation.RELU).build(), batchName + "2a")
 
-		// Convolutional layers with dropout
-		graph.addLayer(convName + "2a",
-				new ConvolutionLayer.Builder(kernelSize, stride).nOut(filters[0]).convolutionMode(ConvolutionMode.Same)
-						.dropOut(dropRate).build(),
-				input)
-				.addLayer(batchName + "2a", new BatchNormalization.Builder().nOut(filters[0]).build(), convName + "2a")
-				.addLayer(activationName + "2a", new ActivationLayer.Builder().activation(Activation.RELU).build(),
-						batchName + "2a")
+        // Second convolutional layer in the main path
+        .addLayer(convName + "2b",
+                new ConvolutionLayer.Builder(new int[]{kernelSize, 1}, new int[]{1, 1})
+                        .dilation(new int[]{dilation, 1})
+                        .nOut(filters[1])
+                        .convolutionMode(ConvolutionMode.Same)
+                        .dropOut(dropRate)
+                        .build(),
+                activationName + "2a")
+            .addLayer(batchName + "2b", new BatchNormalization.Builder()
+                    .nOut(filters[1]).build(), convName + "2b")
+            .addLayer(activationName + "2b", new ActivationLayer.Builder()
+                    .activation(Activation.RELU).build(), batchName + "2b")
 
-				.addLayer(convName + "2b",
-						new ConvolutionLayer.Builder(kernelSize, new int[] { 1, 1 }).nOut(filters[1])
-								.convolutionMode(ConvolutionMode.Same).dropOut(dropRate).build(),
-						activationName + "2a")
-				.addLayer(batchName + "2b", new BatchNormalization.Builder().nOut(filters[1]).build(), convName + "2b")
-				.addLayer(activationName + "2b", new ActivationLayer.Builder().activation(Activation.RELU).build(),
-						batchName + "2b")
+        // Third convolutional layer in the main path
+        .addLayer(convName + "2c",
+                new ConvolutionLayer.Builder(new int[]{1, 1}, new int[]{1, 1})
+                        .dilation(new int[]{1, 1})
+                        .nOut(filters[2])
+                        .convolutionMode(ConvolutionMode.Same)
+                        .dropOut(dropRate)
+                        .build(),
+                activationName + "2b")
+            .addLayer(batchName + "2c", new BatchNormalization.Builder()
+                    .nOut(filters[2]).build(), convName + "2c")
 
-				.addLayer(convName + "2c",
-						new ConvolutionLayer.Builder(new int[] { 1, 1 }, new int[] { 1, 1 }).nOut(filters[2])
-								.convolutionMode(ConvolutionMode.Same).dropOut(dropRate).build(),
-						activationName + "2b")
-				.addLayer(batchName + "2c", new BatchNormalization.Builder().nOut(filters[2]).build(), convName + "2c")
+        // Shortcut path
+        .addLayer(convName + "1",
+                new ConvolutionLayer.Builder(new int[]{1, 1}, new int[]{stride, 1})
+                        .dilation(new int[]{1, 1})
+                        .nOut(filters[2])
+                        .convolutionMode(ConvolutionMode.Same)
+                        .dropOut(dropRate)
+                        .build(),
+                input)
+            .addLayer(batchName + "1", new BatchNormalization.Builder()
+                    .nOut(filters[2]).build(), convName + "1")
 
-				// Shortcut connection
-				.addLayer(convName + "1",
-						new ConvolutionLayer.Builder(new int[] { 1, 1 }, stride).nOut(filters[2])
-								.convolutionMode(ConvolutionMode.Same).dropOut(dropRate).build(),
-						input)
-				.addLayer(batchName + "1", new BatchNormalization.Builder().nOut(filters[2]).build(), convName + "1")
+        // Element-wise addition of the main path and the shortcut path
+        .addVertex(shortcutName, new ElementWiseVertex(ElementWiseVertex.Op.Add),
+                   batchName + "2c", batchName + "1")
+        .addLayer(convName, new ActivationLayer.Builder()
+                .activation(Activation.RELU).build(), shortcutName);
 
-				.addVertex(shortcutName, new ElementWiseVertex(ElementWiseVertex.Op.Add), batchName + "2c",
-						batchName + "1")
-				.addLayer(convName, new ActivationLayer.Builder().activation(Activation.RELU).build(), shortcutName);
-
-		return convName;
-	}
+        return convName;
+    }
 }
