@@ -1,7 +1,18 @@
 EncyclopeDIA changelog for user-facing changes:
 
-encyclopedia-3.0.0-SNAPSHOT
- - Feature: updated scoring system to EncyclopeDIA 2.0 by default
+encyclopedia-5.0.0-SNAPSHOT
+ - Feature: added new scoring EncyclopeDIA module that is more quant-focused
+ - Feature: added TDC-based FDR estimation
+ - Feature: added pre-alignment analysis to set RT windows
+ - Feature: added new peptide RT model based on Chronologer
+
+encyclopedia-4.9.19
+ - Feature: added direct Koina prediction into libraries to replace Prosit input-file creation
+
+encyclopedia-4.7.17
+ - Feature: added Chromatogrind tools for building libraries
+ - Feature: added PRM scheduler
+ - Feature: moved towards simplified user settings based on instrument platform
  - Feature: added "-minIntensityNumIons" to filter raw files based on minimum number of ions measured (default is -1 or "off", Thermo raw files only)
  - Feature: added option to specify a new FASTA when combining multiple libraries together. This can be beneficial if libraries were originally created with different FASTA databases
  - Feature: added "-maskBadIntegrations" to suppress background quantification when no "quantitative" ions are found. This inserts 0s for quant, which is useful in testing knockout studies or circumstances where specific peptides should not be found in certain samples (default is false)
