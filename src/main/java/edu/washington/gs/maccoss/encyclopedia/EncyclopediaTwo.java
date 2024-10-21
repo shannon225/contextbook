@@ -328,7 +328,9 @@ public class EncyclopediaTwo {
 		ArrayList<Range> ranges=new ArrayList<Range>();
 		for (Range range : stripefile.getRanges().keySet()) {
 			if (!parameters.useTargetWindowCenter()||range.contains(parameters.getTargetWindowCenter())) {
-				ranges.add(range);
+				if (range.getMiddle()>0.0f) { // TODO repair if we ever work in negative mode
+					ranges.add(range);
+				}
 			}
 		}
 		Collections.sort(ranges);
@@ -384,7 +386,7 @@ public class EncyclopediaTwo {
 					// values occur it's unclear how to interpret them.
 					continue;
 				}
-				Logger.logLine("Processing " + range + " m/z, (" + dutyCycle + " second duty cycle)");
+				Logger.logLine("Processing " + range + " m/z, (" + dutyCycle + " second duty cycle), "+stripes.size()+" MS/MS");
 
 				Collections.sort(stripes);
 

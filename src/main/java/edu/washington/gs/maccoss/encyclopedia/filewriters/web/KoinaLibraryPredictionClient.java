@@ -26,18 +26,15 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.PrositCSVWriter;
-import edu.washington.gs.maccoss.encyclopedia.filewriters.web.models.fragmentation.Prosit2020HCDModel;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.web.models.fragmentation.Prosit2023timsTOFModel;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.web.models.ims.AlphaPeptDeepIMSModel;
-import edu.washington.gs.maccoss.encyclopedia.filewriters.web.models.ims.IM2DeepIMSModel;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.web.models.rt.ChronologerModel;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.web.models.rt.DeepLCHelaRTModel;
-import edu.washington.gs.maccoss.encyclopedia.filewriters.web.models.rt.Prosit2019RTModel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.RunnableWithExceptions;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.SubProgressIndicator;
@@ -65,29 +62,21 @@ public class KoinaLibraryPredictionClient {
 		SearchParameters params=SearchParameterParser.getDefaultParametersObject();
 		
 		ArrayList<KoinaPrecursor> precursors=new ArrayList<KoinaPrecursor>();
-		precursors.add(new KoinaPrecursor(AminoAcidEncoding.getAAs("LGGNEQVCR", params.getAAConstants()), 25f, (byte)2));
-		precursors.add(new KoinaPrecursor(AminoAcidEncoding.getAAs("GAGSSEPVTGLDAK", params.getAAConstants()), 25f, (byte)2));
+		precursors.add(new KoinaPrecursor(AminoAcidEncoding.getAAs("ATHFMENVTR", params.getAAConstants()), 25f, (byte)2));
 		
 		AminoAcidConstants constants = new AminoAcidConstants();
 		ArrayList<KoinaFeaturePredictionModel> models=new ArrayList<KoinaFeaturePredictionModel>();
 		models.add(new Prosit2023timsTOFModel());
-		models.add(new DeepLCHelaRTModel());
+		models.add(new ChronologerModel());
 		models.add(new AlphaPeptDeepIMSModel());
 		KoinaLibraryPredictionClient client=new KoinaLibraryPredictionClient(models);
 		runKoinaOnBatch(client, precursors, KoinaLibraryPredictionClient.HTTPS_KOINA_WILHELMLAB_ORG_443);
 		
 		for (KoinaPrecursor precursor : precursors) {
 			AnnotatedLibraryEntry entry=precursor.toEntry(constants, params);
+			System.out.println(precursor.getiRT()+" --> "+entry.getRetentionTime());
 			Charter.launchChart(entry);
 		}
-	}
-
-	public static ArrayList<KoinaFeaturePredictionModel> getDefaultModels() {
-		ArrayList<KoinaFeaturePredictionModel> models=new ArrayList<KoinaFeaturePredictionModel>();
-		models.add(new Prosit2020HCDModel());
-		models.add(new Prosit2019RTModel());
-		models.add(new IM2DeepIMSModel());
-		return models;
 	}
 	
 	/**

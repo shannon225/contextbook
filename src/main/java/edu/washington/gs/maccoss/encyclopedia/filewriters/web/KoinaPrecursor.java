@@ -37,6 +37,9 @@ public class KoinaPrecursor {
 	public float getNCE() {
 		return nce;
 	}
+	public float getiRT() {
+		return iRT;
+	}
 	
 	public void addAccession(String accession) {
 		accessions.add(accession);

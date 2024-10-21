@@ -42,8 +42,8 @@ import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
 public class DilutionCurveFitterDialog extends JDialog {
 	private static final long serialVersionUID = 1L;
 	
-	private static final Color PRESENT_TEXT_COLOR = Color.black;
-	private static final Color MISSING_TEXT_COLOR = Color.red;
+	//private static final Color PRESENT_TEXT_COLOR = Color.black;
+	//private static final Color MISSING_TEXT_COLOR = Color.red;
 	private static final ImageIcon processingIcon=new ImageIcon(SearchPanel.class.getClassLoader().getResource("images/processing_icon.png"));
 
 	public static void launchDilutionCurveFitterDialog(Component root) {
@@ -75,22 +75,22 @@ public class DilutionCurveFitterDialog extends JDialog {
 		targetTextArea.setFont(new Font("Monospaced", Font.PLAIN, 10));
 		JScrollPane targetScrollPane = new JScrollPane(targetTextArea);
 		final TitledBorder targetBorder = BorderFactory.createTitledBorder("Target protein accessions (requires exact matches):");
-		targetBorder.setTitleColor(MISSING_TEXT_COLOR);
+		//targetBorder.setTitleColor(MISSING_TEXT_COLOR);
 		targetScrollPane.setBorder(targetBorder);
 		targetTextArea.setEditable(true);
-		targetTextArea.addCaretListener(new CaretListener() {
-			@Override
-			public void caretUpdate(CaretEvent e) {
-				int length = targetTextArea.getText().trim().length();
-				if (length>0&&!PRESENT_TEXT_COLOR.equals(targetBorder.getTitleColor())) {
-					targetBorder.setTitleColor(PRESENT_TEXT_COLOR);
-					targetScrollPane.repaint();
-				} else if (length<=0&&!MISSING_TEXT_COLOR.equals(targetBorder.getTitleColor())) {
-					targetBorder.setTitleColor(MISSING_TEXT_COLOR);
-					targetScrollPane.repaint();
-				}
-			}
-		});
+//		targetTextArea.addCaretListener(new CaretListener() {
+//			@Override
+//			public void caretUpdate(CaretEvent e) {
+//				int length = targetTextArea.getText().trim().length();
+//				if (length>0&&!PRESENT_TEXT_COLOR.equals(targetBorder.getTitleColor())) {
+//					targetBorder.setTitleColor(PRESENT_TEXT_COLOR);
+//					targetScrollPane.repaint();
+//				} else if (length<=0&&!MISSING_TEXT_COLOR.equals(targetBorder.getTitleColor())) {
+//					targetBorder.setTitleColor(MISSING_TEXT_COLOR);
+//					targetScrollPane.repaint();
+//				}
+//			}
+//		});
 
 		final SpinnerModel maximumPeptidesPerProteinSpinner=new SpinnerNumberModel(3, 1, 100, 1);
 		final SpinnerModel maximumAssayDensitySpinner=new SpinnerNumberModel(10, 1, 1000, 5);
@@ -131,8 +131,8 @@ public class DilutionCurveFitterDialog extends JDialog {
 				
 				if (saveDir==null) {
 					JOptionPane.showMessageDialog(frame, "You must specify a global ELIB or DLIB library file!", "Incomplete options!", JOptionPane.WARNING_MESSAGE, processingIcon);
-				} else if (targets.length==0) {
-					JOptionPane.showMessageDialog(frame, "You must specify at least one target accession number!", "Incomplete options!", JOptionPane.WARNING_MESSAGE, processingIcon);
+				//} else if (targets.length==0) {
+				//	JOptionPane.showMessageDialog(frame, "You must specify at least one target accession number!", "Incomplete options!", JOptionPane.WARNING_MESSAGE, processingIcon);
 				} else if (exampleSearchFile==null) {
 					JOptionPane.showMessageDialog(frame, "You must specify a retention time alignment file!", "Incomplete options!", JOptionPane.WARNING_MESSAGE, processingIcon);
 				} else if (titrationCurveFile==null) {
@@ -248,6 +248,8 @@ public class DilutionCurveFitterDialog extends JDialog {
 
 		@Override
 		public boolean isTargetedProtein(String accession) {
+			if (targets==null||targets.length==0) return true;
+			
 			for (int i = 0; i < targets.length; i++) {
 				if (accession.indexOf(targets[i])>=0) return true;
 			}

@@ -360,7 +360,7 @@ public class DilutionCurveFitter {
 				float loq=bestFit.getLOQ();
 				
 				reportWriter.println(peptide+","+protein+","+lod+","+loq+","+pair.y+","+bestFit.m+","+bestFit.b+","+bestFit.noiseStdev+","+bestFit.linearStdev+","+bestFit.maxValue);
-				if (Float.isFinite(loq)&&loq<0) {
+				if (Float.isFinite(loq)&&lod<0) {
 					fitPeptides.add(new FitPeptide(peptide, protein, bestFit, expected, actualArray));
 				}
 			}

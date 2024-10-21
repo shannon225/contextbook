@@ -257,6 +257,7 @@ public class ThesaurusParametersPanel extends JPanel implements ParametersPanelI
 				25f,
 				targetWindowCenter,
 				precursorWindowWidthValue,
+				-1.0f,
 				numberOfQuantitativeIonsValue,
 				minNumOfQuantitativeIonsValue,
 				-1,

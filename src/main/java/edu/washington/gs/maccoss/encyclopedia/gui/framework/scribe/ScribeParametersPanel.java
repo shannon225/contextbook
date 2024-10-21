@@ -247,6 +247,7 @@ public class ScribeParametersPanel extends JPanel implements ParametersPanelInte
 				25f,
 				targetWindowCenter,
 				precursorWindowWidthValue,
+				-1.0f,
 				numberOfQuantitativeIonsValue,
 				minNumOfQuantitativeIonsValue,
 				-1,

@@ -346,7 +346,7 @@ public class DIABrowserPanel extends JPanel {
 		SwingWorkerProgress<ArrayList<AcquiredSpectrum>> worker=new SwingWorkerProgress<ArrayList<AcquiredSpectrum>>((Frame)SwingUtilities.getWindowAncestor(this), "Please wait...", "Reading Raw File") {
 			@Override
 			protected ArrayList<AcquiredSpectrum> doInBackgroundForReal() throws Exception {
-				ChartPanel structureChart=MzmlStructureCharter.getStructureChart(f);
+				ChartPanel structureChart=MzmlStructureCharter.getStructureChart(f, parameters);
 				boolean found=false;
 				for (int i=0; i<primaryTabs.getTabCount(); i++) {
 					String title=primaryTabs.getTitleAt(i);

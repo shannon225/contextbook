@@ -38,6 +38,7 @@ public class SearchParameters implements XMLObject {
 	public static final String INTEGRATE_PRECURSORS = "-integratePrecursors";
 	public static final String ADJUST_INFERRED_RT_BOUNDARIES = "-adjustInferredRTBoundaries";
 	public static final String MIN_NUM_INTEGRATED_RT_POINTS = "-minNumIntegratedRTPoints";
+	public static final String MAX_WINDOW_WIDTH = "-maxWindowWidth"; // wider "alignment" windows should be tossed. Thanks, MacCoss!
 	public static final String INSTRUMENT="-instrument"; 
 	public static final int DEFAULT_MIN_NUM_INTEGRATED_RT_POINTS = 3;
 	public static final int DEFAULT_MAX_NUM_FRAGMENT_IONS = 10;
@@ -89,6 +90,7 @@ public class SearchParameters implements XMLObject {
     protected final boolean adjustInferredRTBoundaries;
     protected final InstrumentSpecificSearchParameters instrument;
     protected final boolean skipLibraryRetentionTime;
+    protected final float maxWindowWidth;
     
     public Optional<ArrayList<Range>> getPrecursorIsolationRanges() {
 		return precursorIsolationRanges;
@@ -96,7 +98,7 @@ public class SearchParameters implements XMLObject {
 
 	public SearchParameters(AminoAcidConstants aaConstants, FragmentationType fragType, MassTolerance precursorTolerance, double precursorOffsetPPM, double precursorIsolationMargin, MassTolerance fragmentTolerance, double fragmentOffsetPPM, MassTolerance libraryFragmentTolerance, DigestionEnzyme enzyme,
 			float percolatorThreshold, float percolatorProteinThreshold, boolean usePercolator, PercolatorVersion percolatorVersionNumber, int percolatorTrainingSetSize, float percolatorTrainingSetThreshold,
-			int percolatorTrainingIterations, DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, 
+			int percolatorTrainingIterations, DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, float maxWindowWidth,
 			int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, int topNTargetsUsed, float minIntensity, float minIntensityNumIons, Optional<PeptideModification> localizingModification, ScoringBreadthType CASiLBreadthType, 
 			float getNumberOfExtraDecoyLibrariesSearched, boolean quantifyAcrossSamples, boolean verifyModificationIons, float rtWindowInMin, int minNumIntegratedRTPoints, boolean filterPeaklists, boolean doNotUseGlobalFDR, 
 			Optional<File> precursorIsolationRangeFile, Optional<File> percolatorModelFile, boolean normalizeByTIC, boolean subtractBackground, boolean maskBadIntegrations, boolean adjustInferredRTBoundaries, boolean skipLibraryRetentionTime, boolean integratePrecursors, InstrumentSpecificSearchParameters instrument, boolean enableAdvancedOptions) {
@@ -121,6 +123,7 @@ public class SearchParameters implements XMLObject {
 		this.expectedPeakWidth=expectedPeakWidth;
 		this.targetWindowCenter=targetWindowCenter;
 		this.precursorWindowSize=precursorWindowSize;
+		this.maxWindowWidth=maxWindowWidth;
 		this.numberOfQuantitativePeaks=numberOfQuantitativePeaks;
 		this.minNumOfQuantitativePeaks=minNumOfQuantitativePeaks;
 		this.topNTargetsUsed=topNTargetsUsed;
@@ -228,6 +231,7 @@ public class SearchParameters implements XMLObject {
 		sb.append(" -numberOfThreadsUsed "+numberOfThreadsUsed+"\n");
 		sb.append(" -expectedPeakWidth "+expectedPeakWidth+"\n");
 		sb.append(" -precursorWindowSize "+precursorWindowSize+"\n");
+		sb.append(" -maxWindowWidth "+maxWindowWidth+"\n");
 		sb.append(" ").append(NUMBER_OF_QUANTITATIVE_PEAKS).append(" ").append(numberOfQuantitativePeaks).append("\n");
 		sb.append(" -minNumOfQuantitativePeaks "+minNumOfQuantitativePeaks+"\n");
 		sb.append(" -topNTargetsUsed "+topNTargetsUsed+"\n");
@@ -284,6 +288,7 @@ public class SearchParameters implements XMLObject {
 		map.put("-numberOfThreadsUsed", numberOfThreadsUsed+"");
 		map.put("-expectedPeakWidth", expectedPeakWidth+"");
 		map.put("-precursorWindowSize", precursorWindowSize+"");
+		map.put("-maxWindowWidth", maxWindowWidth+"");
 		map.put(NUMBER_OF_QUANTITATIVE_PEAKS, numberOfQuantitativePeaks+"");
 		map.put("-minNumOfQuantitativePeaks", minNumOfQuantitativePeaks+"");
 		map.put("-topNTargetsUsed",topNTargetsUsed+"");
@@ -498,6 +503,10 @@ public class SearchParameters implements XMLObject {
 	
 	public float getPrecursorWindowSize() {
 		return precursorWindowSize;
+	}
+	
+	public float getMaxWindowWidth() {
+		return maxWindowWidth;
 	}
 	
 	public float getNumberOfExtraDecoyLibrariesSearched() {

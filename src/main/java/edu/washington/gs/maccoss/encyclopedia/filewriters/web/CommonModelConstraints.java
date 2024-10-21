@@ -54,4 +54,11 @@ public class CommonModelConstraints {
 		
 		return true;
 	}
+	public static boolean canModelChronologer(AminoAcidEncoding[] aas, byte precursorCharge) {
+		if (aas.length<4||aas.length>50) return false;
+		
+		// no PTM constraint (beyond AminoAcidEncoding)
+		
+		return true;
+	}
 }

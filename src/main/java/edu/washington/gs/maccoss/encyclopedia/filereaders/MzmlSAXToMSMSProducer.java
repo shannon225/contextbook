@@ -473,24 +473,27 @@ public class MzmlSAXToMSMSProducer extends DefaultHandler implements MSMSProduce
 					ionMobilityArray=Optional.of(array);
 				}
 				
+				
 				double precursorIsolationMargin = parameters==null?0.0:parameters.getPrecursorIsolationMargin();
 				try {
-					FragmentScan stripe=new FragmentScan(spectrumName, spectrumRef, spectrumIndex, scanStartTime, fraction, ionInjectTime, isolationWindowTarget-isolationWindowLowerOffset+precursorIsolationMargin, isolationWindowTarget+isolationWindowUpperOffset-precursorIsolationMargin,
-							checkArray(massArray), checkArray(intensityArray), ionMobilityArray, charge);
-					stripes.add(stripe);
-					
-					Range range=stripe.getRange();
-					TFloatArrayList stripeRTs=retentionTimesByStripe.get(range);
-					TFloatArrayList stripeIITs=ionInjectionTimesByStripe.get(range);
-					if (stripeRTs==null) {
-						stripeRTs=new TFloatArrayList();
-						retentionTimesByStripe.put(range, stripeRTs);
-						stripeIITs=new TFloatArrayList();
-						ionInjectionTimesByStripe.put(range, stripeIITs);
-					}
-					stripeRTs.add(scanStartTime);
-					if (ionInjectTime!=null) {
-						stripeIITs.add(ionInjectTime);
+					if (parameters.getMaxWindowWidth()<=0||parameters.getMaxWindowWidth()>isolationWindowUpperOffset+isolationWindowLowerOffset) {	
+						FragmentScan stripe=new FragmentScan(spectrumName, spectrumRef, spectrumIndex, scanStartTime, fraction, ionInjectTime, isolationWindowTarget-isolationWindowLowerOffset+precursorIsolationMargin, isolationWindowTarget+isolationWindowUpperOffset-precursorIsolationMargin,
+								checkArray(massArray), checkArray(intensityArray), ionMobilityArray, charge);
+						stripes.add(stripe);
+						
+						Range range=stripe.getRange();
+						TFloatArrayList stripeRTs=retentionTimesByStripe.get(range);
+						TFloatArrayList stripeIITs=ionInjectionTimesByStripe.get(range);
+						if (stripeRTs==null) {
+							stripeRTs=new TFloatArrayList();
+							retentionTimesByStripe.put(range, stripeRTs);
+							stripeIITs=new TFloatArrayList();
+							ionInjectionTimesByStripe.put(range, stripeIITs);
+						}
+						stripeRTs.add(scanStartTime);
+						if (ionInjectTime!=null) {
+							stripeIITs.add(ionInjectTime);
+						}
 					}
 				} catch (NullPointerException npe) {
 					Logger.errorLine("Potential nulls:");

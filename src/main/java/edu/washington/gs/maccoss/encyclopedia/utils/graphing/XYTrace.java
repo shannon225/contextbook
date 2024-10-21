@@ -82,7 +82,9 @@ public class XYTrace implements XYTraceInterface, Comparable<XYTraceInterface> {
 	}
 	
 	public double getMaxYInRange(Range xrange) {
-		return getMaxXYInRange(xrange).y;
+		XYPoint maxXYInRange = getMaxXYInRange(xrange);
+		if (maxXYInRange==null) return 0.0;
+		return maxXYInRange.y;
 	}
 	
 	public XYPoint getMaxXY() {
@@ -90,7 +92,9 @@ public class XYTrace implements XYTraceInterface, Comparable<XYTraceInterface> {
 	}
 	
 	public double getMaxY() {
-		return getMaxXYInRange(new Range(-Double.MAX_VALUE, Double.MAX_VALUE)).y;
+		XYPoint maxXYInRange = getMaxXYInRange(new Range(-Double.MAX_VALUE, Double.MAX_VALUE));
+		if (maxXYInRange==null) return 0.0;
+		return maxXYInRange.y;
 	}
 	
 	public XYTrace rescaleX(float rescaleX) {

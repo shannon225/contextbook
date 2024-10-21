@@ -719,14 +719,26 @@ public class SearchPanel extends JPanel {
 			dataMenu.add(subsetDIA);
 		}
 
-		JMenuItem dilutonCurveFitterItem=new JMenuItem("Create PRM assay from DIA...", processingIcon);
-		dilutonCurveFitterItem.addActionListener(new ActionListener() {
+		JMenuItem prmAssayItem=new JMenuItem("Create PRM assay from DIA...", processingIcon);
+		prmAssayItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				SearchPanelUtilities.launchDIAtoPRMDialog(SearchPanel.this);
 			}
 		});
-		dataMenu.add(dilutonCurveFitterItem);
+		dataMenu.add(prmAssayItem);
+
+		JMenuItem dilutonCurveFitterItem=new JMenuItem("Create PRM assay from DIA curves...", processingIcon);
+		dilutonCurveFitterItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				SearchPanelUtilities.launchDIAtoPRMWithCurvesDialog(SearchPanel.this);
+			}
+		});
+		if (enableAdvancedOptions) {
+			dilutonCurveFitterItem.setText("HIDDEN: "+dilutonCurveFitterItem.getText());
+			dataMenu.add(dilutonCurveFitterItem);
+		}
 
 		JMenuItem toggleScoringSystemItem=new JMenuItem("Toggle EncyclopeDIA Scoring System", libraryBrowserIcon);
 		toggleScoringSystemItem.addActionListener(new ActionListener() {

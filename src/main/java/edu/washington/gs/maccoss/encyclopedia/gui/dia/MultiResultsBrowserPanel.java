@@ -487,7 +487,7 @@ public class MultiResultsBrowserPanel extends JPanel {
 					XYTextAnnotation annotation = new XYTextAnnotation(sampleNames[i], domainAxis.getLowerBound(), rangeAxis.getUpperBound());
 					annotation.setTextAnchor(TextAnchor.TOP_LEFT);
 					annotation.setFont(new Font("News Gothic MT", Font.BOLD, 14));
-					fragmentChart.getChart().getXYPlot().addAnnotation(annotation);
+					//fragmentChart.getChart().getXYPlot().addAnnotation(annotation);
 					
 					domainAxis.setLabel(null);
 					domainAxis.setTickLabelFont(new Font("News Gothic MT", Font.PLAIN, 12));

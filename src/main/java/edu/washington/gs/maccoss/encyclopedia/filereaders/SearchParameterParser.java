@@ -50,6 +50,7 @@ public class SearchParameterParser {
 		map.put(SearchParameters.OPT_PERC_TRAINING_SIZE, Integer.toString(PercolatorExecutor.DEFAULT_TRAINING_SET_SIZE));
 		map.put(SearchParameters.OPT_PERC_TRAINING_THRESH, Float.toString(PercolatorExecutor.DEFAULT_TRAINING_THRESHOLD));
 		map.put("-expectedPeakWidth", "25");
+		map.put("-maxWindowWidth", "-1");
 		map.put("-acquisition", DataAcquisitionType.toString(DataAcquisitionType.DIA));
 		map.put("-localizationModification", PeptideModification.NO_MODIFICATION_NAME);
 		map.put("-scoringBreadthType", ScoringBreadthType.RECALIBRATED_PEAK_WIDTH.toShortname());
@@ -138,6 +139,7 @@ public class SearchParameterParser {
 		final float targetWindowCenter;
 		final float expectedPeakWidth;
 		final float precursorWindowSize;
+		final float maxWindowWidth;
 		final int numberOfQuantitativePeaks;
 		final int minNumOfQuantitativePeaks;
 		final int topNTargetsUsed;
@@ -318,6 +320,7 @@ public class SearchParameterParser {
 		numberOfThreadsUsed=ParsingUtils.getInteger("-numberOfThreadsUsed", parameters, Runtime.getRuntime().availableProcessors());
 		targetWindowCenter=ParsingUtils.getFloat("-targetWindowCenter", parameters, -1f);
 		precursorWindowSize=ParsingUtils.getFloat("-precursorWindowSize", parameters, -1f);
+		maxWindowWidth=ParsingUtils.getFloat("-maxWindowWidth", parameters, -1f);
 		expectedPeakWidth=ParsingUtils.getFloat("-expectedPeakWidth", parameters, 25f);
 		numberOfQuantitativePeaks=ParsingUtils.getInteger(SearchParameters.NUMBER_OF_QUANTITATIVE_PEAKS, parameters, 5);
 		minNumOfQuantitativePeaks=ParsingUtils.getInteger("-minNumOfQuantitativePeaks", parameters, 3);
@@ -412,6 +415,7 @@ public class SearchParameterParser {
 				expectedPeakWidth,
 				targetWindowCenter,
 				precursorWindowSize,
+				maxWindowWidth,
 				numberOfQuantitativePeaks,
 				minNumOfQuantitativePeaks,
 				topNTargetsUsed,

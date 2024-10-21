@@ -119,11 +119,7 @@ public class MzmlStructureCharter {
 		}
 	}
 
-	public static ChartPanel getStructureChart(File mzMLFile) {
-		HashMap<String, String> paramMap=PecanParameterParser.getDefaultParameters();
-		paramMap.put("-acquisition", "DIA"); // NON-OVERLAPPING!
-		SearchParameters parameters=PecanParameterParser.parseParameters(paramMap);
-
+	public static ChartPanel getStructureChart(File mzMLFile, SearchParameters parameters) {
 		if (mzMLFile.getName().toLowerCase().endsWith("dia")) {
 			StripeFileInterface dia=StripeFileGenerator.getFile(mzMLFile, parameters);
 			if (dia instanceof StripeFile) {

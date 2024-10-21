@@ -13,6 +13,7 @@ import edu.washington.gs.maccoss.encyclopedia.filewriters.web.models.fragmentati
 import edu.washington.gs.maccoss.encyclopedia.filewriters.web.models.ims.AlphaPeptDeepIMSModel;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.web.models.ims.IM2DeepIMSModel;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.web.models.rt.AlphaPeptDeepRTModel;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.web.models.rt.ChronologerModel;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.web.models.rt.DeepLCHelaRTModel;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.web.models.rt.Prosit2019RTModel;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.web.models.rt.Prosit2020TMTRTModel;
@@ -60,6 +61,7 @@ public interface KoinaFeaturePredictionModel {
 		}
 		if (RT_TYPE.equals(modelType)) {
 			return new Prosit2019RTModel();
+			//return new ChronologerModel();
 		}
 
 		throw new EncyclopediaException("Unexpected type ["+modelType+"]");
@@ -151,6 +153,7 @@ public interface KoinaFeaturePredictionModel {
 	public static ArrayList<KoinaFeaturePredictionModel> getRTModels() {
 		ArrayList<KoinaFeaturePredictionModel> models=new ArrayList<KoinaFeaturePredictionModel>();
 		models.add(new Prosit2019RTModel());
+		models.add(new ChronologerModel());
 		models.add(new DeepLCHelaRTModel());
 		models.add(new AlphaPeptDeepRTModel());
 		models.add(new Prosit2020TMTRTModel());

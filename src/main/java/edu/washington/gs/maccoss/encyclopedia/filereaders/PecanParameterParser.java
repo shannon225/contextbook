@@ -110,6 +110,7 @@ public class PecanParameterParser {
 		final int numberOfThreadsUsed;
 		final float targetWindowCenter;
 		final float precursorWindowSize;
+		final float maxWindowWidth;
 		final int numberOfQuantitativePeaks;
 		final int minNumOfQuantitativePeaks;
 		final int topNTargetsUsed;
@@ -300,6 +301,7 @@ public class PecanParameterParser {
 		numberOfThreadsUsed=ParsingUtils.getInteger("-numberOfThreadsUsed", parameters, Runtime.getRuntime().availableProcessors());
 		targetWindowCenter=ParsingUtils.getFloat("-targetWindowCenter", parameters, -1f);
 		precursorWindowSize=ParsingUtils.getFloat("-precursorWindowSize", parameters, -1f);
+		maxWindowWidth=ParsingUtils.getFloat("-maxWindowWidth", parameters, -1f);
 		numberOfQuantitativePeaks=ParsingUtils.getInteger(SearchParameters.NUMBER_OF_QUANTITATIVE_PEAKS, parameters, 5);
 		minNumOfQuantitativePeaks=ParsingUtils.getInteger("-minNumOfQuantitativePeaks", parameters, 3);
 		topNTargetsUsed=ParsingUtils.getInteger("-topNTargetsUsed", parameters, -1);
@@ -354,6 +356,7 @@ public class PecanParameterParser {
 				numberOfThreadsUsed,
 				targetWindowCenter,
 				precursorWindowSize,
+				maxWindowWidth,
 				numberOfQuantitativePeaks,
 				minNumOfQuantitativePeaks,
 				topNTargetsUsed,

@@ -268,6 +268,7 @@ public class EncyclopediaTwoParametersPanel extends JPanel implements Parameters
 				25f,
 				targetWindowCenter,
 				precursorWindowWidthValue,
+				-1.0f,
 				numberOfQuantitativeIonsValue,
 				minNumOfQuantitativeIonsValue,
 				SearchParameters.DEFAULT_MAX_NUM_FRAGMENT_IONS,
