@@ -150,7 +150,6 @@ public class MzmlScanRangeTrackerSAXProducer extends DefaultHandler implements R
 					}
 				}
 
-				System.out.println(parameters.getMaxWindowWidth()+", "+parameters.getMaxWindowWidth()+" > "+isolationWindowUpperOffset+" + "+isolationWindowLowerOffset);
 				if (parameters.getMaxWindowWidth()<=0||parameters.getMaxWindowWidth()>isolationWindowUpperOffset+isolationWindowLowerOffset) {	
 					// NOTE: does not consider parameters.getPrecursorIsolationMargin() to keep margins intact for reporting
 					Range range=new Range(isolationWindowTarget-isolationWindowLowerOffset, isolationWindowTarget+isolationWindowUpperOffset);
