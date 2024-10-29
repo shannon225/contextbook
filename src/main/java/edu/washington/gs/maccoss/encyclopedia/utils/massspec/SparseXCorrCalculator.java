@@ -240,7 +240,8 @@ public class SparseXCorrCalculator {
 			default:
 				throw new EncyclopediaException("Unknown fragmentation type ["+type+"]");
 		}
-		
+
+		Collections.sort(allPeaks);
 		return new Pair<>(model, getIntensityArray(params, allPeaks, model.getChargedMass(precursorCharge), true));
 	}
 
@@ -255,8 +256,11 @@ public class SparseXCorrCalculator {
 		return peaks;
 	}
 
+	/**
+	 *
+	 * @param allPeaks: MUST BE SORTED ON MASS
+	 */
 	private static SparseXCorrSpectrum getIntensityArray(SearchParameters params, ArrayList<Peak> allPeaks, double precursorMz, boolean addIntensityToNeighboringBins) {
-		Collections.sort(allPeaks);
 		
 		// set tolerance to 2x the fragment tolerance of the highest fragment
 		float fragmentBinSize=2.0f*(float)params.getFragmentTolerance().getTolerance(biggestFragmentMass);
