@@ -144,7 +144,7 @@ public class SparseXCorrCalculator {
 		double increment=(lastMass-firstMass)/ArrayXCorrCalculator.groups;
 		double[] binMaxMass=new double[ArrayXCorrCalculator.groups]; 
 		for (int i=0; i<ArrayXCorrCalculator.groups-1; i++) {
-			binMaxMass[i]=increment*(i+1);
+			binMaxMass[i]=firstMass + increment*(i+1);
 		}
 		binMaxMass[ArrayXCorrCalculator.groups-1]=Double.MAX_VALUE;
 		
