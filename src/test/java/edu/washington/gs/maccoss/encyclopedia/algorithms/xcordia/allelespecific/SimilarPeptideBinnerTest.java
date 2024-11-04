@@ -294,7 +294,7 @@ public class SimilarPeptideBinnerTest extends TestCase {
 		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
 		
 		// WITH FIXED AND VARIABLE MODS
-		ArrayList<FastaPeptideEntry> targets=enzyme.digestProtein(entry, 4, 40, 0, parameters.getAAConstants(), false);
+		ArrayList<FastaPeptideEntry> targets=enzyme.digestProtein(entry, 4, 40, 0, false, parameters.getAAConstants(), false);
 		
 		SimilarPeptideBinner binner=new SimilarPeptideBinner();
 		ArrayList<ArrayList<FastaPeptideEntry>> bins=binner.binPeptides(targets);
