@@ -1,14 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-
-import org.apache.commons.lang3.builder.HashCodeBuilder;
-
+import com.google.common.collect.ImmutableList;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.AlleleVariant;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.ExtendedFastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.VariantFastaPeptideEntry;
@@ -22,8 +14,13 @@ import gnu.trove.map.hash.TCharDoubleHashMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.set.TCharSet;
 import gnu.trove.set.hash.TCharHashSet;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
+import java.util.*;
 
 public final class DigestionEnzyme {
+	private static final boolean DEFAULT_HANDLE_N_TERM_METHIONINE = true; // TODO: consider making this a SearchParameter
+
 	public static final char[] AAs="ACDEFGHIKLMNPQRSTVWY".toCharArray();
 	private final char stopCodon='*';
 	private final String name;
@@ -304,16 +301,53 @@ public final class DigestionEnzyme {
 	}
 	
 	//@MoMo 
-	public ArrayList<FastaPeptideEntry> digestProtein(FastaEntryInterface entry, int minLength, int maxLength, int maxMissedCleavages, AminoAcidConstants constants, boolean requireVariant) {
+	public ArrayList<FastaPeptideEntry> digestProtein(FastaEntryInterface entry,
+													  int minLength,
+													  int maxLength,
+													  int maxMissedCleavages,
+													  AminoAcidConstants constants,
+													  boolean requireVariant) {
+		return digestProtein(entry, minLength, maxLength, maxMissedCleavages, DEFAULT_HANDLE_N_TERM_METHIONINE,
+				constants, requireVariant);
+	}
+
+
+	public ArrayList<FastaPeptideEntry> digestProtein(FastaEntryInterface entry,
+													  int minLength,
+													  int maxLength,
+													  int maxMissedCleavages,
+													  boolean handleNTermMethionine,
+													  AminoAcidConstants constants,
+													  boolean requireVariant) {
 		if (entry instanceof ExtendedFastaEntry) {
-			return digestProtein(entry, minLength, maxLength, maxMissedCleavages, constants, requireVariant, ((ExtendedFastaEntry)entry).getPotentialVariants());
+			return digestProtein(entry, minLength, maxLength, maxMissedCleavages, handleNTermMethionine, constants,
+					requireVariant, ((ExtendedFastaEntry)entry).getPotentialVariants());
 		} else {
-			return digestProtein(entry, minLength, maxLength, maxMissedCleavages, constants, requireVariant, new ArrayList<AlleleVariant>());
+			return digestProtein(entry, minLength, maxLength, maxMissedCleavages, handleNTermMethionine, constants,
+					requireVariant, new ArrayList<AlleleVariant>());
 		}
 	}
 
+	public ArrayList<FastaPeptideEntry> digestProtein(FastaEntryInterface protein,
+													  int minLength,
+													  int maxLength,
+													  int maxMissedCleavages,
+													  AminoAcidConstants constants,
+													  boolean requireVariant,
+													  ArrayList<AlleleVariant> variants) {
+		return digestProtein(protein, minLength, maxLength, maxMissedCleavages, DEFAULT_HANDLE_N_TERM_METHIONINE,
+				constants, requireVariant, variants);
+	}
+
 	//@MoMo modified 
-	public ArrayList<FastaPeptideEntry> digestProtein(FastaEntryInterface protein, int minLength, int maxLength, int maxMissedCleavages, AminoAcidConstants constants, boolean requireVariant, ArrayList<AlleleVariant> variants) {
+	public ArrayList<FastaPeptideEntry> digestProtein(FastaEntryInterface protein,
+													  int minLength,
+													  int maxLength,
+													  int maxMissedCleavages,
+													  boolean handleNTermMethionine,
+													  AminoAcidConstants constants,
+													  boolean requireVariant,
+													  ArrayList<AlleleVariant> variants) {
 		String sequence=protein.getSequence();
 		
 		int totalAllowedStarts=maxMissedCleavages+1;
@@ -330,7 +364,8 @@ public final class DigestionEnzyme {
 			}
 			if (!requireVariant) {
 				for (int i=starts.size()-1; (i>starts.size()-1-totalAllowedStarts)&&i>=0; i--) {
-					peptides.addAll(getPeptides(protein, starts.get(i), stop, minLength, maxLength, sequence, constants, Optional.empty(), protein instanceof ExtendedFastaEntry));
+					peptides.addAll(getPeptides(protein, starts.get(i), stop, minLength, maxLength, sequence,
+							handleNTermMethionine, constants, Optional.empty(), protein instanceof ExtendedFastaEntry));
 				}
 			}
 			starts.add(stop+1);
@@ -431,7 +466,8 @@ public final class DigestionEnzyme {
 					}
 					// Check whether we have generated peptides for this start and stop sites pair already  
 					if (!usedPair.containsKey(start)||!usedPair.get(start).contains(stop)) {
-						peptides.addAll(getPeptides(protein, start, stop, minLength, maxLength, sequenceVariant, constants, Optional.of(variant), protein instanceof ExtendedFastaEntry));
+						peptides.addAll(getPeptides(protein, start, stop, minLength, maxLength, sequenceVariant,
+								handleNTermMethionine, constants, Optional.of(variant), protein instanceof ExtendedFastaEntry));
 						if (!usedPair.containsKey(start)) {
 							usedPair.put(start, new TIntArrayList());
 						}
@@ -476,7 +512,16 @@ public final class DigestionEnzyme {
 	}
 	
 	//@MoMo 
-	private ArrayList<FastaPeptideEntry> getPeptides(FastaEntryInterface protein, int start, int stop, int minLength, int maxLength, String sequence, AminoAcidConstants constants, Optional<AlleleVariant> maybeVariant, boolean useOnlyAnnotatedMods) {
+	private ArrayList<FastaPeptideEntry> getPeptides(FastaEntryInterface protein,
+													 int start,
+													 int stop,
+													 int minLength,
+													 int maxLength,
+													 String sequence,
+													 boolean handleNTermMethionine,
+													 AminoAcidConstants constants,
+													 Optional<AlleleVariant> maybeVariant,
+													 boolean useOnlyAnnotatedMods) {
 		TCharDoubleHashMap fixedMods=constants.getFixedMods();
 		ModificationMassMap variableMods=constants.getVariableMods();
 		ArrayList<FastaPeptideEntry> peptides=new ArrayList<FastaPeptideEntry>();
@@ -498,7 +543,29 @@ public final class DigestionEnzyme {
 				}
 			}
 		}
+
+		if (handleNTermMethionine && start == 0 && peptide.charAt(0) == 'M') {
+			for (FastaPeptideEntry peptideEntry : ImmutableList.copyOf(peptides)) {
+				if (peptideEntry.getSequence().length() > minLength) {
+					String withoutMSequence = stripFirstM(peptideEntry.getSequence());
+					if (withoutMSequence != null) {
+						peptides.add(generateEntry(protein, withoutMSequence, maybeVariant));
+					}
+				}
+			}
+		}
+
 		return peptides;
+	}
+
+
+	static String stripFirstM(String modifiedPeptideSequence) {
+		int index = modifiedPeptideSequence.indexOf('M');
+		if (index == -1) {
+			return null;
+		} else {
+			return modifiedPeptideSequence.substring(0, index) + modifiedPeptideSequence.substring(index+1);
+		}
 	}
 
 	public ArrayList<FastaPeptideEntry> getModifiedForms(FastaEntryInterface protein, String peptide, TCharDoubleHashMap fixedMods, ModificationMassMap variableMods, Optional<AlleleVariant> maybeVariant, boolean useOnlyAnnotatedMods) {
