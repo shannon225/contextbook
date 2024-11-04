@@ -163,9 +163,7 @@ public class BackgroundGenerator {
 				peptides=new ArrayList<String>();
 				peptides.add(entry.getSequence());
 			}
-			for (String sequence : peptides) {
-				sequences.add(sequence);
-			}
+			sequences.addAll(peptides);
 		}
 		return generateBackground(binBoundaries, useBins, sequences, backgroundDecoys, params);
 	}
