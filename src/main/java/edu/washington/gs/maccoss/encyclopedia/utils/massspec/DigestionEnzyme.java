@@ -1,13 +1,11 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
 import com.google.common.collect.ImmutableList;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.AlleleVariant;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.ExtendedFastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.VariantFastaPeptideEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TCharDoubleHashMap;
@@ -19,7 +17,6 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import java.util.*;
 
 public final class DigestionEnzyme {
-	private static final boolean DEFAULT_HANDLE_N_TERM_METHIONINE = true; // TODO: consider making this a SearchParameter
 
 	public static final char[] AAs="ACDEFGHIKLMNPQRSTVWY".toCharArray();
 	private final char stopCodon='*';
@@ -307,8 +304,8 @@ public final class DigestionEnzyme {
 													  int maxMissedCleavages,
 													  AminoAcidConstants constants,
 													  boolean requireVariant) {
-		return digestProtein(entry, minLength, maxLength, maxMissedCleavages, DEFAULT_HANDLE_N_TERM_METHIONINE,
-				constants, requireVariant);
+		return digestProtein(entry, minLength, maxLength, maxMissedCleavages,
+				PecanSearchParameters.DEFAULT_HANDLE_N_TERM_METHIONINE, constants, requireVariant);
 	}
 
 
@@ -335,8 +332,8 @@ public final class DigestionEnzyme {
 													  AminoAcidConstants constants,
 													  boolean requireVariant,
 													  ArrayList<AlleleVariant> variants) {
-		return digestProtein(protein, minLength, maxLength, maxMissedCleavages, DEFAULT_HANDLE_N_TERM_METHIONINE,
-				constants, requireVariant, variants);
+		return digestProtein(protein, minLength, maxLength, maxMissedCleavages,
+				PecanSearchParameters.DEFAULT_HANDLE_N_TERM_METHIONINE, constants, requireVariant, variants);
 	}
 
 	//@MoMo modified 
@@ -637,5 +634,12 @@ public final class DigestionEnzyme {
 		} else {
 			return protein.getSubEntry(sequence);
 		}
+	}
+
+
+	public static ArrayList<FastaPeptideEntry> digestProtein(FastaEntryInterface entry, PecanSearchParameters params) {
+		return params.getEnzyme().digestProtein(entry, params.getMinPeptideLength(),
+				params.getMaxPeptideLength(), params.getMaxMissedCleavages(), params.isHandleNTermMethionineInDigestion(),
+				params.getAAConstants(), params.isRequireVariableMods());
 	}
 }
