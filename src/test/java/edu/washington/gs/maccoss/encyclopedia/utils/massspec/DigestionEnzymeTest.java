@@ -5,12 +5,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.TreeSet;
+import java.util.*;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntry;
@@ -22,6 +17,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.StringUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.map.hash.TCharDoubleHashMap;
@@ -29,6 +25,9 @@ import gnu.trove.map.hash.TObjectIntHashMap;
 import gnu.trove.procedure.TObjectIntProcedure;
 import gnu.trove.set.hash.TCharHashSet;
 import junit.framework.TestCase;
+
+import static edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme.AAs;
+import static edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme.getAvailableEnzymes;
 
 public class DigestionEnzymeTest extends TestCase {
 	
@@ -834,6 +833,128 @@ public class DigestionEnzymeTest extends TestCase {
 		assertEquals("[AV]|{}", DigestionEnzyme.getEnzyme("Elastase").toXTandemCode());
 		assertEquals("{DE}|[AFILMV]", DigestionEnzyme.getEnzyme("Thermolysin").toXTandemCode());
 		assertEquals("[]|[]", DigestionEnzyme.getEnzyme("No Enzyme").toXTandemCode());
-		assertEquals("{}|{}", new DigestionEnzyme("Non-Specific", "nonspecific", new TCharHashSet(DigestionEnzyme.AAs), new TCharHashSet(DigestionEnzyme.AAs)).toXTandemCode());
+		assertEquals("{}|{}", new DigestionEnzyme("Non-Specific", "nonspecific", new TCharHashSet(AAs), new TCharHashSet(AAs)).toXTandemCode());
 	}
+
+	public void testAvailableEnzymes() {
+
+		final List<DigestionEnzyme> availableEnzymes = getAvailableEnzymes();
+		for (DigestionEnzyme availableEnzyme : availableEnzymes) {
+			final DigestionEnzyme oldEnzyme = oldGetEnzyme(availableEnzyme.getName());
+
+			assertEquals(oldEnzyme, availableEnzyme);
+		}
+
+		assertTrue(availableEnzymes.size() >= 13);
+	}
+
+	// used to test that enzymes didn't change in refactor
+	private static DigestionEnzyme oldGetEnzyme(String enzymeName) {
+		TCharHashSet n=new TCharHashSet();
+		TCharHashSet c=new TCharHashSet();
+		if ("Trypsin".equalsIgnoreCase(enzymeName)) {
+			n.add('K');
+			n.add('R');
+			c.addAll(AAs);
+			c.remove('P');
+
+			return new DigestionEnzyme("Trypsin", "trypsin", n, c);
+
+		} else if ("Trypsin/p".equalsIgnoreCase(enzymeName)) {
+			n.add('K');
+			n.add('R');
+			c.addAll(AAs);
+
+			return new DigestionEnzyme("Trypsin/p", "trypsinp", n, c);
+
+		} else if ("No Enzyme".equalsIgnoreCase(enzymeName)) {
+
+			return new DigestionEnzyme("No Enzyme", "no_enzyme", n, c);
+
+		} else if ("None".equalsIgnoreCase(enzymeName)) {
+
+			return new DigestionEnzyme("No Enzyme", "no_enzyme", n, c);
+
+		} else if ("Nonspecific".equalsIgnoreCase(enzymeName) || "Nonspecific Enzyme".equalsIgnoreCase(enzymeName)) {
+
+			n.addAll(AAs);
+			c.addAll(AAs);
+			return new DigestionEnzyme("Nonspecific Enzyme", "nonspecific_enzyme", n, c);
+
+		} else if ("Lys-C".equalsIgnoreCase(enzymeName)) {
+			n.add('K');
+			c.addAll(AAs);
+			c.remove('P');
+
+			return new DigestionEnzyme("Lys-C", "lys-c", n, c);
+
+		} else if ("Lys-N".equalsIgnoreCase(enzymeName)) {
+			n.addAll(AAs);
+			c.add('K');
+
+			return new DigestionEnzyme("Lys-N", "lys-n", n, c);
+
+		} else if ("Arg-C".equalsIgnoreCase(enzymeName)) {
+			n.add('R');
+			c.addAll(AAs);
+			c.remove('P');
+
+			return new DigestionEnzyme("Arg-C", "arg-c", n, c);
+
+		} else if ("Glu-C".equalsIgnoreCase(enzymeName)) {
+			n.add('D'); //Danielle says not to bother
+			n.add('E');
+			c.addAll(AAs);
+			c.remove('P');
+
+			return new DigestionEnzyme("Glu-C", "glu-c", n, c);
+
+		} else if ("Asp-N".equalsIgnoreCase(enzymeName)) {
+			n.addAll(AAs);
+			c.add('D');
+			c.add('E');
+
+			return new DigestionEnzyme("Asp-N", "asp-n", n, c);
+
+		} else if ("Chymotrypsin".equalsIgnoreCase(enzymeName)) {
+			n.add('F');
+			n.add('Y');
+			n.add('W');
+			c.addAll(AAs);
+			c.remove('P');
+
+			return new DigestionEnzyme("Chymotrypsin", "chymotrypsin", n, c);
+
+		} else if ("Elastase".equalsIgnoreCase(enzymeName)) {
+			n.add('A');
+			n.add('V');
+			c.addAll(AAs);
+
+			return new DigestionEnzyme("Elastase", "elastase", n, c);
+
+		} else if ("Thermolysin".equalsIgnoreCase(enzymeName)) {
+			c.add('A');
+			c.add('F');
+			c.add('I');
+			c.add('L');
+			c.add('M');
+			c.add('V');
+			n.addAll(AAs);
+			n.remove('D');
+			n.remove('E');
+
+			return new DigestionEnzyme("Thermolysin", "thermolysin", n, c);
+
+		} else if ("Pepsin A".equalsIgnoreCase(enzymeName)) {
+			n.add('F');
+			n.add('L');
+			c.addAll(AAs);
+
+			return new DigestionEnzyme("Pepsin A", "pepsin", n, c);
+		}
+
+		throw new EncyclopediaException("Unknown digestion enzyme ["+enzymeName+"]");
+	}
+
+
 }
