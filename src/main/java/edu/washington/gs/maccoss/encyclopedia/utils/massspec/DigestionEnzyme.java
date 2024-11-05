@@ -34,17 +34,17 @@ public final class DigestionEnzyme {
 	public static final DigestionEnzyme[] AVAILABLE_ENZYMES = new DigestionEnzyme[] {
 			createEnzyme("Trypsin", "trypsin", new char[] {'K', 'R'}, new char[] {'P'}, false),
 			createEnzyme("Trypsin/p", "trypsinp", new char[] {'K', 'R'}, new char[0], false),
-			createEnzyme("No Enzyme", "no_enzyme", new char[0], AAs, false),
-			createEnzyme("Nonspecific Enzyme", "nonspecific_enzyme", AAs, new char[0], false),
+			createEnzyme("Glu-C", "glu-c", new char[] {'D', 'E'}, new char[] {'P'}, false),
 			createEnzyme("Lys-C", "lys-c", new char[] {'K'}, new char[] {'P'}, false),
 			createEnzyme("Lys-N", "lys-n", new char[0], new char[] {'K'}, true),
 			createEnzyme("Arg-C", "arg-c", new char[] {'R'}, new char[] {'P'}, false),
-			createEnzyme("Glu-C", "glu-c", new char[] {'D', 'E'}, new char[] {'P'}, false),
 			createEnzyme("Asp-N", "asp-n", new char[0], new char[] {'D', 'E'}, true),
 			createEnzyme("Chymotrypsin", "chymotrypsin", new char[] {'F', 'Y', 'W'}, new char[] {'P'}, false),
 			createEnzyme("Elastase", "elastase", new char[] {'A', 'V'}, new char[0], false),
 			createEnzyme("Thermolysin", "thermolysin", new char[] {'D', 'E'}, new char[] {'A', 'F', 'I', 'L', 'M', 'V'}, true),
-			createEnzyme("Pepsin A", "pepsin", new char[] {'F', 'L'}, new char[0], false)
+			createEnzyme("Pepsin A", "pepsin", new char[] {'F', 'L'}, new char[0], false),
+			createEnzyme("Nonspecific Enzyme", "nonspecific_enzyme", AAs, new char[0], false),
+			createEnzyme("No Enzyme", "no_enzyme", new char[0], AAs, false)
 	};
 
 
