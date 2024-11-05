@@ -31,7 +31,7 @@ public final class DigestionEnzyme {
 	private final TCharHashSet nterm;
 	private final TCharHashSet cterm;
 
-	private static final DigestionEnzyme[] AVAILABLE_ENZYMES = new DigestionEnzyme[] {
+	public static final DigestionEnzyme[] AVAILABLE_ENZYMES = new DigestionEnzyme[] {
 			createEnzyme("Trypsin", "trypsin", new char[] {'K', 'R'}, new char[] {'P'}, false),
 			createEnzyme("Trypsin/p", "trypsinp", new char[] {'K', 'R'}, new char[0], false),
 			createEnzyme("No Enzyme", "no_enzyme", new char[0], AAs, false),
