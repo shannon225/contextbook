@@ -951,6 +951,11 @@ public class DigestionEnzymeTest extends TestCase {
 			c.addAll(AAs);
 
 			return new DigestionEnzyme("Pepsin A", "pepsin", n, c);
+		} else if ("CNBr".equalsIgnoreCase(enzymeName)) {
+			n.add('M');
+			c.addAll(AAs);
+
+			return new DigestionEnzyme("CNBr", "cnbr", n, c);
 		}
 
 		throw new EncyclopediaException("Unknown digestion enzyme ["+enzymeName+"]");

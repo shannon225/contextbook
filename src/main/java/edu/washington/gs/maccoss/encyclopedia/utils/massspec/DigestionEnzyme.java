@@ -43,6 +43,7 @@ public final class DigestionEnzyme {
 			createEnzyme("Elastase", "elastase", new char[] {'A', 'V'}, new char[0], false),
 			createEnzyme("Thermolysin", "thermolysin", new char[] {'D', 'E'}, new char[] {'A', 'F', 'I', 'L', 'M', 'V'}, true),
 			createEnzyme("Pepsin A", "pepsin", new char[] {'F', 'L'}, new char[0], false),
+			createEnzyme("CNBr", "cnbr", new char[] {'M'}, new char[0], false),
 			createEnzyme("Nonspecific Enzyme", "nonspecific_enzyme", AAs, new char[0], false),
 			createEnzyme("No Enzyme", "no_enzyme", new char[0], AAs, false)
 	};
