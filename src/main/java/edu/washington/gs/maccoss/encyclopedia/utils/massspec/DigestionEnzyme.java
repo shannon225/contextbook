@@ -361,8 +361,14 @@ public final class DigestionEnzyme {
 			}
 			if (!requireVariant) {
 				for (int i=starts.size()-1; (i>starts.size()-1-totalAllowedStarts)&&i>=0; i--) {
-					peptides.addAll(getPeptides(protein, starts.get(i), stop, minLength, maxLength, sequence,
-							handleNTermMethionine, constants, Optional.empty(), protein instanceof ExtendedFastaEntry));
+					final int start = starts.get(i);
+					peptides.addAll(getPeptides(protein, start, stop, minLength, maxLength, sequence,
+							constants, Optional.empty(), protein instanceof ExtendedFastaEntry));
+
+					if (handleNTermMethionine && start==0 && sequence.charAt(0) == 'M') {
+						peptides.addAll(getPeptides(protein, 1, stop, minLength, maxLength,  sequence,
+								constants, Optional.empty(), protein instanceof ExtendedFastaEntry));
+					}
 				}
 			}
 			starts.add(stop+1);
@@ -464,11 +470,21 @@ public final class DigestionEnzyme {
 					// Check whether we have generated peptides for this start and stop sites pair already  
 					if (!usedPair.containsKey(start)||!usedPair.get(start).contains(stop)) {
 						peptides.addAll(getPeptides(protein, start, stop, minLength, maxLength, sequenceVariant,
-								handleNTermMethionine, constants, Optional.of(variant), protein instanceof ExtendedFastaEntry));
+								constants, Optional.of(variant), protein instanceof ExtendedFastaEntry));
 						if (!usedPair.containsKey(start)) {
 							usedPair.put(start, new TIntArrayList());
 						}
 						usedPair.get(start).add(stop);
+
+						if (handleNTermMethionine && start==0 && sequence.charAt(0) == 'M' && variant.getStartSite()>1) {
+							peptides.addAll(getPeptides(protein, 1, stop, minLength, maxLength,  sequenceVariant,
+									constants, Optional.of(variant), protein instanceof ExtendedFastaEntry));
+
+							if (!usedPair.containsKey(1)) {
+								usedPair.put(1, new TIntArrayList());
+							}
+							usedPair.get(1).add(stop);
+						}
 					}
 					cuts--;
 				}
@@ -515,7 +531,6 @@ public final class DigestionEnzyme {
 													 int minLength,
 													 int maxLength,
 													 String sequence,
-													 boolean handleNTermMethionine,
 													 AminoAcidConstants constants,
 													 Optional<AlleleVariant> maybeVariant,
 													 boolean useOnlyAnnotatedMods) {
@@ -541,29 +556,9 @@ public final class DigestionEnzyme {
 			}
 		}
 
-		if (handleNTermMethionine && start == 0 && peptide.charAt(0) == 'M') {
-			for (FastaPeptideEntry peptideEntry : ImmutableList.copyOf(peptides)) {
-				if (peptideEntry.getSequence().length() > minLength) {
-					String withoutMSequence = stripFirstM(peptideEntry.getSequence());
-					if (withoutMSequence != null) {
-						peptides.add(generateEntry(protein, withoutMSequence, maybeVariant));
-					}
-				}
-			}
-		}
-
 		return peptides;
 	}
 
-
-	static String stripFirstM(String modifiedPeptideSequence) {
-		int index = modifiedPeptideSequence.indexOf('M');
-		if (index == -1) {
-			return null;
-		} else {
-			return modifiedPeptideSequence.substring(0, index) + modifiedPeptideSequence.substring(index+1);
-		}
-	}
 
 	public ArrayList<FastaPeptideEntry> getModifiedForms(FastaEntryInterface protein, String peptide, TCharDoubleHashMap fixedMods, ModificationMassMap variableMods, Optional<AlleleVariant> maybeVariant, boolean useOnlyAnnotatedMods) {
 		

@@ -261,6 +261,73 @@ public class DigestionEnzymeTest extends TestCase {
 		}
 	}
 
+	public void testNTermMHandlingRespectsMinLength() {
+		String bsa=">TEST_PROTEIN Which I made up\n"+"MAPKANDMAPR\n";
+
+		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
+		FastaEntryInterface entry=FastaReader.readFasta(bsa, "", parameters).get(0);
+		String sequence=entry.getSequence();
+
+		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
+		HashSet<String> expected=new HashSet<String>();
+		expected.add("MAPK");
+		expected.add("ANDMAPR");
+
+
+		ArrayList<FastaPeptideEntry> sequences;
+
+		int minLength;
+
+		minLength = 4;
+		sequences = enzyme.digestProtein(entry, minLength, 99999999, 0, true,
+				new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()), false);
+
+		assertEquals(expected.size(), sequences.size());
+		for (FastaPeptideEntry peptide : sequences) {
+			assertTrue(expected.contains(peptide.getSequence()));
+		}
+
+		minLength = 3;
+		expected.add("APK");
+		sequences = enzyme.digestProtein(entry, minLength, 99999999, 0, true,
+				new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()), false);
+
+		assertEquals(expected.size(), sequences.size());
+		for (FastaPeptideEntry peptide : sequences) {
+			assertTrue(expected.contains(peptide.getSequence()));
+		}
+	}
+
+	public void testNTermMModified() {
+		String bsa=">TEST_PROTEIN Which I made up\n"+"MAPEPTIDEKANDAPEPTIDER\n";
+
+		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
+		FastaEntryInterface entry=FastaReader.readFasta(bsa, "", parameters).get(0);
+		String sequence=entry.getSequence();
+
+		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
+		HashSet<String> expected=new HashSet<String>();
+		expected.add("[42.0]MAPEPTIDEK");
+		expected.add("M[16.0]APEPTIDEK");
+		expected.add("MAPEPTIDEK");
+		expected.add("APEPTIDEK");
+		expected.add("ANDAPEPTIDER");
+
+
+		ModificationMassMap variableMods=new ModificationMassMap("M=16,a=42");
+		AminoAcidConstants constants=new AminoAcidConstants(new TCharDoubleHashMap(), variableMods);
+
+		ArrayList<FastaPeptideEntry> sequences;
+
+		sequences = enzyme.digestProtein(entry, 1, 99999999, 0, true,
+				constants, false);
+
+		assertEquals(expected.size(), sequences.size());
+		for (FastaPeptideEntry peptide : sequences) {
+			assertTrue(expected.contains(peptide.getSequence()));
+		}
+	}
+
 	public void testDigestProteinNoNTermM() {
 		String bsa=">TEST_PROTEIN Which I made up\n"+"APEPTIDEKANDAPEPTIDER\n";
 
@@ -318,7 +385,6 @@ public class DigestionEnzymeTest extends TestCase {
 		expected.add("MW[15.994915]VTFISLLFLFSSAYSR");
 		expected.add("W[15.994915]VTFISLLFLFSSAYSR"); // handling n-term methionine
 		expected.add("[42.010565]MWVTFISLLFLFSSAYSR");
-		expected.add("[42.010565]WVTFISLLFLFSSAYSR"); // handling n-term methionine
 		expected.add("DLGEENFK");
 		expected.add("DLGEENFK[8.014199]");
 		expected.add("ALVLIAFAQYLQQCPFEDHVK");
@@ -1097,7 +1163,7 @@ public class DigestionEnzymeTest extends TestCase {
 		assertEquals(expected.size(), sequences.size());
 		for (FastaPeptideEntry pep : sequences) {
 			if (!expected.contains(pep.getSequence())) {
-				System.out.println("generated but not expected: "+pep);
+				System.out.println("generated but not expected: "+pep.getSequence());
 			}
 			expected.remove(pep.getSequence());
 		}
@@ -1195,7 +1261,7 @@ public class DigestionEnzymeTest extends TestCase {
 		assertEquals(expected.size(), sequences.size());
 		for (FastaPeptideEntry pep : sequences) {
 			if (!expected.contains(pep.getSequence())) {
-				System.out.println("generated but not expected: "+pep);
+				System.out.println("generated but not expected: "+pep.getSequence());
 			}
 			expected.remove(pep.getSequence());
 		}
