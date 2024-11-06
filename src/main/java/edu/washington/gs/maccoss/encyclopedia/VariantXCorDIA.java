@@ -64,6 +64,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.FileLogRecorder;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
@@ -152,7 +153,7 @@ public class VariantXCorDIA {
 						targets=new ArrayList<FastaPeptideEntry>();
 						ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(targetsFile, parameters);
 						for (FastaEntryInterface entry : entries) {
-							ArrayList<FastaPeptideEntry> peptides=parameters.getEnzyme().digestProtein(entry, parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages(), parameters.getAAConstants(), parameters.isRequireVariableMods());
+							ArrayList<FastaPeptideEntry> peptides=DigestionEnzyme.digestProtein(entry, parameters);
 							for (FastaPeptideEntry peptide : peptides) {
 								targets.add(peptide);
 							}
@@ -272,8 +273,7 @@ public class VariantXCorDIA {
 		Logger.logLine("Found "+entries.size()+" total proteins...");
 		
 		for (FastaEntryInterface entry : entries) {
-			ArrayList<FastaPeptideEntry> peptides=parameters.getEnzyme().digestProtein(entry, parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages(), parameters.getAAConstants(), parameters.isRequireVariableMods());
-
+			ArrayList<FastaPeptideEntry> peptides=DigestionEnzyme.digestProtein(entry, parameters);
 			for (FastaPeptideEntry peptide : peptides) {
 				backgroundProteome.add(peptide.getSequence());
 			}
