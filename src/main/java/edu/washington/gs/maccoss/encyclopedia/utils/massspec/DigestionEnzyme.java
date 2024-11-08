@@ -32,37 +32,52 @@ public final class DigestionEnzyme {
 	private final TCharHashSet cterm;
 
 	public static final DigestionEnzyme[] AVAILABLE_ENZYMES = new DigestionEnzyme[] {
-			createEnzyme("Trypsin", "trypsin", new char[] {'K', 'R'}, new char[] {'P'}, false),
-			createEnzyme("Trypsin/p", "trypsinp", new char[] {'K', 'R'}, new char[0], false),
-			createEnzyme("Glu-C", "glu-c", new char[] {'D', 'E'}, new char[] {'P'}, false),
-			createEnzyme("Lys-C", "lys-c", new char[] {'K'}, new char[] {'P'}, false),
-			createEnzyme("Lys-N", "lys-n", new char[0], new char[] {'K'}, true),
-			createEnzyme("Arg-C", "arg-c", new char[] {'R'}, new char[] {'P'}, false),
-			createEnzyme("Asp-N", "asp-n", new char[0], new char[] {'D', 'E'}, true),
-			createEnzyme("Chymotrypsin", "chymotrypsin", new char[] {'F', 'Y', 'W'}, new char[] {'P'}, false),
-			createEnzyme("Elastase", "elastase", new char[] {'A', 'V'}, new char[0], false),
-			createEnzyme("Thermolysin", "thermolysin", new char[] {'D', 'E'}, new char[] {'A', 'F', 'I', 'L', 'M', 'V'}, true),
-			createEnzyme("Pepsin A", "pepsin", new char[] {'F', 'L'}, new char[0], false),
-			createEnzyme("CNBr", "cnbr", new char[] {'M'}, new char[0], false),
-			createEnzyme("Nonspecific Enzyme", "nonspecific_enzyme", AAs, new char[0], false),
-			createEnzyme("No Enzyme", "no_enzyme", new char[0], AAs, false)
+			createEnzyme("Trypsin", "trypsin", new char[] {'K', 'R'}, false, new char[] {'P'}, true),
+			createEnzyme("Trypsin/p", "trypsinp", new char[] {'K', 'R'}, false, null, true),
+			createEnzyme("Glu-C", "glu-c", new char[] {'D', 'E'}, false, new char[] {'P'}, true),
+			createEnzyme("Lys-C", "lys-c", new char[] {'K'}, false, new char[] {'P'}, true),
+			createEnzyme("Lys-N", "lys-n", null, true, new char[] {'K'}, false),
+			createEnzyme("Arg-C", "arg-c", new char[] {'R'}, false, new char[] {'P'}, true),
+			createEnzyme("Asp-N", "asp-n", null, true, new char[] {'D', 'E'}, false),
+			createEnzyme("Chymotrypsin", "chymotrypsin", new char[] {'F', 'Y', 'W'}, false, new char[] {'P'}, true),
+			createEnzyme("Elastase", "elastase", new char[] {'A', 'V'}, false, null, true),
+			createEnzyme("Thermolysin", "thermolysin", new char[] {'D', 'E'}, true, new char[] {'A', 'F', 'I', 'L', 'M', 'V'}, false),
+			createEnzyme("Pepsin A", "pepsin", new char[] {'F', 'L'}, false, null, true),
+			createEnzyme("CNBr", "cnbr", new char[] {'M'}, false, null, true),
+			createEnzyme("Nonspecific Enzyme", "nonspecific_enzyme", null, true, null, true),
+			createEnzyme("No Enzyme", "no_enzyme", null, false, null, false)
 	};
 
 
-	public static DigestionEnzyme createEnzyme(String name, String percolatorName, char[] nTerm, char[] cTerm, boolean reversed) {
+	public static DigestionEnzyme createEnzyme(String name,
+											   String percolatorName,
+											   char[] nTerm,
+											   boolean nTermReversed,
+											   char[] cTerm,
+											   boolean cTermReversed) {
+		if (nTerm == null) {
+			nTerm = new char[0];
+		}
+		if (cTerm == null) {
+			cTerm = new char[0];
+		}
+		
 		TCharHashSet n=new TCharHashSet();
 		TCharHashSet c=new TCharHashSet();
-		if (reversed) {
+		if (nTermReversed) {
 			n.addAll(AAs);
 			n.removeAll(nTerm);
-
-			c.addAll(cTerm);
 		} else {
 			n.addAll(nTerm);
+		}
 
+		if (cTermReversed) {
 			c.addAll(AAs);
 			c.removeAll(cTerm);
+		} else {
+			c.addAll(cTerm);
 		}
+
 		return new DigestionEnzyme(name, percolatorName, n, c);
 	}
 	

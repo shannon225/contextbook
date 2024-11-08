@@ -1,19 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-
-import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.*;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.FastaReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PecanParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
@@ -25,6 +12,13 @@ import gnu.trove.map.hash.TObjectIntHashMap;
 import gnu.trove.procedure.TObjectIntProcedure;
 import gnu.trove.set.hash.TCharHashSet;
 import junit.framework.TestCase;
+
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 
 import static edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme.AAs;
 import static edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme.getAvailableEnzymes;
@@ -839,13 +833,20 @@ public class DigestionEnzymeTest extends TestCase {
 	public void testAvailableEnzymes() {
 
 		final List<DigestionEnzyme> availableEnzymes = getAvailableEnzymes();
-		for (DigestionEnzyme availableEnzyme : availableEnzymes) {
-			final DigestionEnzyme oldEnzyme = oldGetEnzyme(availableEnzyme.getName());
 
-			assertEquals(oldEnzyme, availableEnzyme);
+		int count=0;
+
+		for (DigestionEnzyme availableEnzyme : availableEnzymes) {
+			try {
+				final DigestionEnzyme oldEnzyme = oldGetEnzyme(availableEnzyme.getName());
+				assertEquals(oldEnzyme, availableEnzyme);
+				count++;
+			} catch (EncyclopediaException ee) {
+				continue;
+			}
 		}
 
-		assertTrue(availableEnzymes.size() >= 13);
+		assertEquals(14, count);
 	}
 
 	// used to test that enzymes didn't change in refactor
