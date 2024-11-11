@@ -584,8 +584,7 @@
 			<artifactId>deeplearning4j-zoo</artifactId>
 			<version>1.0.0-M2.1</version>
 		</dependency>
-
-		<!--
+		<!-- 	
 		<dependency>
 			<groupId>
 				org.nd4j</groupId>
@@ -593,7 +592,6 @@
 			<version>1.0.0-M2.1</version>
 		</dependency>
 		 -->
-		 
 		<dependency>
 			<groupId>org.bytedeco</groupId>
 			<artifactId>cuda-platform-redist</artifactId>
