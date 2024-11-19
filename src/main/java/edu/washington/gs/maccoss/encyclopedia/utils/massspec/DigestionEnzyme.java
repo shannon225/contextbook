@@ -24,132 +24,74 @@ public final class DigestionEnzyme {
 	private final String percolatorName;
 	private final TCharHashSet nterm;
 	private final TCharHashSet cterm;
-	
-	private static final String[] enzymeNames=new String[] {
-			"Trypsin",
-			"Trypsin/p",
-			"Lys-C",
-			"Lys-N",
-			"Arg-C",
-			"Glu-C",
-			"Chymotrypsin",
-			"Pepsin A",
-			"Elastase",
-			"Thermolysin",
-			"No Enzyme",
-			"Nonspecific"
+
+	public static final DigestionEnzyme[] AVAILABLE_ENZYMES = new DigestionEnzyme[] {
+			createEnzyme("Trypsin", "trypsin", new char[] {'K', 'R'}, false, new char[] {'P'}, true),
+			createEnzyme("Trypsin/p", "trypsinp", new char[] {'K', 'R'}, false, null, true),
+			createEnzyme("Glu-C", "glu-c", new char[] {'D', 'E'}, false, new char[] {'P'}, true),
+			createEnzyme("Lys-C", "lys-c", new char[] {'K'}, false, new char[] {'P'}, true),
+			createEnzyme("Lys-N", "lys-n", null, true, new char[] {'K'}, false),
+			createEnzyme("Arg-C", "arg-c", new char[] {'R'}, false, new char[] {'P'}, true),
+			createEnzyme("Asp-N", "asp-n", null, true, new char[] {'D', 'E'}, false),
+			createEnzyme("Chymotrypsin", "chymotrypsin", new char[] {'F', 'Y', 'W'}, false, new char[] {'P'}, true),
+			createEnzyme("Elastase", "elastase", new char[] {'A', 'V'}, false, null, true),
+			createEnzyme("Thermolysin", "thermolysin", new char[] {'D', 'E'}, true, new char[] {'A', 'F', 'I', 'L', 'M', 'V'}, false),
+			createEnzyme("Pepsin A", "pepsin", new char[] {'F', 'L'}, false, null, true),
+			createEnzyme("CNBr", "cnbr", new char[] {'M'}, false, null, true),
+			createEnzyme("Nonspecific Enzyme", "nonspecific_enzyme", null, true, null, true),
+			createEnzyme("No Enzyme", "no_enzyme", null, false, null, false)
 	};
+
+
+	public static DigestionEnzyme createEnzyme(String name,
+											   String percolatorName,
+											   char[] nTerm,
+											   boolean nTermReversed,
+											   char[] cTerm,
+											   boolean cTermReversed) {
+		if (nTerm == null) {
+			nTerm = new char[0];
+		}
+		if (cTerm == null) {
+			cTerm = new char[0];
+		}
+		
+		TCharHashSet n=new TCharHashSet();
+		TCharHashSet c=new TCharHashSet();
+		if (nTermReversed) {
+			n.addAll(AAs);
+			n.removeAll(nTerm);
+		} else {
+			n.addAll(nTerm);
+		}
+
+		if (cTermReversed) {
+			c.addAll(AAs);
+			c.removeAll(cTerm);
+		} else {
+			c.addAll(cTerm);
+		}
+
+		return new DigestionEnzyme(name, percolatorName, n, c);
+	}
 	
 	public static List<DigestionEnzyme> getAvailableEnzymes() {
-		List<DigestionEnzyme> enzymes=new ArrayList<DigestionEnzyme>();
-		for (String name : enzymeNames) {
-			enzymes.add(getEnzyme(name));
-		}
-		return enzymes;
+		return Arrays.asList(AVAILABLE_ENZYMES);
 	}
 	
 	public static DigestionEnzyme getEnzyme(String enzymeName) {
-		TCharHashSet n=new TCharHashSet();
-		TCharHashSet c=new TCharHashSet();
-		if ("Trypsin".equalsIgnoreCase(enzymeName)) {
-			n.add('K');
-			n.add('R');
-			c.addAll(AAs);
-			c.remove('P');
-			
-			return new DigestionEnzyme("Trypsin", "trypsin", n, c);
-			
-		} else if ("Trypsin/p".equalsIgnoreCase(enzymeName)) {
-			n.add('K');
-			n.add('R');
-			c.addAll(AAs);
-			
-			return new DigestionEnzyme("Trypsin/p", "trypsinp", n, c);
-			
-		} else if ("No Enzyme".equalsIgnoreCase(enzymeName)) {
-			
-			return new DigestionEnzyme("No Enzyme", "no_enzyme", n, c);
-			
-		} else if ("None".equalsIgnoreCase(enzymeName)) {
-			
-			return new DigestionEnzyme("No Enzyme", "no_enzyme", n, c);
-			
-		} else if ("Nonspecific".equalsIgnoreCase(enzymeName)) {
+		for (DigestionEnzyme availableEnzyme : AVAILABLE_ENZYMES) {
+			if (availableEnzyme.getName().equalsIgnoreCase(enzymeName)) {
+				return availableEnzyme;
+			}
+		}
 
-			n.addAll(AAs);
-			c.addAll(AAs);
-			return new DigestionEnzyme("Nonspecific Enzyme", "nonspecific_enzyme", n, c);
-			
-		} else if ("Lys-C".equalsIgnoreCase(enzymeName)) {
-			n.add('K');
-			c.addAll(AAs);
-			c.remove('P');
-			
-			return new DigestionEnzyme("Lys-C", "lys-c", n, c);
-			
-		} else if ("Lys-N".equalsIgnoreCase(enzymeName)) {
-			n.addAll(AAs);
-			c.add('K');
-			
-			return new DigestionEnzyme("Lys-N", "lys-n", n, c);
-			
-		} else if ("Arg-C".equalsIgnoreCase(enzymeName)) {
-			n.add('R');
-			c.addAll(AAs);
-			c.remove('P');
-			
-			return new DigestionEnzyme("Arg-C", "arg-c", n, c);
-			
-		} else if ("Glu-C".equalsIgnoreCase(enzymeName)) {
-			n.add('D'); //Danielle says not to bother
-			n.add('E');
-			c.addAll(AAs);
-			c.remove('P');
-			
-			return new DigestionEnzyme("Glu-C", "glu-c", n, c);
-			
-		} else if ("Asp-N".equalsIgnoreCase(enzymeName)) {
-			n.addAll(AAs);
-			c.add('D');
-			c.add('E');
-			
-			return new DigestionEnzyme("Asp-N", "asp-n", n, c);
-			
-		} else if ("Chymotrypsin".equalsIgnoreCase(enzymeName)) {
-			n.add('F');
-			n.add('Y');
-			n.add('W');
-			c.addAll(AAs);
-			c.remove('P');
-			
-			return new DigestionEnzyme("Chymotrypsin", "chymotrypsin", n, c);
-			
-		} else if ("Elastase".equalsIgnoreCase(enzymeName)) {
-			n.add('A');
-			n.add('V');
-			c.addAll(AAs);
-			
-			return new DigestionEnzyme("Elastase", "elastase", n, c);
-			
-		} else if ("Thermolysin".equalsIgnoreCase(enzymeName)) {
-			c.add('A');
-			c.add('F');
-			c.add('I');
-			c.add('L');
-			c.add('M');
-			c.add('V');
-			n.addAll(AAs);
-			n.remove('D');
-			n.remove('E');
-			
-			return new DigestionEnzyme("Thermolysin", "thermolysin", n, c);
-			
-		} else if ("Pepsin A".equalsIgnoreCase(enzymeName)) {
-			n.add('F');
-			n.add('L');
-			c.addAll(AAs);
-			
-			return new DigestionEnzyme("Pepsin A", "pepsin", n, c);
+		// special cases:
+		if ("None".equalsIgnoreCase(enzymeName)) {
+			return getEnzyme("No Enzyme");
+		}
+		if ("Nonspecific".equalsIgnoreCase(enzymeName)) {
+			return getEnzyme("Nonspecific Enzyme");
 		}
 		
 		throw new EncyclopediaException("Unknown digestion enzyme ["+enzymeName+"]");
