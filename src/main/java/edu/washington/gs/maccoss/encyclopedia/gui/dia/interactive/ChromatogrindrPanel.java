@@ -52,13 +52,18 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSpinner;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.RowFilter;
+import javax.swing.SpinnerModel;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.SpringLayout;
 import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
@@ -99,6 +104,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.FragmentIonConsistencyCharter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.LabeledComponent;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.PercentageLayout;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SwingWorkerProgress;
@@ -149,6 +155,7 @@ public class ChromatogrindrPanel extends JPanel {
 
 	private final JCheckBox sgSmoothBox;
 	private final JCheckBox backgroundSubtractBox;
+	private final SpinnerModel smallestIonNumbers=new SpinnerNumberModel(3, 0, 10, 1);
 
 	private LibraryInterface reference=null;
 	private StripeFileInterface dia=null;
@@ -375,11 +382,25 @@ public class ChromatogrindrPanel extends JPanel {
 				updateToSelectedPeptide();
 			}
 		});
+		
+		JSpinner ionSpinner = new JSpinner(smallestIonNumbers);
+		ionSpinner.addChangeListener(new ChangeListener() {
+			
+			@Override
+			public void stateChanged(ChangeEvent e) {
+				updateToSelectedPeptide();
+			}
+		});
+		LabeledComponent ionSpinnerLabel = new LabeledComponent("Min Ion", "The smallest ion index considered, 0 for unfiltered", ionSpinner);
+		ionSpinnerLabel.setBackground(null);
 
 		JPanel checkboxes=new JPanel(new FlowLayout());
 		options.add(checkboxes);
 		checkboxes.add(sgSmoothBox);
+		checkboxes.add(Box.createHorizontalStrut(10));
 		checkboxes.add(backgroundSubtractBox);
+		checkboxes.add(Box.createHorizontalStrut(10));
+		checkboxes.add(ionSpinnerLabel);
 		
 		JPanel buttons=new JPanel(new FlowLayout());
 		options.add(buttons);
@@ -702,6 +723,9 @@ public class ChromatogrindrPanel extends JPanel {
 		SearchParameters parameters=getParameters();
 		FragmentationModel model=PeptideUtils.getPeptideModel(entry.getPeptideModSeq(), parameters.getAAConstants());
 		FragmentIon[] primaryIonObjects=model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge(), false);
+		if (((Integer)smallestIonNumbers.getValue())>1) {
+			primaryIonObjects=FragmentIon.thresholdIons(primaryIonObjects, (Integer)smallestIonNumbers.getValue());
+		}
 		
 		float rtInSec=entry.getRetentionTimeInSec();
 		float minRTInSec = rtInSec-RT_EXTRACTION_MARGIN_IN_SEC;
@@ -795,6 +819,9 @@ public class ChromatogrindrPanel extends JPanel {
 		
 		FragmentationModel model=PeptideUtils.getPeptideModel(entry.getPeptideModSeq(), parameters.getAAConstants());
 		FragmentIon[] primaryIonObjects=model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge(), false);
+		if (((Integer)smallestIonNumbers.getValue())>1) {
+			primaryIonObjects=FragmentIon.thresholdIons(primaryIonObjects, (Integer)smallestIonNumbers.getValue());
+		}
 		
 		loadDataBlock: try {
 			
@@ -957,7 +984,14 @@ public class ChromatogrindrPanel extends JPanel {
 				
 				if (references.size()>0) {
 					LibraryEntry ref=references.get(0);
+					if ((Integer)smallestIonNumbers.getValue()>0) {
+						ref=AnnotatedLibraryEntry.getAnnotationsOnly(ref, parameters, (Integer)smallestIonNumbers.getValue());
+					}
+					
 					LibraryEntry acq=data.getEntry(ref, parameters);
+					if ((Integer)smallestIonNumbers.getValue()>0) {
+						acq=AnnotatedLibraryEntry.getAnnotationsOnly(acq, parameters, (Integer)smallestIonNumbers.getValue());
+					}
 
 					if (pastedRTs.size()>0&&libraryRTs.size()>0) {
 						Collection<XYPoint> points=new ArrayList<XYPoint>();

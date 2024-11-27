@@ -501,7 +501,7 @@ public final class DigestionEnzyme {
 		return peptides;
 	}
 
-	public ArrayList<FastaPeptideEntry> getModifiedForms(FastaEntryInterface protein, String peptide, TCharDoubleHashMap fixedMods, ModificationMassMap variableMods, Optional<AlleleVariant> maybeVariant, boolean useOnlyAnnotatedMods) {
+	private ArrayList<FastaPeptideEntry> getModifiedForms(FastaEntryInterface protein, String peptide, TCharDoubleHashMap fixedMods, ModificationMassMap variableMods, Optional<AlleleVariant> maybeVariant, boolean useOnlyAnnotatedMods) {
 		
 		ArrayList<FastaPeptideEntry> peptides=new ArrayList<FastaPeptideEntry>();
 		peptides.add(adjustForFixed(protein, peptide, fixedMods, maybeVariant));
@@ -533,7 +533,7 @@ public final class DigestionEnzyme {
 	 * @param fixedMods
 	 * @return
 	 */
-	public FastaPeptideEntry adjustForFixed(FastaEntryInterface protein, String peptide, TCharDoubleHashMap fixedMods, Optional<AlleleVariant> maybeVariant) {
+	private FastaPeptideEntry adjustForFixed(FastaEntryInterface protein, String peptide, TCharDoubleHashMap fixedMods, Optional<AlleleVariant> maybeVariant) {
 		StringBuilder sb=new StringBuilder();
 		if (fixedMods.contains(AminoAcidConstants.N_TERM)) {
 			double mass=fixedMods.get(AminoAcidConstants.N_TERM);

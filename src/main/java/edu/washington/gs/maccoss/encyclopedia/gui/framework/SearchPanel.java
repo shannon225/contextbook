@@ -165,7 +165,7 @@ public class SearchPanel extends JPanel {
 			params=SearchParameterParser.parseParameters(map);
 		}
 
-		if ((ProgramType.Global==program||ProgramType.EncyclopeDIA==program)&&false) {
+		if ((ProgramType.Global==program||ProgramType.EncyclopeDIA==program)&&enableAdvancedOptions) {
 			try {
 				EncyclopediaParametersPanel encyclopedia;
 				switch (Networking.isOffendingAddress()) {

@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.StringTokenizer;
+import java.util.function.Consumer;
 
 import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.Lists;
@@ -89,8 +90,20 @@ public class FragmentIon implements Comparable<FragmentIon>, Ion {
 		}
 		return masses;
 	}
+	
+	public static FragmentIon[] thresholdIons(FragmentIon[] fragments, int minIonNumber) {
+		final List<FragmentIon> work = Lists.newArrayList();
 
-	//TODO: write test cases for this functionality
+		Arrays.stream(fragments).forEach(ion -> {
+			if (ion.index>=minIonNumber) {
+				work.add(ion);
+			}
+		});
+		
+		return work.toArray(new FragmentIon[0]);
+	}
+
+	//TODO: write test cases for this functionality. This could probably be sped up using m/z sort order!
 	public static FragmentIon[] getUniqueFragments(FragmentIon[] fragments, MassTolerance tolerance) {
 		final List<FragmentIon> work = Lists.newArrayList();
 
