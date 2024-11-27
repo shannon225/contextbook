@@ -430,6 +430,7 @@ public class KoinaLibraryPredictionClient {
 			throws InterruptedException {
 		try {
 			ArrayList<Thread> threads=new ArrayList<Thread>();
+			final ArrayList<Exception> exceptions=new ArrayList<Exception>();
 
 			int start=0;
 			while (true) {
@@ -440,12 +441,15 @@ public class KoinaLibraryPredictionClient {
 				int stop=Math.min(peptides.size(), start+MICRO_BATCH_SIZE);
 				List<KoinaPrecursor> subList=peptides.subList(start, stop);
 			
-			
 				for (KoinaFeaturePredictionModel model : client.models) {
 					Thread t=new Thread(new Runnable() {
 						@Override
 						public void run() {
-							model.updatePeptides(subList, baseURL);
+							try {
+								model.updatePeptides(subList, baseURL);
+							} catch (Exception e) {
+								exceptions.add(e);
+							}
 						}
 					});
 					t.start();
@@ -469,6 +473,9 @@ public class KoinaLibraryPredictionClient {
 
 			if (!allSucceeded) {
 				throw new EncyclopediaException("Timed out on Koina job");
+			}
+			if (exceptions.size()>0) {
+				throw new EncyclopediaException("Error found processing Koina results", exceptions.get(0));
 			}
 
 		} catch (Exception e) { 
