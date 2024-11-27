@@ -157,7 +157,7 @@ public class ArrayXCorrCalculator {
 		double increment=(lastMass-firstMass)/groups;
 		double[] binMaxMass=new double[groups]; 
 		for (int i=0; i<groups-1; i++) {
-			binMaxMass[i]=increment*(i+1);
+			binMaxMass[i]=firstMass + increment*(i+1);
 		}
 		binMaxMass[groups-1]=Double.MAX_VALUE;
 		

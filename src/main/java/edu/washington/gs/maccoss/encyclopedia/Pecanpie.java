@@ -61,6 +61,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.VersioningDetector;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
@@ -154,7 +155,7 @@ public class Pecanpie {
 						targets=new ArrayList<FastaPeptideEntry>();
 						ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(targetsFile, parameters);
 						for (FastaEntryInterface entry : entries) {
-							ArrayList<FastaPeptideEntry> peptides=parameters.getEnzyme().digestProtein(entry, parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages(), parameters.getAAConstants(), parameters.isRequireVariableMods());
+							ArrayList<FastaPeptideEntry> peptides=DigestionEnzyme.digestProtein(entry, parameters);
 							targets.addAll(peptides);
 						}
 					}
@@ -244,7 +245,7 @@ public class Pecanpie {
 		// add database to proteome
 		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(fastaFile, parameters);
 		for (FastaEntryInterface entry : entries) {
-			ArrayList<FastaPeptideEntry> peptides=parameters.getEnzyme().digestProtein(entry, parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages(), parameters.getAAConstants(), parameters.isRequireVariableMods());
+			ArrayList<FastaPeptideEntry> peptides= DigestionEnzyme.digestProtein(entry, parameters);
 			for (FastaPeptideEntry peptide : peptides) {
 				backgroundProteome.add(peptide.getSequence());
 			}

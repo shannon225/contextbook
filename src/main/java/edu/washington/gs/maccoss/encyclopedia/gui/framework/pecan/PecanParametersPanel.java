@@ -199,7 +199,7 @@ public class PecanParametersPanel extends JPanel implements ParametersPanelInter
 			
 			ArrayList<FastaEntryInterface> targetProteins=FastaReader.readFasta(targetFile, parameters);
 			for (FastaEntryInterface entry : targetProteins) {
-				ArrayList<FastaPeptideEntry> peptides=parameters.getEnzyme().digestProtein(entry, parameters.getMinPeptideLength(), parameters.getMaxPeptideLength(), parameters.getMaxMissedCleavages(), parameters.getAAConstants(), false);
+				ArrayList<FastaPeptideEntry> peptides=DigestionEnzyme.digestProtein(entry, parameters);
 				targets.addAll(peptides);
 			}
 		}

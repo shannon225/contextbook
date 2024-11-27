@@ -1110,7 +1110,7 @@ public class SearchPanelUtilities {
 		final SpinnerModel maxMissedCleavageSpinner=new SpinnerNumberModel(FastaToPrositCSVParameters.DEFAULT_MAX_MISSED_CLEAVAGE, FastaToPrositCSVParameters.MIN_MAX_MISSED_CLEAVAGE, FastaToPrositCSVParameters.MAX_MAX_MISSED_CLEAVAGE, 1);
 		final SpinnerModel minMzSpinner=new SpinnerNumberModel(FastaToPrositCSVParameters.DEFAULT_MIN_MZ, FastaToPrositCSVParameters.MIN_MZ, FastaToPrositCSVParameters.MAX_MZ, 0.1);
 		final SpinnerModel maxMzSpinner=new SpinnerNumberModel(FastaToPrositCSVParameters.DEFAULT_MAX_MZ, FastaToPrositCSVParameters.MIN_MZ, FastaToPrositCSVParameters.MAX_MZ, 0.1);
-		final JComboBox<String> enzymeBox=new JComboBox<String>(new String[] {"Trypsin", "Glu-C", "Lys-C", "Arg-C", "Asp-N", "Lys-N", "CNBr", "Chymotrypsin", "Pepsin A", "No Enzyme"});
+		final JComboBox<DigestionEnzyme> enzymeBox=new JComboBox<DigestionEnzyme>(DigestionEnzyme.AVAILABLE_ENZYMES);
 		final JCheckBox isAdjustNCEForDIACheckbox=new JCheckBox("", FastaToPrositCSVParameters.DEFAULT_ADJUST_NCE_FOR_DIA);
 		final JCheckBox isAddDecoysCheckbox=new JCheckBox("", FastaToPrositCSVParameters.DEFAULT_ADD_DECOYS);
 		
@@ -1158,7 +1158,7 @@ public class SearchPanelUtilities {
 				int maxMissedCleavages=((Number)maxMissedCleavageSpinner.getValue()).byteValue();
 				double minimumMz=((Number)minMzSpinner.getValue()).doubleValue();
 				double maximumMz=((Number)maxMzSpinner.getValue()).doubleValue();
-				DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme((String)enzymeBox.getSelectedItem());
+				DigestionEnzyme enzyme=(DigestionEnzyme)enzymeBox.getSelectedItem();
 				final boolean isAdjustNCEForDIA=isAdjustNCEForDIACheckbox.isSelected();
 				final boolean isAddDecoys=isAddDecoysCheckbox.isSelected();
 				
@@ -1255,8 +1255,8 @@ public class SearchPanelUtilities {
 		final SpinnerModel maxMissedCleavageSpinner=new SpinnerNumberModel(FastaToPrositCSVParameters.DEFAULT_MAX_MISSED_CLEAVAGE, FastaToPrositCSVParameters.MIN_MAX_MISSED_CLEAVAGE, FastaToPrositCSVParameters.MAX_MAX_MISSED_CLEAVAGE, 1);
 		final SpinnerModel minMzSpinner=new SpinnerNumberModel(FastaToPrositCSVParameters.DEFAULT_MIN_MZ, FastaToPrositCSVParameters.MIN_MZ, FastaToPrositCSVParameters.MAX_MZ, 0.1);
 		final SpinnerModel maxMzSpinner=new SpinnerNumberModel(FastaToPrositCSVParameters.DEFAULT_MAX_MZ, FastaToPrositCSVParameters.MIN_MZ, FastaToPrositCSVParameters.MAX_MZ, 0.1);
-		final JComboBox<String> enzymeBox=new JComboBox<String>(new String[] {"Trypsin", "Glu-C", "Lys-C", "Arg-C", "Asp-N", "Lys-N", "CNBr", "Chymotrypsin", "Pepsin A", "No Enzyme"});
-		
+		final JComboBox<DigestionEnzyme> enzymeBox=new JComboBox<DigestionEnzyme>(DigestionEnzyme.AVAILABLE_ENZYMES);
+
 		JPanel chargeRange=new JPanel(new FlowLayout());
 		chargeRange.setOpaque(true);
 		chargeRange.setBackground(Color.white);
@@ -1287,7 +1287,7 @@ public class SearchPanelUtilities {
 				int maxMissedCleavages=((Number)maxMissedCleavageSpinner.getValue()).byteValue();
 				double minimumMz=((Number)minMzSpinner.getValue()).doubleValue();
 				double maximumMz=((Number)maxMzSpinner.getValue()).doubleValue();
-				DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme((String)enzymeBox.getSelectedItem());
+				DigestionEnzyme enzyme=(DigestionEnzyme) enzymeBox.getSelectedItem();
 				
 				if (fastaFile!=null&&fastaFile.exists()) {
 					dialog.setVisible(false);

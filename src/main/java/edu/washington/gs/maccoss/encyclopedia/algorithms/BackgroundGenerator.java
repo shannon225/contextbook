@@ -12,6 +12,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptideDatabase;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 import gnu.trove.map.hash.TDoubleIntHashMap;
@@ -155,16 +156,14 @@ public class BackgroundGenerator {
 			ArrayList<String> peptides;
 			if (digest) {
 				peptides=new ArrayList<>();
-				for (FastaPeptideEntry peptide : params.getEnzyme().digestProtein(entry, params.getMinPeptideLength(), params.getMaxPeptideLength(), params.getMaxMissedCleavages(), params.getAAConstants(), params.isRequireVariableMods())) {
+				for (FastaPeptideEntry peptide : DigestionEnzyme.digestProtein(entry, params)) {
 					peptides.add(peptide.getSequence());
 				}
 			} else {
 				peptides=new ArrayList<String>();
 				peptides.add(entry.getSequence());
 			}
-			for (String sequence : peptides) {
-				sequences.add(sequence);
-			}
+			sequences.addAll(peptides);
 		}
 		return generateBackground(binBoundaries, useBins, sequences, backgroundDecoys, params);
 	}

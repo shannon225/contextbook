@@ -15,7 +15,6 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import edu.washington.gs.maccoss.encyclopedia.Encyclopedia;
-import edu.washington.gs.maccoss.encyclopedia.EncyclopediaTwo;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutor;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorVersion;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PeptideModification;
