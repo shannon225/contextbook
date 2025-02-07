@@ -81,6 +81,7 @@ import gnu.trove.map.hash.TFloatFloatHashMap;
 
 public class DIABrowserPanel extends JPanel {
 	private static final float THREE_SECONDS = 3/60f;
+	private static final String GLOBAL_TITLE="Global";
 	private static final String STRUCTURE_TITLE="Structure";
 	private static final String INTENSITY_DISTRIBUTION_TITLE="Intensity Distributions";
 	private static final String BOXPLOT_TITLE="Range Statistics";
@@ -346,7 +347,22 @@ public class DIABrowserPanel extends JPanel {
 		SwingWorkerProgress<ArrayList<AcquiredSpectrum>> worker=new SwingWorkerProgress<ArrayList<AcquiredSpectrum>>((Frame)SwingUtilities.getWindowAncestor(this), "Please wait...", "Reading Raw File") {
 			@Override
 			protected ArrayList<AcquiredSpectrum> doInBackgroundForReal() throws Exception {
-				ChartPanel structureChart=MzmlStructureCharter.getStructureChart(f);
+				ChartPanel globalChart=MzmlStructureCharter.getStructureChart(f, true);
+					if (globalChart!=null) {
+					boolean found=false;
+					for (int i=0; i<primaryTabs.getTabCount(); i++) {
+						String title=primaryTabs.getTitleAt(i);
+						if (title==GLOBAL_TITLE) {
+							primaryTabs.setComponentAt(i, globalChart);
+							found=true;
+						}
+					}
+					if (!found) {
+						primaryTabs.addTab(GLOBAL_TITLE, globalChart);
+					}
+				}
+				
+				ChartPanel structureChart=MzmlStructureCharter.getStructureChart(f, false);
 				boolean found=false;
 				for (int i=0; i<primaryTabs.getTabCount(); i++) {
 					String title=primaryTabs.getTitleAt(i);
