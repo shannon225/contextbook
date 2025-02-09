@@ -266,7 +266,7 @@ public enum AminoAcidEncoding {
 		if (tolerance.equals(mass, 224.152478)) return nTMT0;
 		if (tolerance.equals(mass, 229.162932)) return nTMT10;
 		
-		throw new EncyclopediaException("Unexpected n-term modification ["+mass+"]!");
+		throw new NonstandardAminoAcidException("Unexpected n-term modification ["+mass+"]!");
 	}
 	
 	public static AminoAcidEncoding getAA(char aa, double mass) {

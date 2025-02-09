@@ -9,7 +9,6 @@ import java.awt.Font;
 import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Image;
 import java.awt.Paint;
 import java.awt.Shape;
 import java.awt.Toolkit;
@@ -21,7 +20,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.font.TextAttribute;
-import java.awt.geom.Arc2D;
 import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
@@ -36,7 +34,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -45,13 +42,13 @@ import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
-import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.KeyStroke;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.annotations.XYShapeAnnotation;
 import org.jfree.chart.annotations.XYTextAnnotation;
 import org.jfree.chart.axis.CategoryAxis;
 import org.jfree.chart.axis.CategoryLabelPositions;
@@ -67,9 +64,10 @@ import org.jfree.chart.renderer.xy.AbstractXYItemRenderer;
 import org.jfree.chart.renderer.xy.XYAreaRenderer;
 import org.jfree.chart.renderer.xy.XYBlockRenderer;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
-import org.jfree.chart.title.TextTitle;
+import org.jfree.chart.renderer.xy.XYShapeRenderer;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.statistics.DefaultBoxAndWhiskerCategoryDataset;
+import org.jfree.data.xy.XYDataItem;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 import org.jfree.graphics2d.svg.SVGGraphics2D;
@@ -77,13 +75,10 @@ import org.jfree.graphics2d.svg.SVGUtils;
 import org.jfree.ui.RectangleInsets;
 import org.jfree.ui.TextAnchor;
 
-import com.itextpdf.awt.FontMapper;
 import com.itextpdf.awt.PdfGraphics2D;
 import com.itextpdf.text.Document;
-import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.FontFactory;
 import com.itextpdf.text.Rectangle;
-import com.itextpdf.text.pdf.BaseFont;
 import com.itextpdf.text.pdf.PdfContentByte;
 import com.itextpdf.text.pdf.PdfTemplate;
 import com.itextpdf.text.pdf.PdfWriter;
@@ -644,6 +639,68 @@ public class Charter {
 		chartPanel.setMaximumDrawHeight(Integer.MAX_VALUE);
 		return chartPanel;
 	}
+	public static ExtendedChartPanel getShapeChart(String title, String xAxisLabel, String yAxisLabel, int fontsizeAxes, int fontsizeTicks, final ArrayList<XYShapeAnnotation> shapes, final ArrayList<XYPoint> values, boolean requireIncludesZero) {
+		boolean displayLegend=false;
+
+		XYSeriesCollection dataset=new XYSeriesCollection();
+        XYSeries series = new XYSeries("Shapes");
+		XYLineAndShapeRenderer renderer=new XYLineAndShapeRenderer();
+		renderer.setBaseLinesVisible(false);
+		renderer.setBasePaint(new Color(0,0,0,0));
+		renderer.setAutoPopulateSeriesShape(false);
+		renderer.setSeriesShape(0, new Ellipse2D.Double(0,0,0,0));
+        renderer.setBaseShapesVisible(true);
+        for (XYPoint xyPoint : values) {
+			series.add(new XYDataItem(xyPoint.x, xyPoint.y));
+		}
+        for (XYShapeAnnotation shape : shapes) {
+			renderer.addAnnotation(shape);
+		}
+        dataset.addSeries(series);
+
+		NumberAxis xAxis=new NumberAxis(xAxisLabel);
+		NumberAxis yAxis=new NumberAxis(yAxisLabel);
+		xAxis.setAutoRangeIncludesZero(requireIncludesZero);
+		yAxis.setAutoRangeIncludesZero(requireIncludesZero);
+
+		XYPlot plot=new XYPlot();
+		plot.setDataset(dataset);
+		plot.setRenderer(renderer);
+		plot.setDomainAxis(xAxis);
+		plot.setRangeAxis(yAxis);
+
+		Font font=new Font(BASE_FONT_NAME, Font.PLAIN, fontsizeTicks);
+		Font font2=new Font(BASE_FONT_NAME, Font.PLAIN, fontsizeAxes);
+		
+		final JFreeChart chart=new JFreeChart(title, font2, plot, true);
+
+		plot.setBackgroundPaint(Color.white);
+		plot.setDomainGridlinePaint(Color.white);//gray);
+		plot.setDomainGridlinesVisible(false);
+		plot.setRangeGridlinePaint(Color.white);//gray);
+		plot.setRangeGridlinesVisible(false);
+		chart.setBackgroundPaint(Color.white);
+
+		NumberAxis rangeAxis=(NumberAxis) ((XYPlot) plot).getRangeAxis();
+		rangeAxis.setLabelFont(font2);
+		rangeAxis.setTickLabelFont(font);
+		NumberAxis domainAxis=(NumberAxis) ((XYPlot) plot).getDomainAxis();
+		domainAxis.setLabelFont(font2);
+		domainAxis.setTickLabelFont(font);
+
+		ExtendedChartPanel chartPanel=new ExtendedChartPanel(chart, false, 1f);
+		if (!displayLegend) {
+			chartPanel.getChart().removeLegend();
+		} else {
+			chartPanel.getChart().getLegend().setItemFont(font2);
+		}
+
+		chartPanel.setMinimumDrawWidth(0);
+		chartPanel.setMinimumDrawHeight(0);
+		chartPanel.setMaximumDrawWidth(Integer.MAX_VALUE);
+		chartPanel.setMaximumDrawHeight(Integer.MAX_VALUE);
+		return chartPanel;
+	}
 
 	public static ExtendedChartPanel getChart(String xAxis, String yAxis, boolean displayLegend, XYTraceInterface... traces) {
 		return getChart(xAxis, yAxis, displayLegend, 0.0, traces);
@@ -712,7 +769,7 @@ public class Charter {
 	}
 	
 	public static ExtendedChartPanel getChart(final String xAxis, String yAxis, boolean displayLegend, double maxY, int fontSize, final XYTraceInterface... traces) {
-		if (maxY==0.0) {
+		if (maxY==0.0&&traces.length>0) {
 			maxY=XYTrace.getMaxY(traces)*1.05;
 		}
 

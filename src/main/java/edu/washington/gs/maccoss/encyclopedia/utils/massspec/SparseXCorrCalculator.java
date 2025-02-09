@@ -82,7 +82,12 @@ public class SparseXCorrCalculator {
 		return sum;
 	}
 
-	static SparseXCorrSpectrum preprocessSpectrum(SparseXCorrSpectrum spectrum) {
+		
+	
+	public static SparseXCorrSpectrum preprocessSpectrum(SparseXCorrSpectrum spectrum) {
+		return preprocessSpectrum(spectrum, ArrayXCorrCalculator.lowerOffset, ArrayXCorrCalculator.upperOffset);
+	}
+	public static SparseXCorrSpectrum preprocessSpectrum(SparseXCorrSpectrum spectrum, int lowerOffset, int upperOffset) {
 		SparseIndexMap preprocessedSpectrum=new SparseIndexMap();
 		
 		int length=spectrum.length();
@@ -95,7 +100,7 @@ public class SparseXCorrCalculator {
 			negativeIntensities[i]=-intensities[i];
 		}
 		
-		for (int offset=ArrayXCorrCalculator.lowerOffset; offset<ArrayXCorrCalculator.upperOffset; offset++) {
+		for (int offset=ArrayXCorrCalculator.lowerOffset; offset<=ArrayXCorrCalculator.upperOffset; offset++) {
 			if (offset==0) continue;
 			for (int i=0; i<indicies.length; i++) {
 				int index=indicies[i]+offset;
@@ -144,7 +149,7 @@ public class SparseXCorrCalculator {
 		double increment=(lastMass-firstMass)/ArrayXCorrCalculator.groups;
 		double[] binMaxMass=new double[ArrayXCorrCalculator.groups]; 
 		for (int i=0; i<ArrayXCorrCalculator.groups-1; i++) {
-			binMaxMass[i]=increment*(i+1);
+			binMaxMass[i]=firstMass + increment*(i+1);
 		}
 		binMaxMass[ArrayXCorrCalculator.groups-1]=Double.MAX_VALUE;
 		
@@ -240,7 +245,8 @@ public class SparseXCorrCalculator {
 			default:
 				throw new EncyclopediaException("Unknown fragmentation type ["+type+"]");
 		}
-		
+
+		Collections.sort(allPeaks);
 		return new Pair<>(model, getIntensityArray(params, allPeaks, model.getChargedMass(precursorCharge), true));
 	}
 
@@ -255,8 +261,11 @@ public class SparseXCorrCalculator {
 		return peaks;
 	}
 
+	/**
+	 *
+	 * @param allPeaks: MUST BE SORTED ON MASS
+	 */
 	private static SparseXCorrSpectrum getIntensityArray(SearchParameters params, ArrayList<Peak> allPeaks, double precursorMz, boolean addIntensityToNeighboringBins) {
-		Collections.sort(allPeaks);
 		
 		// set tolerance to 2x the fragment tolerance of the highest fragment
 		float fragmentBinSize=2.0f*(float)params.getFragmentTolerance().getTolerance(biggestFragmentMass);

@@ -47,7 +47,7 @@ public class XCorrCalculatorTest extends TestCase {
 	private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.CID, new MassTolerance(0.5, MassErrorUnitType.AMU), new MassTolerance(0.5, MassErrorUnitType.AMU), DigestionEnzyme.getEnzyme("trypsin"), false, true, false);
 	//private static final SearchParameters PARAMETERS=new PecanSearchParameters(new AminoAcidConstants(), FragmentationType.YONLY, new MassTolerance(10, MassErrorUnitType.PPM), new MassTolerance(10, MassErrorUnitType.PPM), DigestionEnzyme.getEnzyme("trypsin"));
 	
-	public static void main(String[] args) throws Exception {
+	public static void main1(String[] args) throws Exception {
 		final SearchParameters parameters=SearchParameterParser.getDefaultParametersObject(InstrumentSpecificSearchParameters.OrbitrapOrbitrap);
 		
 		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("Trypsin");
@@ -150,7 +150,7 @@ public class XCorrCalculatorTest extends TestCase {
 		System.out.println("Array: "+(System.currentTimeMillis()-time));
 	}
 	
-	public static void main2(String[] args) {
+	public static void main(String[] args) {
 		final byte charge=2;
 		final float chargedMz=(float)((1329.6335+(charge-1)*MassConstants.protonMass)/charge);
 		System.out.println(chargedMz);
@@ -174,9 +174,9 @@ public class XCorrCalculatorTest extends TestCase {
 		Spectrum normalizedSpectrumT = getNormalizedSpectrum(s, SparseXCorrCalculator.biggestFragmentMass, charge, t, PARAMETERS);
 		Charter.launchChart(normalizedSpectrumT, "Model", new Dimension(600, height));
 		f=SparseXCorrCalculator.preprocessSpectrum(f);
-		//Charter.launchChart(getNormalizedSpectrum(s, SparseXCorrCalculator.biggestFragmentMass, charge, f, PARAMETERS), "PP Spectrum", new Dimension(600, 250));
+		Charter.launchChart(getNormalizedSpectrum(s, SparseXCorrCalculator.biggestFragmentMass, charge, f, PARAMETERS), "PP Spectrum", new Dimension(600, 250));
 		t=SparseXCorrCalculator.preprocessSpectrum(t);
-		//Charter.launchChart(getNormalizedSpectrum(s, SparseXCorrCalculator.biggestFragmentMass, charge, t, PARAMETERS), "PP Model", new Dimension(600, 250));
+		Charter.launchChart(getNormalizedSpectrum(s, SparseXCorrCalculator.biggestFragmentMass, charge, t, PARAMETERS), "PP Model", new Dimension(600, 250));
 		
 	}
 
@@ -353,7 +353,7 @@ public class XCorrCalculatorTest extends TestCase {
 		return rts;
 	}
 	
-	static Spectrum getNormalizedSpectrum(final Spectrum s, final double precursorMz, final byte charge, final SparseXCorrSpectrum intensityBins, final SearchParameters params) {
+	public static Spectrum getNormalizedSpectrum(final Spectrum s, final double precursorMz, final byte charge, final SparseXCorrSpectrum intensityBins, final SearchParameters params) {
 		double massPlusOne=precursorMz*charge-(charge-1)*MassConstants.protonMass;
 		// set tolerance to 2x the fragment tolerance of the highest fragment
 		float fragmentBinSize=2.0f*(float) params.getFragmentTolerance().getTolerance(massPlusOne);

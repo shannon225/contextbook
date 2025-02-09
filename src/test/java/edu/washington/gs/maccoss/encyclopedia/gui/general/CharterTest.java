@@ -19,8 +19,10 @@ import javax.swing.JPanel;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedSpectrum;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
@@ -32,6 +34,11 @@ import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassErrorUnitType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.SparseXCorrCalculator;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.SparseXCorrSpectrum;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.XCorrCalculatorTest;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 import gnu.trove.list.array.TFloatArrayList;
@@ -159,7 +166,7 @@ public class CharterTest {
 		Charter.launchChart(annotatedEntry);
 	}
 
-	public static void main(String[] args) {
+	public static void main3(String[] args) {
 		double[] masses = new double[] { 130.09, 147.11, 183.66, 204.13, 221.10, 239.11, 249.10, 267.11, 291.16, 296.48,
 				304.88, 322.19, 362.18, 380.19, 402.20, 419.23, 439.16, 463.23, 481.24, 520.28, 592.27, 610.28, 649.31,
 				695.37, 723.37, 748.39, 810.41, 863.41, 924.45, 926.45, 934.46, 962.47, 1023.51, 1076.52, 1138.55,
@@ -436,7 +443,7 @@ public class CharterTest {
 		Charter.launchChart(anno);
 	}
 
-	public static void main3(String[] args) {
+	public static void main(String[] args) {
 		double[] masses = new double[] { 68.6871, 68.7309, 69.0631, 71.0826, 71.7839, 72.0778, 73.0807, 73.5243,
 				74.1006, 82.3521, 82.4109, 84.0695, 85.0655, 86.0933, 86.384, 86.4551, 86.6412, 86.9153, 86.9976,
 				87.0948, 87.1513, 87.2612, 87.3162, 87.4427, 88.1012, 89.0547, 100.077, 101.111, 102.0514, 102.1206,
@@ -671,6 +678,10 @@ public class CharterTest {
 				5f, 3f, 5f, 4f, 10f, 70f, 11f, 52f, 2f, 19f, 2f, 4f, 3f, 5f, 1f, 7f, 3f, 1f, 3f, 2f, 28f, 2f, 11f, 1f,
 				2f, 2f, 25f, 1f, 9f, 2f, 3f, 1f, 2f, 27f, 16f, 4f, 2f, 7f, 2f, 3f };
 
+		if (true) {
+			intensities = General.protectedSqrt(intensities);
+		}
+		
 		HashMap<String, String> paramsMap = SearchParameterParser.getDefaultParameters();
 		paramsMap.put("-ptol", "0.5");
 		paramsMap.put("-ptolunits", "AMU");
@@ -678,11 +689,36 @@ public class CharterTest {
 		paramsMap.put("-ftolunits", "AMU");
 		paramsMap.put("-lftol", "0.5");
 		paramsMap.put("-lftolunits", "AMU");
+		paramsMap.put("-frag", "YONLY");
 		SearchParameters params = SearchParameterParser.parseParameters(paramsMap);
 		LibraryEntry entry = new LibraryEntry("", new HashSet<>(), 1229.74, (byte) 2, "ELVISLIVESK", 1, 0, 0, masses,
 				intensities, Optional.empty(), params.getAAConstants());
+		
+		AnnotatedLibraryEntry ref=FragmentationModel.generateEntry(entry.getPeptideModSeq(), "source", new HashSet<String>(), entry.getPrecursorCharge(), entry.getRetentionTimeInSec(), false, params);
 		AnnotatedLibraryEntry annotatedEntry = new AnnotatedLibraryEntry(entry, params);
-		Charter.launchChart(annotatedEntry, "ELVISLIVESK");
+		//Charter.launchChart(ref, "ELVISLIVESK");
+		
+		int height = 275;
+		//Charter.launchChart(entry, "Spectrum", new Dimension(600, height));
+		//Charter.launchChart(annotatedEntry, "Library", new Dimension(600, height));
+
+		// XCORR
+		SparseXCorrSpectrum f=SparseXCorrCalculator.normalize(entry, new Range(entry.getPrecursorMZ()-10.0f, entry.getPrecursorMZ()+10.0f), false, params);
+		SparseXCorrSpectrum t=SparseXCorrCalculator.getTheoreticalSpectrum("ELVISLIVESK", entry.getPrecursorCharge(), params);
+		//Charter.launchChart(s, "Spectrum", new Dimension(600, height));
+		
+		
+		Charter.launchChart(entry, "Original Spectrum", new Dimension(600, height));
+		
+		Spectrum normalizedSpectrumF = XCorrCalculatorTest.getNormalizedSpectrum(entry, SparseXCorrCalculator.biggestFragmentMass, entry.getPrecursorCharge(), f, params);
+		Charter.launchChart(normalizedSpectrumF, "Normalized Spectrum", new Dimension(600, height));
+		Spectrum normalizedSpectrumT = XCorrCalculatorTest.getNormalizedSpectrum(entry, SparseXCorrCalculator.biggestFragmentMass, entry.getPrecursorCharge(), t, params);
+		Charter.launchChart(normalizedSpectrumT, "Model", new Dimension(600, height));
+		f=SparseXCorrCalculator.preprocessSpectrum(f);
+		Charter.launchChart(XCorrCalculatorTest.getNormalizedSpectrum(entry, SparseXCorrCalculator.biggestFragmentMass, entry.getPrecursorCharge(), f, params), "PP Spectrum", new Dimension(600, 250));
+		t=SparseXCorrCalculator.preprocessSpectrum(t);
+		Charter.launchChart(XCorrCalculatorTest.getNormalizedSpectrum(entry, SparseXCorrCalculator.biggestFragmentMass, entry.getPrecursorCharge(), t, params), "PP Model", new Dimension(600, 250));
+		
 	}
 
 	public static void main4(String[] args) {

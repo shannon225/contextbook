@@ -51,7 +51,7 @@ import junit.framework.TestCase;
 public class FastaReaderTest extends TestCase {
 
 
-	public static void main(String[] args) throws Exception {
+	public static void mainS(String[] args) throws Exception {
 		SearchParameters params=SearchParameterParser.getDefaultParametersObject();
 		File f=new File("/Users/searleb/Downloads/thorium/mus_musculus_reviewed_uniprot.fasta");
 		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f, params);
@@ -141,12 +141,31 @@ public class FastaReaderTest extends TestCase {
 			System.out.println(unique+" / "+entries.size()+" = "+(unique/(float)entries.size())+" at "+ppm+" ppm");
 		}
 	}
-	
-	public static void mainS(String[] args) throws Exception {
+
+	public static void main(String[] args) throws Exception {
 		SearchParameters params=SearchParameterParser.getDefaultParametersObject();
 		File f=new File("/Users/searleb/Downloads/uniprotkb_proteome_UP000005640_2024_01_07.fasta");
 		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f, params);
-		float error=0.01f;
+		
+		int[] density=new int[4000]; // 1000 Da per bin
+		for (FastaEntryInterface entry : entries) {
+			float mass=(float)params.getAAConstants().getMass(entry.getSequence());
+			
+			
+			int index=Math.round((mass)/1000f);
+			density[index]++;
+		}
+		
+		for (int i = 1; i < density.length; i++) {
+			System.out.println(Log.log10(i*1000)+"\t"+density[i]);
+		}
+	}
+	
+	public static void mainGelAccuracy(String[] args) throws Exception {
+		SearchParameters params=SearchParameterParser.getDefaultParametersObject();
+		File f=new File("/Users/searleb/Downloads/uniprotkb_proteome_UP000005640_2024_01_07.fasta");
+		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f, params);
+		float error=0.05f; //(+/-5%)
 		
 		int[] density=new int[40000]; // 100 Da per bin
 		for (FastaEntryInterface entry : entries) {

@@ -20,4 +20,26 @@ public class MassConstants {
 	public static double getChargedIsotopeMass(double precursorMz, byte charge, byte isotope) {
 		return precursorMz + (isotope * neutronMass / charge);
 	}
+	
+	public static float getEstimateIMS(double chargedMass, byte charge) {
+		// predicts 1/k0
+		// discussed here: https://github.com/lazear/sage/pull/98
+		double sqMzOverCharge=(chargedMass*chargedMass) / charge;
+		
+		return (float)(-1.660e+00+ 
+		        (-3.798e-01 * Math.log1p(chargedMass)) + 
+		        (-2.389e-04 * chargedMass) + 
+		        (3.957e-01 * Math.log1p(sqMzOverCharge)) + 
+		        (4.157e-07 * sqMzOverCharge) + 
+		        (1.417e-01 * charge));
+	}
+	
+	public static float getCCSFromIMS(float IMS, double precursorMz, byte charge) {
+		double gasMass=28.013;
+		double temp=31.85;
+		double t_diff=273.15;
+	    double constant = 18509.8632163405;
+	    double reduced_mass = (precursorMz * charge * gasMass) / (precursorMz * charge + gasMass);
+	    return (float)((constant * charge) / (Math.sqrt(reduced_mass * (temp + t_diff)) * 1 / IMS));
+	}
 }

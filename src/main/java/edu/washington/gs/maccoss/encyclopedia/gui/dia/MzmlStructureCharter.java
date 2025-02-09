@@ -1,7 +1,11 @@
 package edu.washington.gs.maccoss.encyclopedia.gui.dia;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Rectangle;
+import java.awt.Shape;
+import java.awt.geom.Rectangle2D;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -17,7 +21,11 @@ import java.util.StringTokenizer;
 import java.util.TreeMap;
 
 import org.jfree.chart.ChartPanel;
+import org.jfree.chart.annotations.XYShapeAnnotation;
+import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 
+import edu.washington.gs.maccoss.encyclopedia.datastructures.GlobalRangeTracker;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ScanRangeTracker;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
@@ -31,9 +39,13 @@ import edu.washington.gs.maccoss.encyclopedia.gui.general.GUIParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
+import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
+import gnu.trove.map.hash.TDoubleObjectHashMap;
+import gnu.trove.procedure.TDoubleObjectProcedure;
 
 public class MzmlStructureCharter {
 
@@ -62,6 +74,60 @@ public class MzmlStructureCharter {
 		in.close();
 		ChartPanel panel=MzmlStructureCharter.getStructureChart(tracker, true);
 		Charter.launchComponent(panel, "File structure", new Dimension(900, 450));
+	}
+
+	public static ChartPanel getGlobalStructureChart(StripeFile dia) {
+		try {
+			Connection c=dia.getConnection();
+			try {
+				Statement s=c.createStatement();
+				try {
+					GlobalRangeTracker tracker=new GlobalRangeTracker();
+					Logger.logLine("Strarting to read windows...");
+					
+					// double[] is {stopMz, minRT, maxRT}
+					TDoubleObjectHashMap<double[]> valuesByLowerBound=new TDoubleObjectHashMap<double[]>();
+
+					ResultSet rs=s.executeQuery("select scanstarttime, isolationwindowlower, isolationwindowupper from spectra");
+					while (rs.next()) {
+						double rt=rs.getFloat(1);
+						double startMz=rs.getDouble(2);
+						double stopMz=rs.getDouble(3);
+						
+						double[] values=valuesByLowerBound.get(startMz);
+						if (values==null) {
+							values=new double[] {stopMz, rt, rt};
+							valuesByLowerBound.put(startMz, values);
+						} else {
+							if (values[1]>rt) values[1]=rt;
+							if (values[2]<rt) values[2]=rt;
+						}
+					}
+					
+					valuesByLowerBound.forEachEntry(new TDoubleObjectProcedure<double[]>() {
+						@Override
+						public boolean execute(double a, double[] b) {
+							tracker.addRange(new Range(a, b[0]), new Range(b[1], b[2]));
+							return true;
+						}
+					});
+					
+					Logger.logLine("Found "+tracker.getStripeRTsInSecs().size()+" total windows...");
+					
+					return getStructureChart(tracker, false);
+
+				} finally {
+					s.close();
+				}
+			} finally {
+				c.close();
+			}
+			
+		} catch (IOException ioe) {
+			throw new EncyclopediaException("DIA reading IO error!", ioe);
+		} catch (SQLException sqle) {
+			throw new EncyclopediaException("DIA reading SQL error!", sqle);
+		}
 	}
 	
 	public static ChartPanel getStructureChart(StripeFile dia) {
@@ -119,14 +185,28 @@ public class MzmlStructureCharter {
 		}
 	}
 
-	public static ChartPanel getStructureChart(File mzMLFile, SearchParameters parameters) {
+	public static ChartPanel getStructureChart(File mzMLFile, boolean isGlobal) {
+		HashMap<String, String> paramMap=PecanParameterParser.getDefaultParameters();
+		paramMap.put("-acquisition", "DIA"); // NON-OVERLAPPING!
+		SearchParameters parameters=PecanParameterParser.parseParameters(paramMap);
+
 		if (mzMLFile.getName().toLowerCase().endsWith("dia")) {
 			StripeFileInterface dia=StripeFileGenerator.getFile(mzMLFile, parameters);
 			if (dia instanceof StripeFile) {
-				return getStructureChart((StripeFile)dia);
+
+				if (isGlobal) {
+					return getGlobalStructureChart((StripeFile)dia);
+				} else {
+					return getStructureChart((StripeFile)dia);
+				}
 			}
 		}
-		
+
+		if (isGlobal) {
+			Logger.errorLine("Missing structure chart because file is not already built.");
+			ChartPanel panel=Charter.getChart("M/Z", "Retention Time", false, new XYTraceInterface[0]);
+			return panel;
+		}
 
 		ScanRangeTracker scanTracker=null;
 		Logger.logLine("Indexing "+mzMLFile.getName()+" ...");
@@ -150,7 +230,7 @@ public class MzmlStructureCharter {
 			Logger.errorLine("DIA reading interrupted!");
 			Logger.errorException(ie);
 		}
-		
+
 		return getStructureChart(scanTracker, false);
 	}
 
@@ -212,8 +292,62 @@ public class MzmlStructureCharter {
 		return panel;
 	}
 
+
+	public static ChartPanel getStructureChart(GlobalRangeTracker scanTracker, boolean isScanNumberInsteadOfRT) {
+		TreeMap<Range, Range> retentionTimesByStripe=new TreeMap<>(scanTracker.getStripeRTsInSecs());
+		if (retentionTimesByStripe.size()==0) {
+			// FIXME should include precursor data eventually
+			return null;
+		}
+
+		boolean everyOther=false;
+
+		String yAxis=isScanNumberInsteadOfRT?"Scan Number":"Retention Time (min)";
+
+		ArrayList<XYShapeAnnotation> shapes=new ArrayList<XYShapeAnnotation>();
+		ArrayList<XYPoint> points=new ArrayList<XYPoint>();
+		double minMz=Double.MAX_VALUE;
+		double minRT=Double.MAX_VALUE;
+		double maxMz=Double.MIN_VALUE;
+		double maxRT=Double.MIN_VALUE;
+		
+		for (Entry<Range, Range> entry : retentionTimesByStripe.entrySet()) {
+			Range mzRange=entry.getKey();
+			Range rtRange=entry.getValue();
+			if (mzRange.getStart()<minMz) minMz=mzRange.getStart();
+			if (mzRange.getStop()>maxMz) maxMz=mzRange.getStop();
+			if (rtRange.getStart()<minRT) minRT=rtRange.getStart();
+			if (rtRange.getStop()>maxRT) maxRT=rtRange.getStop();
+			
+			double x=mzRange.getStart();
+			double y=rtRange.getStart()/60f;
+			double width=mzRange.getStop()-mzRange.getStart();
+			double height=(rtRange.getStop()-rtRange.getStart())/60f;
+			Rectangle2D shape = new Rectangle2D.Double();
+			shape.setFrame(x, y, width, height);
+			
+			everyOther=!everyOther;
+			
+			BasicStroke stroke=new BasicStroke(1.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
+			shapes.add(new XYShapeAnnotation(shape, stroke, Color.gray, getColor50p(everyOther)));
+		}
+		
+		points.add(new XYPoint(minMz, minRT/60.0));
+		points.add(new XYPoint(maxMz, minRT/60.0));
+		points.add(new XYPoint(maxMz, maxRT/60.0));
+		points.add(new XYPoint(minMz, maxRT/60.0));
+		points.add(new XYPoint(minMz, minRT/60.0));
+		
+		return Charter.getShapeChart(null, "M/Z", yAxis, 16, 16, shapes, points, false);
+	}
+
 	private static Color getColor(boolean everyOther) {
 		//return everyOther?new Color(0, 0, 200):new Color(100, 100, 255);
 		return everyOther?GUIParameters.getBaseColor():GUIParameters.getBrighterColor();
+	}
+
+	private static Color getColor50p(boolean everyOther) {
+		//return everyOther?new Color(0, 0, 200):new Color(100, 100, 255);
+		return everyOther?GUIParameters.getBaseColor(127):GUIParameters.getBrighterColor(127);
 	}
 }

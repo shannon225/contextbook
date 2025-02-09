@@ -31,6 +31,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 
 //@Immutable
 public class PecanSearchParameters extends SearchParameters {
+	public static final boolean DEFAULT_HANDLE_N_TERM_METHIONINE = true; // TODO: allow user to set this parameter
 	private final int minPeptideLength;
 	private final int maxPeptideLength;
 	private final int maxMissedCleavages;
@@ -616,7 +617,11 @@ public class PecanSearchParameters extends SearchParameters {
 	public boolean isDontRunDecoys() {
 		return dontRunDecoys;
 	}
-	
+
+	public boolean isHandleNTermMethionineInDigestion() {
+		return PecanSearchParameters.DEFAULT_HANDLE_N_TERM_METHIONINE;
+	}
+
 	public float getAlpha() {
 		return alpha;
 	}

@@ -68,6 +68,10 @@ public class AnnotatedLibraryEntry extends LibraryEntry {
 	}
 	
 	public static AnnotatedLibraryEntry getAnnotationsOnly(LibraryEntry entry, SearchParameters parameters) {
+		return getAnnotationsOnly(entry, parameters, 0);
+	}
+
+	public static AnnotatedLibraryEntry getAnnotationsOnly(LibraryEntry entry, SearchParameters parameters, int minIonNumber) {
 		double[] massArray=entry.getMassArray();
 		float[] intensityArray=entry.getIntensityArray();
 		float[] correlationArray=entry.getCorrelationArray();
@@ -79,12 +83,14 @@ public class AnnotatedLibraryEntry extends LibraryEntry {
 		ArrayList<Boolean> newQuantifiedIons=new ArrayList<Boolean>();
 		FragmentationModel model=PeptideUtils.getPeptideModel(entry.getPeptideModSeq(), parameters.getAAConstants());
 		for (Ion fragmentIon : model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge(), false)) {
-			int[] indicies=parameters.getFragmentTolerance().getIndicies(massArray, fragmentIon.getMass());
-			for (int i=0; i<indicies.length; i++) {
-				newMasses.add(massArray[indicies[i]]);
-				newIntensities.add(intensityArray[indicies[i]]);
-				newCorrelations.add(correlationArray[indicies[i]]);
-				newQuantifiedIons.add(quantifiedIonsArray[indicies[i]]);
+			if (minIonNumber==0||fragmentIon.getIndex()>=minIonNumber) {
+				int[] indicies=parameters.getFragmentTolerance().getIndicies(massArray, fragmentIon.getMass());
+				for (int i=0; i<indicies.length; i++) {
+					newMasses.add(massArray[indicies[i]]);
+					newIntensities.add(intensityArray[indicies[i]]);
+					newCorrelations.add(correlationArray[indicies[i]]);
+					newQuantifiedIons.add(quantifiedIonsArray[indicies[i]]);
+				}
 			}
 		}
 		boolean[] newQuantifiedIonsArray=new boolean[newQuantifiedIons.size()];
