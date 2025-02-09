@@ -52,11 +52,11 @@ import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
 public class PeptidePropertiesPredictor {
-	private static final int REPORTING_BATCH_SIZE = 10;
+	private static final int REPORTING_BATCH_SIZE = 1000;
 	private static final int INITIAL_BATCH_SIZE = 64;
 	public static final int MAX_BATCH_SIZE = 1024;
 	private static final int EPOCHS_TO_2X_BATCH = 99999; // never increase
-    public static final int EMBED_DIMENSION = 64;
+    public static final int EMBED_DIMENSION = 128;
     public static final int N_RESNET_BLOCKS = 3;
     public static final int KERNEL_SIZE = 9;
     public static final int NUM_EPOCHS = 3; // only limited epochs with iterative training
@@ -66,7 +66,7 @@ public class PeptidePropertiesPredictor {
     	
     	// FIXME
     	//dir=new File("/Users/searleb/Downloads/");
-    	File saveLocation=new File(dir, "peptide_prediction_model.dl4j");
+    	File saveLocation=new File(dir, "peptide_prediction_model_resnet.dl4j");
     	if (saveLocation.exists()) {
     		saveLocation.delete();
     	}

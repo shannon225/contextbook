@@ -476,14 +476,19 @@ public class EncyclopediaTwo {
 	static ArrayList<FragmentScan> getScanSubsetFromStripes(LibraryEntry entry, TargeteDecoyPSMFilter filter, ArrayList<FragmentScan> allScansInStripe, float[] rts) {
 		float modelRT=entry.getScanStartTime()/60f;
 		float realRT=filter.getYRT(modelRT)*60f;
+		ArrayList<FragmentScan> subset=new ArrayList<FragmentScan>();
 
 		// find center
 		int index=Arrays.binarySearch(rts, realRT);
 		if (index<0) {
 			index=-(index+1);
 		}
+		if (index>=allScansInStripe.size()) index=allScansInStripe.size()-1;
+		if (index<0) {
+			// no scans
+			return subset;
+		}
 		// for before the center, add at end, then reverse
-		ArrayList<FragmentScan> subset=new ArrayList<FragmentScan>();
 		for (int i = index; i >= 0; i--) {
 			float actualRT=allScansInStripe.get(i).getScanStartTime()/60f;
 			boolean passes=filter.getRtFilter().getProbabilityFitsModel(actualRT, modelRT)>=0.5f;
