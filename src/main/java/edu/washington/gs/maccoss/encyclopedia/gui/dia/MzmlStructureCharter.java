@@ -42,7 +42,10 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
+import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
+import gnu.trove.map.hash.TDoubleObjectHashMap;
+import gnu.trove.procedure.TDoubleObjectProcedure;
 
 public class MzmlStructureCharter {
 
@@ -79,24 +82,37 @@ public class MzmlStructureCharter {
 			try {
 				Statement s=c.createStatement();
 				try {
-					ArrayList<Range> ranges=new ArrayList<Range>();
-					// doesn't get DDA data
-					ResultSet rs=s.executeQuery("select start, stop from ranges where NumWindows>=10");
-					while (rs.next()) {
-						double startmz=rs.getFloat(1);
-						double stopmz=rs.getFloat(2);
-						ranges.add(new Range(startmz,stopmz));
-					}
-					
 					GlobalRangeTracker tracker=new GlobalRangeTracker();
-					for (Range range : ranges) {
-						rs=s.executeQuery("select min(scanstarttime), max(scanstarttime) from spectra where IsolationWindowCenter between "+range.getStart()+" and "+range.getStop());
-						while (rs.next()) {
-							float startRT=rs.getFloat(1);
-							float stopRT=rs.getFloat(2);
-							tracker.addRange(range, new Range(startRT, stopRT));
+					Logger.logLine("Strarting to read windows...");
+					
+					// double[] is {stopMz, minRT, maxRT}
+					TDoubleObjectHashMap<double[]> valuesByLowerBound=new TDoubleObjectHashMap<double[]>();
+
+					ResultSet rs=s.executeQuery("select scanstarttime, isolationwindowlower, isolationwindowupper from spectra");
+					while (rs.next()) {
+						double rt=rs.getFloat(1);
+						double startMz=rs.getDouble(2);
+						double stopMz=rs.getDouble(3);
+						
+						double[] values=valuesByLowerBound.get(startMz);
+						if (values==null) {
+							values=new double[] {stopMz, rt, rt};
+							valuesByLowerBound.put(startMz, values);
+						} else {
+							if (values[1]>rt) values[1]=rt;
+							if (values[2]<rt) values[2]=rt;
 						}
 					}
+					
+					valuesByLowerBound.forEachEntry(new TDoubleObjectProcedure<double[]>() {
+						@Override
+						public boolean execute(double a, double[] b) {
+							tracker.addRange(new Range(a, b[0]), new Range(b[1], b[2]));
+							return true;
+						}
+					});
+					
+					Logger.logLine("Found "+tracker.getStripeRTsInSecs().size()+" total windows...");
 					
 					return getStructureChart(tracker, false);
 
@@ -313,7 +329,7 @@ public class MzmlStructureCharter {
 			everyOther=!everyOther;
 			
 			BasicStroke stroke=new BasicStroke(1.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
-			shapes.add(new XYShapeAnnotation(shape, stroke, Color.gray, getColor(everyOther)));
+			shapes.add(new XYShapeAnnotation(shape, stroke, Color.gray, getColor50p(everyOther)));
 		}
 		
 		points.add(new XYPoint(minMz, minRT/60.0));
@@ -328,5 +344,10 @@ public class MzmlStructureCharter {
 	private static Color getColor(boolean everyOther) {
 		//return everyOther?new Color(0, 0, 200):new Color(100, 100, 255);
 		return everyOther?GUIParameters.getBaseColor():GUIParameters.getBrighterColor();
+	}
+
+	private static Color getColor50p(boolean everyOther) {
+		//return everyOther?new Color(0, 0, 200):new Color(100, 100, 255);
+		return everyOther?GUIParameters.getBaseColor(127):GUIParameters.getBrighterColor(127);
 	}
 }

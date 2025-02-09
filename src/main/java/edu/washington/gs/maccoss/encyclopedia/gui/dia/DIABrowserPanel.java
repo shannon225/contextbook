@@ -347,31 +347,26 @@ public class DIABrowserPanel extends JPanel {
 		SwingWorkerProgress<ArrayList<AcquiredSpectrum>> worker=new SwingWorkerProgress<ArrayList<AcquiredSpectrum>>((Frame)SwingUtilities.getWindowAncestor(this), "Please wait...", "Reading Raw File") {
 			@Override
 			protected ArrayList<AcquiredSpectrum> doInBackgroundForReal() throws Exception {
-				ChartPanel globalChart=MzmlStructureCharter.getStructureChart(f, true);
-					if (globalChart!=null) {
-					boolean found=false;
-					for (int i=0; i<primaryTabs.getTabCount(); i++) {
-						String title=primaryTabs.getTitleAt(i);
-						if (title==GLOBAL_TITLE) {
-							primaryTabs.setComponentAt(i, globalChart);
-							found=true;
-						}
-					}
-					if (!found) {
-						primaryTabs.addTab(GLOBAL_TITLE, globalChart);
+				for (int i=0; i<primaryTabs.getTabCount(); i++) {
+					String title=primaryTabs.getTitleAt(i);
+					if (title==GLOBAL_TITLE) {
+						primaryTabs.removeTabAt(i);
 					}
 				}
-				
-				ChartPanel structureChart=MzmlStructureCharter.getStructureChart(f, false);
-				boolean found=false;
 				for (int i=0; i<primaryTabs.getTabCount(); i++) {
 					String title=primaryTabs.getTitleAt(i);
 					if (title==STRUCTURE_TITLE) {
-						primaryTabs.setComponentAt(i, structureChart);
-						found=true;
+						primaryTabs.removeTabAt(i);
 					}
 				}
-				if (!found) {
+				
+				ChartPanel globalChart=MzmlStructureCharter.getStructureChart(f, true);
+				if (globalChart!=null) {
+					primaryTabs.addTab(GLOBAL_TITLE, globalChart);
+				}
+				
+				ChartPanel structureChart=MzmlStructureCharter.getStructureChart(f, false);
+				if (structureChart!=null) {
 					primaryTabs.addTab(STRUCTURE_TITLE, structureChart);
 				}
 				

@@ -46,22 +46,35 @@ public class GUIParameters {
 		return BASE_COLOR;
 	}
 	
+	public static Color getBaseColor(int alpha) {
+		checkInit();
+
+		return new Color(BASE_COLOR.getRed(), BASE_COLOR.getGreen(), BASE_COLOR.getBlue(), alpha);
+	}
+	
 	public static Color getBrighterColor() {
+		return getBrighterColor(BASE_COLOR.getAlpha());
+	}
+
+	public static Color getBrighterColor(int alpha) {
 		checkInit();
 		
 		int r=Math.min(255, BASE_COLOR.getRed()+100);
 		int g=Math.min(255, BASE_COLOR.getGreen()+100);
 		int b=Math.min(255, BASE_COLOR.getBlue()+100);
-		return new Color(r, g, b, BASE_COLOR.getAlpha());
+		return new Color(r, g, b, alpha);
 	}
 	
 	public static Color getDarkerColor() {
+		return getDarkerColor(BASE_COLOR.getAlpha());
+	}
+	public static Color getDarkerColor(int alpha) {
 		checkInit();
 		
 		int r=Math.max(0, BASE_COLOR.getRed()-100);
 		int g=Math.max(0, BASE_COLOR.getGreen()-100);
 		int b=Math.max(0, BASE_COLOR.getBlue()-100);
-		return new Color(r, g, b, BASE_COLOR.getAlpha());
+		return new Color(r, g, b, alpha);
 	}
 	
 	public static void requestUpdatedColor() {
