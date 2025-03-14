@@ -8,7 +8,6 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Frame;
 import java.awt.Graphics2D;
-import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
@@ -33,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.zip.DataFormatException;
@@ -60,7 +60,6 @@ import javax.swing.KeyStroke;
 import javax.swing.RowFilter;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
-import javax.swing.SpringLayout;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -83,6 +82,8 @@ import org.jfree.ui.TextAnchor;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.IsotopicDistributionCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeptideXYPoint;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.prediction.AminoAcidEncoding;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.prediction.NonstandardAminoAcidException;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefinementData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefiner;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
@@ -90,6 +91,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEnt
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursor;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
@@ -101,6 +103,12 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.web.KoinaFeaturePredictionModel;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.web.KoinaLibraryPredictionClient;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.web.KoinaPrecursor;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.web.models.fragmentation.Prosit2023timsTOFModel;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.web.models.ims.AlphaPeptDeepIMSModel;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.web.models.rt.ChronologerModel;
 import edu.washington.gs.maccoss.encyclopedia.gui.dia.FragmentIonConsistencyCharter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.FileChooserPanel;
@@ -128,6 +136,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.BackgroundSubtractionFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
+import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 import gnu.trove.procedure.TObjectFloatProcedure;
@@ -153,6 +162,7 @@ public class ChromatogrindrPanel extends JPanel {
 	private final JCheckBox jtfNotFilter=new JCheckBox("NOT");
 	private final JComboBox<InstrumentSpecificSearchParameters> instrumentCombo=new JComboBox<InstrumentSpecificSearchParameters>(InstrumentSpecificSearchParameters.INSTRUMENTS);
 
+	private final JCheckBox fragmentBox;
 	private final JCheckBox sgSmoothBox;
 	private final JCheckBox backgroundSubtractBox;
 	private final SpinnerModel smallestIonNumbers=new SpinnerNumberModel(3, 0, 10, 1);
@@ -163,13 +173,15 @@ public class ChromatogrindrPanel extends JPanel {
 	private final TObjectFloatHashMap<String> pastedRTs=new TObjectFloatHashMap<String>();
 	private final TObjectFloatHashMap<String> libraryRTs=new TObjectFloatHashMap<String>();
 
+	private final KoinaLibraryPredictionClient client;
+
 	public static void main(String[] args) {
 		File rawFile=new File("/Users/searleb/Documents/encyclopedia/small_file/bcs_2020jan16_hela_clib_3.mzML");
 		File libraryFile=new File("/Users/searleb/Documents/encyclopedia/small_file/pan_human_library.dlib");
 		final ChromatogrindrPanel browser=new ChromatogrindrPanel();
 		launchBrowserPanel(browser);
 		
-		browser.updateLibrary(libraryFile);
+		//browser.updateLibrary(libraryFile);
 		browser.updateRaw(rawFile);
 		
 		browser.pasteTable("KNILLTIGSYK	64.14	2	\n" + "GLGC[+57.021464]SLLFIPLGLVDRR	96.87	3	\n"
@@ -283,6 +295,12 @@ public class ChromatogrindrPanel extends JPanel {
 	public ChromatogrindrPanel() {
 		super(new BorderLayout());
 		
+		ArrayList<KoinaFeaturePredictionModel> models=new ArrayList<KoinaFeaturePredictionModel>();
+		models.add(new Prosit2023timsTOFModel());
+		models.add(new ChronologerModel());
+		models.add(new AlphaPeptDeepIMSModel());
+		this.client=new KoinaLibraryPredictionClient(models);
+		
 		peptideModel=new PeptidePrecursorTableModel();
 		peptideTable=new JTable(peptideModel) {
 			private static final long serialVersionUID = 1L;
@@ -366,6 +384,15 @@ public class ChromatogrindrPanel extends JPanel {
 			}
 		});
 
+		fragmentBox=new JCheckBox("Fragments");
+		fragmentBox.setSelected(true);
+		fragmentBox.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				updateToSelectedPeptide();
+			}
+		});
+
 		sgSmoothBox=new JCheckBox("Smooth");
 		sgSmoothBox.setSelected(true);
 		sgSmoothBox.addActionListener(new ActionListener() {
@@ -396,6 +423,8 @@ public class ChromatogrindrPanel extends JPanel {
 
 		JPanel checkboxes=new JPanel(new FlowLayout());
 		options.add(checkboxes);
+		checkboxes.add(fragmentBox);
+		checkboxes.add(Box.createHorizontalStrut(10));
 		checkboxes.add(sgSmoothBox);
 		checkboxes.add(Box.createHorizontalStrut(10));
 		checkboxes.add(backgroundSubtractBox);
@@ -540,9 +569,13 @@ public class ChromatogrindrPanel extends JPanel {
 			rowSorter.setRowFilter(RowFilter.regexFilter("(?i)"+text));
 		}
 	}
+	
+	HashMap<String, AnnotatedLibraryEntry> entryMap=new HashMap<String, AnnotatedLibraryEntry>();
 
 	public void pasteTable(String clip) {
 		peptideModel.paste(clip);
+		
+		updatePredictions();
 		
 		pastedRTs.clear();
 		for (InteractivePeptidePrecursor peptide : peptideModel.getAllEntries()) {
@@ -552,6 +585,50 @@ public class ChromatogrindrPanel extends JPanel {
 			peptideTable.setRowSelectionInterval(0, 0);
 		}
 		peptideTable.requestFocus();
+	}
+
+	public void updatePredictions() {
+		SearchParameters parameters=getParameters();
+		ArrayList<KoinaPrecursor> pred=new ArrayList<KoinaPrecursor>();
+		for (InteractivePeptidePrecursor entry : peptideModel.getAllEntries()) {
+			if (!entryMap.containsKey(getPeptideIdentifier(entry))) {
+				try {
+					AminoAcidEncoding[] encoding = AminoAcidEncoding.getAAs(entry.getPeptideModSeq(), parameters.getAAConstants());
+					boolean passes=client.checkPeptide(encoding, entry.getPrecursorCharge());
+				
+					KoinaPrecursor precursor = new KoinaPrecursor(encoding, 33f, entry.getPrecursorCharge());
+					if (passes) {
+						pred.add(precursor);
+					}
+				} catch (NonstandardAminoAcidException e) {
+					Logger.errorLine("FAILED: "+entry.getPeptideModSeq());
+				}
+			}
+		}
+		int count=client.generatePredictions(KoinaLibraryPredictionClient.HTTPS_KOINA_WILHELMLAB_ORG_443, pred, new EmptyProgressIndicator(true));
+		Logger.logLine("Generated "+count+" predictions");
+
+		libraryRTs.clear();
+		for (KoinaPrecursor precursor : pred) {
+			AnnotatedLibraryEntry entry=precursor.toEntry(parameters.getAAConstants(), parameters);
+			entryMap.put(getPeptideIdentifier(entry), entry);
+
+			libraryRTs.put(entry.getPeptideModSeq(), entry.getRetentionTimeInSec()/60f);
+		}
+	}
+
+	private static String getPeptideIdentifier(PeptidePrecursor entry) {
+		String peptideModSeq = entry.getPeptideModSeq();
+		byte precursorCharge = entry.getPrecursorCharge();
+		return getPeptideIdentifier(peptideModSeq, precursorCharge);
+	}
+
+	private static String getPeptideIdentifier(String peptideModSeq, byte precursorCharge) {
+		return peptideModSeq+":"+precursorCharge;
+	}
+	
+	private Optional<LibraryEntry> getPrediction(PeptidePrecursor entry) {
+		return Optional.ofNullable(entryMap.get(getPeptideIdentifier(entry)));
 	}
 
 	private void copyTable() {
@@ -629,6 +706,7 @@ public class ChromatogrindrPanel extends JPanel {
 			ArrayList<LibraryEntry> entries=library.getAllEntries(false, new AminoAcidConstants());
 
 			peptideModel.paste(entries);
+			updatePredictions();
 			
 			pastedRTs.clear();
 			for (InteractivePeptidePrecursor peptide : peptideModel.getAllEntries()) {
@@ -849,7 +927,7 @@ public class ChromatogrindrPanel extends JPanel {
 			}
 			Collections.sort(trimmedPrecursors);
 			precursors=trimmedPrecursors;
-			XYTraceInterface[] traceArray=ChromatogramExtractor.extractPrecursorChromatograms(parameters.getPrecursorTolerance(), entry.getPrecursorMZ(), entry.getPrecursorCharge(), precursors, true, false);
+			XYTraceInterface[] traceArray=ChromatogramExtractor.extractPrecursorChromatograms(parameters.getPrecursorTolerance(), entry.getPrecursorMZ(), entry.getPrecursorCharge(), precursors, sgSmoothBox.isSelected(), backgroundSubtractBox.isSelected());
 			for (int i = 0; i < traceArray.length; i++) {
 				if (traceArray[i] instanceof XYTrace) {
 					precursorTraces.add((XYTrace)traceArray[i]);
@@ -976,6 +1054,7 @@ public class ChromatogrindrPanel extends JPanel {
 			deltaMassPanel.getChart().setTitle("Fragments");
 			deltaMassPanelGroup.add(deltaMassPanel);
 			
+			Optional<LibraryEntry> optionalRef=null;
 			if (reference!=null) {
 				ArrayList<LibraryEntry> references=reference.getEntries(entry.getPeptideModSeq(), entry.getPrecursorCharge(), false);
 				if (references.size()==0) {
@@ -983,76 +1062,86 @@ public class ChromatogrindrPanel extends JPanel {
 				}
 				
 				if (references.size()>0) {
-					LibraryEntry ref=references.get(0);
-					if ((Integer)smallestIonNumbers.getValue()>0) {
-						ref=AnnotatedLibraryEntry.getAnnotationsOnly(ref, parameters, (Integer)smallestIonNumbers.getValue());
-					}
-					
-					LibraryEntry acq=data.getEntry(ref, parameters);
-					if ((Integer)smallestIonNumbers.getValue()>0) {
-						acq=AnnotatedLibraryEntry.getAnnotationsOnly(acq, parameters, (Integer)smallestIonNumbers.getValue());
-					}
-
-					if (pastedRTs.size()>0&&libraryRTs.size()>0) {
-						Collection<XYPoint> points=new ArrayList<XYPoint>();
-						pastedRTs.forEachEntry(new TObjectFloatProcedure<String>() {
-							@Override
-							public boolean execute(String a, float b) {
-								if (libraryRTs.contains(a)) {
-									float c=libraryRTs.get(a);
-									points.add(new PeptideXYPoint(c, b, false, a));
-								}
-								return true;
-							}
-						});
-						
-						XYTrace backgroundRTs=new XYTrace(points, GraphType.bigpoint, "backgroundRTs", new Color(0f, 0f, 0f, 0.2f), 2.0f);
-						XYTrace targetRT=new XYTrace(new float[] {ref.getScanStartTime()/60f}, new float[] {entry.getRetentionTimeInSec()/60f}, GraphType.bighollowpoint, "targetRTs", Color.red, 5.0f);
-						
-						ChartPanel rtPanel=Charter.getChart("Library Retention Time", "Acquired Retention Time", false, targetRT, backgroundRTs);
-						rightInfoPanel.add(rtPanel);
-					}
-
-					PercentageLayout fraglayout = new PercentageLayout(0, 2);
-					fraglayout.setColFraction(0, 0.33);
-					fraglayout.setColFraction(1, 0.67);
-					JPanel fragPanelGroup=new JPanel(fraglayout);
-					rightInfoPanel.add(fragPanelGroup);
-
-					// pad out for -1
-					float[] predictedIsotopeDistribution=IsotopicDistributionCalculator.getIsotopeDistribution(entry.getPeptideModSeq(), parameters.getAAConstants());
-					predictedIsotopeDistribution=General.concatenate(new float[] {0f}, predictedIsotopeDistribution);
-					
-					ArrayList<XYTrace> precursorButterflyTraces=FragmentIonConsistencyCharter.getPrecursorButterfly(ChromatogramExtractor.isotopes, precursorIntegrations.x, predictedIsotopeDistribution, ChromatogramExtractor.isotopeColors);
-					precursorButterflyTraces.add(new XYTrace(new float[] {-1.5f,  2.5f}, new float[] {0.0f, 0.0f}, GraphType.line, "base", Color.DARK_GRAY, 1f));
-					ChartPanel chartPanelPrecursorButterfly = Charter.getChart("Precursor", "Relative Intensity", false, precursorButterflyTraces.toArray(new XYTrace[0]));
-					((NumberAxis)chartPanelPrecursorButterfly.getChart().getXYPlot().getRangeAxis()).getAutoRangeIncludesZero();
-					chartPanelPrecursorButterfly.getChart().getXYPlot().getDomainAxis().setRange(-1.5, 2.5);
-					chartPanelPrecursorButterfly.getChart().getXYPlot().getRangeAxis().setRange(-1.15, 1.15);
-	
-					fragPanelGroup.add(chartPanelPrecursorButterfly);
-	
-					LibraryEntry butterfly=FragmentIonConsistencyCharter.getButterfly(acq, ref);
-					ChartPanel chartPanelButterfly = Charter.getChart(new AnnotatedLibraryEntry(butterfly, parameters, true));
-					
-					Font font=new Font(Charter.BASE_FONT_NAME, Font.PLAIN, 18);
-					XYTextAnnotation acquiredAnnotation = new XYTextAnnotation("Acquired", 10.0, 1.0);
-					XYTextAnnotation libraryAnnotation = new XYTextAnnotation("Library", 10.0, -1.0);
-					acquiredAnnotation.setTextAnchor(TextAnchor.TOP_LEFT);
-					libraryAnnotation.setTextAnchor(TextAnchor.CENTER_LEFT);
-					acquiredAnnotation.setPaint(Color.black);
-					acquiredAnnotation.setFont(font);
-					libraryAnnotation.setPaint(Color.black);
-					libraryAnnotation.setFont(font);
-					chartPanelButterfly.getChart().getXYPlot().addAnnotation(acquiredAnnotation);
-					chartPanelButterfly.getChart().getXYPlot().addAnnotation(libraryAnnotation);
-					chartPanelButterfly.getChart().getXYPlot().getRangeAxis().setRange(-1.15, 1.15);
-					chartPanelButterfly.getChart().getXYPlot().getRangeAxis().setLabel("Relative Intensity");
-					chartPanelButterfly.getChart().setTitle((String)null);
-					
-
-					fragPanelGroup.add(chartPanelButterfly);
+					optionalRef=Optional.of(references.get(0));
 				}
+			}
+
+			if (optionalRef==null) {
+				optionalRef=getPrediction(entry);
+			}
+			
+			if (optionalRef.isPresent()) {
+				LibraryEntry ref=optionalRef.get();
+				
+				if ((Integer)smallestIonNumbers.getValue()>0) {
+					ref=AnnotatedLibraryEntry.getAnnotationsOnly(ref, parameters, (Integer)smallestIonNumbers.getValue());
+				}
+				
+				LibraryEntry acq=data.getEntry(ref, parameters);
+				if ((Integer)smallestIonNumbers.getValue()>0) {
+					acq=AnnotatedLibraryEntry.getAnnotationsOnly(acq, parameters, (Integer)smallestIonNumbers.getValue());
+				}
+
+				// THIS IS A SPEED ISSUE
+				if (false&&pastedRTs.size()>0&&libraryRTs.size()>0) {
+					Collection<XYPoint> points=new ArrayList<XYPoint>();
+					pastedRTs.forEachEntry(new TObjectFloatProcedure<String>() {
+						@Override
+						public boolean execute(String a, float b) {
+							if (libraryRTs.contains(a)) {
+								float c=libraryRTs.get(a);
+								points.add(new PeptideXYPoint(c, b, false, a));
+							}
+							return true;
+						}
+					});
+					
+					XYTrace backgroundRTs=new XYTrace(points, GraphType.bigpoint, "backgroundRTs", new Color(0f, 0f, 0f, 0.2f), 2.0f);
+					XYTrace targetRT=new XYTrace(new float[] {ref.getScanStartTime()/60f}, new float[] {entry.getRetentionTimeInSec()/60f}, GraphType.bighollowpoint, "targetRTs", Color.red, 5.0f);
+					
+					ChartPanel rtPanel=Charter.getChart("Library Retention Time", "Acquired Retention Time", false, targetRT, backgroundRTs);
+					rightInfoPanel.add(rtPanel);
+				}
+
+				PercentageLayout fraglayout = new PercentageLayout(0, 2);
+				fraglayout.setColFraction(0, 0.33);
+				fraglayout.setColFraction(1, 0.67);
+				JPanel fragPanelGroup=new JPanel(fraglayout);
+				rightInfoPanel.add(fragPanelGroup);
+
+				// pad out for -1
+				float[] predictedIsotopeDistribution=IsotopicDistributionCalculator.getIsotopeDistribution(entry.getPeptideModSeq(), parameters.getAAConstants());
+				predictedIsotopeDistribution=General.concatenate(new float[] {0f}, predictedIsotopeDistribution);
+				
+				ArrayList<XYTrace> precursorButterflyTraces=FragmentIonConsistencyCharter.getPrecursorButterfly(ChromatogramExtractor.isotopes, precursorIntegrations.x, predictedIsotopeDistribution, ChromatogramExtractor.isotopeColors);
+				precursorButterflyTraces.add(new XYTrace(new float[] {-1.5f,  2.5f}, new float[] {0.0f, 0.0f}, GraphType.line, "base", Color.DARK_GRAY, 1f));
+				ChartPanel chartPanelPrecursorButterfly = Charter.getChart("Precursor", "Relative Intensity", false, precursorButterflyTraces.toArray(new XYTrace[0]));
+				((NumberAxis)chartPanelPrecursorButterfly.getChart().getXYPlot().getRangeAxis()).getAutoRangeIncludesZero();
+				chartPanelPrecursorButterfly.getChart().getXYPlot().getDomainAxis().setRange(-1.5, 2.5);
+				chartPanelPrecursorButterfly.getChart().getXYPlot().getRangeAxis().setRange(-1.15, 1.15);
+
+				fragPanelGroup.add(chartPanelPrecursorButterfly);
+
+				LibraryEntry butterfly=FragmentIonConsistencyCharter.getButterfly(acq, ref);
+				ChartPanel chartPanelButterfly = Charter.getChart(new AnnotatedLibraryEntry(butterfly, parameters, true));
+				
+				Font font=new Font(Charter.BASE_FONT_NAME, Font.PLAIN, 18);
+				XYTextAnnotation acquiredAnnotation = new XYTextAnnotation("Acquired", 10.0, 1.0);
+				XYTextAnnotation libraryAnnotation = new XYTextAnnotation("Library", 10.0, -1.0);
+				acquiredAnnotation.setTextAnchor(TextAnchor.TOP_LEFT);
+				libraryAnnotation.setTextAnchor(TextAnchor.CENTER_LEFT);
+				acquiredAnnotation.setPaint(Color.black);
+				acquiredAnnotation.setFont(font);
+				libraryAnnotation.setPaint(Color.black);
+				libraryAnnotation.setFont(font);
+				chartPanelButterfly.getChart().getXYPlot().addAnnotation(acquiredAnnotation);
+				chartPanelButterfly.getChart().getXYPlot().addAnnotation(libraryAnnotation);
+				chartPanelButterfly.getChart().getXYPlot().getRangeAxis().setRange(-1.15, 1.15);
+				chartPanelButterfly.getChart().getXYPlot().getRangeAxis().setLabel("Relative Intensity");
+				chartPanelButterfly.getChart().setTitle((String)null);
+				
+
+				fragPanelGroup.add(chartPanelButterfly);
 			}
 
 		} catch (DataFormatException sqle) {
@@ -1091,6 +1180,10 @@ public class ChromatogrindrPanel extends JPanel {
 		
 		fragmentTraces.add(new XYTrace(new float[] {rtRange.getStart()/60f, rtRange.getStop()/60f}, new float[] {(float)globalMaxYFragment, (float)globalMaxYFragment}, GraphType.area, "Boundaries", new Color(102, 204, 255, 50), 4.0f));
 		precursorTraces.add(new XYTrace(new float[] {rtRange.getStart()/60f, rtRange.getStop()/60f}, new float[] {(float)globalMaxYPrecursor, (float)globalMaxYPrecursor}, GraphType.area, "Boundaries", new Color(102, 204, 255, 50), 4.0f));
+		
+		if (!fragmentBox.isSelected()) {
+			fragmentTraces=null;
+		}
 		
 		final ChartPanel chartPanel=ChromatogramCharter.createChart(Optional.ofNullable(precursorTraces), Optional.ofNullable(fragmentTraces), globalMaxYPrecursor, globalMaxYFragment);
 		chartPanel.setMouseZoomable(false, false);

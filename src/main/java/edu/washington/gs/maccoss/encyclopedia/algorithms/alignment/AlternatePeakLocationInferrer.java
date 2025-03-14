@@ -139,7 +139,7 @@ public class AlternatePeakLocationInferrer {
 				for (SearchJobData job : pecanJobs) {
 					if (job.getOriginalDiaFileName().equals(fileName)) {
 						RetentionTimeAlignmentInterface map = alignmentMap.get(job);
-						float alignedRT=map==null?pep.getRT()/60:map.getXValue(pep.getRT()/60f);
+						float alignedRT=map==null?pep.getRetentionTimeInSec()/60:map.getXValue(pep.getRetentionTimeInSec()/60f);
 						
 						alignedRTInMinBySequenceMap.put(pep.getPeptideModSeq(), alignedRT);
 						continue EXTRAPEPS;

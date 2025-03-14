@@ -19,6 +19,9 @@ public class KoinaPrecursor {
 	private volatile double[] mzs=null;
 	HashSet<String> accessions=new HashSet<String>();
 	
+	public KoinaPrecursor(String peptideModSeq, float nce, byte charge, AminoAcidConstants aaConstants) {
+		this(AminoAcidEncoding.getAAs(peptideModSeq, aaConstants), nce, charge);
+	}
 	public KoinaPrecursor(AminoAcidEncoding[] aas, float nce, byte charge) {
 		this.aas=aas;
 		this.nce = nce;

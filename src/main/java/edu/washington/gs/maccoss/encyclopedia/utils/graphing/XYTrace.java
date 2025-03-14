@@ -6,6 +6,7 @@ import java.util.*;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.Correlation;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
@@ -301,6 +302,138 @@ public class XYTrace implements XYTraceInterface, Comparable<XYTraceInterface> {
 		}
 		return new Pair<float[], float[]>(xs.toArray(), ys.toArray());
 	}
+	
+	public double integrate(Range range) {
+		ArrayList<XYPoint> clipped=clipRegion(this, range);
+		if (clipped.size() < 2) {
+			return 0.0;
+		}
+		
+		double area = 0.0;
+        for (int i = 0; i < clipped.size() - 1; i++) {
+            XYPoint p1 = clipped.get(i);
+            XYPoint p2 = clipped.get(i + 1);
+
+            double base = p2.getX() - p1.getX(); // width
+            double avgHeight = (p1.getY() + p2.getY()) / 2.0; // average of y-values
+            area += base * avgHeight;
+        }
+        return area;
+	}
+	
+	public static ArrayList<XYPoint> clipRegion(XYTrace trace, Range range) {
+		ArrayList<XYPoint> result = new ArrayList<>();
+		
+		if (range.getStop() < trace.points.get(0).getX() || 
+        		range.getStart() > trace.points.get(trace.points.size() - 1).getX()) {
+            // No overlap with points
+            return result;
+        }
+        
+        XYPoint prev=null;
+		for (XYPoint point : trace.points) {
+			if (range.contains(point.x)) {
+				if (result.size()==0&&prev!=null) {
+					// pad to begin
+					result.add(new XYPoint(range.getStart(), linearInterpolate(prev, point, range.getStart())));
+				}
+				result.add(point);
+			} else if (point.x>range.getStop()) {
+				// pad to end
+				if (prev!=null) {
+					result.add(new XYPoint(range.getStop(), linearInterpolate(prev, point, range.getStop())));
+					break;
+				}
+			}
+			prev=point;
+		}
+		return result;
+	}
+	
+	public static double correlate(XYTrace x, XYTrace y) {
+		ArrayList<XYPoint>[] values=XYTrace.alignXYPoints(x.getPoints(), y.getPoints());
+
+        ArrayList<XYPoint> alignedX = values[0];
+        ArrayList<XYPoint> alignedY = values[1];
+        
+        Pair<float[], float[]> xArrays=toFloatArrays(alignedX);
+        Pair<float[], float[]> yArrays=toFloatArrays(alignedY);
+        
+        return Correlation.getPearsons(xArrays.y, yArrays.y);
+	}
+
+	/**
+	 * Takes two sorted lists of XYPoint (sorted by X ascending) and returns two new
+	 * lists that have identical X-values (merged from both), with Y-values linearly
+	 * interpolated as needed.
+	 *
+	 * @param listA Sorted list of XYPoint (by x ascending).
+	 * @param listB Sorted list of XYPoint (by x ascending).
+	 * @return An array of size 2: [alignedA, alignedB] where each is a new
+	 *         ArrayList<XYPoint>.
+	 */
+	
+	public static ArrayList<XYPoint>[] alignXYPoints(ArrayList<XYPoint> listA, ArrayList<XYPoint> listB) {
+		ArrayList<XYPoint> alignedA = new ArrayList<>();
+		ArrayList<XYPoint> alignedB = new ArrayList<>();
+		
+		int aIndex=0;
+		int bIndex=0;
+		XYPoint prevA=null;
+		XYPoint prevB=null;
+		while (aIndex<listA.size()||bIndex<listB.size()) {
+			XYPoint a = aIndex<listA.size()?listA.get(aIndex):null;
+			XYPoint b = bIndex<listB.size()?listB.get(bIndex):null;
+			
+			double ax=a==null?Double.MAX_VALUE:a.x;
+			double bx=b==null?Double.MAX_VALUE:b.x;
+			
+			if (ax==bx) {
+				alignedA.add(a);
+				alignedB.add(b);
+				prevA=a;
+				prevB=b;
+				aIndex++;
+				bIndex++;
+				
+			} else if (ax>bx) {
+				// process b.x
+				alignedB.add(b);
+				alignedA.add(new XYPoint(b.x, linearInterpolate(prevA, a, b.x)));
+
+				prevB=b;
+				bIndex++;
+			} else {
+				// process a.x
+				alignedA.add(a);
+				alignedB.add(new XYPoint(a.x, linearInterpolate(prevB, b, a.x)));
+
+				prevA=a;
+				aIndex++;
+			}
+		}
+
+		return new ArrayList[] {alignedA, alignedB};
+	}
+	
+	public static double linearInterpolate(XYPoint p1, XYPoint p2, double targetX) {
+		if (p1==null&&p2==null) return 0.0;
+		if (p1==null) return p2.y;
+		if (p2==null) return p1.y;
+		
+        double x1 = p1.getX();
+        double y1 = p1.getY();
+        double x2 = p2.getX();
+        double y2 = p2.getY();
+
+        if (Math.abs(x2 - x1) < 1e-12) {
+            // Avoid potential division-by-zero
+            return (y1+y2)/2.0f;
+        }
+
+        // Linear interpolation formula
+        return y1 + (targetX - x1) * (y2 - y1) / (x2 - x1);
+    }
 	
 	/**
 	 * takes the average value for each trace, binned by the rounding increment. Does not fill in 0s between increments!

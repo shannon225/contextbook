@@ -78,6 +78,14 @@ public class General {
 		return r;
 	}
 	
+	public static char[] reverse(char[] a) {
+		char[] r=new char[a.length];
+		for (int i = 0; i < r.length; i++) {
+			r[a.length-i-1]=a[i];
+		}
+		return r;
+	}
+	
 	public static float[] shuffle(float[] a) {
 		int shuffleSeed=a.length;
 		for (int i = 0; i < a.length; i++) {

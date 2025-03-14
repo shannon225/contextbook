@@ -1,10 +1,8 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.precursor;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Optional;
 
-import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefinementData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefiner;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntRange;
@@ -15,7 +13,6 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Ion;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PrecursorIon;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.Correlation;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.FloatPair;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.list.array.TDoubleArrayList;
@@ -24,7 +21,7 @@ import gnu.trove.map.hash.TByteObjectHashMap;
 import gnu.trove.procedure.TByteObjectProcedure;
 
 public class PrecursorIntegrator {
-	private static final float REQUIRED_ION_PERCENTAGE_OF_DISTRIBUTION = 0.5f;
+	public static final float REQUIRED_ION_PERCENTAGE_OF_DISTRIBUTION = 0.5f;
 	
 	@SuppressWarnings("unchecked")
 	public static ArrayList<TransitionRefinementData> integratePeptide(String peptideModSeq, float[] expectedIsotopicDistribution, float[] psmRTsInSec, Optional<Float> ionMobility, ArrayList<PeakTrace<PrecursorIon>> traces, SearchParameters params) {

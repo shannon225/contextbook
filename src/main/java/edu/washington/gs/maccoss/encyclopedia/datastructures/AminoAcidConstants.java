@@ -299,143 +299,147 @@ public class AminoAcidConstants {
 		if (fixedOrVariable != null) {
 			return fixedOrVariable;
 		} else {
-			Optional<PeptideModification> modification = findModification(getDefaultLocalizationModifications(), aa, modificationMass);
-			Optional<Double> opModificationMass = modification.map(PeptideModification::getMass);
-			return opModificationMass.orElseGet(() -> {
-				if (aa == 'C') {
-					if (tolerance.equals(57.0, modificationMass)) { // Carbamidomethyl
-						return 57.0214635;
-					} else if (tolerance.equals(58.0, modificationMass)) { // Carboxymethyl
-						return 58.005479;
-					} else if (tolerance.equals(46.0, modificationMass)) { // MMTS
-						return 45.987721;
-					} else if (tolerance.equals(99.0, modificationMass)) { // Carbamidomethyl + acetyl
-						return 57.0214635 + 42.010565;
-					} else if (tolerance.equals(40.0, modificationMass)) { // Carbamidomethyl - pyro-glu
-						return 57.0214635 - 17.026549;
-					}
-				}
-
-				if (aa == 'M' || aa == 'W') {
-					if (tolerance.equals(16.0, modificationMass)) { // Oxidation
-						return 15.994915;
-					} else if (tolerance.equals(58.0, modificationMass)) { // Ox + acetyl
-						return 42.010565 + 15.994915;
-					}
-				}
-
-				if (aa == 'N' || aa == 'Q') {
-					if (tolerance.equals(1, modificationMass)) { // deamidation
-						return MassConstants.oh2-MassConstants.nh3;
-					}
-				}
-
-				if (aa == 'E') {
-					if (tolerance.equals(-18.0, modificationMass)) { // pyro-glu
-						return -18.010565;
-					}
-				}
-
-				if (aa == 'Q') {
-					if (tolerance.equals(-17.0, modificationMass)) { // pyro-glu
-						return -17.026549;
-					}
-				}
-
-				if (aa == 'S' || aa == 'T' || aa == 'Y') {
-					if (tolerance.equals(80.0, modificationMass)) { // Phospho
-						return PeptideModification.phosphorylation.getMass();
-					} else if (tolerance.equals(122.0, modificationMass)) { // Phospho + acetyl
-						return 42.010565 + PeptideModification.phosphorylation.getMass();
-					}
-				}
-
-				if (tolerance.equals(42.0, modificationMass)) { // acetyl
-					return 42.010565;
-				}
-				
-				// SILAC
-				if (aa == 'K') {
-					if (tolerance.equals(8.0, modificationMass)) { // SILAC
-						return 8.014199;
-					} else if (tolerance.equals(6.0, modificationMass)) { // SILAC
-						return 6.020129;
-					}
-				}
-				if (aa == 'R') {
-					if (tolerance.equals(10.0, modificationMass)) { // SILAC
-						return 10.008269;
-					} else if (tolerance.equals(4.0, modificationMass)) { // SILAC
-						return 3.988140;
-					} else if (tolerance.equals(5.0, modificationMass)) { // SILAC
-						return 5.028462;
-					} else if (tolerance.equals(6.0, modificationMass)) { // SILAC
-						return 6.020129;
-					} else if (tolerance.equals(11.0, modificationMass)) { // SILAC
-						return 11.032077;
-					}
-				}
-				if (aa == 'A') {
-					if (tolerance.equals(4.0, modificationMass)) { // SILAC
-						return 4.007099;
-					} else if (tolerance.equals(3.0, modificationMass)) { // SILAC
-						return 3.010064;
-					}
-				}
-				if (aa == 'L' || aa == 'I') {
-					if (tolerance.equals(3.0, modificationMass)) { // SILAC
-						return 3.018830;
-					} else if (tolerance.equals(6.0, modificationMass)) { // SILAC
-						return 6.020129;
-					} else if (tolerance.equals(7.0, modificationMass)) { // SILAC
-						return 7.017164;
-					}
-				}
-				if (aa == 'M') {
-					if (tolerance.equals(4.0, modificationMass)) { // SILAC
-						return 4.013419;
-					} else if (tolerance.equals(6.0, modificationMass)) { // SILAC
-						return 6.013809;
-					}
-				}
-				if (aa == 'D') {
-					if (tolerance.equals(5.0, modificationMass)) { // SILAC
-						return 5.010454;
-					}
-				}
-				if (aa == 'P') {
-					if (tolerance.equals(5.0, modificationMass)) { // SILAC
-						return 5.016774;
-					} else if (tolerance.equals(6.0, modificationMass)) { // SILAC
-						return 6.013809;
-					} else if (tolerance.equals(7.0, modificationMass)) { // SILAC
-						return 7.034695;
-					}
-				}
-				if (aa == 'E') {
-					if (tolerance.equals(6.0, modificationMass)) { // SILAC
-						return 6.013809;
-					}
-				}
-				if (aa == 'V') {
-					if (tolerance.equals(6.0, modificationMass)) { // SILAC
-						return 6.013809;
-					}
-				}
-				if (aa == 'Y') {
-					if (tolerance.equals(9.0, modificationMass)) { // SILAC
-						return 9.030193;
-					}
-				}
-				if (aa == 'F') {
-					if (tolerance.equals(9.0, modificationMass)) { // SILAC
-						return 9.030193;
-					}
-				}
-				// END SILAC
-				
-				return modificationMass;
-			});
+			return getStandardAccurateModificationMass(aa, modificationMass);
 		}
+	}
+
+	public static double getStandardAccurateModificationMass(char aa, double modificationMass) {
+		Optional<PeptideModification> modification = findModification(getDefaultLocalizationModifications(), aa, modificationMass);
+		Optional<Double> opModificationMass = modification.map(PeptideModification::getMass);
+		return opModificationMass.orElseGet(() -> {
+			if (aa == 'C') {
+				if (tolerance.equals(57.0, modificationMass)) { // Carbamidomethyl
+					return 57.0214635;
+				} else if (tolerance.equals(58.0, modificationMass)) { // Carboxymethyl
+					return 58.005479;
+				} else if (tolerance.equals(46.0, modificationMass)) { // MMTS
+					return 45.987721;
+				} else if (tolerance.equals(99.0, modificationMass)) { // Carbamidomethyl + acetyl
+					return 57.0214635 + 42.010565;
+				} else if (tolerance.equals(40.0, modificationMass)) { // Carbamidomethyl - pyro-glu
+					return 57.0214635 - 17.026549;
+				}
+			}
+
+			if (aa == 'M' || aa == 'W') {
+				if (tolerance.equals(16.0, modificationMass)) { // Oxidation
+					return 15.994915;
+				} else if (tolerance.equals(58.0, modificationMass)) { // Ox + acetyl
+					return 42.010565 + 15.994915;
+				}
+			}
+
+			if (aa == 'N' || aa == 'Q') {
+				if (tolerance.equals(1, modificationMass)) { // deamidation
+					return MassConstants.oh2-MassConstants.nh3;
+				}
+			}
+
+			if (aa == 'E') {
+				if (tolerance.equals(-18.0, modificationMass)) { // pyro-glu
+					return -18.010565;
+				}
+			}
+
+			if (aa == 'Q') {
+				if (tolerance.equals(-17.0, modificationMass)) { // pyro-glu
+					return -17.026549;
+				}
+			}
+
+			if (aa == 'S' || aa == 'T' || aa == 'Y') {
+				if (tolerance.equals(80.0, modificationMass)) { // Phospho
+					return PeptideModification.phosphorylation.getMass();
+				} else if (tolerance.equals(122.0, modificationMass)) { // Phospho + acetyl
+					return 42.010565 + PeptideModification.phosphorylation.getMass();
+				}
+			}
+
+			if (tolerance.equals(42.0, modificationMass)) { // acetyl
+				return 42.010565;
+			}
+			
+			// SILAC
+			if (aa == 'K') {
+				if (tolerance.equals(8.0, modificationMass)) { // SILAC
+					return 8.014199;
+				} else if (tolerance.equals(6.0, modificationMass)) { // SILAC
+					return 6.020129;
+				}
+			}
+			if (aa == 'R') {
+				if (tolerance.equals(10.0, modificationMass)) { // SILAC
+					return 10.008269;
+				} else if (tolerance.equals(4.0, modificationMass)) { // SILAC
+					return 3.988140;
+				} else if (tolerance.equals(5.0, modificationMass)) { // SILAC
+					return 5.028462;
+				} else if (tolerance.equals(6.0, modificationMass)) { // SILAC
+					return 6.020129;
+				} else if (tolerance.equals(11.0, modificationMass)) { // SILAC
+					return 11.032077;
+				}
+			}
+			if (aa == 'A') {
+				if (tolerance.equals(4.0, modificationMass)) { // SILAC
+					return 4.007099;
+				} else if (tolerance.equals(3.0, modificationMass)) { // SILAC
+					return 3.010064;
+				}
+			}
+			if (aa == 'L' || aa == 'I') {
+				if (tolerance.equals(3.0, modificationMass)) { // SILAC
+					return 3.018830;
+				} else if (tolerance.equals(6.0, modificationMass)) { // SILAC
+					return 6.020129;
+				} else if (tolerance.equals(7.0, modificationMass)) { // SILAC
+					return 7.017164;
+				}
+			}
+			if (aa == 'M') {
+				if (tolerance.equals(4.0, modificationMass)) { // SILAC
+					return 4.013419;
+				} else if (tolerance.equals(6.0, modificationMass)) { // SILAC
+					return 6.013809;
+				}
+			}
+			if (aa == 'D') {
+				if (tolerance.equals(5.0, modificationMass)) { // SILAC
+					return 5.010454;
+				}
+			}
+			if (aa == 'P') {
+				if (tolerance.equals(5.0, modificationMass)) { // SILAC
+					return 5.016774;
+				} else if (tolerance.equals(6.0, modificationMass)) { // SILAC
+					return 6.013809;
+				} else if (tolerance.equals(7.0, modificationMass)) { // SILAC
+					return 7.034695;
+				}
+			}
+			if (aa == 'E') {
+				if (tolerance.equals(6.0, modificationMass)) { // SILAC
+					return 6.013809;
+				}
+			}
+			if (aa == 'V') {
+				if (tolerance.equals(6.0, modificationMass)) { // SILAC
+					return 6.013809;
+				}
+			}
+			if (aa == 'Y') {
+				if (tolerance.equals(9.0, modificationMass)) { // SILAC
+					return 9.030193;
+				}
+			}
+			if (aa == 'F') {
+				if (tolerance.equals(9.0, modificationMass)) { // SILAC
+					return 9.030193;
+				}
+			}
+			// END SILAC
+			
+			return modificationMass;
+		});
 	}
 }

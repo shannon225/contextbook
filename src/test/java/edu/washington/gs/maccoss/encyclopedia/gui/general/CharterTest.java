@@ -443,7 +443,7 @@ public class CharterTest {
 		Charter.launchChart(anno);
 	}
 
-	public static void main(String[] args) {
+	public static void mainELVISLIVESK(String[] args) {
 		double[] masses = new double[] { 68.6871, 68.7309, 69.0631, 71.0826, 71.7839, 72.0778, 73.0807, 73.5243,
 				74.1006, 82.3521, 82.4109, 84.0695, 85.0655, 86.0933, 86.384, 86.4551, 86.6412, 86.9153, 86.9976,
 				87.0948, 87.1513, 87.2612, 87.3162, 87.4427, 88.1012, 89.0547, 100.077, 101.111, 102.0514, 102.1206,
@@ -720,6 +720,32 @@ public class CharterTest {
 		Charter.launchChart(XCorrCalculatorTest.getNormalizedSpectrum(entry, SparseXCorrCalculator.biggestFragmentMass, entry.getPrecursorCharge(), t, params), "PP Model", new Dimension(600, 250));
 		
 	}
+	
+	public static void main11(String[] args) {
+		HashMap<String, String> paramsMap = SearchParameterParser.getDefaultParameters();
+		paramsMap.put("-ptol", "0.5");
+		paramsMap.put("-ptolunits", "AMU");
+		paramsMap.put("-ftol", "0.5");
+		paramsMap.put("-ftolunits", "AMU");
+		paramsMap.put("-lftol", "0.5");
+		paramsMap.put("-lftolunits", "AMU");
+		paramsMap.put("-frag", "YONLY");
+		SearchParameters params = SearchParameterParser.parseParameters(paramsMap);
+		
+		String peptideModSeq="AQWTNVK";
+		FragmentationModel model=PeptideUtils.getPeptideModel(peptideModSeq, params.getAAConstants());
+		
+		AnnotatedLibraryEntry unitEntry=model.getUnitSpectrum("", new HashSet<String>(), (byte)2, 0, params, model.getMasses(), 0.0, false, false);
+		Charter.launchChart(unitEntry, "AQWTNVK", new Dimension(500, 300));
+		
+
+		 peptideModSeq="KVMTWQA";
+		 model=PeptideUtils.getPeptideModel(peptideModSeq, params.getAAConstants());
+		
+		 unitEntry=model.getUnitSpectrum("", new HashSet<String>(), (byte)2, 0, params, model.getMasses(), 0.0, false, false);
+		Charter.launchChart(unitEntry, "KVMTWQA", new Dimension(500, 300));
+		
+	}
 
 	public static void main4(String[] args) {
 		File[] fs = new File("/Volumes/searle_ssd/malaria/UW_SCX_yeast/scx_mzmls")
@@ -918,6 +944,28 @@ public class CharterTest {
 				actual.get(peptide).getPeptideSeq(), new Dimension(500, 350));
 		Charter.launchChart(new AnnotatedLibraryEntry(
 				FragmentIonConsistencyCharter.getButterfly(actual.get(peptide), altpredicted.get(0)), params, true),
+				actual.get(peptide).getPeptideSeq(), new Dimension(500, 350));
+	}
+
+	public static void main(String[] args) throws Exception {
+		File actualFile = new File(
+				"/Users/searleb/Downloads/ttr.dlib");
+		HashMap<String, String> paramMap = SearchParameterParser.getDefaultParameters();
+		paramMap.put("-ftol", "10");
+		paramMap.put("-lftol", "10");
+		SearchParameters params = SearchParameterParser.parseParameters(paramMap);
+		int peptide = 0;
+
+		LibraryFile actualLibrary = new LibraryFile();
+		actualLibrary.openFile(actualFile);
+
+		ArrayList<LibraryEntry> actual = actualLibrary.getEntries("TSESGELHGLTTEEEFVEGIYK", (byte)3, false);
+		ArrayList<LibraryEntry> predicted = actualLibrary.getEntries("TSESGEPHGLTTEEEFVEGIYK", (byte)3, false);
+
+		Charter.launchChart(new AnnotatedLibraryEntry(actual.get(peptide), params, true),
+				actual.get(peptide).getPeptideSeq(), new Dimension(500, 350));
+		Charter.launchChart(new AnnotatedLibraryEntry(
+				FragmentIonConsistencyCharter.getButterfly(actual.get(peptide), predicted.get(peptide)), params, true),
 				actual.get(peptide).getPeptideSeq(), new Dimension(500, 350));
 	}
 }

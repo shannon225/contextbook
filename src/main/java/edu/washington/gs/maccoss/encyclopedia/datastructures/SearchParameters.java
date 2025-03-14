@@ -34,6 +34,7 @@ public class SearchParameters implements XMLObject {
 	public static final String ENABLE_ADVANCED_OPTIONS="-enableAdvancedOptions";
 	public static final String NUMBER_OF_QUANTITATIVE_PEAKS = "-numberOfQuantitativePeaks";
 	public static final String SUBTRACT_BACKGROUND = "-subtractBackground";
+	public static final String SMOOTH_INTEGRATIONS = "-smoothIntegrations";
 	public static final String MASK_BAD_INTEGRATIONS = "-maskBadIntegrations";
 	public static final String INTEGRATE_PRECURSORS = "-integratePrecursors";
 	public static final String ADJUST_INFERRED_RT_BOUNDARIES = "-adjustInferredRTBoundaries";
@@ -85,6 +86,7 @@ public class SearchParameters implements XMLObject {
     protected final Optional<File> percolatorModelFile;
     protected final boolean normalizeByTIC;
     protected final boolean subtractBackground;
+    protected final boolean smoothIntegrations;
     protected final boolean maskBadIntegrations;
     protected final boolean integratePrecursors;
     protected final boolean adjustInferredRTBoundaries;
@@ -101,7 +103,7 @@ public class SearchParameters implements XMLObject {
 			int percolatorTrainingIterations, DataAcquisitionType dataAcquisitionType, int numberOfThreadsUsed, float expectedPeakWidth, float targetWindowCenter, float precursorWindowSize, float maxWindowWidth,
 			int numberOfQuantitativePeaks, int minNumOfQuantitativePeaks, int topNTargetsUsed, float minIntensity, float minIntensityNumIons, Optional<PeptideModification> localizingModification, ScoringBreadthType CASiLBreadthType, 
 			float getNumberOfExtraDecoyLibrariesSearched, boolean quantifyAcrossSamples, boolean verifyModificationIons, float rtWindowInMin, int minNumIntegratedRTPoints, boolean filterPeaklists, boolean doNotUseGlobalFDR, 
-			Optional<File> precursorIsolationRangeFile, Optional<File> percolatorModelFile, boolean normalizeByTIC, boolean subtractBackground, boolean maskBadIntegrations, boolean adjustInferredRTBoundaries, boolean skipLibraryRetentionTime, boolean integratePrecursors, InstrumentSpecificSearchParameters instrument, boolean enableAdvancedOptions) {
+			Optional<File> precursorIsolationRangeFile, Optional<File> percolatorModelFile, boolean smoothIntegrations, boolean normalizeByTIC, boolean subtractBackground, boolean maskBadIntegrations, boolean adjustInferredRTBoundaries, boolean skipLibraryRetentionTime, boolean integratePrecursors, InstrumentSpecificSearchParameters instrument, boolean enableAdvancedOptions) {
 		this.aaConstants=aaConstants;
 		this.fragType=fragType;
 		this.precursorTolerance=precursorTolerance;
@@ -140,6 +142,7 @@ public class SearchParameters implements XMLObject {
         this.doNotUseGlobalFDR=doNotUseGlobalFDR;
         this.precursorIsolationRangeFile=precursorIsolationRangeFile;
         this.percolatorModelFile=percolatorModelFile;
+        this.smoothIntegrations=smoothIntegrations;
         this.normalizeByTIC=normalizeByTIC;
         this.subtractBackground=subtractBackground;
         this.maskBadIntegrations=maskBadIntegrations;
@@ -242,6 +245,7 @@ public class SearchParameters implements XMLObject {
 		sb.append(" -minIntensityNumIons "+minIntensityNumIons+"\n");
 		sb.append(" -normalizeByTIC "+normalizeByTIC+"\n");
 		sb.append(" "+SUBTRACT_BACKGROUND+" "+subtractBackground+"\n");
+		sb.append(" "+SMOOTH_INTEGRATIONS+" "+smoothIntegrations+"\n");
 		sb.append(" "+MASK_BAD_INTEGRATIONS+" "+maskBadIntegrations+"\n");
 		sb.append(" "+INTEGRATE_PRECURSORS+" "+integratePrecursors+"\n");
 		sb.append(" "+ADJUST_INFERRED_RT_BOUNDARIES+" "+adjustInferredRTBoundaries+"\n");
@@ -301,6 +305,7 @@ public class SearchParameters implements XMLObject {
 		map.put("-minIntensityNumIons", minIntensityNumIons+"");
 		map.put("-normalizeByTIC", normalizeByTIC+"");
 		map.put(SUBTRACT_BACKGROUND, subtractBackground+"");
+		map.put(SMOOTH_INTEGRATIONS, smoothIntegrations+"");
 		map.put(MASK_BAD_INTEGRATIONS, maskBadIntegrations+"");
 		map.put(INTEGRATE_PRECURSORS, integratePrecursors+"");
 		map.put(ADJUST_INFERRED_RT_BOUNDARIES, adjustInferredRTBoundaries+"");
@@ -591,6 +596,10 @@ public class SearchParameters implements XMLObject {
     
     public boolean isSubtractBackground() {
 		return subtractBackground;
+	}
+    
+    public boolean isSmoothIntegrations() {
+		return smoothIntegrations;
 	}
     
     public boolean isMaskBadIntegrations() {

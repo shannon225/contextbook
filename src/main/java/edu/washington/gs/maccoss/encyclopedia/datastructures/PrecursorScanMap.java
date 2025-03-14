@@ -4,7 +4,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.precursor.PrecursorIntegrator;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
@@ -28,6 +33,74 @@ public class PrecursorScanMap {
 			rts.add(scan.getScanStartTime());
 		}
 		this.rts=rts.toArray();
+	}
+	
+	public Pair<ArrayList<XYPoint>, ArrayList<XYPoint>[]> integrateChromatogram(double mz, byte charge, Range rtRange, float[] expectedIsotopicDistribution, MassTolerance tolerance) {
+		ArrayList<XYPoint> totalTrace=new ArrayList<XYPoint>();
+
+		@SuppressWarnings("unchecked")
+		ArrayList<XYPoint>[] isotopeTraces=new ArrayList[isotopes.length];
+		for (int i = 0; i < isotopeTraces.length; i++) {
+			isotopeTraces[i]=new ArrayList<XYPoint>();
+		}
+		
+		int index=Arrays.binarySearch(rts, rtRange.getStart());
+		if (index<0) {
+			// insertion point
+			index=-(index+1);
+		}
+		if (index<0) index=1;
+		if (index>=precursors.size()) {
+			return new Pair<ArrayList<XYPoint>, ArrayList<XYPoint>[]>(totalTrace, isotopeTraces);
+		}
+		
+		// move back 1 to capture the boundaries
+		if (index>0) index=index-1;
+		
+		for (int i = index; i < rts.length; i++) {
+			Peak[] isotopeIntensities = getPacket(precursors.get(i), mz, charge, tolerance);
+			//Charter.launchChart(Peak.toSpectrum(isotopeIntensities, "packet", rts[i], mz));
+			
+			float minScaler=Float.MAX_VALUE;
+
+			// NOTE: access to expectedIsotopicDistribution doesn't include -1
+			for (int j = 1; j < isotopeIntensities.length; j++) {
+				if (expectedIsotopicDistribution[j-1]>PrecursorIntegrator.REQUIRED_ION_PERCENTAGE_OF_DISTRIBUTION) {
+					float scaler=isotopeIntensities[j].getIntensity()/expectedIsotopicDistribution[j-1];
+
+					if (minScaler>scaler) {
+						minScaler=scaler;
+					}
+				}
+			}
+			//minScaler=Float.MAX_VALUE;
+			
+			float[] intensities=new float[isotopes.length];
+			for (int j = 0; j < isotopeIntensities.length; j++) {
+				if (j>0) {
+					intensities[j]=Math.min(isotopeIntensities[j].getIntensity(), expectedIsotopicDistribution[j-1]*minScaler);
+				} else {
+					intensities[j]=isotopeIntensities[j].getIntensity();
+				}
+			}
+
+			float sumIntensity=0.0f;
+			for (int j = 0; j < intensities.length; j++) {
+				isotopeTraces[j].add(new XYPoint(rts[i], intensities[j]));
+				
+				if (j>0) {
+					// remove the "-1" trace intensity
+					sumIntensity+=intensities[j];
+				}
+			}
+			totalTrace.add(new XYPoint(rts[i], sumIntensity));
+			
+			if (rtRange.getStop()<rts[i]) {
+				break;
+			}
+		}
+
+		return new Pair<ArrayList<XYPoint>, ArrayList<XYPoint>[]>(totalTrace, isotopeTraces);
 	}
 	
 	public Pair<float[], TFloatArrayList[]> integrateIsotopePacket(double mz, Range rtRange, byte charge, MassTolerance tolerance) {
@@ -70,7 +143,7 @@ public class PrecursorScanMap {
 						deltaMasses[j].add((float)deltaMass);
 					}
 				}
-				isotopeIntensities=previousIsotopeIntensities;
+				previousIsotopeIntensities=isotopeIntensities;
 			} else {
 				// outside range
 				break;

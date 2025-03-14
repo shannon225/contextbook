@@ -17,6 +17,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.Transition
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursorWithProteins;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
@@ -86,7 +87,7 @@ public class PhosphoLocalizer {
 		return background;
 	}
 
-	public Optional<PhosphoLocalizationData> runDIAPhosphoLocalization(PSMData psmdata, ArrayList<FragmentScan> stripes, boolean tryAllPermutations, boolean buildOutGUIData) {
+	public Optional<PhosphoLocalizationData> runDIAPhosphoLocalization(PeptidePrecursorWithProteins psmdata, ArrayList<FragmentScan> stripes, boolean tryAllPermutations, boolean buildOutGUIData) {
 		ArrayList<Spectrum> spectra=new ArrayList<Spectrum>();
 		for (FragmentScan stripe : stripes) {
 			spectra.add(stripe);
@@ -94,7 +95,7 @@ public class PhosphoLocalizer {
 		return runPhosphoLocalization(psmdata, spectra, tryAllPermutations, buildOutGUIData);
 	}
 
-	public Optional<PhosphoLocalizationData> runPhosphoLocalization(PSMData psmdata, ArrayList<Spectrum> stripes, boolean tryAllPermutations, boolean buildOutGUIData) {
+	public Optional<PhosphoLocalizationData> runPhosphoLocalization(PeptidePrecursorWithProteins psmdata, ArrayList<Spectrum> stripes, boolean tryAllPermutations, boolean buildOutGUIData) {
 		ArrayList<String> permutations;
 		if (tryAllPermutations) {
 			permutations=PhosphoPermuter.getPermutations(psmdata.getPeptideModSeq(), modification, params.getAAConstants());
@@ -106,7 +107,7 @@ public class PhosphoLocalizer {
 			//System.out.println("single\t"+psmdata.getPeptideModSeq()+"\t1\t1\t0\t1000");
 			return Optional.empty();
 		} else {
-			PhosphoLocalizationData multiple=extractPhosphoForms(psmdata.getPeptideModSeq(), psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), permutations, psmdata.getRetentionTime(), stripes, buildOutGUIData);
+			PhosphoLocalizationData multiple=extractPhosphoForms(psmdata.getPeptideModSeq(), psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), permutations, psmdata.getRetentionTimeInSec(), stripes, buildOutGUIData);
 			return Optional.of(multiple);
 		}
 	}

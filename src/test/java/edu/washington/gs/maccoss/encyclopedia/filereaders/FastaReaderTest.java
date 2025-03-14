@@ -142,7 +142,7 @@ public class FastaReaderTest extends TestCase {
 		}
 	}
 
-	public static void main(String[] args) throws Exception {
+	public static void mainN(String[] args) throws Exception {
 		SearchParameters params=SearchParameterParser.getDefaultParametersObject();
 		File f=new File("/Users/searleb/Downloads/uniprotkb_proteome_UP000005640_2024_01_07.fasta");
 		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f, params);
@@ -159,6 +159,30 @@ public class FastaReaderTest extends TestCase {
 		for (int i = 1; i < density.length; i++) {
 			System.out.println(Log.log10(i*1000)+"\t"+density[i]);
 		}
+	}
+	
+	public static void main(String[] args) throws Exception {
+		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
+		File f=new File("/Users/searleb/Downloads/uniprotkb_proteome_UP000005640_2024_01_07.fasta");
+		DigestionEnzyme enzyme = DigestionEnzyme.getEnzyme("Trypsin");
+
+		int counter=0;
+		int total=0;
+		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f, parameters);
+		for (FastaEntryInterface entry : entries) {
+			ArrayList<FastaPeptideEntry> peptides=enzyme.digestProtein(entry, 7, 40, 2, parameters.getAAConstants(), false);
+			for (FastaPeptideEntry peptide : peptides) {
+				total++;
+				String inner=peptide.getSequence().substring(1, peptide.getSequence().length()-1);
+				String reverse=new String(General.reverse(inner.toCharArray()));
+				if (inner.equals(reverse)) {
+					counter++;
+				}
+			}
+			
+		}
+		
+		System.out.println(counter+" / "+total+" of "+entries.size()+" proteins --> "+(100*counter/(float)total));
 	}
 	
 	public static void mainGelAccuracy(String[] args) throws Exception {

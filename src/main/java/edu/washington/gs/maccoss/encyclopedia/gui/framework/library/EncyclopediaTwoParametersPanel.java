@@ -287,6 +287,7 @@ public class EncyclopediaTwoParametersPanel extends JPanel implements Parameters
 				Optional.empty(),
 				true,
 				true,
+				true,
 				false,
 				false,
 				false,

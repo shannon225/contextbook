@@ -8,7 +8,7 @@ public class CommonModelConstraints {
 		if (precursorCharge<1||precursorCharge>6) {
 			return false;
 		}
-		if (aas.length<7||aas.length>30) return false;
+		if (aas.length<7+2||aas.length>30+2) return false;
 
 		for (int i = 0; i < aas.length; i++) {
 			if (!aas[i].isStandardAminoAcid()&&aas[i]!=AminoAcidEncoding.Mox) {
@@ -22,7 +22,7 @@ public class CommonModelConstraints {
 		if (precursorCharge<1||precursorCharge>6) {
 			return false;
 		}
-		if (aas.length>30) return false;
+		if (aas.length>30+2) return false;
 		
 		// Prosit-TMT requires n-term TMT, but not K-TMT!
 		if (aas[0]!=AminoAcidEncoding.nTMT10) return false;
@@ -38,7 +38,7 @@ public class CommonModelConstraints {
 		if (precursorCharge<1||precursorCharge>6) {
 			return false;
 		}
-		if (aas.length<2||aas.length>198) return false;
+		if (aas.length<2+2||aas.length>198+2) return false;
 		
 		// no PTM constraint
 		
@@ -48,14 +48,14 @@ public class CommonModelConstraints {
 		if (precursorCharge<1||precursorCharge>6) {
 			return false;
 		}
-		if (aas.length<4||aas.length>60) return false;
+		if (aas.length<4+2||aas.length>60+2) return false;
 		
 		// no PTM constraint
 		
 		return true;
 	}
 	public static boolean canModelChronologer(AminoAcidEncoding[] aas, byte precursorCharge) {
-		if (aas.length<4||aas.length>50) return false;
+		if (aas.length<4+2||aas.length>50+2) return false;
 		
 		// no PTM constraint (beyond AminoAcidEncoding)
 		

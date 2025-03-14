@@ -29,7 +29,6 @@ import edu.washington.gs.maccoss.encyclopedia.filewriters.PrositCSVWriter;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.web.models.fragmentation.Prosit2023timsTOFModel;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.web.models.ims.AlphaPeptDeepIMSModel;
 import edu.washington.gs.maccoss.encyclopedia.filewriters.web.models.rt.ChronologerModel;
-import edu.washington.gs.maccoss.encyclopedia.filewriters.web.models.rt.DeepLCHelaRTModel;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
@@ -183,6 +182,15 @@ public class KoinaLibraryPredictionClient {
 		return fileName;
 	}
 	
+	public boolean checkPeptide(AminoAcidEncoding[] aas, byte pepCharge) {
+		for (KoinaFeaturePredictionModel model : models) {
+			if (!model.canModelPeptide(aas, pepCharge)) {
+				return false;
+			}
+		}
+		return true;
+	}
+	
 	/**
      * Extracts valid peptides from a library file, ensuring they are compatible with all models.
      */
@@ -323,8 +331,45 @@ public class KoinaLibraryPredictionClient {
 	/**
 	 * Constructs a new KoinaLibraryPredictionClient with the specified list of feature prediction models.
 	 */
-	private KoinaLibraryPredictionClient(ArrayList<KoinaFeaturePredictionModel> models) {
+	public KoinaLibraryPredictionClient(ArrayList<KoinaFeaturePredictionModel> models) {
 		this.models.addAll(models);
+	}
+	
+	/**
+	 * Loads the predictions from the feature prediction models into the library by processing the provided peptides.
+	 */
+	public int generatePredictions(String baseURL, ArrayList<KoinaPrecursor> peptides, ProgressIndicator progress) {
+		int start=0;
+		
+		while (true) {
+			if (start>=peptides.size()) {
+				break;
+			}
+			
+			int stop=Math.min(peptides.size(), start+BATCH_SIZE);
+			List<KoinaPrecursor> subList=peptides.subList(start, stop);
+			
+			// try koina twice in a row before failing
+			try {
+				runKoinaOnBatch(this, subList, baseURL);
+				
+			} catch (Exception e) {
+				try {
+					Logger.errorLine("Ran into a Koina error, trying a second time!");
+					runKoinaOnBatch(this, subList, baseURL);
+					
+				} catch (Exception e2) {
+					Logger.errorLine("Ran into a second Koina error, failing!");
+					throw new EncyclopediaException(e2);
+				}
+			}
+
+			Logger.logLine("Processed "+stop+" of "+peptides.size());
+			start=stop;
+			progress.update("Processed "+stop+" of "+peptides.size(), stop/(float)peptides.size());
+		}
+		
+		return start;
 	}
 	
 	/**
@@ -427,7 +472,7 @@ public class KoinaLibraryPredictionClient {
 	 * Runs the Koina feature prediction models on a batch of KoinaPrecursor peptides.
 	 * This method creates and starts threads for each model to update the peptides in parallel.
 	 */
-	private static void runKoinaOnBatch(KoinaLibraryPredictionClient client, List<KoinaPrecursor> peptides, String baseURL)
+	public static void runKoinaOnBatch(KoinaLibraryPredictionClient client, List<KoinaPrecursor> peptides, String baseURL)
 			throws InterruptedException {
 		try {
 			ArrayList<Thread> threads=new ArrayList<Thread>();

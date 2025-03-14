@@ -56,6 +56,7 @@ public enum InstrumentSpecificSearchParameters {
 				params.put("-ftol", "10");
 				params.put("-ptolunits", MassErrorUnitType.PPM.toString());
 				params.put("-ftolunits", MassErrorUnitType.PPM.toString());
+				params.put(SearchParameters.SMOOTH_INTEGRATIONS, Boolean.FALSE.toString());
 				params.put(SearchParameters.SUBTRACT_BACKGROUND, Boolean.TRUE.toString());
 				params.put("-minIntensity", "-1");
 				params.put("-filterPeaklists", Boolean.FALSE.toString());
@@ -66,6 +67,7 @@ public enum InstrumentSpecificSearchParameters {
 				params.put("-ftol", "25");
 				params.put("-ptolunits", MassErrorUnitType.PPM.toString());
 				params.put("-ftolunits", MassErrorUnitType.PPM.toString());
+				params.put(SearchParameters.SMOOTH_INTEGRATIONS, Boolean.FALSE.toString());
 				params.put(SearchParameters.SUBTRACT_BACKGROUND, Boolean.TRUE.toString());
 				params.put("-minIntensity", "125");
 				params.put("-filterPeaklists", Boolean.TRUE.toString());
@@ -76,6 +78,7 @@ public enum InstrumentSpecificSearchParameters {
 				params.put("-ftol", "10");
 				params.put("-ptolunits", MassErrorUnitType.PPM.toString());
 				params.put("-ftolunits", MassErrorUnitType.PPM.toString());
+				params.put(SearchParameters.SMOOTH_INTEGRATIONS, Boolean.FALSE.toString());
 				params.put(SearchParameters.SUBTRACT_BACKGROUND, Boolean.TRUE.toString());
 				params.put("-minIntensity", "500");
 				params.put("-filterPeaklists", Boolean.TRUE.toString());
@@ -86,6 +89,7 @@ public enum InstrumentSpecificSearchParameters {
 				params.put("-ftol", "0.4");
 				params.put("-ptolunits", MassErrorUnitType.AMU.toString());
 				params.put("-ftolunits", MassErrorUnitType.AMU.toString());
+				params.put(SearchParameters.SMOOTH_INTEGRATIONS, Boolean.FALSE.toString());
 				params.put(SearchParameters.SUBTRACT_BACKGROUND, Boolean.TRUE.toString());
 				params.put("-minIntensity", "-1");
 				params.put("-filterPeaklists", Boolean.TRUE.toString());
@@ -96,6 +100,7 @@ public enum InstrumentSpecificSearchParameters {
 				params.put("-ftol", "0.4");
 				params.put("-ptolunits", MassErrorUnitType.PPM.toString());
 				params.put("-ftolunits", MassErrorUnitType.AMU.toString());
+				params.put(SearchParameters.SMOOTH_INTEGRATIONS, Boolean.FALSE.toString());
 				params.put(SearchParameters.SUBTRACT_BACKGROUND, Boolean.TRUE.toString());
 				params.put("-minIntensity", "-1");
 				params.put("-filterPeaklists", Boolean.TRUE.toString());
@@ -106,6 +111,7 @@ public enum InstrumentSpecificSearchParameters {
 				params.put("-ftol", "10");
 				params.put("-ptolunits", MassErrorUnitType.AMU.toString());
 				params.put("-ftolunits", MassErrorUnitType.PPM.toString());
+				params.put(SearchParameters.SMOOTH_INTEGRATIONS, Boolean.FALSE.toString());
 				params.put(SearchParameters.SUBTRACT_BACKGROUND, Boolean.TRUE.toString());
 				params.put("-minIntensity", "-1");
 				params.put("-filterPeaklists", Boolean.TRUE.toString());

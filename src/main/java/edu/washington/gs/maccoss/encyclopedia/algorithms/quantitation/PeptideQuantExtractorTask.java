@@ -7,6 +7,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.DotProduct;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.IsotopicDistributionCalculator;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.PSMPeakScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.PeakLocationInferrerInterface;
@@ -18,11 +19,15 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Nothing;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
-import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYZPoint;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakScores;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakScoresWithIonData;
@@ -35,13 +40,13 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ThreadableTask;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
-import gnu.trove.list.array.TIntArrayList;
 
 public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 	private final Optional<PhosphoLocalizer> localizer;
 	private final Optional<PeakLocationInferrerInterface> inferrer;
 	private final String filename;
 	private final ArrayList<FragmentScan> stripes;
+	protected final Optional<PrecursorScanMap> precursors;
 	private final boolean limitToQuantifiable;
 
 	private final PSMPeakScorer scorer;
@@ -50,9 +55,10 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 	private final PSMData psmdata;
 	private final ConcurrentLinkedQueue<IntegratedLibraryEntry> savedEntries; // CAN BE NULL
 
-	public PeptideQuantExtractorTask(String filename, PSMData psmdata, final Optional<PeakLocationInferrerInterface> inferrer, Optional<PhosphoLocalizer> localizer, ArrayList<FragmentScan> stripes, SearchParameters parameters, boolean limitToQuantifiable) {
+	public PeptideQuantExtractorTask(String filename, PSMData psmdata, final Optional<PeakLocationInferrerInterface> inferrer, Optional<PhosphoLocalizer> localizer, ArrayList<FragmentScan> stripes, Optional<PrecursorScanMap> precursors, SearchParameters parameters, boolean limitToQuantifiable) {
 		this.filename=filename;
 		this.psmdata=psmdata;
+		this.precursors=precursors;
 		this.inferrer=inferrer;
 		this.localizer=localizer;
 		this.stripes=stripes;
@@ -64,9 +70,10 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		this.limitToQuantifiable=limitToQuantifiable; //library.isPresent();
 	}
 
-	public PeptideQuantExtractorTask(String filename, PSMData psmdata, final Optional<PeakLocationInferrerInterface> inferrer, Optional<PhosphoLocalizer> localizer, ArrayList<FragmentScan> stripes, SearchParameters parameters, ConcurrentLinkedQueue<IntegratedLibraryEntry> savedEntries, boolean limitToQuantifiable) {
+	public PeptideQuantExtractorTask(String filename, PSMData psmdata, final Optional<PeakLocationInferrerInterface> inferrer, Optional<PhosphoLocalizer> localizer, ArrayList<FragmentScan> stripes, Optional<PrecursorScanMap> precursors, SearchParameters parameters, ConcurrentLinkedQueue<IntegratedLibraryEntry> savedEntries, boolean limitToQuantifiable) {
 		this.filename=filename;
 		this.psmdata=psmdata;
+		this.precursors=precursors;
 		this.inferrer=inferrer;
 		this.localizer=localizer;
 		this.stripes=stripes;
@@ -95,7 +102,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 
 	@Override
 	protected Nothing process() {		
-		Optional<Pair<TransitionRefinementData, Integer>> spectrum=extractSpectrum(psmdata.getAccessions(), psmdata.getPrecursorCharge(), psmdata.getPeptideModSeq(), psmdata.getRetentionTime(), psmdata.getDuration(), limitToQuantifiable, inferrer, params.isQuantifySameFragmentsAcrossSamples(), psmdata.wasInferred());
+		Optional<Pair<TransitionRefinementData, Integer>> spectrum=extractSpectrum(psmdata.getAccessions(), psmdata.getPrecursorCharge(), psmdata.getPeptideModSeq(), psmdata.getRetentionTimeInSec(), params.getExpectedPeakWidth(), limitToQuantifiable, inferrer, params.isQuantifySameFragmentsAcrossSamples(), psmdata.wasInferred());
 		Optional<HashMap<String, TransitionRefinementData>> phosphoData=Optional.empty();
 		if (canRunLocalization()) {
 			Optional<PhosphoLocalizationData> localizationData=runLocalization(false);
@@ -142,12 +149,11 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 					
 			double[] fragmentMassArray=FragmentIon.getMasses(data.getFragmentMassArray());
 			
-			// FIXME START WORK HERE
 			String fractionName=filename;
 			if (spectrum.get().y>0) {
 				fractionName=fractionName+"_"+spectrum.get().y;
 			}
-			IntegratedLibraryEntry entry=new IntegratedLibraryEntry(fractionName, psmdata.getAccessions(), psmdata.getSpectrumIndex(), psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), psmdata.getPeptideModSeq(), 1, psmdata.getRetentionTime(), psmdata.getScore(), integrationScore, fragmentMassArray, data.getIntegrationArray(), data);
+			IntegratedLibraryEntry entry=new IntegratedLibraryEntry(fractionName, psmdata.getAccessions(), psmdata.getSpectrumIndex(), psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), psmdata.getPeptideModSeq(), 1, psmdata.getRetentionTimeInSec(), psmdata.getScore(), integrationScore, fragmentMassArray, data.getIntegrationArray(), data);
 			if (limitToQuantifiable) {
 				if (entry.getIonCount()<params.getMinNumOfQuantitativePeaks()||entry.getTIC()<1.0f) {
 					return Nothing.NOTHING;
@@ -215,6 +221,32 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 			}
 			
 			if (!retry) {
+				// once we've got the right range, we integrate the precursors
+				float[] expectedIsotopicDistribution=IsotopicDistributionCalculator.getIsotopeDistribution(unitEntry.getPeptideModSeq(), params.getAAConstants());
+				if (precursors.isPresent()) {
+					Pair<ArrayList<XYPoint>, ArrayList<XYPoint>[]> precursorTraces=precursors.get().
+							integrateChromatogram(unitEntry.getPrecursorMZ(), unitEntry.getPrecursorCharge(), data.x.getRange(), 
+									expectedIsotopicDistribution, params.getPrecursorTolerance());
+					
+					XYTrace precursorTrace = new XYTrace(precursorTraces.x, GraphType.boldline, "p");
+					
+					System.out.println(precursorTrace.integrate(data.x.getRange()));
+					ArrayList<XYTrace> traces=new ArrayList<XYTrace>();
+//					for (int i = 0; i < precursorTraces.y.length; i++) {
+//						traces.add(new XYTrace(precursorTraces.y[i], GraphType.boldline, "+"+(i-1)));
+//					}
+					System.out.println("Range: "+data.x.getRange()+" vs "+scanStart+" to "+scanStop);
+					
+					XYTrace fragmentTrace=new XYTrace(data.x.getRtArray().get(), data.x.getMedianChromatogram(), GraphType.boldline, "f").trim(data.x.getRange());
+					System.out.println(fragmentTrace);
+					traces.add(precursorTrace.rescaleY(1.0f/(float)precursorTrace.getMaxY()));
+					traces.add(fragmentTrace.rescaleY(1.0f/(float)fragmentTrace.getMaxY()));
+					
+					System.out.println("Correlation: "+XYTrace.correlate(precursorTrace, fragmentTrace));
+					
+					Charter.launchChart("Retention Time", "Intensity", true, traces.toArray(new XYTrace[0]));
+				}
+				
 				return data;
 			}
 		}
@@ -329,7 +361,9 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		for (int i=0; i<bestScores.length; i++) {
 			if (bestScores[i]!=null&&bestScores[i].getScore()>0) {
 				float[] chromatogram=traces[i].toArray();
-				chromatogram=SkylineSGFilter.paddedSavitzkyGolaySmooth(chromatogram);
+				if (params.isSmoothIntegrations()) {
+					chromatogram=SkylineSGFilter.paddedSavitzkyGolaySmooth(chromatogram);
+				}
 				if (params.isSubtractBackground()) {
 					chromatogram=BackgroundSubtractionFilter.backgroundSubtractMovingMedian(chromatogram, movingAverageLength*10);
 				}

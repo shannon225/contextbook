@@ -66,6 +66,7 @@ public class SearchParameterParser {
         map.put("-numberOfThreadsUsed", Integer.toString(Runtime.getRuntime().availableProcessors()));
 		map.put("-normalizeByTIC", "true");
 		map.put(SearchParameters.SUBTRACT_BACKGROUND, "true");
+		map.put(SearchParameters.SMOOTH_INTEGRATIONS, "true");
 		map.put(SearchParameters.MASK_BAD_INTEGRATIONS, "false");
 		map.put(SearchParameters.INTEGRATE_PRECURSORS, "false");
 		map.put(SearchParameters.ADJUST_INFERRED_RT_BOUNDARIES, "false");
@@ -93,6 +94,7 @@ public class SearchParameterParser {
 		map.put("-minNumOfQuantitativePeaks", "3");
 		map.put("-normalizeByTIC", "true");
 		map.put(SearchParameters.SUBTRACT_BACKGROUND, "true");
+		map.put(SearchParameters.SMOOTH_INTEGRATIONS, "true");
 		map.put(SearchParameters.MASK_BAD_INTEGRATIONS, "false");
 		map.put(SearchParameters.INTEGRATE_PRECURSORS, "false");
 		return map;
@@ -156,6 +158,7 @@ public class SearchParameterParser {
         final boolean doNotUseGlobalFDR;
         final boolean normalizeByTIC;
         final boolean subtractBackground;
+        final boolean smoothIntegrations;
         final boolean maskBadIntegrations;
         final boolean integratePrecursors;
         final boolean adjustInferredRTBoundaries;
@@ -384,6 +387,7 @@ public class SearchParameterParser {
         doNotUseGlobalFDR=ParsingUtils.getBoolean("-doNotUseGlobalFDR", parameters, false);
 		normalizeByTIC = ParsingUtils.getBoolean("-normalizeByTIC", parameters, true);
         subtractBackground=ParsingUtils.getBoolean(SearchParameters.SUBTRACT_BACKGROUND, parameters, true);
+        smoothIntegrations=ParsingUtils.getBoolean(SearchParameters.SMOOTH_INTEGRATIONS, parameters, true);
         maskBadIntegrations=ParsingUtils.getBoolean(SearchParameters.MASK_BAD_INTEGRATIONS, parameters, false);
         integratePrecursors=ParsingUtils.getBoolean(SearchParameters.INTEGRATE_PRECURSORS, parameters, false);
         adjustInferredRTBoundaries=ParsingUtils.getBoolean(SearchParameters.ADJUST_INFERRED_RT_BOUNDARIES, parameters, false);
@@ -432,6 +436,7 @@ public class SearchParameterParser {
 				doNotUseGlobalFDR,
 				precursorIsolationRangeFile,
 				percolatorModelFile,
+				smoothIntegrations,
 				normalizeByTIC,
 				subtractBackground,
 				maskBadIntegrations,

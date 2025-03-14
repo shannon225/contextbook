@@ -9,7 +9,7 @@ import java.util.StringTokenizer;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassConstants;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 
-public class PSMData implements PeptidePrecursorWithProteins, HasRetentionTime {
+public class PSMData implements PeptidePrecursorWithProteins {
 	private final int spectrumIndex;
 	private final double precursorMZ;
 	private final byte precursorCharge;

@@ -744,7 +744,8 @@ public class DilutionCurveFitter {
 			equation=new Pair<Float, Float>(1f, b);
 			
 			// calculate deviation to find the best fit
-			float rsquared=0;
+			float RSS=0;
+			float TSS=0;
 			for (int j = 0; j < loggedExpected.size(); j++) {
 				float x=loggedExpected.get(j);
 				float actualY=loggedActual.get(j);
@@ -755,8 +756,11 @@ public class DilutionCurveFitter {
 				}
 				
 				float residual=actualY-predictedY;
-				rsquared+=residual*residual;
+				RSS+=residual*residual;
+				TSS+=actualY*actualY;
 			}
+			
+			float rsquared=1.0f-RSS/TSS;
 			
 			fit=new DilutionFit(noiseMean, noiseMax, noiseStdev, linearStdev, equation.x, equation.y, lastZero, firstNonZero, maxMeasuredValue, rsquared);
 			

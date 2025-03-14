@@ -178,7 +178,7 @@ public class LocalizationDataToTSVConsumer implements Runnable {
 				
 				AmbiguousPeptideModSeq localizationPeptideModSeq=AmbiguousPeptideModSeq.getFullyAmbiguous(peptide.getPeptideModSeq(), modification, aaConstants, "");
 				
-				ModificationLocalizationData data=new ModificationLocalizationData(localizationPeptideModSeq, peptide.getRT(), 0.0f, 0.0f, localizationPeptideModSeq.getNumModifications(), false, false, true, new FragmentIon[0], 0.0f, totalIntensity);
+				ModificationLocalizationData data=new ModificationLocalizationData(localizationPeptideModSeq, peptide.getRetentionTimeInSec(), 0.0f, 0.0f, localizationPeptideModSeq.getNumModifications(), false, false, true, new FragmentIon[0], 0.0f, totalIntensity);
 				result.put(peptide.getPeptideModSeq(), data);
 			}
 		}

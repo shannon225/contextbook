@@ -11,37 +11,59 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEnt
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.parameters.InstrumentSpecificSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFile;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.web.KoinaFeaturePredictionModel;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.web.KoinaLibraryPredictionClient;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.web.KoinaPrecursor;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.web.models.fragmentation.Prosit2020HCDModel;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.web.models.fragmentation.Prosit2023timsTOFModel;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.web.models.ims.AlphaPeptDeepIMSModel;
+import edu.washington.gs.maccoss.encyclopedia.filewriters.web.models.rt.ChronologerModel;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import junit.framework.TestCase;
 
 public class PeptideQuantExtractorTaskTest extends TestCase {
 	public static void main(String[] args) throws Exception {
-		File f=new File("/Users/searleb/Documents/encyclopedia/bugs/failed_integration/2020dec03_cobbs_cmv_inf_gpfdia_05_3.dia");
+		final File f=new File("/Users/searleb/Documents/manuscripts/2025/mapms/mapms/2024_06_17_125ng_HeLa_1e6_6xpDIA_aurora_01.dia");
 		StripeFile raw=new StripeFile(true);
 		raw.openFile(f);
 		ConcurrentLinkedQueue<IntegratedLibraryEntry> savedEntries=new ConcurrentLinkedQueue<IntegratedLibraryEntry>();
+		SearchParameters parameters=InstrumentSpecificSearchParameters.OrbitrapOrbitrap.getDefaultParameters();
 		
-		//2020dec03_cobbs_cmv_inf_gpfdia_05_3.mzML:3876.1084:NLVPMVATVQGQNLK+2
-		String peptideModSeq="NLVPMVATVQGQNLK";
+		//YGIEPTMVVQGVK	74.9156723	2
+		String peptideModSeq="YGIEPTMVVQGVK";
 		byte precursorCharge=2;
-		float retentionTime=3876.1084f;
-		int spectrumIndex=103782;
+		float retentionTime=74.9156723f*60f;
+		int spectrumIndex=0;
+
+		ArrayList<KoinaPrecursor> pred=new ArrayList<KoinaPrecursor>();
+		pred.add(new KoinaPrecursor(peptideModSeq, 33f, precursorCharge, parameters.getAAConstants()));
+		ArrayList<KoinaFeaturePredictionModel> models=new ArrayList<KoinaFeaturePredictionModel>();
+		models.add(new Prosit2020HCDModel());
+		KoinaLibraryPredictionClient client=new KoinaLibraryPredictionClient(models);
+		client.generatePredictions(KoinaLibraryPredictionClient.HTTPS_KOINA_WILHELMLAB_ORG_443, pred, new EmptyProgressIndicator(true));
 		
+		AnnotatedLibraryEntry entry=pred.get(0).toEntry(parameters.getAAConstants(), parameters);
 		
-		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
 		double targetMz=parameters.getAAConstants().getChargedMass(peptideModSeq, precursorCharge);
 		float expectedPeakWidth = parameters.getExpectedPeakWidth();
 		PSMData psm=new PSMData(new HashSet<>(), spectrumIndex, targetMz, precursorCharge, peptideModSeq, retentionTime, 1, 1, expectedPeakWidth, false, parameters.getAAConstants());
 		
 		ArrayList<FragmentScan> stripes=raw.getStripes(targetMz, 0, Float.MAX_VALUE, false);
-		System.out.println(targetMz+" --> "+stripes.size());
+		System.out.println("mz:"+targetMz+", rt: "+38.59886932f*60f);
+
+		Logger.logLine("Processing precursors scans...");
+		PrecursorScanMap precursors=new PrecursorScanMap(raw.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE));
 		
-		PeptideQuantExtractorTask task=new PeptideQuantExtractorTask(f.getName(), psm, Optional.ofNullable(null), Optional.ofNullable(null), stripes, parameters, savedEntries, false);
+		PeptideQuantExtractorTask task=new PeptideQuantExtractorTask(f.getName(), psm, Optional.ofNullable(null), Optional.ofNullable(null), stripes, Optional.ofNullable(precursors), parameters, savedEntries, false);
 		task.process();
 		IntegratedLibraryEntry poll=savedEntries.poll();
-		System.out.println(poll);
+		System.out.println(poll.getPeptideModSeq());
 	}
 	
 	public void testQuantifyPeptide() {

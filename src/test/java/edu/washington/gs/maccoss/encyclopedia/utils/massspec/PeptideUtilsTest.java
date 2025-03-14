@@ -93,8 +93,19 @@ public class PeptideUtilsTest extends TestCase {
 	}
 	
 	public void testGetCorrectedMasses() {
-		final AminoAcidConstants aaConstants = new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
 		String sequence="A[+42.0]QRHS[+79.96633]DSCCSLEEK";
+		assertEquals("A[+42.010565]QRHS[+79.966331]DSCCSLEEK", PeptideUtils.getCorrectedMasses(sequence));
+		sequence="A[+42.0]QRHS[+80.0]DSCCSLEEK";
+		assertEquals("A[+42.010565]QRHS[+79.966331]DSCCSLEEK", PeptideUtils.getCorrectedMasses(sequence));
+		sequence="Q[-17]QRHS[+80.0]DSCCSLEEK";
+		assertEquals("Q[-17.026549]QRHS[+79.966331]DSCCSLEEK", PeptideUtils.getCorrectedMasses(sequence));
+		sequence="Q[-17.026549]QRHS[+79.96633]DSCCSLEEK";
+		assertEquals("Q[-17.026549]QRHS[+79.966331]DSCCSLEEK", PeptideUtils.getCorrectedMasses(sequence));
+		sequence="[+42]GDQPC[+57]ASGR";
+		assertEquals("[+42.010565]GDQPC[+57.0214635]ASGR", PeptideUtils.getCorrectedMasses(sequence));
+		
+		final AminoAcidConstants aaConstants = new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
+		sequence="A[+42.0]QRHS[+79.96633]DSCCSLEEK";
 		assertEquals("A[+42.010565]QRHS[+79.966331]DSCCSLEEK", PeptideUtils.getCorrectedMasses(sequence, aaConstants));
 		sequence="A[+42.0]QRHS[+80.0]DSCCSLEEK";
 		assertEquals("A[+42.010565]QRHS[+79.966331]DSCCSLEEK", PeptideUtils.getCorrectedMasses(sequence, aaConstants));
@@ -102,6 +113,8 @@ public class PeptideUtilsTest extends TestCase {
 		assertEquals("Q[-17.026549]QRHS[+79.966331]DSCCSLEEK", PeptideUtils.getCorrectedMasses(sequence, aaConstants));
 		sequence="Q[-17.026549]QRHS[+79.96633]DSCCSLEEK";
 		assertEquals("Q[-17.026549]QRHS[+79.966331]DSCCSLEEK", PeptideUtils.getCorrectedMasses(sequence, aaConstants));
+		sequence="[+42]GDQPC[+57]ASGR";
+		assertEquals("[+42.010565]GDQPC[+57.0214635]ASGR", PeptideUtils.getCorrectedMasses(sequence, aaConstants));
 	}
 	
 	public void testGetAAs() {

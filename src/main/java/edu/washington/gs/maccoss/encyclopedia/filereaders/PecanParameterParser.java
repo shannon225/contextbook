@@ -126,6 +126,7 @@ public class PecanParameterParser {
         final Optional<File> precursorIsolationRangeFile;
         final boolean normalizeByTIC;
         final boolean subtractBackground;
+        final boolean smoothIntegrations;
         final boolean maskBadIntegrations;
         final boolean adjustInferredRTBoundaries;
         final boolean skipLibraryRetentionTime;
@@ -316,6 +317,7 @@ public class PecanParameterParser {
 		filterPeaklists = ParsingUtils.getBoolean("-filterPeaklists", parameters, false);
 		doNotUseGlobalFDR = ParsingUtils.getBoolean("-doNotUseGlobalFDR", parameters, false);
 		subtractBackground = ParsingUtils.getBoolean(SearchParameters.SUBTRACT_BACKGROUND, parameters, true);
+		smoothIntegrations = ParsingUtils.getBoolean(SearchParameters.SMOOTH_INTEGRATIONS, parameters, true);
         maskBadIntegrations=ParsingUtils.getBoolean(SearchParameters.MASK_BAD_INTEGRATIONS, parameters, false);
         integratePrecursors=ParsingUtils.getBoolean(SearchParameters.INTEGRATE_PRECURSORS, parameters, false);
         adjustInferredRTBoundaries=ParsingUtils.getBoolean(SearchParameters.ADJUST_INFERRED_RT_BOUNDARIES, parameters, false);
@@ -371,6 +373,7 @@ public class PecanParameterParser {
 				doNotUseGlobalFDR,
 				precursorIsolationRangeFile,
 				percolatorModelFile,
+				smoothIntegrations,
 				normalizeByTIC,
 				subtractBackground,
 				maskBadIntegrations,

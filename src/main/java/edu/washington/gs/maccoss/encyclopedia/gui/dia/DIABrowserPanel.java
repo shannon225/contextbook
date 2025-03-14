@@ -347,11 +347,6 @@ public class DIABrowserPanel extends JPanel {
 		SwingWorkerProgress<ArrayList<AcquiredSpectrum>> worker=new SwingWorkerProgress<ArrayList<AcquiredSpectrum>>((Frame)SwingUtilities.getWindowAncestor(this), "Please wait...", "Reading Raw File") {
 			@Override
 			protected ArrayList<AcquiredSpectrum> doInBackgroundForReal() throws Exception {
-
-				ChartPanel globalChart=MzmlStructureCharter.getStructureChart(f, true);
-				if (globalChart!=null) {
-					primaryTabs.addTab(GLOBAL_TITLE, globalChart);
-				}
 				
 				ChartPanel structureChart=MzmlStructureCharter.getStructureChart(f, false);
 				if (structureChart!=null) {
@@ -359,6 +354,11 @@ public class DIABrowserPanel extends JPanel {
 				}
 				
 				primaryTabs.setSelectedIndex(primaryTabs.getTabCount()-1);
+
+				ChartPanel globalChart=MzmlStructureCharter.getStructureChart(f, true);
+				if (globalChart!=null) {
+					primaryTabs.addTab(GLOBAL_TITLE, globalChart);
+				}
 				
 				dia=StripeFileGenerator.getFile(f, parameters);
 				Logger.logLine("Read "+dia.getOriginalFileName()+", ("+dia.getRanges().size()+" total windows)");

@@ -213,7 +213,7 @@ public class ReferencePeakIntegrator {
 				if (range.contains((float)psm.getPrecursorMZ())) {
 					// convert RTs back to this sample
 					PSMData rtCorrected=psm.updateRetentionTime(alignment.getYValue(psm.getRetentionTime()));
-					executor.submit(new PeptideQuantExtractorTask(filename, rtCorrected, Optional.empty(), Optional.empty(), stripes, params, savedEntries, false));
+					executor.submit(new PeptideQuantExtractorTask(filename, rtCorrected, Optional.empty(), Optional.empty(), stripes, Optional.empty(), params, savedEntries, false));
 				}
 			}
 		}

@@ -26,6 +26,7 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPe
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
@@ -37,8 +38,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
-import gnu.trove.map.TObjectByteMap;
-import gnu.trove.map.hash.TObjectByteHashMap;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 
 public class PeptideQuantExtractor {
@@ -252,7 +251,7 @@ public class PeptideQuantExtractor {
 			if (inferrer.isPresent()) {
 				retentionTime=inferrer.get().getWarpedRTInSec(job, peptideModSeq);
 			} else {
-				retentionTime=percolatorPeptide.getRT();
+				retentionTime=percolatorPeptide.getRetentionTimeInSec();
 			}
 			boolean wasInferred=true;
 			int scanID=-1; // negative scan ID for inferred IDs
@@ -297,6 +296,9 @@ public class PeptideQuantExtractor {
 		}
 		Collections.sort(ranges);
 		
+		Logger.logLine("Processing precursors scans...");
+		PrecursorScanMap precursors=new PrecursorScanMap(stripefile.getPrecursors(-Float.MAX_VALUE, Float.MAX_VALUE));
+		
 		// get stripes
 		int rangesFinished=0;
 		float numberOfTasks=2.0f+ranges.size();
@@ -330,7 +332,7 @@ public class PeptideQuantExtractor {
 
 			for (PSMData psm : data) {
 				if (range.contains((float)psm.getPrecursorMZ())) {
-					executor.submit(new PeptideQuantExtractorTask(filename, psm, inferrer, Optional.ofNullable(null), stripes, parameters, savedEntries, limitToQuantifiable));
+					executor.submit(new PeptideQuantExtractorTask(filename, psm, inferrer, Optional.ofNullable(null), stripes, Optional.ofNullable(precursors), parameters, savedEntries, limitToQuantifiable));
 				}
 			}
 

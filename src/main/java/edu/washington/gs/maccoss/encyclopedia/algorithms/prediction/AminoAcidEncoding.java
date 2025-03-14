@@ -56,6 +56,8 @@ public enum AminoAcidEncoding {
 	n(42),
 	c(43);
 	
+	private static final int MAX_SILAC_MASS = 12;
+
 	public static int MAX_ENCODING_LENGTH=45; 
 	
 	private final int index;
@@ -305,11 +307,19 @@ public enum AminoAcidEncoding {
 				case 'C': 
 					if (tolerance.equals(mass, 57.0214635)) return CCam;
 					if (tolerance.equals(mass, 57.0214635 - 17.026549)) return PyroCCam;
-					return C;
+					if (mass<MAX_SILAC_MASS&&mass>0.0) {
+						return C;
+					} else {
+						throw new NonstandardAminoAcidException("Unexpected amino acid "+aa+"["+mass+"]!");
+					}
 					
 				case 'E':
 					if (tolerance.equals(mass, -18.010565)) return PyroGlu;
-					return E;
+					if (mass<MAX_SILAC_MASS&&mass>0.0) {
+						return E;
+					} else {
+						throw new NonstandardAminoAcidException("Unexpected amino acid "+aa+"["+mass+"]!");
+					}
 				
 				case 'K':
 					if (tolerance.equals(mass, 42.010565)) return KAc; 
@@ -320,45 +330,117 @@ public enum AminoAcidEncoding {
 					if (tolerance.equals(mass, 42.046950)) return KTriMe; 
 					if (tolerance.equals(mass, 224.152478)) return KTMT0; 
 					if (tolerance.equals(mass, 229.162932)) return KTMT10; 
-					return K;
+					if (mass<MAX_SILAC_MASS&&mass>0.0) {
+						return K;
+					} else {
+						throw new NonstandardAminoAcidException("Unexpected amino acid "+aa+"["+mass+"]!");
+					}
 					
 				case 'M': 
 					if (tolerance.equals(mass, 15.994915)) return Mox;
-					return M;
+					if (mass<MAX_SILAC_MASS&&mass>0.0) {
+						return M;
+					} else {
+						throw new NonstandardAminoAcidException("Unexpected amino acid "+aa+"["+mass+"]!");
+					}
 					
 				case 'Q': 
 					if (tolerance.equals(mass, -17.026549)) return PyroGlu;
-					return Q;
+					if (mass<MAX_SILAC_MASS&&mass>0.0) {
+						return Q;
+					} else {
+						throw new NonstandardAminoAcidException("Unexpected amino acid "+aa+"["+mass+"]!");
+					}
 					
 				case 'R': 
 					if (tolerance.equals(mass, 14.015650)) return RMe; 
 					if (tolerance.equals(mass, 28.031300)) return RDiMe; 
-					return R;
+					if (mass<MAX_SILAC_MASS&&mass>0.0) {
+						return R;
+					} else {
+						throw new NonstandardAminoAcidException("Unexpected amino acid "+aa+"["+mass+"]!");
+					}
 					
 				case 'S': 
 					if (tolerance.equals(mass, 79.966331)) return SPhos;
-					return S;
+					if (mass<MAX_SILAC_MASS&&mass>0.0) {
+						return S;
+					} else {
+						throw new NonstandardAminoAcidException("Unexpected amino acid "+aa+"["+mass+"]!");
+					}
 					
 				case 'T': 
 					if (tolerance.equals(mass, 79.966331)) return TPhos;
-					return T;
+					if (mass<MAX_SILAC_MASS&&mass>0.0) {
+						return T;
+					} else {
+						throw new NonstandardAminoAcidException("Unexpected amino acid "+aa+"["+mass+"]!");
+					}
 					
 				case 'W': 
 					if (tolerance.equals(mass, 15.994915)) return Wox;
-					return W;
+					if (mass<MAX_SILAC_MASS&&mass>0.0) {
+						return W;
+					} else {
+						throw new NonstandardAminoAcidException("Unexpected amino acid "+aa+"["+mass+"]!");
+					}
 					
 				case 'Y': 
 					if (tolerance.equals(mass, 79.966331)) return YPhos;
-					return Y;
+					if (mass<MAX_SILAC_MASS&&mass>0.0) {
+						return Y;
+					} else {
+						throw new NonstandardAminoAcidException("Unexpected amino acid "+aa+"["+mass+"]!");
+					}
 					
-				case 'F': return F;
-				case 'G': return G;
-				case 'H': return H;
-				case 'I': return I;
-				case 'L': return L;
-				case 'N': return N;
-				case 'P': return P;
-				case 'V': return V;
+				case 'F': 
+					if (mass<MAX_SILAC_MASS&&mass>0.0) {
+						return F;
+					} else {
+						throw new NonstandardAminoAcidException("Unexpected amino acid "+aa+"["+mass+"]!");
+					}
+				case 'G': 
+					if (mass<MAX_SILAC_MASS&&mass>0.0) {
+						return G;
+					} else {
+						throw new NonstandardAminoAcidException("Unexpected amino acid "+aa+"["+mass+"]!");
+					}
+				case 'H': 
+					if (mass<MAX_SILAC_MASS&&mass>0.0) {
+						return H;
+					} else {
+						throw new NonstandardAminoAcidException("Unexpected amino acid "+aa+"["+mass+"]!");
+					}
+				case 'I': 
+					if (mass<MAX_SILAC_MASS&&mass>0.0) {
+						return I;
+					} else {
+						throw new NonstandardAminoAcidException("Unexpected amino acid "+aa+"["+mass+"]!");
+					}
+				case 'L': 
+					if (mass<MAX_SILAC_MASS&&mass>0.0) {
+						return L;
+					} else {
+						throw new NonstandardAminoAcidException("Unexpected amino acid "+aa+"["+mass+"]!");
+					}
+				case 'N': 
+					if (mass<MAX_SILAC_MASS&&mass>0.0) {
+						return N;
+					} else {
+						throw new NonstandardAminoAcidException("Unexpected amino acid "+aa+"["+mass+"]!");
+					}
+				case 'P': 
+					if (mass<MAX_SILAC_MASS&&mass>0.0) {
+						return P;
+					} else {
+						throw new NonstandardAminoAcidException("Unexpected amino acid "+aa+"["+mass+"]!");
+					}
+				case 'V': 
+					if (mass<MAX_SILAC_MASS&&mass>0.0) {
+						return V;
+					} else {
+						throw new NonstandardAminoAcidException("Unexpected amino acid "+aa+"["+mass+"]!");
+					}
 					
 				default: throw new NonstandardAminoAcidException("Unexpected amino acid "+aa+"["+mass+"]!");
 			}

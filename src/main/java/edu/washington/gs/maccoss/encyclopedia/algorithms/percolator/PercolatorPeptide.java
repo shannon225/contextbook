@@ -144,10 +144,10 @@ public class PercolatorPeptide implements PeptidePrecursorWithProteins {
 	public byte getPrecursorCharge() {
 		return precursorCharge;
 	}
-	public double getMZ() {
+	public double getPrecursorMZ() {
 		return mz;
 	}
-	public float getRT() {
+	public float getRetentionTimeInSec() {
 		return rt;
 	}
 	public boolean isPSMIDDecoy() {

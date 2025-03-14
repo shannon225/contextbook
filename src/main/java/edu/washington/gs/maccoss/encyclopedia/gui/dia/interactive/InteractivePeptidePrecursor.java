@@ -23,6 +23,7 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.io.TableParserMuscle;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 
 public class InteractivePeptidePrecursor extends SimplePeptidePrecursor implements HasRetentionTime {
 	private static final AminoAcidConstants aaConstants=new AminoAcidConstants();
@@ -136,7 +137,7 @@ public class InteractivePeptidePrecursor extends SimplePeptidePrecursor implemen
 			float second =Float.parseFloat(st.nextToken());
 			range=new Range(first*60f, second*60f);
 		}
-
+		peptideModSeq=PeptideUtils.getCorrectedMasses(peptideModSeq);
 		return new InteractivePeptidePrecursor(peptideModSeq, charge, rtMin * 60f, passes, range);
 	}
 

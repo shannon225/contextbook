@@ -6,6 +6,7 @@ import java.util.Optional;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.PointInterface;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
 
@@ -86,5 +87,60 @@ public class Peak implements PointInterface {
 			}
 		}
 		return new Triplet<double[], float[], Optional<float[]>>(masses.toArray(), intensities.toArray(), ionMobilities.size()==0?Optional.empty():Optional.of(ionMobilities.toArray()));
+	}
+	
+	public static Spectrum toSpectrum(Peak[] peaks, final String name, final float rtInSec, final double precursorMZ) {
+		final double[] masses=new double[peaks.length];
+		final float[] intensities=new float[peaks.length];
+		float[] ims=new float[peaks.length];
+		boolean anyIMS=false;
+		for (int i = 0; i < peaks.length; i++) {
+			masses[i]=peaks[i].mass;
+			intensities[i]=peaks[i].intensity;
+			if (peaks[i].ionMobility!=null) {
+				ims[i]=peaks[i].ionMobility;
+				anyIMS=true;
+			}
+		}
+		final float[] finalIMS=anyIMS?ims:null;
+		final float tic=General.sum(intensities);
+		
+		return new Spectrum() {
+			
+			@Override
+			public float getTIC() {
+				return tic;
+			}
+			
+			@Override
+			public String getSpectrumName() {
+				return name;
+			}
+			
+			@Override
+			public float getScanStartTime() {
+				return rtInSec;
+			}
+			
+			@Override
+			public double getPrecursorMZ() {
+				return precursorMZ;
+			}
+			
+			@Override
+			public double[] getMassArray() {
+				return masses;
+			}
+			
+			@Override
+			public Optional<float[]> getIonMobilityArray() {
+				return Optional.ofNullable(finalIMS);
+			}
+			
+			@Override
+			public float[] getIntensityArray() {
+				return intensities;
+			}
+		};
 	}
 }

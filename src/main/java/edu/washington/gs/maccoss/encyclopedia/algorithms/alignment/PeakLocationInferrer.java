@@ -60,7 +60,7 @@ public class PeakLocationInferrer {
 		ArrayList<PercolatorPeptide> alignmentSeed=PercolatorReader.getPassingPeptidesFromTSV(bestJob.getPercolatorFiles().getPeptideOutputFile(), bestJob.getParameters(), false).x;
 		TObjectFloatHashMap<String> rtsBySequence=new TObjectFloatHashMap<String>();
 		for (PercolatorPeptide peptide : alignmentSeed) {
-			rtsBySequence.put(peptide.getPeptideModSeq(), peptide.getRT());
+			rtsBySequence.put(peptide.getPeptideModSeq(), peptide.getRetentionTimeInSec());
 		}
 		Logger.logLine("Number of anchors in seed file: "+alignmentSeed.size());
 
@@ -87,7 +87,7 @@ public class PeakLocationInferrer {
 				for (PercolatorPeptide peptide : peptides) {
 					String seq=peptide.getPeptideModSeq();
 					if (rtsBySequence.containsKey(seq)) {
-						points.add(new XYPoint(rtsBySequence.get(seq)/60f, peptide.getRT()/60f));
+						points.add(new XYPoint(rtsBySequence.get(seq)/60f, peptide.getRetentionTimeInSec()/60f));
 					}
 				}
 				if (points.size()<10) {

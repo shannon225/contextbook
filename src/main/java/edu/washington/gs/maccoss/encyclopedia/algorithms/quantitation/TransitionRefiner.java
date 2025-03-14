@@ -189,9 +189,31 @@ public class TransitionRefiner {
 			// calculate trapezoidal background area
 			integrationArray[i]=integrationArray[i]-backgroundArray[i];
 		}
-
+		
+		// calculate best correlating peaks
+		// set final median chromatogram based on only best correlating peaks (considering minimum num and max num from params)
+		float[] sortedCorrelations=correlationArray.clone();
+		Arrays.sort(sortedCorrelations);
+		int count=0;
+		float minCorrelation=0f;
+		for (int i = sortedCorrelations.length-1; i >= 0; i--) {
+			// if we've already got enough peaks, or if the correlations drop too low and we've got the minimum, break
+			if (count>=params.getNumberOfQuantitativePeaks()) break;
+			if (sortedCorrelations[i]<weakIdentificationCorrelationThreshold&&count>=params.getMinNumOfQuantitativePeaks()) break;
+			minCorrelation=sortedCorrelations[i];
+			count++;
+		}
+		
+		ArrayList<float[]> selectedChromatograms=new ArrayList<float[]>();
+		for (int i = 0; i < correlationArray.length; i++) {
+			if (correlationArray[i]>=minCorrelation) {
+				selectedChromatograms.add(chromatograms.get(i));
+			}
+		}
+		medianData = extractMedianChromatogram(retentionTimeInSec, selectedChromatograms, retentionTimes, Optional.empty(), adjustPeakBoundaries, params.getMinNumIntegratedRTPoints(), params.getExpectedPeakWidth());
+		
 		Range range=new Range(retentionTimes[medianData.getIndices().getStart()], retentionTimes[medianData.getIndices().getStop()]);
-		if (plot) {
+		if (true) {
 			HashMap<String, ChartPanel> panels=new HashMap<String, ChartPanel>();
 			panels.put("unnormalized", getChart(chromatograms, correlationArray, retentionTimes, range));
 			panels.put("unnormalized_uncolored", getChart(chromatograms, new float[correlationArray.length], retentionTimes, range));

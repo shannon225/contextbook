@@ -180,7 +180,9 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 			
 //			ArrayList<XYTrace> traces=new ArrayList<XYTrace>();
 			for (int i = 0; i < transposeChromatograms.length; i++) {
-				transposeChromatograms[i]=SkylineSGFilter.paddedSavitzkyGolaySmooth(transposeChromatograms[i]);
+				if (parameters.isSmoothIntegrations()) {
+					transposeChromatograms[i]=SkylineSGFilter.paddedSavitzkyGolaySmooth(transposeChromatograms[i]);
+				}
 				if (parameters.isSubtractBackground()) {
 					transposeChromatograms[i]=BackgroundSubtractionFilter.backgroundSubtractMovingMedian(transposeChromatograms[i], movingAverageLength*10);
 				}
@@ -336,7 +338,9 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 					ArrayList<float[]> chromatogramList=new ArrayList<float[]>();
 					for (int j = 0; j < chromatograms.length; j++) {
 						if (General.sum(chromatograms[j])>0.0f) {
-							chromatograms[j]=SkylineSGFilter.paddedSavitzkyGolaySmooth(chromatograms[j]);
+							if (parameters.isSmoothIntegrations()) {
+								chromatograms[j]=SkylineSGFilter.paddedSavitzkyGolaySmooth(chromatograms[j]);
+							}
 							if (parameters.isSubtractBackground()) {
 								chromatograms[j]=BackgroundSubtractionFilter.backgroundSubtractMovingMedian(chromatograms[j], movingAverageLength*10);
 							}
