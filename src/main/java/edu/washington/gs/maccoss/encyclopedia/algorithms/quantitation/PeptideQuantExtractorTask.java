@@ -17,8 +17,8 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.phospho.PhosphoLocalize
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.InferrablePSM;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
@@ -52,10 +52,10 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 	private final PSMPeakScorer scorer;
 	private final SearchParameters params;
 
-	private final PSMData psmdata;
+	private final InferrablePSM psmdata;
 	private final ConcurrentLinkedQueue<IntegratedLibraryEntry> savedEntries; // CAN BE NULL
 
-	public PeptideQuantExtractorTask(String filename, PSMData psmdata, final Optional<PeakLocationInferrerInterface> inferrer, Optional<PhosphoLocalizer> localizer, ArrayList<FragmentScan> stripes, Optional<PrecursorScanMap> precursors, SearchParameters parameters, boolean limitToQuantifiable) {
+	public PeptideQuantExtractorTask(String filename, InferrablePSM psmdata, final Optional<PeakLocationInferrerInterface> inferrer, Optional<PhosphoLocalizer> localizer, ArrayList<FragmentScan> stripes, Optional<PrecursorScanMap> precursors, SearchParameters parameters, boolean limitToQuantifiable) {
 		this.filename=filename;
 		this.psmdata=psmdata;
 		this.precursors=precursors;
@@ -70,7 +70,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		this.limitToQuantifiable=limitToQuantifiable; //library.isPresent();
 	}
 
-	public PeptideQuantExtractorTask(String filename, PSMData psmdata, final Optional<PeakLocationInferrerInterface> inferrer, Optional<PhosphoLocalizer> localizer, ArrayList<FragmentScan> stripes, Optional<PrecursorScanMap> precursors, SearchParameters parameters, ConcurrentLinkedQueue<IntegratedLibraryEntry> savedEntries, boolean limitToQuantifiable) {
+	public PeptideQuantExtractorTask(String filename, InferrablePSM psmdata, final Optional<PeakLocationInferrerInterface> inferrer, Optional<PhosphoLocalizer> localizer, ArrayList<FragmentScan> stripes, Optional<PrecursorScanMap> precursors, SearchParameters parameters, ConcurrentLinkedQueue<IntegratedLibraryEntry> savedEntries, boolean limitToQuantifiable) {
 		this.filename=filename;
 		this.psmdata=psmdata;
 		this.precursors=precursors;
@@ -102,7 +102,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 
 	@Override
 	protected Nothing process() {		
-		Optional<Pair<TransitionRefinementData, Integer>> spectrum=extractSpectrum(psmdata.getAccessions(), psmdata.getPrecursorCharge(), psmdata.getPeptideModSeq(), psmdata.getRetentionTimeInSec(), params.getExpectedPeakWidth(), limitToQuantifiable, inferrer, params.isQuantifySameFragmentsAcrossSamples(), psmdata.wasInferred());
+		Optional<Pair<TransitionRefinementData, FragmentScan>> spectrum=extractSpectrum(psmdata.getAccessions(), psmdata.getPrecursorCharge(), psmdata.getPeptideModSeq(), psmdata.getRetentionTimeInSec(), params.getExpectedPeakWidth(), limitToQuantifiable, inferrer, params.isQuantifySameFragmentsAcrossSamples(), psmdata.wasInferred());
 		Optional<HashMap<String, TransitionRefinementData>> phosphoData=Optional.empty();
 		if (canRunLocalization()) {
 			Optional<PhosphoLocalizationData> localizationData=runLocalization(false);
@@ -150,10 +150,12 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 			double[] fragmentMassArray=FragmentIon.getMasses(data.getFragmentMassArray());
 			
 			String fractionName=filename;
-			if (spectrum.get().y>0) {
-				fractionName=fractionName+"_"+spectrum.get().y;
+			int spectrumIndex=0;
+			if (spectrum.get().y!=null&&spectrum.get().y.getFraction()>0) {
+				fractionName=fractionName+"_"+spectrum.get().y.getFraction();
+				spectrumIndex=spectrum.get().y.getSpectrumIndex();
 			}
-			IntegratedLibraryEntry entry=new IntegratedLibraryEntry(fractionName, psmdata.getAccessions(), psmdata.getSpectrumIndex(), psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), psmdata.getPeptideModSeq(), 1, psmdata.getRetentionTimeInSec(), psmdata.getScore(), integrationScore, fragmentMassArray, data.getIntegrationArray(), data);
+			IntegratedLibraryEntry entry=new IntegratedLibraryEntry(fractionName, psmdata.getAccessions(), spectrumIndex, psmdata.getPrecursorMZ(), psmdata.getPrecursorCharge(), psmdata.getPeptideModSeq(), 1, psmdata.getRetentionTimeInSec(), psmdata.getScore(), integrationScore, fragmentMassArray, data.getIntegrationArray(), data);
 			if (limitToQuantifiable) {
 				if (entry.getIonCount()<params.getMinNumOfQuantitativePeaks()||entry.getTIC()<1.0f) {
 					return Nothing.NOTHING;
@@ -175,7 +177,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		return localizer.get().runDIAPhosphoLocalization(psmdata, stripes, tryAllPermutations, true);
 	}
 
-	private Optional<Pair<TransitionRefinementData, Integer>> extractSpectrum(HashSet<String> accessions, byte precursorCharge, String peptideModSeq, float retentionTime, float duration, boolean limitToQuantifiable, final Optional<PeakLocationInferrerInterface> inferrer, boolean integrateEverything, boolean wasInferred) {
+	private Optional<Pair<TransitionRefinementData, FragmentScan>> extractSpectrum(HashSet<String> accessions, byte precursorCharge, String peptideModSeq, float retentionTime, float duration, boolean limitToQuantifiable, final Optional<PeakLocationInferrerInterface> inferrer, boolean integrateEverything, boolean wasInferred) {
 		FragmentationModel model=PeptideUtils.getPeptideModel(peptideModSeq, params.getAAConstants());
 		
 		// if inferrer is present then we need to integrate everything in the target mass list
@@ -183,12 +185,15 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		if (inferrer.isPresent()) {
 			masses=inferrer.get().getTopNBestIons(peptideModSeq, precursorCharge);
 		}
+		System.out.println("Masses1 ("+masses.length+"): "+General.toString(masses));
+		
 		AnnotatedLibraryEntry unitEntry=model.getUnitSpectrum(filename, accessions, precursorCharge, retentionTime, params, masses, 0.0, false, true);
+		System.out.println("Masses2 ("+unitEntry.getMassArray().length+"): "+General.toString(unitEntry.getMassArray()));
 		
 		return Optional.ofNullable(extractSpectrum(unitEntry, duration, limitToQuantifiable, integrateEverything, wasInferred));
 	}
 
-	public Pair<TransitionRefinementData, Integer> extractSpectrum(AnnotatedLibraryEntry unitEntry, float duration, boolean limitToQuantifiable, boolean integrateEverything, boolean wasInferred) {
+	public Pair<TransitionRefinementData, FragmentScan> extractSpectrum(AnnotatedLibraryEntry unitEntry, float duration, boolean limitToQuantifiable, boolean integrateEverything, boolean wasInferred) {
 		// widened to 3x the expected size (+/-1.5) of the peak to make sure we don't miss something by catching just the corner
 		float scanStart=unitEntry.getRetentionTime()-duration*1.5f;
 		float scanStop=unitEntry.getRetentionTime()+duration*1.5f;
@@ -198,8 +203,9 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		
 		while (true) {
 			ArrayList<FragmentScan> stripes=getScanSubset(scanStart, scanStop);
-		
-			Pair<TransitionRefinementData, Integer> data = quantifyPeptide(scorer, unitEntry, limitToQuantifiable, stripes, integrateEverything, wasInferred, params);
+			System.out.println("Masses3 ("+unitEntry.getMassArray().length+"): "+General.toString(unitEntry.getMassArray()));
+			
+			Pair<TransitionRefinementData, FragmentScan> data = quantifyPeptide(scorer, unitEntry, limitToQuantifiable, stripes, integrateEverything, wasInferred, params);
 
 			if (data==null) return null;
 			if (data.x.getMedianChromatogram().length==0) return data;
@@ -252,10 +258,10 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		}
 	}
 
-	public static Pair<TransitionRefinementData, Integer> quantifyPeptide(PSMPeakScorer scorer, AnnotatedLibraryEntry unitEntry, boolean limitToQuantifiable, ArrayList<FragmentScan> stripes, boolean integrateEverything, boolean wasInferred, SearchParameters params) {
+	public static Pair<TransitionRefinementData, FragmentScan> quantifyPeptide(PSMPeakScorer scorer, AnnotatedLibraryEntry unitEntry, boolean limitToQuantifiable, ArrayList<FragmentScan> stripes, boolean integrateEverything, boolean wasInferred, SearchParameters params) {
 		
 		// find the center
-		int bestFraction=0;
+		FragmentScan bestStripe=null;
 		float bestDelta=Float.MAX_VALUE;
 		PeakScores[] bestScores=null;
 		PeakScores[] bestIndividualFragmentScores=null;
@@ -271,7 +277,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 			if (delta<bestDelta) {
 				bestDelta=delta;
 				bestScores=eachPeakScores;
-				bestFraction=stripe.getFraction();
+				bestStripe=stripe;
 			}
 			if (bestIndividualFragmentScores==null) {
 				bestIndividualFragmentScores=new PeakScores[eachPeakScores.length];
@@ -315,7 +321,7 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		if (bestScores==null||bestScores.length==0) return null;
 
 		return new Pair<> (extractTransitions(unitEntry, limitToQuantifiable, stripes, wasInferred, params, bestScores, scoreList,
-				retentionTimes, totalIonCurrent, totalIdentifiedIonCurrent, movingAverageLength), bestFraction);
+				retentionTimes, totalIonCurrent, totalIdentifiedIonCurrent, movingAverageLength), bestStripe);
 		
 	}
 

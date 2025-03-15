@@ -213,7 +213,7 @@ public class TransitionRefiner {
 		medianData = extractMedianChromatogram(retentionTimeInSec, selectedChromatograms, retentionTimes, Optional.empty(), adjustPeakBoundaries, params.getMinNumIntegratedRTPoints(), params.getExpectedPeakWidth());
 		
 		Range range=new Range(retentionTimes[medianData.getIndices().getStart()], retentionTimes[medianData.getIndices().getStop()]);
-		if (true) {
+		if (plot) {
 			HashMap<String, ChartPanel> panels=new HashMap<String, ChartPanel>();
 			panels.put("unnormalized", getChart(chromatograms, correlationArray, retentionTimes, range));
 			panels.put("unnormalized_uncolored", getChart(chromatograms, new float[correlationArray.length], retentionTimes, range));

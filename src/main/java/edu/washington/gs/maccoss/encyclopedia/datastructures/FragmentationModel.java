@@ -60,7 +60,7 @@ public class FragmentationModel {
 		return getUnitSpectrum(filename, accessions, precursorCharge, retentionTime, params, null, minimumMass, isDecoy, forQuant);
 	}
 	public AnnotatedLibraryEntry getUnitSpectrum(String filename, HashSet<String> accessions, byte precursorCharge, float retentionTime, SearchParameters params, double[] targetMasses, double minimumMass, boolean isDecoy, boolean forQuant) {
-		return getUnitSpectrum(filename, accessions, precursorCharge, retentionTime, params, null, minimumMass, isDecoy, true, forQuant);
+		return getUnitSpectrum(filename, accessions, precursorCharge, retentionTime, params, targetMasses, minimumMass, isDecoy, true, forQuant);
 	}
 	public AnnotatedLibraryEntry getUnitSpectrum(String filename, HashSet<String> accessions, byte precursorCharge, float retentionTime, SearchParameters params, double[] targetMasses, double minimumMass, boolean isDecoy, boolean useNeutralLosses, boolean forQuant) {
 		String sequence=getPeptideModSeq();

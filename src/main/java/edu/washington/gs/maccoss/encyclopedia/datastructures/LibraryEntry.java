@@ -24,6 +24,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.QuantitativePeakIntensityComparator;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.SpectrumWithCharge;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
 
 //@Immutable
 public class LibraryEntry implements Comparable<PeptidePrecursor>, SpectrumWithCharge, HasRetentionTime, PeptidePrecursorWithProteins, XYTraceInterface {
@@ -396,6 +397,21 @@ public class LibraryEntry implements Comparable<PeptidePrecursor>, SpectrumWithC
 	
 	public boolean[] getQuantifiedIonsArray() {
 		return quantifiedIonsArray;
+	}
+	
+	public ArrayList<Peak> getPeaksByIntensityFraction(float intensityFraction, int minimumNumber) {
+		ArrayList<Peak> peaks=new ArrayList<Peak>();
+		float maxIntensity=General.max(intensityArray);
+		float[] intensityCopy=intensityArray.clone();
+		float requiredMinIntensity=QuickMedian.select(intensityCopy, 1.0f-minimumNumber/(float)intensityCopy.length);
+		requiredMinIntensity=Math.min(requiredMinIntensity, maxIntensity*intensityFraction)-1e-7f; // epsilon to account for rounding errors
+		
+		for (int i = 0; i < massArray.length; i++) {
+			if (intensityArray[i]>=requiredMinIntensity) {
+				peaks.add(new Peak(massArray[i], intensityArray[i]));
+			}
+		}
+		return peaks;
 	}
 	
 	public ArrayList<Peak> getPeaks(float minimumCorrelation) {

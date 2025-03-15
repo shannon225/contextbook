@@ -1,6 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
 import java.awt.Dimension;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -13,6 +14,8 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.DigestionEnzyme;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentationType;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.map.hash.TCharDoubleHashMap;
 import junit.framework.TestCase;
 
@@ -51,6 +54,55 @@ public class LibraryEntryTest extends TestCase {
 			assertEquals(expectedTrimmedMasses[i], trimmedMasses[i], 0.1);
 		}
 	}
+	
+	public void testGetPeaksByIntensityFraction() {
+		double[] massArray = new double[] { 98.06063, 175.11955, 227.10323,
+				304.16214, 324.15599, 333, 419.18908, 444, 505.20367,
+				532.27314, 555, 618.28773, 650.407259, 666, 713.32082,
+				733.31467, 777, 779.449849, 810.37359, 862.35727, 876.502609,
+				888, 939.41618, 1018.45838, 1036.46894 };
+		float[] intensityArray = new float[] { 1f, 2f, 3f, 4f, 5f, 6f,
+				7f, 8f, 9f, 10f, 11f, 12f, 13f, 14f, 15f, 16f, 17f, 18f, 19f,
+				20f, 1f, 22f, 23f, 24f, 2f };
+
+		final AminoAcidConstants aaConstants = new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
+
+		LibraryEntry entry=new LibraryEntry("", new HashSet<String>(), 518.73841, (byte)2, "PEPT[+80]IDER", 1, 0.0f, 0.0f, massArray, intensityArray, Optional.empty(), aaConstants);
+		
+		float[] peaks=getIntensities(entry.getPeaksByIntensityFraction(0.1f, 1));
+		assertEquals(24.0f, General.max(peaks), 1e-12f);
+		assertEquals(3.0f, General.min(peaks), 1e-12f);
+		assertEquals(21, peaks.length);
+		
+		peaks=getIntensities(entry.getPeaksByIntensityFraction(0.2f, 1));
+		assertEquals(24.0f, General.max(peaks), 1e-12f);
+		assertEquals(5.0f, General.min(peaks), 1e-12f);
+		assertEquals(19, peaks.length);
+		
+		peaks=getIntensities(entry.getPeaksByIntensityFraction(0.5f, 1));
+		assertEquals(24.0f, General.max(peaks), 1e-12f);
+		assertEquals(12.0f, General.min(peaks), 1e-12f);
+		assertEquals(12, peaks.length);
+
+		peaks=getIntensities(entry.getPeaksByIntensityFraction(0.5f, 13));
+		assertEquals(24.0f, General.max(peaks), 1e-12f);
+		assertEquals(11.0f, General.min(peaks), 1e-12f);
+		assertEquals(13, peaks.length);
+
+		peaks=getIntensities(entry.getPeaksByIntensityFraction(0.5f, 15));
+		assertEquals(24.0f, General.max(peaks), 1e-12f);
+		assertEquals(9.0f, General.min(peaks), 1e-12f);
+		assertEquals(15, peaks.length);
+	}
+	
+	public static float[] getIntensities(ArrayList<Peak> peaks) {
+		float[] intensities=new float[peaks.size()];
+		for (int i = 0; i < intensities.length; i++) {
+			intensities[i]=peaks.get(i).intensity;
+		}
+		return intensities;
+	}
+	
 	public static void main(String[] args) {
 		HashMap<String, String> defaults=SearchParameterParser.getDefaultParameters();
 		defaults.put("-ptol", "17");
