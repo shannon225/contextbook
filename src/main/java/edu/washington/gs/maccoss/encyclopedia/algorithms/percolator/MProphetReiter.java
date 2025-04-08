@@ -6,13 +6,13 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
@@ -21,7 +21,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.LinearDiscriminantAnaly
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
-import gnu.trove.map.hash.TObjectFloatHashMap;
 
 public class MProphetReiter implements Runnable {
 	private final float peptideFDRThreshold;
@@ -30,6 +29,30 @@ public class MProphetReiter implements Runnable {
 	
 	private Throwable error;
 	private MProphetResult result;
+	
+	public static void main(String[] args) throws Exception {
+		if (args.length!=3) {
+			Logger.errorLine("MProphetReiter requires three parameters in order:");
+			Logger.logLine("  1) Input TSV");
+			Logger.logLine("  2) Input FASTA");
+			Logger.logLine("  3) Threshold (e.g., 0.01)");
+		}
+		
+		SearchParameters params=SearchParameterParser.getDefaultParametersObject();
+		File inputTSV=new File(args[0]);
+		File fastaFile=new File(args[1]);
+		float threshold=Float.parseFloat(args[2]);
+
+		Logger.logLine("Input TSV: "+inputTSV.toString());
+		Logger.logLine("Input FASTA: "+fastaFile.toString());
+		
+		File peptideOutputFile=new File(inputTSV.toString()+".output.txt");
+		File peptideDecoyFile=new File(inputTSV.toString()+".decoy.txt");
+		
+		MProphetExecutionData data=new MProphetExecutionData(inputTSV, fastaFile, peptideOutputFile, peptideDecoyFile, params);
+		
+		executeMProphetTSV(data, threshold, params.getAAConstants(), 1);
+	}
 	
 	public MProphetReiter(MProphetExecutionData settings, float peptideFDRThreshold, AminoAcidConstants aaConstants) {
 		this.settings = settings;
