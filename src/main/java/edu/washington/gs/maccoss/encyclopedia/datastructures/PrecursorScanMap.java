@@ -73,7 +73,8 @@ public class PrecursorScanMap {
 					}
 				}
 			}
-			//minScaler=Float.MAX_VALUE;
+			// FIXME currently ignoring isotopic distribution accuracy
+			minScaler=Float.MAX_VALUE;
 			
 			float[] intensities=new float[isotopes.length];
 			for (int j = 0; j < isotopeIntensities.length; j++) {

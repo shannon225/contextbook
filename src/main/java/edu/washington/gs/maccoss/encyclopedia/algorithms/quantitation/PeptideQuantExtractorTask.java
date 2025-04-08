@@ -1,5 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation;
 
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -185,10 +186,8 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		if (inferrer.isPresent()) {
 			masses=inferrer.get().getTopNBestIons(peptideModSeq, precursorCharge);
 		}
-		System.out.println("Masses1 ("+masses.length+"): "+General.toString(masses));
 		
 		AnnotatedLibraryEntry unitEntry=model.getUnitSpectrum(filename, accessions, precursorCharge, retentionTime, params, masses, 0.0, false, true);
-		System.out.println("Masses2 ("+unitEntry.getMassArray().length+"): "+General.toString(unitEntry.getMassArray()));
 		
 		return Optional.ofNullable(extractSpectrum(unitEntry, duration, limitToQuantifiable, integrateEverything, wasInferred));
 	}
@@ -203,7 +202,6 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 		
 		while (true) {
 			ArrayList<FragmentScan> stripes=getScanSubset(scanStart, scanStop);
-			System.out.println("Masses3 ("+unitEntry.getMassArray().length+"): "+General.toString(unitEntry.getMassArray()));
 			
 			Pair<TransitionRefinementData, FragmentScan> data = quantifyPeptide(scorer, unitEntry, limitToQuantifiable, stripes, integrateEverything, wasInferred, params);
 
@@ -228,29 +226,47 @@ public class PeptideQuantExtractorTask extends ThreadableTask<Nothing> {
 			
 			if (!retry) {
 				// once we've got the right range, we integrate the precursors
-				float[] expectedIsotopicDistribution=IsotopicDistributionCalculator.getIsotopeDistribution(unitEntry.getPeptideModSeq(), params.getAAConstants());
 				if (precursors.isPresent()) {
+					float[] expectedIsotopicDistribution=IsotopicDistributionCalculator.getIsotopeDistribution(unitEntry.getPeptideModSeq(), params.getAAConstants());
 					Pair<ArrayList<XYPoint>, ArrayList<XYPoint>[]> precursorTraces=precursors.get().
 							integrateChromatogram(unitEntry.getPrecursorMZ(), unitEntry.getPrecursorCharge(), data.x.getRange(), 
 									expectedIsotopicDistribution, params.getPrecursorTolerance());
 					
-					XYTrace precursorTrace = new XYTrace(precursorTraces.x, GraphType.boldline, "p");
+					XYTrace precursorTrace = new XYTrace(precursorTraces.x, GraphType.dashedline, "p", Color.red, 1.0f);
+					XYTrace fragmentTrace=new XYTrace(data.getX().getRtArray().get(), data.getX().getMedianChromatogram(), GraphType.dashedline, "f", Color.blue, 1.0f).trim(data.getX().getRange());
 					
-					System.out.println(precursorTrace.integrate(data.x.getRange()));
-					ArrayList<XYTrace> traces=new ArrayList<XYTrace>();
-//					for (int i = 0; i < precursorTraces.y.length; i++) {
-//						traces.add(new XYTrace(precursorTraces.y[i], GraphType.boldline, "+"+(i-1)));
-//					}
-					System.out.println("Range: "+data.x.getRange()+" vs "+scanStart+" to "+scanStop);
+					//System.out.println("Correlation: "+XYTrace.correlate(precursorTrace, fragmentTrace)+" \t"+data.getX().getPeptideModSeq()+"\t"+data.getX().getApexRT()/60f+"\t"+data.getX().getPrecursorCharge());
+					Float totalPrecursorIntensity=(float)precursorTrace.integrate(data.x.getRange());
+					Float correlationWithFragments=(float)XYTrace.correlate(precursorTrace, fragmentTrace);
+					ArrayList<XYPoint>[] precursorChromatograms=precursorTraces.y;
+					TransitionRefinementData updatedData=data.x.updatePrecursors(totalPrecursorIntensity, correlationWithFragments, precursorChromatograms);
+					data=new Pair<TransitionRefinementData, FragmentScan>(updatedData, data.y);
 					
-					XYTrace fragmentTrace=new XYTrace(data.x.getRtArray().get(), data.x.getMedianChromatogram(), GraphType.boldline, "f").trim(data.x.getRange());
-					System.out.println(fragmentTrace);
-					traces.add(precursorTrace.rescaleY(1.0f/(float)precursorTrace.getMaxY()));
-					traces.add(fragmentTrace.rescaleY(1.0f/(float)fragmentTrace.getMaxY()));
-					
-					System.out.println("Correlation: "+XYTrace.correlate(precursorTrace, fragmentTrace));
-					
-					Charter.launchChart("Retention Time", "Intensity", true, traces.toArray(new XYTrace[0]));
+					if (false&&data.getX().getPeptideModSeq().equals("DVVNVLQAVGESLAK")) {
+						System.out.println("mz:"+unitEntry.getPrecursorMZ()+", rt: "+unitEntry.getRetentionTimeInSec()+", z: "+unitEntry.getPrecursorCharge());
+						
+						ArrayList<XYTrace> traces=new ArrayList<XYTrace>();
+	//					for (int i = 0; i < precursorTraces.y.length; i++) {
+	//						traces.add(new XYTrace(precursorTraces.y[i], GraphType.boldline, "+"+(i-1)));
+	//					}
+						
+						System.out.println(fragmentTrace);
+						traces.add(precursorTrace.rescaleY(1.0f/(float)precursorTrace.getMaxY()));
+						traces.add(fragmentTrace.rescaleY(1.0f/(float)fragmentTrace.getMaxY()));
+						
+	
+						ArrayList<XYPoint>[] values=XYTrace.alignXYPoints(precursorTrace.getPoints(), fragmentTrace.getPoints());
+	
+						XYTrace alignedX = new XYTrace(values[0], GraphType.bighollowpoint, "p2", Color.red, 10.0f);
+						XYTrace alignedY = new XYTrace(values[1], GraphType.bighollowpoint, "f2", Color.blue, 10.0f);
+				        
+						traces.add(alignedX.rescaleY(1.0f/(float)alignedX.getMaxY()));
+						traces.add(alignedY.rescaleY(1.0f/(float)alignedY.getMaxY()));
+						
+						System.out.println("Correlation: "+XYTrace.correlate(precursorTrace, fragmentTrace)+" \t"+data.getX().getPeptideModSeq()+"\t"+data.getX().getApexRT()/60f+"\t"+data.getX().getPrecursorCharge());
+						
+						Charter.launchChart("Retention Time", "Intensity", true, traces.toArray(new XYTrace[0]));
+					}
 				}
 				
 				return data;

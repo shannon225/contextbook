@@ -6,10 +6,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
@@ -21,7 +19,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.LinearDiscriminantAnaly
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
-import gnu.trove.map.hash.TObjectFloatHashMap;
 
 public class MProphetReiter implements Runnable {
 	private final float peptideFDRThreshold;
@@ -100,26 +97,34 @@ public class MProphetReiter implements Runnable {
 			}
 			
 			int best=0;
+			LinearDiscriminantAnalysis previousLDA=null;
 			for (int i = 0; i < numIterationsPerCalculation; i++) {
 				float targetFDR=0.01f;
 				if (i==0) {
 					targetFDR=0.15f;
+				} else if (i==1) {
+					targetFDR=0.02f;
 				}
 				ArrayList<ScoredMProphetData> data=trainingDataset.getPassingTargets(Optional.ofNullable(lda), targetFDR).x;
-				System.out.println(n+"."+i+") "+data.size()); //FIXME
-				if (data.size()<best||data.size()==0) {
+				System.out.println(n+"."+i+") "+data.size()+" (targetFDR="+Math.round(targetFDR*100)+"%)"); //FIXME
+				if (data.size()==0||(i>2&&data.size()<=best)) {
+					if (previousLDA!=null) {
+						lda=previousLDA;
+					}
 					break;
 				}
 				best=data.size();
 				ArrayList<float[]> decoyData = trainingDataset.getDecoyData();
 				ArrayList<float[]> scoredData = MProphetDataset.getScoredData(data);
-				if (decoyData.size()>scoredData.size()*100) {
+				if (decoyData.size()>scoredData.size()*10) {
 					// make sure the decoy data doesn't get too out of hand in size
-					decoyData=new ArrayList<float[]>(decoyData.subList(0, scoredData.size()*1));
+					decoyData=new ArrayList<float[]>(decoyData.subList(0, scoredData.size()*10));
 				}
 				LinearDiscriminantAnalysis model=LinearDiscriminantAnalysis.buildModel(scoredData, decoyData);
+				
 				if (!General.checkNaN(model.getCoefficients())&&!General.checkIfAllX(model.getCoefficients(), 0.0)) {
 					// if we get NaNs, then fall back on wherever we were previously
+					previousLDA=lda;
 					lda=model;
 				} else {
 					break;

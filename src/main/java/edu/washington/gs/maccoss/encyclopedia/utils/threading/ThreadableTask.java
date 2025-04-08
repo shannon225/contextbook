@@ -27,6 +27,7 @@ public abstract class ThreadableTask<R> implements Callable<R> {
 			//Logger.logLine("Finished "+getTaskName()+" in "+(stopTime-startTime)/1000+" seconds.");
 		} catch (Throwable t) {
 			Logger.errorLine("Encountered unexpected exception!");
+			t.printStackTrace();
 			Logger.errorException(t);
 			throw new EncyclopediaException("Encountered unexpected exception!", t);
 		}

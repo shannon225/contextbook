@@ -9,6 +9,7 @@ import java.util.Optional;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeAlignmentInterface.AlignmentDataPoint;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefinementData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefiner;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentationModel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
@@ -16,6 +17,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Quadruplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakChromatogram;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.QuantitativeDIAData;
 import gnu.trove.map.hash.TObjectFloatHashMap;
 import gnu.trove.procedure.TObjectFloatProcedure;
@@ -81,6 +83,11 @@ public class LibraryPeakLocationInferrer implements PeakLocationInferrerInterfac
 	@Override
 	public double[] getTopNBestIons(String peptideModSeq, byte precursorCharge) {
 		LibraryEntry entry=entriesByPeptideKey.get(getPeptideKey(peptideModSeq, precursorCharge));
+		if (entry==null) {
+			FragmentationModel model=PeptideUtils.getPeptideModel(peptideModSeq, params.getAAConstants());
+			return model.getMasses();
+		}
+		
 		ArrayList<Peak> peaks=entry.getPeaksByIntensityFraction(0.1f, params.getNumberOfQuantitativePeaks());
 		
 		double[] masses=new double[peaks.size()];

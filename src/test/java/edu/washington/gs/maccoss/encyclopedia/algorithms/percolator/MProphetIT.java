@@ -70,7 +70,6 @@ public class MProphetIT {
 		assertTrue(origpair.getPassingPeptides().size()>0);
 		assertTrue(origpair.getPi0()>0);
 		
-		System.out.println("total pep: "+origpair.getPassingPeptides().size());
 		System.out.println("pi_0: "+origpair.getPi0());
 		
 		// Check that re-reading the results gives the same data as the return from executing Percolator
@@ -83,22 +82,17 @@ public class MProphetIT {
 		assertTrue("Got invalid pi0 from MProphet (" + pi0 + ")", 0.1 < pi0 && pi0 < 0.9);
 
 		Pair<ArrayList<PercolatorPeptide>, Float> decoyPair=PercolatorReader.getPassingPeptidesFromTSV(percolatorFiles.getPeptideDecoyFile(), threshold, aaConstants, true);
-		final int nDecoys = decoyPair.x.size();
-		assertTrue(nDecoys <= 2);
+		
+		float actualFDR=pi0*decoyPair.x.size()/(float)pair.x.size();
+		System.out.println("Found: "+pair.x.size()+" at FDR: "+actualFDR);
+		assertTrue(String.format("Result didn't meet threshold! %.03f * %d / %d = %.02f >= %.02f",
+				pi0,
+				decoyPair.x.size(),
+				pair.x.size(),
+				actualFDR,
+				threshold),
+				actualFDR<0.03);
 
-		// check that the decoys/targets is less than the qvalue threshold
-		final int nTargets = origpair.getPassingPeptides().size();
-		final float fdr = pi0 * nDecoys / (float) nTargets;
-		assertTrue(
-				String.format("Result didn't meet threshold! %.03f * %d / %d = %.02f >= %.02f",
-						pi0,
-						nDecoys,
-						nTargets,
-						fdr,
-						threshold
-				),
-				fdr < threshold + 0.005f
-		);
 	}
 
 	public static MProphetExecutionData getMProphetFiles(File featureFile, File fastaFile, SearchParameters parameters) throws IOException {

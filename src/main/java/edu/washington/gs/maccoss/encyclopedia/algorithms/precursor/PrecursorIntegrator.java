@@ -11,6 +11,8 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.RetentionTimeBoundary;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Ion;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PrecursorIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.FloatPair;
@@ -111,6 +113,7 @@ public class PrecursorIntegrator {
 				TFloatArrayList integrationArray=new TFloatArrayList();
 				TFloatArrayList backgroundArray=new TFloatArrayList();
 				ArrayList<float[]> chromatograms=new ArrayList<>();
+				ArrayList<ArrayList<XYPoint>> precursorChromatograms=new ArrayList<ArrayList<XYPoint>>();
 				for (int i = 0; i < smoothedTraces.length; i++) {
 					if (smoothedTraces[i]!=null) {
 						ions.add(smoothedTraces[i].getIon());
@@ -122,15 +125,23 @@ public class PrecursorIntegrator {
 						integrationArray.add(intensity.getOne());
 						backgroundArray.add(intensity.getTwo());
 						chromatograms.add(smoothedTraces[i].getIntensity());
+						
+						precursorChromatograms.add(XYTrace.toPoints(smoothedTraces[i].getRt(), smoothedTraces[i].getIntensity()));
 					}
 				}
 				boolean[] quantitativeIonsArray=new boolean[correlationArray.size()];
 				for (int i = 0; i < quantitativeIonsArray.length; i++) {
 					quantitativeIonsArray[i]=correlationArray.get(i)>TransitionRefiner.quantitativeCorrelationThreshold;
 				}
+
+				float[] integrationArrayData = integrationArray.toArray();
+				float totalPrecursorIntensity=General.sum(integrationArrayData);
+				Float correlationWithFragments=null; // we don't have fragments so this isn't meaningful
+				
 				TransitionRefinementData trd=new TransitionRefinementData(peptideModSeq, charge, ions.toArray(new Ion[ions.size()]), chromatograms, 
-						correlationArray.toArray(), quantitativeIonsArray, integrationArray.toArray(), backgroundArray.toArray(), medianIntensityArray, ionMobility, finalBoundary, 
-						deltaMassArray.toArray(), fragmentMasses.toArray(), integrationArray.toArray(), rtArray, null, null, 0.0f, 
+						correlationArray.toArray(), quantitativeIonsArray, integrationArrayData, backgroundArray.toArray(), medianIntensityArray, ionMobility, finalBoundary, 
+						deltaMassArray.toArray(), fragmentMasses.toArray(), integrationArrayData, rtArray, null, null, 0.0f, 
+						totalPrecursorIntensity, correlationWithFragments, precursorChromatograms.toArray(new ArrayList[0]),
 						params.getAAConstants());
 				data.add(trd);
 				

@@ -37,6 +37,26 @@ public class AminoAcidConstantsTest extends TestCase {
 	}
 	
 	public static void main(String[] args) {
+		//delta masses
+		AminoAcidConstants aas = new AminoAcidConstants();
+		char[] AAs="ALVIHYWFMSTNDQEKRCGP".toCharArray();
+
+		for (int i = 0; i < AAs.length; i++) {
+			char a = AAs[i];
+			float massA = Math.round(aas.getMass(a)*100f)/100f;
+
+			for (int j = 0; j < AAs.length; j++) {
+				if (j>0) System.out.print('\t');
+				char b = AAs[j];
+				float mass=Math.round(Math.abs(aas.getMass(a)-aas.getMass(b))*100)/100f;
+				System.out.print(mass);
+			}
+			System.out.println();
+		}
+		
+	}
+	
+	public static void main2(String[] args) {
 		AminoAcidConstants aas = new AminoAcidConstants();
 		char[] AAs="ARNDCEQGHLKMFPSTWYV".toCharArray();
 		TFloatObjectHashMap<ArrayList<String>> massMap=new TFloatObjectHashMap<>();

@@ -20,6 +20,26 @@ import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndic
 import junit.framework.TestCase;
 
 public class WindowDownsamplerTest extends TestCase {
+	public static void main(String[] args) throws Exception {
+		File startFile=new File("/Users/searleb/Documents/encyclopedia/small_file/bcs_2020jan16_hela_clib_3.dia");
+		File resultFile=new File("/Users/searleb/Documents/encyclopedia/small_file/asIf4Windows.dia");
+		
+		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
+		
+		ArrayList<Range> downsampledRanges=new ArrayList<>();
+		downsampledRanges.add(new Range(598.522827148437f,	626.53466796875f));
+		downsampledRanges.add(new Range(626.53466796875f,	650.545593261719f));
+		downsampledRanges.add(new Range(650.545593261719f,	676.557434082031f));
+		downsampledRanges.add(new Range(676.557434082031f,	702.568420410156f));
+		
+		WindowDownsampler downsampler=new WindowDownsampler(downsampledRanges, parameters.getFragmentTolerance());
+		DIAProcessor processor=new DIAProcessor(downsampler, parameters);
+
+		StripeFileInterface startStripeFile = StripeFileGenerator.getFile(startFile, parameters);
+		
+		processor.processStripeFile(new EmptyProgressIndicator(), startStripeFile, resultFile, false);
+	}
+	
 	public void testDownsample() throws Exception {
 		final Path startFile = getResourceAsTempFile("WindowDownsamplerTest", ".dia", "/small_regression/bcs_2020jan16_hela_48p0_48p1.dia");
 		final File resultFile=File.createTempFile("WindowDownsamplerTestResult", ".dia");

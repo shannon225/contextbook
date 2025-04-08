@@ -16,6 +16,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.Quadruplet;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Ion;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
@@ -46,6 +47,10 @@ public class TransitionRefinementData implements PeptidePrecursor {
 	private final Optional<float[]> rtArray;
 	private final Optional<Float> identifiedTICRatio;
 	
+	private final Optional<Float> totalPrecursorIntensity;
+	private final Optional<Float> correlationWithFragments;
+	private final Optional<ArrayList<XYPoint>[]> precursorChromatograms;
+	
 	private final String peptideModSeq;
 	private final String massCorrectedPeptideModSeq;
 	private final byte precursorCharge;
@@ -59,7 +64,7 @@ public class TransitionRefinementData implements PeptidePrecursor {
 	
 	public TransitionRefinementData(String peptideModSeq, byte precursorCharge, Ion[] fragmentMassArray, ArrayList<float[]> chromatograms, float[] correlationArray, boolean[] quantitativeIonArray, float[] integrationArray, 
 			float[] backgroundArray, float[] medianChromatogram, Range range, AminoAcidConstants aaConstants) {
-		this(peptideModSeq, precursorCharge, fragmentMassArray, chromatograms, correlationArray, quantitativeIonArray, integrationArray, backgroundArray, medianChromatogram, Optional.empty(), range, null, null, null, null, null, null, null, aaConstants);
+		this(peptideModSeq, precursorCharge, fragmentMassArray, chromatograms, correlationArray, quantitativeIonArray, integrationArray, backgroundArray, medianChromatogram, Optional.empty(), range, Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), aaConstants);
 	}
 
 	/**
@@ -73,7 +78,7 @@ public class TransitionRefinementData implements PeptidePrecursor {
 	public TransitionRefinementData(String peptideModSeq, byte precursorCharge, Ion[] fragmentMassArray, ArrayList<float[]> chromatograms, float[] correlationArray, boolean[] quantitativeIonArray,
 			float[] integrationArray, float[] backgroundArray, float[] medianChromatogram, Optional<Float> ionMobility, Range range, float[] deltaMassArray, double[] massArray, float[] intensityArray, 
 			float[] rtArray, ModificationLocalizationData localizationData, HashMap<String, TransitionRefinementData> modificationQuantData, Float identifiedTICRatio, 
-			AminoAcidConstants aaConstants) {
+			Float totalPrecursorIntensity, Float correlationWithFragments, ArrayList<XYPoint>[] precursorChromatograms, AminoAcidConstants aaConstants) {
 		this.peptideModSeq=peptideModSeq;
 		this.massCorrectedPeptideModSeq=PeptideUtils.getCorrectedMasses(peptideModSeq, aaConstants);
 		this.precursorCharge=precursorCharge;
@@ -93,7 +98,49 @@ public class TransitionRefinementData implements PeptidePrecursor {
 		this.localizationData=Optional.ofNullable(localizationData);
 		this.modificationQuantData=Optional.ofNullable(modificationQuantData);
 		this.identifiedTICRatio=Optional.ofNullable(identifiedTICRatio);
+		this.totalPrecursorIntensity=Optional.ofNullable(totalPrecursorIntensity);
+		this.correlationWithFragments=Optional.ofNullable(correlationWithFragments);
+		this.precursorChromatograms=Optional.ofNullable(precursorChromatograms);
 		this.aaConstants = aaConstants;
+	}
+	
+	public TransitionRefinementData(String peptideModSeq, byte precursorCharge, Ion[] fragmentMassArray, ArrayList<float[]> chromatograms, float[] correlationArray, boolean[] quantitativeIonArray,
+			float[] integrationArray, float[] backgroundArray, float[] medianChromatogram, Optional<Float> ionMobility, Range range, Optional<float[]> deltaMassArray, Optional<double[]> massArray, Optional<float[]> intensityArray, 
+			Optional<float[]> rtArray, Optional<ModificationLocalizationData> localizationData, Optional<HashMap<String, TransitionRefinementData>> modificationQuantData, Optional<Float> identifiedTICRatio, 
+			Optional<Float> totalPrecursorIntensity, Optional<Float> correlationWithFragments, Optional<ArrayList<XYPoint>[]> precursorChromatograms, AminoAcidConstants aaConstants) {
+
+		
+		this.peptideModSeq=peptideModSeq;
+		this.massCorrectedPeptideModSeq=PeptideUtils.getCorrectedMasses(peptideModSeq, aaConstants);
+		this.precursorCharge=precursorCharge;
+		this.fragmentMassArray=fragmentMassArray;
+		this.chromatograms=chromatograms;
+		this.correlationArray=correlationArray;
+		this.quantitativeIonArray=quantitativeIonArray;
+		this.integrationArray=integrationArray;
+		this.backgroundArray=backgroundArray;
+		this.medianChromatogram=medianChromatogram;
+		this.ionMobility=ionMobility;
+		this.range=range;
+		this.deltaMassArray=deltaMassArray;
+		this.massArray=massArray;
+		this.intensityArray=intensityArray;
+		this.rtArray=rtArray;
+		this.localizationData=localizationData;
+		this.modificationQuantData=modificationQuantData;
+		this.identifiedTICRatio=identifiedTICRatio;
+		this.totalPrecursorIntensity=totalPrecursorIntensity;
+		this.correlationWithFragments=correlationWithFragments;
+		this.precursorChromatograms=precursorChromatograms;
+		this.aaConstants = aaConstants;
+	}
+	
+	public TransitionRefinementData updatePrecursors(Float totalPrecursorIntensity, Float correlationWithFragments, ArrayList<XYPoint>[] precursorChromatograms) {
+		return new TransitionRefinementData(peptideModSeq, precursorCharge, fragmentMassArray, chromatograms,
+				correlationArray, quantitativeIonArray, integrationArray, backgroundArray, medianChromatogram,
+				ionMobility, range, deltaMassArray, massArray, intensityArray, rtArray, localizationData,
+				modificationQuantData, identifiedTICRatio, Optional.ofNullable(totalPrecursorIntensity), Optional.ofNullable(correlationWithFragments), 
+				Optional.ofNullable(precursorChromatograms), aaConstants);
 	}
 
 	@Override
@@ -257,7 +304,11 @@ public class TransitionRefinementData implements PeptidePrecursor {
 				actualQuantitativeIonArray[index.get()]=true;
 			}
 		}
-		return new TransitionRefinementData(peptideModSeq, precursorCharge, fragmentMassArray, chromatograms, correlationArray, actualQuantitativeIonArray, integrationArray, backgroundArray, medianChromatogram, ionMobility, range, deltaMass, mass, intensity, rts, localizationData.isPresent()?localizationData.get():null, modificationQuantData.isPresent()?modificationQuantData.get():null, identifiedTICRatio, aaConstants);
+		return new TransitionRefinementData(peptideModSeq, precursorCharge, fragmentMassArray, chromatograms, correlationArray, actualQuantitativeIonArray, 
+				integrationArray, backgroundArray, medianChromatogram, ionMobility, range, deltaMass, mass, intensity, rts, 
+				localizationData.isPresent()?localizationData.get():null, modificationQuantData.isPresent()?modificationQuantData.get():null, identifiedTICRatio, 
+				totalPrecursorIntensity.isPresent()?totalPrecursorIntensity.get():null, correlationWithFragments.isPresent()?correlationWithFragments.get():null, 
+				precursorChromatograms.isPresent()?precursorChromatograms.get():null, aaConstants);
 	}
 	
 	public Ion[] getFragmentMassArray() {
@@ -304,6 +355,16 @@ public class TransitionRefinementData implements PeptidePrecursor {
 	
 	public Optional<Float> getIonMobility() {
 		return ionMobility;
+	}
+	
+	public Optional<Float> getCorrelationWithFragments() {
+		return correlationWithFragments;
+	}
+	public Optional<ArrayList<XYPoint>[]> getPrecursorChromatograms() {
+		return precursorChromatograms;
+	}
+	public Optional<Float> getTotalPrecursorIntensity() {
+		return totalPrecursorIntensity;
 	}
 	
 	public float getQuantitativeValue() {

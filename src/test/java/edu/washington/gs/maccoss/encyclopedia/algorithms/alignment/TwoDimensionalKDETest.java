@@ -9,6 +9,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Function;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.MedianInterpolatorTest;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.CosineGaussian;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.Distribution;
@@ -75,6 +76,7 @@ public class TwoDimensionalKDETest extends TestCase {
 		Distribution dist=new CosineGaussian(0.0, 5, 10);
 		float[][] stamp=TwoDimensionalKDE.getStamp(dist);
 		for (int i = 0; i < stamp.length; i++) {
+			System.out.println(General.toString(stamp[i]));
 			for (int j = 0; j < stamp[i].length; j++) {
 				assertTrue(stamp[i][j]>=0.0f);
 				assertTrue(stamp[i][j]<1.0f);

@@ -10,6 +10,7 @@ import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractLibraryScoringTask;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Ion;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PrecursorIon;
@@ -34,6 +35,10 @@ public class PeakTrace <T> implements XYTraceInterface, HasRetentionTime {
 
 	public PeakTrace(T ion, float retentionTimeInSec, float[] rt, float[] intensity) {
 		this(ion, retentionTimeInSec, GraphType.line, getColor(ion), 1.0f, rt, intensity);
+	}
+	
+	public XYTrace toXYTrace() {
+		return new XYTrace(rt, intensity, type, getName(), color, thickness);
 	}
 	
 	public static Color getColor(Object ion) {

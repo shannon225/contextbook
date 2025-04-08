@@ -119,6 +119,8 @@ import gnu.trove.set.TDoubleSet;
 import gnu.trove.set.hash.TDoubleHashSet;
 
 public class SearchToBLIB {
+	public static final String GLOBAL_NAME = "global";
+
 	public static void main(String[] args) {
 		final Pair<List<String>, HashMap<String, String>> parsedArgs = CommandLineParser.parseMultipleAndRemainingArguments(args, Encyclopedia.INPUT_DIA_TAG);
 		final List<String> diaPaths = parsedArgs.x;
@@ -1235,7 +1237,7 @@ public class SearchToBLIB {
 		Pair<ArrayList<PercolatorProteinGroup>, ArrayList<PercolatorProteinGroup>> targetDecoyProteins=ParsimonyProteinGrouper.groupProteins(targets.x, decoys.x, parameters.getPercolatorProteinThreshold(), parameters.getAAConstants());
 
 		Logger.logLine("Writing global target/decoy proteins: "+targetDecoyProteins.x.size()+"/"+targetDecoyProteins.y.size());
-		elib.addTargetDecoyProteins("global", targetDecoyProteins.x, targetDecoyProteins.y);
+		elib.addTargetDecoyProteins(GLOBAL_NAME, targetDecoyProteins.x, targetDecoyProteins.y);
 
 		percolatorExecutionData
 				.getPercolatorExecutableVersion()
@@ -1570,7 +1572,7 @@ public class SearchToBLIB {
 		}
 
 		return new LibraryEntry(
-				"global",
+				GLOBAL_NAME,
 				peptide.getAccessions(),
 				-1,
 				parameters.getAAConstants().getChargedMass(peptide.getPeptideModSeq(), peptide.getPrecursorCharge()),

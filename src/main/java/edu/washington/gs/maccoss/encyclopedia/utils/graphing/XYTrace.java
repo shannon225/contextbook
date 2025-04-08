@@ -38,6 +38,19 @@ public class XYTrace implements XYTraceInterface, Comparable<XYTraceInterface> {
 		
 		Collections.sort(points);
 	}
+	
+	public XYTrace changeGraphType(GraphType t) {
+		return new XYTrace(points, t, name, color, thickness);
+	}
+	
+	public XYTrace changeThickness(Float t) {
+		return new XYTrace(points, type, name, color, Optional.ofNullable(t));
+	}
+	
+	public XYTrace changeColor(Color c) {
+		return new XYTrace(points, type, name, Optional.ofNullable(c), thickness);
+	}
+	
 	public int compareTo(XYTraceInterface o) {
 		if (o==null) return 1;
 		return name.compareTo(o.getName());
@@ -281,6 +294,26 @@ public class XYTrace implements XYTraceInterface, Comparable<XYTraceInterface> {
 		}
 		sb.append("};\n");
 		return sb.toString();
+	}
+
+	public static ArrayList<XYPoint> toPoints(double[] xs, double[] ys) {
+		assert(xs.length==ys.length);
+		
+		ArrayList<XYPoint> points=new ArrayList<XYPoint>();
+		for (int i = 0; i < ys.length; i++) {
+			points.add(new XYPoint(xs[i], ys[i]));
+		}
+		return points;
+	}
+
+	public static ArrayList<XYPoint> toPoints(float[] xs, float[] ys) {
+		assert(xs.length==ys.length);
+		
+		ArrayList<XYPoint> points=new ArrayList<XYPoint>();
+		for (int i = 0; i < ys.length; i++) {
+			points.add(new XYPoint(xs[i], ys[i]));
+		}
+		return points;
 	}
 
 	public static Pair<double[], double[]> toArrays(List<XYPoint> points) {
