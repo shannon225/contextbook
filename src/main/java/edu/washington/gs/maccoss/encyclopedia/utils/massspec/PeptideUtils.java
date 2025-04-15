@@ -225,7 +225,7 @@ public class PeptideUtils {
 				modificationMass=aaConstants.getAccurateModificationMass(aaChar, modificationMass);
 
 				masses.set(masses.size()-1, masses.get(masses.size()-1)+modificationMass);
-				double neutralLoss = aaConstants.getNeutralLoss(aaChar, modificationMass);
+				double neutralLoss = 0.0f;//aaConstants.getNeutralLoss(aaChar, modificationMass);
 				neutralLosses.set(masses.size()-1, neutralLoss);
 				modifications.set(masses.size()-1, modificationMass);
 				aas.set(masses.size()-1, aaString+(modificationMass>=0?"[+":"[")+modificationMass+"]");

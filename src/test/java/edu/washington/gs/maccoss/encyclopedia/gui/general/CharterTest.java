@@ -691,13 +691,17 @@ public class CharterTest {
 		paramsMap.put("-lftolunits", "AMU");
 		paramsMap.put("-frag", "YONLY");
 		SearchParameters params = SearchParameterParser.parseParameters(paramsMap);
-		LibraryEntry entry = new LibraryEntry("", new HashSet<>(), 1229.74, (byte) 2, "ELVISLIVESK", 1, 0, 0, masses,
+		LibraryEntry entry = new LibraryEntry("", new HashSet<>(), 1229.74, (byte) 1, "ELVISLIVESK", 1, 0, 0, masses,
 				intensities, Optional.empty(), params.getAAConstants());
 		
-		AnnotatedLibraryEntry ref=FragmentationModel.generateEntry(entry.getPeptideModSeq(), "source", new HashSet<String>(), entry.getPrecursorCharge(), entry.getRetentionTimeInSec(), false, params);
+		AnnotatedLibraryEntry ref=FragmentationModel.generateEntry("ELVISLIVESK", "source", new HashSet<String>(), entry.getPrecursorCharge(), entry.getRetentionTimeInSec(), false, params);
 		AnnotatedLibraryEntry annotatedEntry = new AnnotatedLibraryEntry(entry, params);
-		//Charter.launchChart(ref, "ELVISLIVESK");
+		ExtendedChartPanel chart=Charter.getChart(ref);
+		chart.getChart().getXYPlot().getRangeAxis().setRange(0, 1.2);
+		chart.getChart().getXYPlot().getDomainAxis().setRange(70, 1350);
+		Charter.launchChart(chart, "ELVISLIVESK", new Dimension(500, 275));
 		
+		if (false) {
 		int height = 275;
 		//Charter.launchChart(entry, "Spectrum", new Dimension(600, height));
 		//Charter.launchChart(annotatedEntry, "Library", new Dimension(600, height));
@@ -718,7 +722,7 @@ public class CharterTest {
 		Charter.launchChart(XCorrCalculatorTest.getNormalizedSpectrum(entry, SparseXCorrCalculator.biggestFragmentMass, entry.getPrecursorCharge(), f, params), "PP Spectrum", new Dimension(600, 250));
 		t=SparseXCorrCalculator.preprocessSpectrum(t);
 		Charter.launchChart(XCorrCalculatorTest.getNormalizedSpectrum(entry, SparseXCorrCalculator.biggestFragmentMass, entry.getPrecursorCharge(), t, params), "PP Model", new Dimension(600, 250));
-		
+		}
 	}
 
 	public static void main4(String[] args) {

@@ -185,15 +185,15 @@ public class MProphetReiter implements Runnable {
 		for (ScoredMProphetData data : finalData.x) {
 			if (data.fdr<0.01) passingCount++;
 		}
-		
-		Logger.logLine("Final model: "+passingCount+"/"+dataset.getTargetData().size()+" passing, pi0:"+finalData.y);
-		
-		// get decoys for logging
 		Pair<ArrayList<ScoredMProphetData>, Float> finalDecoyData=dataset.getPassingTargets(Optional.ofNullable(averageModel), Float.MAX_VALUE, true);
+
+		// report model for logging
+		Logger.logLine("Final model: "+passingCount+"/"+dataset.getTargetData().size()+" passing, pi0:"+finalData.y);
 		
 		for (int i = 0; i < averageModel.getCoefficients().length; i++) {
 			Logger.logLine("   "+dataset.getFeatureNames().get(i)+" --> "+averageModel.getCoefficients()[i]);
 		}
+		Logger.logLine("   constant --> "+averageModel.getConstant());
 		
 		ArrayList<ScoredMProphetData> allData=new ArrayList<ScoredMProphetData>();
 		allData.addAll(finalData.x);

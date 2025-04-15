@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.filereaders;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -9,8 +10,13 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Optional;
 import java.util.zip.DataFormatException;
 
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.RetentionTimeFilter;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.TwoDimensionalKDE;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefiner;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ChromatogramLibraryEntry;
@@ -20,6 +26,10 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.ByteConverter;
 import edu.washington.gs.maccoss.encyclopedia.utils.CompressionUtils;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.Correlation;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
 import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.list.array.TIntArrayList;
@@ -27,6 +37,70 @@ import gnu.trove.map.hash.TCharDoubleHashMap;
 
 public class LibraryFileTest {
 	public static void main(String[] args) throws Exception {
+		AminoAcidConstants aaConstants=new AminoAcidConstants();
+		MassTolerance tolerance = new MassTolerance(1);
+		
+		LibraryFile cartographer=new LibraryFile();
+		cartographer.openFile(new File("/Users/searleb/Downloads/all10_cat_wrapped_c99.z23_nce30-003.dlib"));
+		
+		LibraryFile prosit=new LibraryFile();
+		prosit.openFile(new File("/Users/searleb/Downloads/all10_cat_wrapped_c99.z23_nce30-003.dlib.z3_nce33.dlib"));
+		
+		int[] correlationHistogram=new int[101];
+		
+		List<XYPoint> rts=new ArrayList<XYPoint>();
+		for (int i = 39; i < 101; i++) {
+			Range precursorMz = new Range(i*10, (i+1)*10);
+			ArrayList<LibraryEntry> cEntries=cartographer.getEntries(precursorMz, false, aaConstants);
+			
+			HashMap<String, LibraryEntry> pEntries=extracted(prosit, precursorMz, aaConstants);
+			Logger.logLine(i+") "+cEntries.size()+", "+pEntries.size());
+			
+			for (LibraryEntry entry : cEntries) {
+				LibraryEntry pEntry=pEntries.get(getKey(entry));
+				if (pEntry!=null) {
+					double correlation=Correlation.getPearsons(entry, pEntry, tolerance);
+					int round=(int)Math.round(100*correlation);
+					if (round>=0) {
+						correlationHistogram[round]++;
+					}
+					rts.add(new XYPoint(pEntry.getRetentionTimeInSec()/60f, entry.getRetentionTimeInSec()/60f));
+				}
+			}
+		}
+		cartographer.close();
+		prosit.close();
+		
+		System.out.println("Correlation\tCount");
+		for (int i = 0; i < correlationHistogram.length; i++) {
+			System.out.println(i+"\t"+correlationHistogram[i]);
+		}
+		
+		PrintWriter writer=new PrintWriter(new File("/Users/searleb/Downloads/all10_cat_wrapped_c99.rts.txt"));
+		writer.println("Prosit\tCartographer");
+		for (XYPoint xy : rts) {
+			writer.println((float)xy.x+"\t"+(float)xy.y);
+		}
+		writer.close();
+
+		TwoDimensionalKDE twoDimKDE=new TwoDimensionalKDE(rts, TwoDimensionalKDE.HIGHER_RESOLUTION);
+		RetentionTimeFilter filter=RetentionTimeFilter.getFilter(twoDimKDE, rts.size(), "Prosit", "Cartographer");
+		filter.plot(rts, Optional.of(new File("/Users/searleb/Downloads/all10_cat_wrapped_c99.pdf")), "Prosit", "Cartographer");
+	}
+	public static HashMap<String, LibraryEntry> extracted(LibraryFile library, Range precursorMz, AminoAcidConstants constants)
+			throws IOException, SQLException, DataFormatException {
+		ArrayList<LibraryEntry> cEntriesList=library.getEntries(precursorMz, false, constants);
+		HashMap<String, LibraryEntry> cEntries=new HashMap<String, LibraryEntry>();
+		for (LibraryEntry libraryEntry : cEntriesList) {
+			cEntries.put(getKey(libraryEntry), libraryEntry);
+		}
+		return cEntries;
+	}
+	public static String getKey(LibraryEntry libraryEntry) {
+		return libraryEntry.getPeptideModSeq()+"+"+libraryEntry.getPrecursorCharge();
+	}
+	
+	public static void main8(String[] args) throws Exception {
 		LibraryFile elibFile = new LibraryFile();
 		//elibFile.openFile(new File("/Users/searleb/Downloads/ariana_curve/aurora_calcurve_quant.elib"));
 		elibFile.openFile(new File("/Users/searleb/Downloads/MaxIIT_HeLaQuant.elib"));
@@ -223,10 +297,6 @@ public class LibraryFileTest {
 		diaLibraryWithDDAPeaks.addEntries(diaEntriesWithDDAPeaks);
 		diaLibraryWithDDAPeaks.saveAsFile(new File("/Volumes/searle_ssd/malaria/novo_yeast/DIA_analysis/clibs_vs_predicted/uniprot_yeast_25jan2019.fasta.z2_nce33_clibWithDDAPeaks.dlib"));
 		diaLibraryWithDDAPeaks.close();
-	}
-
-	public static String getKey(LibraryEntry entry) {
-		return entry.getPeptideModSeq()+"+"+entry.getPrecursorCharge();
 	}
 	
 	public static void main2(String[] args) throws Exception {
