@@ -100,7 +100,7 @@ public class SparseXCorrCalculator {
 			negativeIntensities[i]=-intensities[i];
 		}
 		
-		for (int offset=ArrayXCorrCalculator.lowerOffset; offset<=ArrayXCorrCalculator.upperOffset; offset++) {
+		for (int offset=lowerOffset; offset<upperOffset; offset++) {
 			if (offset==0) continue;
 			for (int i=0; i<indicies.length; i++) {
 				int index=indicies[i]+offset;
