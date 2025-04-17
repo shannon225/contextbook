@@ -51,6 +51,11 @@ public class RetentionTimeFilter extends AbstractRetentionTimeFilter {
 		}
 		return new RetentionTimeFilter(rtWarper, model, xAxis, yAxis, rts.size());
 	}
+	public static RetentionTimeFilter getFilter(TwoDimensionalKDE twoDimKDE, int size, String xAxis, String yAxis) {
+		Function rtWarper=twoDimKDE.trace();
+		Optional<RTProbabilityModel> model=Optional.empty();
+		return new RetentionTimeFilter(rtWarper, model, xAxis, yAxis, size);
+	}
 
 	public static RetentionTimeFilter getLinearFilter(List<XYPoint> rts, String xAxis, String yAxis) {
 		Function rtWarper;

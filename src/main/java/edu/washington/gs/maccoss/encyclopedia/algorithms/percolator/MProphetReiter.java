@@ -11,6 +11,8 @@ import java.util.HashSet;
 import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
@@ -27,6 +29,30 @@ public class MProphetReiter implements Runnable {
 	
 	private Throwable error;
 	private MProphetResult result;
+	
+	public static void main(String[] args) throws Exception {
+		if (args.length!=3) {
+			Logger.errorLine("MProphetReiter requires three parameters in order:");
+			Logger.logLine("  1) Input TSV");
+			Logger.logLine("  2) Input FASTA");
+			Logger.logLine("  3) Threshold (e.g., 0.01)");
+		}
+		
+		SearchParameters params=SearchParameterParser.getDefaultParametersObject();
+		File inputTSV=new File(args[0]);
+		File fastaFile=new File(args[1]);
+		float threshold=Float.parseFloat(args[2]);
+
+		Logger.logLine("Input TSV: "+inputTSV.toString());
+		Logger.logLine("Input FASTA: "+fastaFile.toString());
+		
+		File peptideOutputFile=new File(inputTSV.toString()+".output.txt");
+		File peptideDecoyFile=new File(inputTSV.toString()+".decoy.txt");
+		
+		MProphetExecutionData data=new MProphetExecutionData(inputTSV, fastaFile, peptideOutputFile, peptideDecoyFile, params);
+		
+		executeMProphetTSV(data, threshold, params.getAAConstants(), 1);
+	}
 	
 	public MProphetReiter(MProphetExecutionData settings, float peptideFDRThreshold, AminoAcidConstants aaConstants) {
 		this.settings = settings;
@@ -167,15 +193,15 @@ public class MProphetReiter implements Runnable {
 		for (ScoredMProphetData data : finalData.x) {
 			if (data.fdr<0.01) passingCount++;
 		}
-		
-		Logger.logLine("Final model: "+passingCount+"/"+dataset.getTargetData().size()+" passing, pi0:"+finalData.y);
-		
-		// get decoys for logging
 		Pair<ArrayList<ScoredMProphetData>, Float> finalDecoyData=dataset.getPassingTargets(Optional.ofNullable(averageModel), Float.MAX_VALUE, true);
+
+		// report model for logging
+		Logger.logLine("Final model: "+passingCount+"/"+dataset.getTargetData().size()+" passing, pi0:"+finalData.y);
 		
 		for (int i = 0; i < averageModel.getCoefficients().length; i++) {
 			Logger.logLine("   "+dataset.getFeatureNames().get(i)+" --> "+averageModel.getCoefficients()[i]);
 		}
+		Logger.logLine("   constant --> "+averageModel.getConstant());
 		
 		ArrayList<ScoredMProphetData> allData=new ArrayList<ScoredMProphetData>();
 		allData.addAll(finalData.x);
