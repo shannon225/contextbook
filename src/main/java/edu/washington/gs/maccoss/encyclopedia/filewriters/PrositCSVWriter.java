@@ -189,7 +189,7 @@ public class PrositCSVWriter {
 		AminoAcidConstants aminoAcidConstants = new AminoAcidConstants();
 		
 		for (FastaEntryInterface entry : entries) {
-			ArrayList<FastaPeptideEntry> peptidesInProtein=enzyme.digestProtein(entry, 7, 30, maxMissedCleavages, new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap()), false);
+			ArrayList<FastaPeptideEntry> peptidesInProtein=enzyme.digestProtein(entry, 7, 30, maxMissedCleavages, aminoAcidConstants, false);
 			for (FastaPeptideEntry pep : peptidesInProtein) {
 				for (byte pepCharge = minCharge; pepCharge <=maxCharge; pepCharge++) {
 					String seq=pep.getSequence();
