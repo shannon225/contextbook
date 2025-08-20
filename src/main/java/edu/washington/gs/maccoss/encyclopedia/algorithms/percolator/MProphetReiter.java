@@ -26,22 +26,25 @@ public class MProphetReiter implements Runnable {
 	private final float peptideFDRThreshold;
 	private final MProphetExecutionData settings;
 	private final AminoAcidConstants aaConstants;
+	private final int seed;
 	
 	private Throwable error;
 	private MProphetResult result;
 	
 	public static void main(String[] args) throws Exception {
-		if (args.length!=3) {
-			Logger.errorLine("MProphetReiter requires three parameters in order:");
+		if (args.length!=4) {
+			Logger.errorLine("MProphetReiter requires four parameters in order:");
 			Logger.logLine("  1) Input TSV");
 			Logger.logLine("  2) Input FASTA");
 			Logger.logLine("  3) Threshold (e.g., 0.01)");
+			Logger.logLine("  4) Seed (e.g., 1)");
 		}
 		
 		SearchParameters params=SearchParameterParser.getDefaultParametersObject();
 		File inputTSV=new File(args[0]);
 		File fastaFile=new File(args[1]);
 		float threshold=Float.parseFloat(args[2]);
+		int seed=Integer.parseInt(args[3]);
 
 		Logger.logLine("Input TSV: "+inputTSV.toString());
 		Logger.logLine("Input FASTA: "+fastaFile.toString());
@@ -51,17 +54,23 @@ public class MProphetReiter implements Runnable {
 		
 		MProphetExecutionData data=new MProphetExecutionData(inputTSV, fastaFile, peptideOutputFile, peptideDecoyFile, params);
 		
-		executeMProphetTSV(data, threshold, params.getAAConstants(), 1);
+		executeMProphetTSV(data, threshold, seed, params.getAAConstants(), 1);
 	}
 	
-	public MProphetReiter(MProphetExecutionData settings, float peptideFDRThreshold, AminoAcidConstants aaConstants) {
+	public MProphetReiter(MProphetExecutionData settings, float peptideFDRThreshold, int seed, AminoAcidConstants aaConstants) {
 		this.settings = settings;
 		this.peptideFDRThreshold=peptideFDRThreshold;
 		this.aaConstants=aaConstants;
+		this.seed=seed;
 	}
 	
 	public static MProphetResult executeMProphetTSV(MProphetExecutionData commandData, float threshold, AminoAcidConstants aaConstants, int round) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
-		MProphetReiter prophet=new MProphetReiter(commandData, threshold, aaConstants);
+		int seed=1;
+		return executeMProphetTSV(commandData, threshold, seed, aaConstants, round);
+	}
+	
+	public static MProphetResult executeMProphetTSV(MProphetExecutionData commandData, float threshold, int seed, AminoAcidConstants aaConstants, int round) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
+		MProphetReiter prophet=new MProphetReiter(commandData, threshold, seed, aaConstants);
 		prophet.run();
 		return prophet.getResult();
 	}
@@ -72,7 +81,7 @@ public class MProphetReiter implements Runnable {
 
 		try {
 			MProphetDataset data = MProphetFeatureReader.parseFeatureFile(file, settings);
-			result = calculateProbabilities(data);
+			result = calculateProbabilities(data, seed);
 
 		} catch (Throwable t) {
 			Logger.errorLine("Error performing mProphet!");
@@ -82,8 +91,8 @@ public class MProphetReiter implements Runnable {
 		}
 	}
 
-	private MProphetResult calculateProbabilities(MProphetDataset dataset) throws EncyclopediaException {
-		int randomSeed=RandomGenerator.randomInt(1);
+	private MProphetResult calculateProbabilities(MProphetDataset dataset, int seed) throws EncyclopediaException {
+		int randomSeed=RandomGenerator.randomInt(seed);
 		int iterationCount=50;
 		int maxKeptModels=iterationCount/2;
 		int numIterationsPerCalculation=10;
