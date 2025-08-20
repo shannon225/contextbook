@@ -486,7 +486,7 @@ public class LibraryReportExtractor {
 					if (quantIonCorrelationLength>0) {
 						quantIonCorrelation=ByteConverter.toFloatArray(CompressionUtils.decompress(rs.getBytes(13), quantIonCorrelationLength));
 					} else {
-						quantIonCorrelation=new float[] {};
+						quantIonCorrelation=new float[quantIonIntensityLength];
 					}
 					
 					// FIXME does not read IMS out of database, currently not used so not necessary for report extracting, but would need to join with Entries table if read

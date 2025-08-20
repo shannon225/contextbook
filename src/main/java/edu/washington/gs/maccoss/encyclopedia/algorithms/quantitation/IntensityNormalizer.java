@@ -17,9 +17,10 @@ import java.util.Set;
 public interface IntensityNormalizer {
 	float normalize(float intensity, String sourceFile);
 
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	static IntensityNormalizer tic(TObjectFloatMap<? super String> ticBySourceFileMap) {
 		// Immutable copy
-		final TObjectFloatMap<? super String> ticMap = new TUnmodifiableObjectFloatMap<>(new TObjectFloatHashMap<>(ticBySourceFileMap));
+		final TObjectFloatMap<? super String> ticMap = new TUnmodifiableObjectFloatMap<>(new TObjectFloatHashMap(ticBySourceFileMap));
 
 		final float averageTic;
 		if (ticMap.size() < 1) {

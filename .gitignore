@@ -4,3 +4,4 @@
 .metadata/**
 .classpath
 /bin/
+.idea/
