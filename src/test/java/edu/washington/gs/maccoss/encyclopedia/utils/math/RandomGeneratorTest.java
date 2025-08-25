@@ -9,6 +9,14 @@ import gnu.trove.set.hash.TFloatHashSet;
 import junit.framework.TestCase;
 
 public class RandomGeneratorTest extends TestCase {
+	public void testExpectedRandomNumbers() {
+		assertEquals(12345, RandomGenerator.randomInt(0));
+		assertEquals(1103527590, RandomGenerator.randomInt(1));
+		assertEquals(-1103502900, RandomGenerator.randomInt(-1));
+		assertEquals(1043980748, RandomGenerator.randomInt(Integer.MAX_VALUE));
+		assertEquals(-2147471303, RandomGenerator.randomInt(Integer.MIN_VALUE));
+	}
+	
 	public void testRandomSequence() {
 		int seed=1;
 		String sequence=RandomGenerator.randomSequence(seed);

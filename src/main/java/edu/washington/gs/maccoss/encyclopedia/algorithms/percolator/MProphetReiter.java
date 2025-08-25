@@ -91,7 +91,7 @@ public class MProphetReiter implements Runnable {
 		}
 	}
 
-	private MProphetResult calculateProbabilities(MProphetDataset dataset, int seed) throws EncyclopediaException {
+	protected MProphetResult calculateProbabilities(MProphetDataset dataset, int seed) throws EncyclopediaException {
 		int randomSeed=RandomGenerator.randomInt(seed);
 		int iterationCount=50;
 		int maxKeptModels=iterationCount/2;
