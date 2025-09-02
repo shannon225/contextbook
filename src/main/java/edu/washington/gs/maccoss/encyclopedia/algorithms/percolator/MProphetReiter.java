@@ -107,6 +107,9 @@ public class MProphetReiter implements Runnable {
 		seedCoefficients.put("isIntegratedSignal", 0.2);
 		seedCoefficients.put("numPeaksWithGoodCorrelation", 0.1);
 		
+		seedCoefficients.put("main_var_Intensity", 1.0);
+		seedCoefficients.put("var_Shape_(weighted)", 4.0);
+		
 		double[] coefficients=new double[dataset.getFeatureNames().size()];
 		for (int i = 0; i < coefficients.length; i++) {
 			double value=seedCoefficients.get(dataset.getFeatureNames().get(i));
@@ -141,7 +144,7 @@ public class MProphetReiter implements Runnable {
 					targetFDR=0.02f;
 				}
 				ArrayList<ScoredMProphetData> data=trainingDataset.getPassingTargets(Optional.ofNullable(lda), targetFDR).x;
-				System.out.println(n+"."+i+") "+data.size()+" (targetFDR="+Math.round(targetFDR*100)+"%)"); //FIXME
+				System.out.println(n+"."+i+") "+data.size()+" (targetFDR="+Math.round(targetFDR*100)+"%) starting model: "+lda); //FIXME
 				if (data.size()==0||(i>2&&data.size()<=best)) {
 					if (previousLDA!=null) {
 						lda=previousLDA;

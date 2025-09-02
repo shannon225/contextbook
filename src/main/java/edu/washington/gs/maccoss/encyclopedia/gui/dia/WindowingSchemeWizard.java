@@ -80,7 +80,7 @@ public class WindowingSchemeWizard extends JPanel implements ActionListener, Cha
 	// follows indexing in WindowSchemeGenerator
 	private static final String[] WINDOWING_SCHEME_ITEMS=new String[] {"Normal DIA", "Staggered/Overlap DIA", "Variable Width DIA"};
 	private static JCheckBox isPhospho=new JCheckBox();
-	private final SpinnerModel numberOfWindows=new SpinnerNumberModel(25, 1, 200, 1);
+	private final SpinnerModel numberOfWindows=new SpinnerNumberModel(25, 1, 500, 1);
 	private final SpinnerModel startMz=new SpinnerNumberModel(400, 1, 2000, 1);
 	private final SpinnerModel stopMz=new SpinnerNumberModel(1000, 1, 2000, 1);
 	private final SpinnerModel marginWidth=new SpinnerNumberModel(0, 0, 5, 0.1);

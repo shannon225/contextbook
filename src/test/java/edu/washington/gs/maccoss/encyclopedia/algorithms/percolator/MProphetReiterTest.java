@@ -11,6 +11,9 @@ public class MProphetReiterTest extends TestCase {
 	
 	public void testRunSmokeTest() throws Exception {
 		ArrayList<MProphetData> targetData=new ArrayList<MProphetData>();
+		ArrayList<MProphetData> decoyData=new ArrayList<MProphetData>();
+		ArrayList<MProphetData> backgroundData=new ArrayList<MProphetData>(); // Entrapment Peptides (Incorrect Matches) - Peptides present in the background, but with no fragment ion signal in Skyline
+		
 		targetData.add(new MProphetData("GTEPSALPFVDPNARPLAPEVSIK_run1", "GTEPSALPFVDPNARPLAPEVSIK", "sp|B2RQC6|PYR1_MOUSE", new float[] {6.071846f, 0.9597988f, 0f, 4f, 4.224282f, 0.614081f, 0.967007f}, false));
 		targetData.add(new MProphetData("LALGIPLPELR_run1", "LALGIPLPELR", "sp|B2RQC6|PYR1_MOUSE", new float[] {5.773255f, 0.9718138f, 0f, 3.6f, 4.213476f, 1.567392f, 0.9676431f}, false));
 		targetData.add(new MProphetData("KVVEPELMGTPDGPC[+57.021464]YPAPPVPR_run1", "KVVEPELMGTPDGPCYPAPPVPR", "sp|B2RQC6|PYR1_MOUSE", new float[] {6.151279f, 0.9803949f, 0f, 4f, 4.082547f, 0.8166296f, 0.9703277f}, false));
@@ -144,7 +147,6 @@ public class MProphetReiterTest extends TestCase {
 		targetData.add(new MProphetData("RPPGPPLPVTTDLAL_run1", "RPPGPPLPVTTDLAL", "sp|Q9JL26|FMNL1_MOUSE", new float[] {6.103515f, 0.9866604f, 0f, 4f, 4.10871f, 0.9805532f, 0.9565766f}, false));
 		targetData.add(new MProphetData("YGC[+57.021464]EGPSHGGLPGASSEK_run1", "YGCEGPSHGGLPGASSEK", "sp|Q9WTK5|NFKB2_MOUSE", new float[] {4.30963f, 0.6381702f, 0.9996875f, 2f, 2.992368f, 0.015f, 0f}, false));
 
-		ArrayList<MProphetData> decoyData=new ArrayList<MProphetData>();
 		decoyData.add(new MProphetData("DECOY_PEC[+57.021464]LGFSYPGESIVR_run1", "PECLGFSYPGESIVR", "Decoys", new float[] {5.591766f, 0f, 0f, 1f, 4.667208f, 1.5f, 0.4397571f}, true));
 		decoyData.add(new MProphetData("DECOY_DDNVANQEVPQQQR_run1", "DDNVANQEVPQQQR", "Decoys", new float[] {1.663997f, 0f, 0f, 0f, 2.322654f, 2.5f, 0.4174688f}, true));
 		decoyData.add(new MProphetData("DECOY_PPDVPVC[+57.021464]EKTGPGMYEPALPPVR_run1", "PPDVPVCEKTGPGMYEPALPPVR", "Decoys", new float[] {5.659268f, 0f, 0f, 1f, 4.908267f, 0.2f, 0.4335879f}, true));
@@ -277,7 +279,6 @@ public class MProphetReiterTest extends TestCase {
 		decoyData.add(new MProphetData("DECOY_ASLVDMVDGTLEPIR_run1", "ASLVDMVDGTLEPIR", "Decoys", new float[] {6.180918f, 0.9717885f, 0f, 3f, 5.034064f, 2.726845f, 0.9363075f}, true));
 		decoyData.add(new MProphetData("DECOY_LLLQSQEDPTGTTGK_run1", "LLLQSQEDPTGTTGK", "Decoys", new float[] {5.892087f, 0.9868839f, 0f, 3f, 4.985222f, 8.131967f, 0.9571638f}, true));
 
-		ArrayList<MProphetData> backgroundData=new ArrayList<MProphetData>(); // Entrapment Peptides (Incorrect Matches) - Peptides present in the background, but with no fragment ion signal in Skyline
 		backgroundData.add(new MProphetData("IKEWYEK_run1", "40.45857", "IKEWYEK", new float[] {6.798676f, 0.2072103f, 56.731f, 1f, 0.9396393f, 5.291936f, 0.312705f},  false));
 		backgroundData.add(new MProphetData("FVSTPVGADGSSAEPR_run1", "60.8319", "FVSTPVGADGSSAEPR", new float[] {6.327935f, 0.1952618f, 15.57321f, 2f, 5.091704f, 2.204087f, 0.5238044f},  false));
 		backgroundData.add(new MProphetData("LNSLTLAR_run1", "70.8419", "LNSLTLAR", new float[] {6.401759f, 0.4160653f, 10.01135f, 2f, 5.244851f, 0.6474048f, 0.4217267f},  false));

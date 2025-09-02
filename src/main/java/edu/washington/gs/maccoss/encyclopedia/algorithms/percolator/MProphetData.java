@@ -7,11 +7,20 @@ public class MProphetData implements Comparable<MProphetData> {
 	private final float[] data;
 	private final boolean isDecoy;
 	
-	public MProphetData(String id, String sequence, String protein, float[] data, boolean isDecoy) {
+	// forces N/A data to be 0.0
+	public MProphetData(String id, String sequence, String protein, float[] startingData, boolean isDecoy) {
 		this.id = id;
 		this.sequence = sequence;
 		this.protein = protein;
-		this.data = data;
+		this.data = new float[startingData.length];
+		for (int i = 0; i < data.length; i++) {
+			if (Float.isNaN(startingData[i])) {
+				data[i]=0.0f;
+			} else {
+				data[i]=startingData[i];
+			}
+		}
+		
 		this.isDecoy=isDecoy;
 	}
 	
