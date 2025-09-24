@@ -21,6 +21,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakChromatogram;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.QuantitativePeakCorrelationComparator;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.QuantitativePeakIntensityComparator;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.SpectrumWithCharge;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
@@ -422,6 +423,28 @@ public class LibraryEntry implements Comparable<PeptidePrecursor>, SpectrumWithC
 			}
 		}
 		return peaks;
+	}
+	
+	public ArrayList<Peak> getAtLeastNPeaks(int atLeastNPeaks, float minimumCorrelation) {
+		ArrayList<PeakChromatogram> peaks=new ArrayList<>();
+		int numPeaks=Math.min(massArray.length, correlationArray.length);
+		for (int i=0; i<numPeaks; i++) {
+			if (intensityArray[i]>0) {
+				peaks.add(new PeakChromatogram(massArray[i], intensityArray[i], correlationArray[i], quantifiedIonsArray[i]));
+			}
+		}
+		Collections.sort(peaks, new QuantitativePeakCorrelationComparator()); // sort by correlation 
+		Collections.reverse(peaks);
+		
+		ArrayList<Peak> retained=new ArrayList<Peak>();
+		for (PeakChromatogram peak : peaks) {
+			if (peak.getCorrelation()>minimumCorrelation||retained.size()<atLeastNPeaks) {
+				retained.add(peak);
+			}
+		}
+
+		Collections.sort(retained); // sort by m/z
+		return retained;
 	}
 
 	public LibraryEntry getDecoy(SearchParameters parameters) {

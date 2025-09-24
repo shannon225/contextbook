@@ -5,7 +5,6 @@ import java.awt.Font;
 import java.util.ArrayList;
 import java.util.Optional;
 
-import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.plot.CombinedDomainXYPlot;
@@ -17,29 +16,36 @@ import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 
 public class ChromatogramCharter {
-	private static final int FONT_SIZE = 16;
+	private static final int DEFAULT_FONT_SIZE = 16;
 
 	public static ExtendedChartPanel createChart(Optional<ArrayList<XYTrace>> precursors, Optional<ArrayList<XYTrace>> fragments) {
-		return createChart(precursors, fragments, 0.0, 0.0);
+		return createChart(precursors, fragments, 0.0, 0.0, DEFAULT_FONT_SIZE);
 	}
+	public static ExtendedChartPanel createChart(Optional<ArrayList<XYTrace>> precursors, Optional<ArrayList<XYTrace>> fragments, int fontSize) {
+		return createChart(precursors, fragments, 0.0, 0.0, fontSize);
+	}
+
 	public static ExtendedChartPanel createChart(Optional<ArrayList<XYTrace>> precursors, Optional<ArrayList<XYTrace>> fragments, double globalMaxYPrecursor, double globalMaxYFragment) {
+		return createChart(precursors, fragments, globalMaxYPrecursor, globalMaxYFragment, DEFAULT_FONT_SIZE);
+	}
+	public static ExtendedChartPanel createChart(Optional<ArrayList<XYTrace>> precursors, Optional<ArrayList<XYTrace>> fragments, double globalMaxYPrecursor, double globalMaxYFragment, int fontSize) {
 		if (!precursors.isPresent()&&!fragments.isPresent()) {
 			throw new EncyclopediaException("Precursors and fragments can't both be missing!");
 		} else if (!precursors.isPresent()) {
-			ExtendedChartPanel fragmentPanel=Charter.getChart("Retention Time (min)", "MS2", false, globalMaxYFragment, FONT_SIZE, fragments.get().toArray(new XYTrace[0]));
+			ExtendedChartPanel fragmentPanel=Charter.getChart("Retention Time (min)", "MS2", false, globalMaxYFragment, fontSize, fragments.get().toArray(new XYTrace[0]));
 			return fragmentPanel;
 		} else if (!fragments.isPresent()) {
-			ExtendedChartPanel precursorPanel=Charter.getChart("Retention Time (min)", "MS1", false, globalMaxYPrecursor, FONT_SIZE, precursors.get().toArray(new XYTrace[0]));
+			ExtendedChartPanel precursorPanel=Charter.getChart("Retention Time (min)", "MS1", false, globalMaxYPrecursor, fontSize, precursors.get().toArray(new XYTrace[0]));
 			return precursorPanel;
 		}
-		ExtendedChartPanel fragmentPanel=Charter.getChart("Retention Time (min)", "MS2", false, globalMaxYFragment, FONT_SIZE, fragments.get().toArray(new XYTrace[0]));
-		ExtendedChartPanel precursorPanel=Charter.getChart("Retention Time (min)", "MS1", false, globalMaxYPrecursor, FONT_SIZE, precursors.get().toArray(new XYTrace[0]));
+		ExtendedChartPanel fragmentPanel=Charter.getChart("Retention Time (min)", "MS2", false, globalMaxYFragment, fontSize, fragments.get().toArray(new XYTrace[0]));
+		ExtendedChartPanel precursorPanel=Charter.getChart("Retention Time (min)", "MS1", false, globalMaxYPrecursor, fontSize, precursors.get().toArray(new XYTrace[0]));
 		precursorPanel.getChart().getXYPlot().getRangeAxis().setInverted(true);
 
 		ValueAxis domainAxis = fragmentPanel.getChart().getXYPlot().getDomainAxis();
-		setFonts(domainAxis);
-		setFonts(fragmentPanel.getChart().getXYPlot().getRangeAxis());
-		setFonts(precursorPanel.getChart().getXYPlot().getRangeAxis());
+		setFonts(domainAxis, fontSize);
+		setFonts(fragmentPanel.getChart().getXYPlot().getRangeAxis(), fontSize);
+		setFonts(precursorPanel.getChart().getXYPlot().getRangeAxis(), fontSize);
 		
 		CombinedDomainXYPlot parent=new CombinedDomainXYPlot(domainAxis);
 		parent.setGap(-1.0);
@@ -67,9 +73,9 @@ public class ChromatogramCharter {
 		return chartPanel;
 	}
 
-	private static void setFonts(ValueAxis axis) {
-		axis.setTickLabelFont(new Font(Charter.BASE_FONT_NAME, Font.PLAIN, FONT_SIZE));
-		axis.setLabelFont(new Font(Charter.BASE_FONT_NAME, Font.PLAIN, FONT_SIZE));
+	private static void setFonts(ValueAxis axis, int fontSize) {
+		axis.setTickLabelFont(new Font(Charter.BASE_FONT_NAME, Font.PLAIN, fontSize));
+		axis.setLabelFont(new Font(Charter.BASE_FONT_NAME, Font.PLAIN, fontSize));
 	}
 	
 	public static ArrayList<XYTrace> invert(ArrayList<XYTrace> traces) {

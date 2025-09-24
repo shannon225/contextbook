@@ -1120,6 +1120,27 @@ public class LibraryFile extends SQLFile implements LibraryInterface {
 			return allEntries;
 		}
 	}
+	
+	public ArrayList<LibraryEntry> getEntriesFromSequences(ArrayList<String> peptideSeqs, boolean sqrt) throws IOException, SQLException, DataFormatException {
+		try (Connection c=getConnection()) {
+			final ArrayList<LibraryEntry> allEntries=new ArrayList<LibraryEntry>();
+			try (PreparedStatement s=c.prepareStatement("select "+"e.PrecursorMZ, "+"e.PrecursorCharge, "+"e.PeptideModSeq, "+"e.Copies, "+"e.RTInSeconds, "+"e.Score, "+"e.MassEncodedLength, "
+					+"e.MassArray, "+"e.IntensityEncodedLength, "+"e.IntensityArray, "+"e.CorrelationEncodedLength, "+"e.CorrelationArray blob, "+"e.QuantifiedIonsArray, "+"e.RTInSecondsStart," +
+					"e.RTInSecondsStop, "+"e.MedianChromatogramEncodedLength, "+"e.MedianChromatogramArray, "+"group_concat(p.ProteinAccession, '"+PSMData.ACCESSION_TOKEN+"') ProteinAccessions, "+"e.SourceFile, "+"e.IonMobility "
+					+"from "
+					+"entries e "+"left join peptidetoprotein p "+"on "+"e.PeptideSeq=p.PeptideSeq "+"and not p.isdecoy "+"where e.PeptideSeq = ? "+"group by e.rowid;")) {
+				for (String peptideSeq : peptideSeqs) {
+					s.setString(1, peptideSeq);
+					ResultSet rs=s.executeQuery();
+
+					final ArrayList<LibraryEntry> libraryEntries = extractEntries(sqrt, rs, SIMPLE_AA_CONSTANTS);
+					allEntries.addAll(libraryEntries);
+				}
+
+			}
+			return allEntries;
+		}
+	}
 
 	private ArrayList<LibraryEntry> extractEntries(boolean sqrt, ResultSet rs, AminoAcidConstants aaConstants) throws SQLException, IOException, DataFormatException {
 		String peptideModSeq;

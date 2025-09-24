@@ -139,7 +139,7 @@ public class MProphetReiter implements Runnable {
 			for (int i = 0; i < numIterationsPerCalculation; i++) {
 				float targetFDR=0.01f;
 				if (i==0) {
-					targetFDR=0.15f;
+					targetFDR=0.15f; // first time through Skyline starts with 15% of the target data, not a 15% FDR. This ensures that the first round of training can happen!
 				} else if (i==1) {
 					targetFDR=0.02f;
 				}

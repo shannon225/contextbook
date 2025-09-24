@@ -420,22 +420,21 @@ public class MultiResultsBrowserPanel extends JPanel {
 		boolean isPrecursors=precursorsPlots.isSelected();
 		boolean isFragments=fragmentsPlots.isSelected();
 		if (files.size()<cols) cols=files.size();
-		
-		JPanel right=new JPanel(new GridLayout(0, isSimplify?1:cols));
-		right.setBackground(Color.WHITE);
-		FragmentationModel model=PeptideUtils.getPeptideModel(entry.getPeptideModSeq(), parameters.getAAConstants());
-		FragmentIon[] primaryIonObjects=model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge(), false);
-		Logger.logLine("Graphing "+entry.getPeptideModSeq()+" ("+primaryIonObjects.length+")"+"...");
-		
+
 		try {
+			JPanel chromatogramsPanel=new JPanel(new GridLayout(0, isSimplify?1:cols));
+			chromatogramsPanel.setBackground(Color.WHITE);
+			FragmentationModel model=PeptideUtils.getPeptideModel(entry.getPeptideModSeq(), parameters.getAAConstants());
+			FragmentIon[] primaryIonObjects=model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge(), false);
+			Logger.logLine("Graphing "+entry.getPeptideModSeq()+" ("+primaryIonObjects.length+")"+"...");
 			
 			double globalMaxYFragment=0.0;
 			double globalMaxYPrecursor=0.0;
 			
 			ArrayList<ArrayList<XYTrace>> allFragmentTraces=new ArrayList<ArrayList<XYTrace>>();
 			ArrayList<ArrayList<XYTrace>> allPrecursorTraces=new ArrayList<ArrayList<XYTrace>>();
-			for (int i=0; i<origSampleNames.length; i++) {
-				String sampleName = origSampleNames[i];
+			for (int i=0; i<sampleNames.length; i++) {
+				String sampleName = sampleNames[i];
 				QuantitativeDIAData quantitativeData=entry.getQuantitativeData(sampleName);
 				StripeFileInterface file=files.get(i);
 
@@ -505,7 +504,7 @@ public class MultiResultsBrowserPanel extends JPanel {
 						chartPanel.setMinimumDrawHeight(0);
 						chartPanel.setMaximumDrawWidth(Integer.MAX_VALUE);
 						chartPanel.setMaximumDrawHeight(Integer.MAX_VALUE);
-				        right.add(chartPanel);
+				        chromatogramsPanel.add(chartPanel);
 				        
 						rangeAxis.setLabelFont(new Font("News Gothic MT", Font.PLAIN, 12));
 					} else {
@@ -527,12 +526,12 @@ public class MultiResultsBrowserPanel extends JPanel {
 					ChartPanel panel=ChromatogramCharter.createChart(precursors, fragments, globalMaxYPrecursor, globalMaxYFragment);
 					
 					panel.getChart().setTitle(sampleNames[i]);
-					right.add(panel);
+					chromatogramsPanel.add(panel);
 					
 				}
 			}
 	
-			split.setRightComponent(right);
+			split.setRightComponent(chromatogramsPanel);
 
 		} catch (DataFormatException sqle) {
 			Logger.errorLine("Error reading raw files!");

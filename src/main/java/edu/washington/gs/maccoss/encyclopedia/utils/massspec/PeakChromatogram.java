@@ -2,12 +2,8 @@ package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.Quadruplet;
-import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
-import gnu.trove.list.array.TDoubleArrayList;
-import gnu.trove.list.array.TFloatArrayList;
 
 public class PeakChromatogram extends Peak {
 	private final float correlation;
