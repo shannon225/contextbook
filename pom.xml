@@ -566,6 +566,7 @@
 			<version>1.7.36</version>
 		</dependency>
 
+		<!-- CUT FOR RELEASE -->
 		<dependency>
 			<groupId>
 				org.deeplearning4j</groupId>
@@ -595,6 +596,8 @@
 			<artifactId>openblas</artifactId>
 			<version>0.3.21-1.5.8</version>
 		</dependency>
+		<!-- -->
+		
 		<dependency>
 			<groupId>
 				org.json</groupId>
