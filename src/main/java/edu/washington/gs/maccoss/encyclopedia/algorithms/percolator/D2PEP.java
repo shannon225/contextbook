@@ -9,7 +9,7 @@ import java.util.List;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Function;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.LinearInterpolatedFunction;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.MonotonicCubicSplineInterpolatedFunction;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 
@@ -118,9 +118,9 @@ public class D2PEP {
 		}
         Collections.sort(knots);
 
-        LinearInterpolatedFunction function=new LinearInterpolatedFunction(knots);
+        MonotonicCubicSplineInterpolatedFunction function=new MonotonicCubicSplineInterpolatedFunction(knots, false);
         
-//      for (int i = 0; i < binned.x.length; i++) {
+//        for (int i = 0; i < binned.x.length; i++) {
 //			System.out.println(binned.x[i]+"\t"+binned.y[i]+"\t"+pepFit[i]+"\t"+function.getYValue((float)binned.x[i]));
 //		}
         
@@ -233,6 +233,89 @@ public class D2PEP {
             }
         }
         return fitted;
+    }
+    
+    /**
+     * I-spline style monotonic interpolation using a cumulative smooth-step basis.
+     * Matches the Python behavior:
+     *
+     *   f(x) = yB[0] + sum_{j=1}^{n-1} (yB[j] - yB[j-1]) * I_j(x)
+     *
+     * where
+     *   I_j(x) = 0                       if x <= xB[j-1]
+     *            3u^2 - 2u^3             if xB[j-1] < x < xB[j]
+     *            1                       if x >= xB[j]
+     *
+     * with u = (x - xB[j-1]) / (xB[j] - xB[j-1]).
+     *
+     * Requirements:
+     *  - xB must be strictly increasing (ties are skipped safely).
+     *  - yB should be monotone (non-decreasing for increasing f, or non-increasing for decreasing f).
+     *
+     * @param xB    knot (block-center) x positions, length n >= 0
+     * @param yB    knot values (block means), length n
+     * @param xEval evaluation points, length m
+     * @return interpolated values f(xEval), length m
+     */
+    public static double[] iSplineMonotonicInterpolate(double[] xB, double[] yB, double[] xEval) {
+        final int n = xB == null ? 0 : xB.length;
+
+        if (n == 0) {
+            return new double[0]; // mirrors the Python function
+        }
+        if (n == 1) {
+            double[] out = new double[xEval.length];
+            Arrays.fill(out, yB[0]);
+            return out;
+        }
+
+        // Defensive copy not strictly needed; do it if you might mutate upstream arrays.
+        xB = Arrays.copyOf(xB, n);
+        yB = Arrays.copyOf(yB, n);
+
+        // Precompute segment deltas (allowing positive OR negative for either monotone direction)
+        final double[] d = new double[n - 1];
+        for (int j = 1; j < n; j++) {
+            d[j - 1] = yB[j] - yB[j - 1];
+        }
+
+        final int m = xEval.length;
+        final double[] f = new double[m];
+        Arrays.fill(f, yB[0]); // base level
+
+        // Accumulate smooth cumulative contributions for each interval
+        for (int j = 1; j < n; j++) {
+            final double xl = xB[j - 1];
+            final double xr = xB[j];
+            final double dx = xr - xl;
+
+            if (!(dx > 0)) {
+                // skip zero-width or invalid intervals
+                continue;
+            }
+
+            final double dj = d[j - 1];
+
+            // For each xEval, add dj * I_j(x)
+            // I_j(x) = smoothstep(u) with u in [0,1], clipped outside.
+            for (int i = 0; i < m; i++) {
+                double u = (xEval[i] - xl) / dx;
+                if (u <= 0.0) {
+                    // I_j = 0
+                    continue;
+                } else if (u >= 1.0) {
+                    // I_j = 1
+                    f[i] += dj;
+                } else {
+                    // cubic smoothstep: 3u^2 - 2u^3
+                    double u2 = u * u;
+                    double s = (3.0 * u2) - (2.0 * u2 * u);
+                    f[i] += dj * s;
+                }
+            }
+        }
+
+        return f;
     }
 
     // Example usage
