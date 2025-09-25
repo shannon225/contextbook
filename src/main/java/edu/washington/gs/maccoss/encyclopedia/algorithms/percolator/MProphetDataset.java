@@ -1,6 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.algorithms.percolator;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Optional;
 
@@ -9,6 +10,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.BenjaminiHochberg;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.LinearDiscriminantAnalysis;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.LocalFDR;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.QuickMedian;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.distributions.Gaussian;
@@ -90,28 +92,23 @@ public class MProphetDataset {
 		return new MProphetDataset(folds[0].featureNames, folds[0].startingScoreIndex, targets, decoys);
 	}
 
-	public Pair<ArrayList<ScoredMProphetData>, Float> getPassingTargets(Optional<LinearDiscriminantAnalysis> optionalLDA, float targetFDR) {
-		return getPassingTargets(optionalLDA, targetFDR, false);
+	public Pair<ArrayList<ScoredMProphetData>, Float> getPassingTargetsByFDR(Optional<LinearDiscriminantAnalysis> optionalLDA, float targetFDR) {
+		return getPassingTargetsByFDR(optionalLDA, targetFDR, false);
 	}
-	public Pair<ArrayList<ScoredMProphetData>, Float> getPassingTargets(Optional<LinearDiscriminantAnalysis> optionalLDA, float targetFDR, boolean getDecoysInstead) {
-		Gaussian nullDistribution = getDecoyDistribution(optionalLDA);
-
-		TFloatArrayList targetScores=new TFloatArrayList();
-		TDoubleArrayList targetPValues=new TDoubleArrayList();
-		
+	public Pair<ArrayList<ScoredMProphetData>, Float> getPassingTargetsByFDR(Optional<LinearDiscriminantAnalysis> optionalLDA, float targetFDR, boolean getDecoysInstead) {
+		// choose the right dataset to work with
 		ArrayList<MProphetData> dataset=targetPeptideData;
 		if (getDecoysInstead) {
 			dataset=decoyPeptideData;
 		}
 		
-		for (MProphetData mProphetData : dataset) {
-			float score;
-			if (optionalLDA.isPresent()) {
-				score=optionalLDA.get().getScore(mProphetData.getData());
-			} else {
-				score=mProphetData.getData()[startingScoreIndex];
-			}
-			targetScores.add(score);
+		TFloatArrayList targetScores = getScoresForDataset(optionalLDA, dataset);
+
+		// calculate p-values for the scores
+		Gaussian nullDistribution = getDecoyDistribution(optionalLDA);
+		TDoubleArrayList targetPValues=new TDoubleArrayList();
+		for (int i = 0; i < targetScores.size(); i++) {
+			float score=targetScores.get(i);
 			double pvalue=nullDistribution.getComplementaryCDF(score);
 			if (Double.isNaN(pvalue)) {
 				targetPValues.add(1.0);
@@ -120,6 +117,7 @@ public class MProphetDataset {
 			}
 		}
 		
+		// calculate FDRs using B-H approach
 		double[] pValueArray = targetPValues.toArray();
 		double pi0=LocalFDR.estimatePi0(pValueArray);
 		double[] targetFDRValues=BenjaminiHochberg.calculateAdjustedPValues(pValueArray);
@@ -135,6 +133,38 @@ public class MProphetDataset {
 			}			
 		}
 		return new Pair<ArrayList<ScoredMProphetData>, Float>(returnedData, (float)pi0);
+	}
+	
+	public ArrayList<ScoredMProphetData> getPassingTargetsByPercentage(Optional<LinearDiscriminantAnalysis> optionalLDA, float topNPercentage) {
+		ArrayList<MProphetData> dataset=targetPeptideData;
+		TFloatArrayList targetScores = getScoresForDataset(optionalLDA, dataset);
+		
+		float[] scoreArray = targetScores.toArray();
+		float minimumScore=QuickMedian.select(scoreArray.clone(), 1.0f-topNPercentage);
+
+		ArrayList<ScoredMProphetData> returnedData=new ArrayList<ScoredMProphetData>();
+		for (int i = 0; i < scoreArray.length; i++) {
+			if (scoreArray[i]>=minimumScore) {
+				ScoredMProphetData data=new ScoredMProphetData(dataset.get(i), targetScores.get(i), 0.0f, 0.0f, 0.0f);
+				returnedData.add(data);
+			}			
+		}
+		return returnedData;
+	}
+
+	private TFloatArrayList getScoresForDataset(Optional<LinearDiscriminantAnalysis> optionalLDA, ArrayList<MProphetData> dataset) {
+		// calculate the scores for each entry in the dataset
+		TFloatArrayList targetScores=new TFloatArrayList();
+		for (MProphetData mProphetData : dataset) {
+			float score;
+			if (optionalLDA.isPresent()) {
+				score=optionalLDA.get().getScore(mProphetData.getData());
+			} else {
+				score=mProphetData.getData()[startingScoreIndex];
+			}
+			targetScores.add(score);
+		}
+		return targetScores;
 	}
 
 	private Gaussian getDecoyDistribution(Optional<LinearDiscriminantAnalysis> optionalLDA) {
