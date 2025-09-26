@@ -2,10 +2,6 @@ package edu.washington.gs.maccoss.encyclopedia.utils.math;
 
 import java.util.ArrayList;
 
-import org.apache.commons.math3.linear.LUDecomposition;
-import org.apache.commons.math3.linear.MatrixUtils;
-import org.apache.commons.math3.linear.RealMatrix;
-
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 
@@ -120,7 +116,6 @@ public class LinearDiscriminantAnalysis implements ScoreCombiner, Comparable<Lin
 			meanDiff[i]=meanPos[i]-meanNeg[i];
 		}
 		
-		
 		// normalize by the average of the columns in both matrices 
 		double[][] meanCorrectedPos=MatrixMath.subtract(posData, meanAll);
 		double[][] meanCorrectedNeg=MatrixMath.subtract(negData, meanAll);
@@ -140,7 +135,6 @@ public class LinearDiscriminantAnalysis implements ScoreCombiner, Comparable<Lin
 				}
 			}
 		}
-		double[][] pooledCovarSaved=MatrixMath.multiply(pooledCovar, 1.0);
 		
 		// The inverse covariance is a measure of precision, while covariance is a measure of dispersion. 
 		// Increased dispersion occurs when values are farther apart and the more they co-vary with other 

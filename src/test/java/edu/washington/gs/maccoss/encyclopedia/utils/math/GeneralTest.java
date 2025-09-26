@@ -91,6 +91,15 @@ public class GeneralTest extends TestCase {
 		}
 	}
 	
+	public void testSumTopN() {
+		float[] f=new float[] {112.29789f,423.9019f,1224.1725f,2097.833f,2401.0515f,2442.4944f,1957.5907f,1112.6595f,663.86957f,70.27865f,90.12375f};
+		assertEquals(0f, General.sumTopN(f, 0), 0.001f);
+		assertEquals(2442.4944f, General.sumTopN(f, 1), 0.001f);
+		assertEquals(4843.546f, General.sumTopN(f, 2), 0.001f);
+		assertEquals(6941.379f, General.sumTopN(f, 3), 0.001f);
+		assertEquals(12596.272f, General.sumTopN(f, 99999), 0.001f);
+	}
+	
 	public void testArrayIncrement() {
 		int[] indices=new int[2];
 		for (int i=0; i<1000; i++) {

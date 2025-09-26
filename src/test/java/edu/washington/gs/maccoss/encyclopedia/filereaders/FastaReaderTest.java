@@ -161,9 +161,47 @@ public class FastaReaderTest extends TestCase {
 		}
 	}
 	
+	// check for equal peptides between fastas
 	public static void main(String[] args) throws Exception {
 		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
-		File f=new File("/Users/searleb/Downloads/uniprotkb_proteome_UP000005640_2024_01_07.fasta");
+		
+		
+		File f1=new File("/Users/searleb/Downloads/UP000001940_6239.fasta");
+		File f2=new File("/Users/searleb/Downloads/Fasta_Target_only_CHIMERYS_Benchmark_human-canonical.fasta");
+		DigestionEnzyme enzyme = DigestionEnzyme.getEnzyme("Trypsin");
+
+		HashSet<String> matches=new HashSet<String>();
+		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f1, parameters);
+		for (FastaEntryInterface entry : entries) {
+			ArrayList<FastaPeptideEntry> peptides=enzyme.digestProtein(entry, 8, 40, 2, parameters.getAAConstants(), false);
+			for (FastaPeptideEntry peptide : peptides) {
+				matches.add(peptide.getSequence().replace("I", "L"));
+			}			
+		}
+
+		HashSet<String> matches2=new HashSet<String>();
+		ArrayList<FastaEntryInterface> entries2=FastaReader.readFasta(f2, parameters);
+		for (FastaEntryInterface entry : entries2) {
+			ArrayList<FastaPeptideEntry> peptides=enzyme.digestProtein(entry, 8, 40, 2, parameters.getAAConstants(), false);
+			for (FastaPeptideEntry peptide : peptides) {
+				matches2.add(peptide.getSequence().replace("I", "L"));
+			}			
+		}
+		
+		int collisions=0;
+		for (String peptide : matches) {
+			if (matches2.contains(peptide)) {
+				collisions++;
+			}
+		}
+		
+		System.out.println(collisions+", "+matches.size()+", "+matches2.size());		
+	}
+	
+	// check for reverse and forward matches
+	public static void mainJ(String[] args) throws Exception {
+		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
+		File f=new File("/Users/searleb/Downloads/UP000001940_6239.fasta");
 		DigestionEnzyme enzyme = DigestionEnzyme.getEnzyme("Trypsin");
 
 		int counter=0;

@@ -142,11 +142,18 @@ public class MProphetReiter implements Runnable {
 			for (int i = 0; i < numIterationsPerCalculation; i++) {
 				float targetFDR=0.01f;
 				if (i==0) {
-					targetFDR=0.15f;
+					targetFDR=0.15f; // first time through Skyline starts with 15% of the target data, not a 15% FDR. This ensures that the first round of training can happen!
 				} else if (i==1) {
 					targetFDR=0.02f;
 				}
-				ArrayList<ScoredMProphetData> data=trainingDataset.getPassingTargets(Optional.ofNullable(lda), targetFDR).x;
+				
+				ArrayList<ScoredMProphetData> data;
+				if (i==0) {
+					data=trainingDataset.getPassingTargetsByPercentage(Optional.ofNullable(lda), targetFDR);
+				} else {
+					data=trainingDataset.getPassingTargetsByFDR(Optional.ofNullable(lda), targetFDR).x;
+				}
+				
 				System.out.println(n+"."+i+") "+data.size()+" (targetFDR="+Math.round(targetFDR*100)+"%) starting model: "+lda); //FIXME
 				if (data.size()==0||(i>2&&data.size()<=best)) {
 					if (previousLDA!=null) {
@@ -175,8 +182,8 @@ public class MProphetReiter implements Runnable {
 			if (lda==null) {
 				Logger.logLine("Iteration "+(n+1)+": Failed to generate a meaningful model!");
 			} else {
-				Pair<ArrayList<ScoredMProphetData>, Float> data=testingDataset.getPassingTargets(Optional.ofNullable(lda), 0.01f);
-				Pair<ArrayList<ScoredMProphetData>, Float> seedData=testingDataset.getPassingTargets(Optional.ofNullable(seedModel), 0.01f);
+				Pair<ArrayList<ScoredMProphetData>, Float> data=testingDataset.getPassingTargetsByFDR(Optional.ofNullable(lda), 0.01f);
+				Pair<ArrayList<ScoredMProphetData>, Float> seedData=testingDataset.getPassingTargetsByFDR(Optional.ofNullable(seedModel), 0.01f);
 				if (seedData.x.size()>data.x.size()) {	
 					models.add(new ScoredObject<LinearDiscriminantAnalysis>(seedData.x.size(), seedModel));
 					Logger.logLine("Iteration "+(n+1)+": prefer seed model, "+seedData.x.size()+"/"+testingDataset.getTargetData().size()+" passing, pi0:"+seedData.y);
@@ -203,12 +210,12 @@ public class MProphetReiter implements Runnable {
 			averageModel=LinearDiscriminantAnalysis.average(bestModels);
 		}
 
-		Pair<ArrayList<ScoredMProphetData>, Float> finalData=dataset.getPassingTargets(Optional.ofNullable(averageModel), Float.MAX_VALUE);
+		Pair<ArrayList<ScoredMProphetData>, Float> finalData=dataset.getPassingTargetsByFDR(Optional.ofNullable(averageModel), Float.MAX_VALUE);
 		int passingCount=0;
 		for (ScoredMProphetData data : finalData.x) {
 			if (data.fdr<0.01) passingCount++;
 		}
-		Pair<ArrayList<ScoredMProphetData>, Float> finalDecoyData=dataset.getPassingTargets(Optional.ofNullable(averageModel), Float.MAX_VALUE, true);
+		Pair<ArrayList<ScoredMProphetData>, Float> finalDecoyData=dataset.getPassingTargetsByFDR(Optional.ofNullable(averageModel), Float.MAX_VALUE, true);
 
 		// report model for logging
 		Logger.logLine("Final model: "+passingCount+"/"+dataset.getTargetData().size()+" passing, pi0:"+finalData.y);

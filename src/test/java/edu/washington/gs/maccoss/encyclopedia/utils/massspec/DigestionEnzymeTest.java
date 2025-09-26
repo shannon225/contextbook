@@ -135,6 +135,38 @@ public class DigestionEnzymeTest extends TestCase {
 		String reversed=enzyme.reverseProtein(sequence, aminoAcidConstants);
 		assertEquals("MSYASSFLFLLSIFTVWRGFVRRDHAKSHAVERFKDFNEEGLKAVHDEFPCQQLYQAFAILVLKLAFETVENVKTDCNEASEDAVCKSDGFLTHLKLLTAVTCREACCDAMEGYTKQQLFCENEPEH", reversed);
 	}
+	
+
+	public void testNTermMHandling() {
+		String bsa=">ALBU_HUMAN Serum albumin OS=Homo sapiens GN=ALB PE=1 SV=2\n"+"MWVTFISLLFLFSSAYSRGVFRRDAHKSEVAHRFKDLGEENFKALVLIAFAQYLQQCPF\n"
+				+"EDHVKLVNEVTEFAKTCVADESAENCDKSLHTLFGDKLCTVATLRETYGEMADCCAKQEPENECFLQH\n";
+		
+		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
+		FastaEntryInterface entry=FastaReader.readFasta(bsa, "", parameters).get(0);
+		
+		DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
+		HashSet<String> expected=new HashSet<String>();
+		expected.add("MWVTFISLLFLFSSAYSR");
+		expected.add("WVTFISLLFLFSSAYSR");
+		expected.add("DLGEENFK");
+		expected.add("ALVLIAFAQYLQQC[57.0214635]PFEDHVK");
+		expected.add("LVNEVTEFAK");
+		expected.add("TC[57.0214635]VADESAENC[57.0214635]DK");
+		expected.add("SLHTLFGDK");
+		expected.add("LC[57.0214635]TVATLR");
+		expected.add("ETYGEMADC[57.0214635]C[57.0214635]AK");
+		expected.add("QEPENEC[57.0214635]FLQH");
+
+		ModificationMassMap variableMods=new ModificationMassMap(); //"C=14.01565");
+		AminoAcidConstants constants=new AminoAcidConstants(AminoAcidConstants.getFixedModsMap("C+57 (Carbamidomethyl)"), variableMods);
+
+		ArrayList<FastaPeptideEntry> sequences=enzyme.digestProtein(entry, 8, 40, 0, true, constants, false);
+		assertEquals(expected.size(), sequences.size());
+		for (FastaPeptideEntry peptide : sequences) {
+			assertTrue(expected.contains(peptide.getSequence()));
+		}
+	}
+		
 
 	public void testFixedModsNoNTermMHandling() {
 		String bsa=">ALBU_HUMAN Serum albumin OS=Homo sapiens GN=ALB PE=1 SV=2\n"+"MWVTFISLLFLFSSAYSRGVFRRDAHKSEVAHRFKDLGEENFKALVLIAFAQYLQQCPF\n"

@@ -1,5 +1,9 @@
 EncyclopeDIA changelog for user-facing changes:
 
+TODO:
+ - Feature: add true min-max for TDC
+ - 
+
 encyclopedia-5.0.0-SNAPSHOT
  - Feature: added new scoring EncyclopeDIA module that is more quant-focused
  - Feature: added TDC-based FDR estimation

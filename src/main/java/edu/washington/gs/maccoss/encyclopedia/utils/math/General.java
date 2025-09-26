@@ -1,5 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.math;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -615,6 +616,18 @@ public class General {
 	public static float sum(float[] v) {
 		if (v==null||v.length==0) return 0.0f;
 		return sum(v, new IntRange(0, v.length-1));
+	}
+
+	public static float sumTopN(float[] v, int n) {
+		if (v==null||v.length==0) return 0.0f;
+		if (n==0) return 0.0f;
+		if (v.length<=n) {
+			return sum(v, new IntRange(0, v.length-1));
+		}
+		float[] copy=v.clone();
+		Arrays.sort(copy);
+
+		return sum(copy, new IntRange(copy.length-n, copy.length-1));
 	}
 
 	public static int sum(int[] v) {
