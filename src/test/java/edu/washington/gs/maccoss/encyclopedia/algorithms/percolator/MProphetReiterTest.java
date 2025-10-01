@@ -402,8 +402,8 @@ public class MProphetReiterTest extends TestCase {
 
 		ArrayList<MProphetData> peptideData=new ArrayList<MProphetData>();
 		
-		int backgroundToAdd = 10;
-		int targetsToAdd = 100; 
+		int backgroundToAdd = 0;
+		int targetsToAdd = 131; 
 		int decoysToAdd = backgroundToAdd + targetsToAdd;  // the number of decoys should match the number of total peptides
 		
 		ArrayList<MProphetData> subsetBackground = new ArrayList<>(backgroundData.subList(0, Math.min(backgroundToAdd, backgroundData.size())));

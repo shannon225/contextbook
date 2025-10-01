@@ -109,8 +109,8 @@ public class MProphetReiter implements Runnable {
 		
 		seedCoefficients.put("main_var_Intensity", 1.0); // W0
 		seedCoefficients.put("var_Shape_(weighted)", 4.0); // W4
-		seedCoefficients.put("var_Co-elution_(weighted)",-0.05); // W5
-		seedCoefficients.put("var_Co-elution_count",1.0); // W1
+		seedCoefficients.put("var_Co-elution_(weighted)", -0.05); // W5
+		seedCoefficients.put("var_Co-elution_count", 1.0); // W1
 		
 		
 		double[] coefficients=new double[dataset.getFeatureNames().size()];
