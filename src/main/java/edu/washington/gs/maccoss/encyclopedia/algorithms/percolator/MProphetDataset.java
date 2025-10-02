@@ -119,7 +119,8 @@ public class MProphetDataset {
 		
 		// calculate FDRs using B-H approach
 		double[] pValueArray = targetPValues.toArray();
-		double pi0=LocalFDR.estimatePi0(pValueArray);
+		double minimumPi0 = 0.05;
+		double pi0=Math.max(minimumPi0, (LocalFDR.estimatePi0(pValueArray)));
 		double[] targetFDRValues=BenjaminiHochberg.calculateAdjustedPValues(pValueArray);
 		double[] targetLFDRValues=LocalFDR.estimateLocalFDR(pValueArray);
 		
