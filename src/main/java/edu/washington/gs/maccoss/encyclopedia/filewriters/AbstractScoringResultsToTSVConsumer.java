@@ -72,7 +72,7 @@ public abstract class AbstractScoringResultsToTSVConsumer implements PeptideScor
 			throw exception;
 		} finally {
 			// unconditionally remove the unsorted temp file
-			System.out.println("Removing temp file " + tmpFile.getAbsolutePath());
+			Logger.logLine("Removing temp file " + tmpFile.getAbsolutePath());
 			FileUtils.deleteQuietly(tmpFile);
 		}
 	}

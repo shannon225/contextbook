@@ -278,6 +278,8 @@ public class DIABrowserPanel extends JPanel {
 			basePeakMasses.add(basePeakMass);
 			basePeakIntensities.add(Log.protectedLog10(basePeakIntensity));
 		}
+		
+		if (minMZ>maxMZ) return new HashMap<PolymerIon, XYTrace>();
 
 		if (false) {
 			float[] basepeakIntensityArray=basePeakIntensities.toArray();
@@ -542,14 +544,15 @@ public class DIABrowserPanel extends JPanel {
 				}
 				rtRange=new double[] {maxRT, minRT};
 			}
-
+			
 			final ChartPanel spectrumChart=Charter.getChart(spectrum);
 			XYTrace intensityHistogram=new XYTrace(PivotTableGenerator.createPivotTable(Log.log10(spectrum.getIntensityArray())), GraphType.area, "Log10 Fragment Intensity Distribution");
+
 			final ChartPanel precursorIntensities=Charter.getChart("Log10 Intensity", "Count (N="+spectrum.getIntensityArray().length+")", false, intensityHistogram);
 			
 			spectrumSplit.setLeftComponent(spectrumChart);
 			spectrumSplit.setRightComponent(precursorIntensities);
-			
+
 			XYTrace marker=new XYTrace(rtRange, new double[] {0, maxTIC}, GraphType.dashedline, "marker");
 			rawSplit.setTopComponent(Charter.getChart("Retention Time", "Precursor TIC", false, chromatogram, marker));
 		}

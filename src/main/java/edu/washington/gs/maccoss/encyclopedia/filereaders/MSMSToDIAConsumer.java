@@ -30,17 +30,26 @@ public class MSMSToDIAConsumer implements Runnable {
 				MSMSBlock block=mzmlBlockQueue.take();
 				if (MSMSBlock.POISON_BLOCK==block) break;
 
-				for (PrecursorScan precursor : block.getPrecursorScans()) {
+				ArrayList<PrecursorScan> precursorScans=block.getPrecursorScans();
+				if (parameters.isFilterPeaklists()) {
+					ArrayList<PrecursorScan> filtered=new ArrayList<>();
+					for (PrecursorScan stripe : precursorScans) {
+						filtered.add(SpectrumPeakFilter.combineAndFilterPeaks(stripe, parameters.getFragmentTolerance()));
+					}
+					precursorScans=filtered;
+				}
+				
+				for (PrecursorScan precursor : precursorScans) {
 					totalPrecursorTIC+=precursor.getTIC();
 				}
 
-				stripeFile.addPrecursor(block.getPrecursorScans());
+				stripeFile.addPrecursor(precursorScans);
 
 				ArrayList<FragmentScan> stripes=block.getFragmentScans();
 				if (parameters.isFilterPeaklists()) {
 					ArrayList<FragmentScan> filtered=new ArrayList<>();
 					for (FragmentScan stripe : stripes) {
-						filtered.add(SpectrumPeakFilter.filterPeaks(stripe));
+						filtered.add(SpectrumPeakFilter.combineAndFilterPeaks(stripe, parameters.getFragmentTolerance()));
 					}
 					stripes=filtered;
 				}

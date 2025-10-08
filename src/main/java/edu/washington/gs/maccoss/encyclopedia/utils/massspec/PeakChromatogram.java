@@ -15,6 +15,13 @@ public class PeakChromatogram extends Peak {
 		this.isQuantified=isQuantified;
 	}
 	
+	public static PeakChromatogram mergePeaks(PeakChromatogram p1, PeakChromatogram p2) {
+		float weightedSum=p1.intensity+p2.intensity;
+		if (weightedSum<=0) weightedSum=1; // guard rail to not divide by 0
+		double mass=(p1.mass*p1.intensity+p2.mass*p2.intensity)/weightedSum;
+		return new PeakChromatogram(mass, weightedSum, Math.max(p1.correlation, p2.correlation), p1.isQuantified||p2.isQuantified);
+	}
+	
 	public float getCorrelation() {
 		return correlation;
 	}
