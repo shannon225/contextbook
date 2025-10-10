@@ -13,6 +13,7 @@ import java.sql.Types;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -679,7 +680,10 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 				} finally {
 					executor.close();
 				}
-				return new ArrayList<FragmentScan>(stripes);
+				
+				ArrayList<FragmentScan> arrayList=new ArrayList<FragmentScan>(stripes);
+				Collections.sort(arrayList);
+				return arrayList;
 			} finally {
 				s.close();
 			}
@@ -756,7 +760,9 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 				} finally {
 					executor.close();
 				}
-				return new ArrayList<FragmentScan>(stripes);
+				ArrayList<FragmentScan> arrayList=new ArrayList<FragmentScan>(stripes);
+				Collections.sort(arrayList);
+				return arrayList;
 			} finally {
 				s.close();
 			}

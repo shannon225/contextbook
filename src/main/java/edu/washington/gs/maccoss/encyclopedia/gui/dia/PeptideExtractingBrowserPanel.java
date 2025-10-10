@@ -9,7 +9,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map.Entry;
@@ -47,9 +46,7 @@ import org.jfree.chart.event.PlotChangeListener;
 import org.jfree.chart.plot.XYPlot;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractScoringResult;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.ExpectedFragmentationScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneFragmentationModel;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanRawScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAOneScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAOneScoringTask;
@@ -90,8 +87,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 
 public class PeptideExtractingBrowserPanel extends JPanel {
 	private static final long serialVersionUID=1L;
-	
-	private final PecanRawScorer scorer;
 
 	private final SearchParameters parameters;
 	private final FileChooserPanel diaFile;
@@ -152,7 +147,6 @@ public class PeptideExtractingBrowserPanel extends JPanel {
 	public PeptideExtractingBrowserPanel(SearchParameters parameters) {
 		super(new BorderLayout());
 		this.parameters=parameters; 
-		scorer=new PecanRawScorer(parameters.getFragmentTolerance(), new ExpectedFragmentationScorer(parameters, 3));
 
 		diaFile=new FileChooserPanel(null, "RAW File", StripeFileGenerator.getFilenameFilter(), true) {
 			private static final long serialVersionUID=1L;
