@@ -2,7 +2,6 @@ package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;

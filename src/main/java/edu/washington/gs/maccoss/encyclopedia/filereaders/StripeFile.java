@@ -622,7 +622,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 			Statement s=c.createStatement();
 			try {
 				ResultSet rs=s.executeQuery("select SpectrumName, PrecursorName, SpectrumIndex, ScanStartTime, IsolationWindowLower, IsolationWindowUpper, PrecursorCharge, MassEncodedLength, MassArray, IntensityEncodedLength, IntensityArray, IonMobilityArrayEncodedLength, IonMobilityArray, IonInjectionTime, Fraction from spectra "
-						+"where IsolationWindowLower <= "+targetMz+" and IsolationWindowUpper >= "+targetMz+" and ScanStartTime between "+minRT+" and "+maxRT);
+						+"where IsolationWindowLower <= "+targetMz+" and IsolationWindowUpper >= "+targetMz+" and ScanStartTime between "+minRT+" and "+maxRT+" order by ScanStartTime asc");
 
 				final Vector<FragmentScan> stripes=new Vector<FragmentScan>();
 
@@ -676,6 +676,8 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 					executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
 				} catch (InterruptedException ie) {
 					throw new EncyclopediaException(ie);
+				} finally {
+					executor.close();
 				}
 				return new ArrayList<FragmentScan>(stripes);
 			} finally {
@@ -696,7 +698,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 			Statement s=c.createStatement();
 			try {
 				ResultSet rs=s.executeQuery("select SpectrumName, PrecursorName, SpectrumIndex, ScanStartTime, IsolationWindowLower, IsolationWindowUpper, PrecursorCharge, MassEncodedLength, MassArray, IntensityEncodedLength, IntensityArray, IonMobilityArrayEncodedLength, IonMobilityArray, IonInjectionTime, Fraction from spectra "
-						+"where  IsolationWindowLower <= "+targetMzRange.getStop()+" and IsolationWindowUpper >= "+targetMzRange.getStart()+" and ScanStartTime between "+minRT+" and "+maxRT);
+						+"where  IsolationWindowLower <= "+targetMzRange.getStop()+" and IsolationWindowUpper >= "+targetMzRange.getStart()+" and ScanStartTime between "+minRT+" and "+maxRT+" order by ScanStartTime asc");
 
 				final Vector<FragmentScan> stripes=new Vector<FragmentScan>();
 
@@ -751,6 +753,8 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 					executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
 				} catch (InterruptedException ie) {
 					throw new EncyclopediaException(ie);
+				} finally {
+					executor.close();
 				}
 				return new ArrayList<FragmentScan>(stripes);
 			} finally {
@@ -772,7 +776,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 			Statement s=c.createStatement();
 			try {
 				ResultSet rs=s.executeQuery("select SpectrumName, PrecursorName, SpectrumIndex, ScanStartTime, IsolationWindowLower, IsolationWindowUpper, PrecursorCharge, MassEncodedLength, MassArray, IntensityEncodedLength, IntensityArray, IonMobilityArrayEncodedLength, IonMobilityArray, IonInjectionTime, Fraction from spectra "
-						+"where  IsolationWindowLower <= "+targetMzRange.getStop()+" and IsolationWindowUpper >= "+targetMzRange.getStart()+" and ScanStartTime between "+minRT+" and "+maxRT);
+						+"where  IsolationWindowLower <= "+targetMzRange.getStop()+" and IsolationWindowUpper >= "+targetMzRange.getStart()+" and ScanStartTime between "+minRT+" and "+maxRT+" order by ScanStartTime asc");
 
 				int cores=Runtime.getRuntime().availableProcessors();
 				ThreadFactory threadFactory=new ThreadFactoryBuilder().setNameFormat("STRIPE_"+targetMzRange.getStart()+"_"+targetMzRange.getStop()+"-%d").setDaemon(true).build();
@@ -827,6 +831,8 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 					executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
 				} catch (InterruptedException ie) {
 					throw new EncyclopediaException(ie);
+				} finally {
+					executor.close();
 				}
 
 				outputQueue.put(MSMSBlock.POISON_BLOCK);
@@ -849,6 +855,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 		if (nullableIonMobilityEncodedLength!=null&&nullableIonMobilityEncodedLength>0) {
 			ionMobilityArray=ByteConverter.toFloatArray(CompressionUtils.decompress(ionMobilityArrayBytes, nullableIonMobilityEncodedLength));
 		}
+		
 		return new FragmentScan(spectrumName, precursorName, spectrumIndex, scanStartTime, fraction, ionInjectionTime, isolationWindowLower, isolationWindowUpper, massArray, intensityArray, ionMobilityArray, (byte)precursorCharge);
 	}
 
