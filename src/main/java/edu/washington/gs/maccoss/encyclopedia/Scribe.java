@@ -361,7 +361,6 @@ public class Scribe {
 		}
 		executor.shutdown();
 		executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-		executor.close();
 		
 		resultsQueue.put(AbstractScoringResult.POISON_RESULT);
 
