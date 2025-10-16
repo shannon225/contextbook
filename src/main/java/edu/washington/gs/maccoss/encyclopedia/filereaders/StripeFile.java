@@ -678,7 +678,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 				} catch (InterruptedException ie) {
 					throw new EncyclopediaException(ie);
 				} finally {
-					executor.close();
+					executor.shutdownNow();
 				}
 				
 				ArrayList<FragmentScan> arrayList=new ArrayList<FragmentScan>(stripes);
@@ -758,7 +758,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 				} catch (InterruptedException ie) {
 					throw new EncyclopediaException(ie);
 				} finally {
-					executor.close();
+					executor.shutdownNow();
 				}
 				ArrayList<FragmentScan> arrayList=new ArrayList<FragmentScan>(stripes);
 				Collections.sort(arrayList);
@@ -838,7 +838,7 @@ public class StripeFile extends SQLFile implements StripeFileInterface {
 				} catch (InterruptedException ie) {
 					throw new EncyclopediaException(ie);
 				} finally {
-					executor.close();
+					executor.shutdownNow();
 				}
 
 				outputQueue.put(MSMSBlock.POISON_BLOCK);
