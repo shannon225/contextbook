@@ -9,6 +9,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.AnnotatedFragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
+import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.map.hash.TDoubleObjectHashMap;
@@ -34,6 +35,27 @@ public class AnnotatedSpectrum implements Spectrum, XYTraceInterface {
 		this.name = name;
 		this.mz = mz;
 		this.annotations=annotations;
+	}
+
+	public AnnotatedSpectrum(Spectrum s, PeptidePrecursor entry, SearchParameters parameters) {
+		masses=s.getMassArray();
+		intensities=s.getIntensityArray();
+		ionMobilityArray=s.getIonMobilityArray();
+		tic=General.sum(intensities);
+		scanStartTime=s.getScanStartTime();
+		name=s.getSpectrumName();
+		mz=s.getPrecursorMZ();
+		
+		double[] massArray=s.getMassArray();
+		this.annotations=new FragmentIon[massArray.length];
+
+		FragmentationModel model=PeptideUtils.getPeptideModel(entry.getPeptideModSeq(), parameters.getAAConstants());
+		for (FragmentIon fragmentIon : model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge(), false)) {
+			int[] indicies=parameters.getFragmentTolerance().getIndicies(massArray, fragmentIon.getMass());
+			for (int i=0; i<indicies.length; i++) {
+				annotations[indicies[i]]=fragmentIon;
+			}
+		}
 	}
 	
 	public AnnotatedSpectrum(Spectrum s, TDoubleObjectHashMap<String> annotationMap, MassTolerance tolerance) {

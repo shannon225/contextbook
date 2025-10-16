@@ -27,6 +27,14 @@ public class IsotopicDistributionCalculatorTest extends TestCase {
 		}
 	}
 
+	public void testGetIsotopeDistribution2String() {
+		float[] dist=IsotopicDistributionCalculator.getIsotopeDistribution("LVNEVTEFAK", PARAMETERS.getAAConstants());
+		float[] expected=new float[] {1.0f, 0.63258016f, 0.23172216f, 0.062215474f, 0.013474071f};
+		for (int i=0; i<dist.length; i++) {
+			assertEquals(expected[i], dist[i], 0.00001f);
+		}
+	}
+
 	public void testGetIsotopeDistributionIntArray() {
 		int[] freq=new int[] {20, 20, 4, 8, 2};
 		float[] dist=IsotopicDistributionCalculator.getIsotopeDistribution(freq);

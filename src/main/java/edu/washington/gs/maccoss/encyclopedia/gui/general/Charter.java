@@ -64,7 +64,6 @@ import org.jfree.chart.renderer.xy.AbstractXYItemRenderer;
 import org.jfree.chart.renderer.xy.XYAreaRenderer;
 import org.jfree.chart.renderer.xy.XYBlockRenderer;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
-import org.jfree.chart.renderer.xy.XYShapeRenderer;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.statistics.DefaultBoxAndWhiskerCategoryDataset;
 import org.jfree.data.xy.XYDataItem;
@@ -404,7 +403,7 @@ public class Charter {
 	}
 
 	public static ExtendedChartPanel getChart(Spectrum spec) {
-		XYTrace trace=spec instanceof XYTrace?(XYTrace)spec:new XYTrace(spec);
+		XYTraceInterface trace=spec instanceof XYTraceInterface?(XYTraceInterface)spec:new XYTrace(spec);
 		ExtendedChartPanel chart=getChart("m/z", "Intensity", false, trace);
 		chart.getChart().setTitle(spec.getSpectrumName());
 		return chart;
@@ -797,6 +796,7 @@ public class Charter {
 		plot.setDomainAxis(numberaxis);
 		plot.setRangeAxis(numberaxis1);
 
+		boolean isSpectrum=false;
 		int count=0;
 		for (XYTraceInterface trace : traces) {
 			AbstractXYItemRenderer renderer=new XYLineAndShapeRenderer();
@@ -895,6 +895,14 @@ public class Charter {
 				renderer=new XYLineAndShapeRenderer();
 				((XYLineAndShapeRenderer) renderer).setBaseShapesVisible(false);
 				renderer.setBasePaint(Color.DARK_GRAY);
+				isSpectrum=true;
+
+				break;
+
+			case imsspectrum:
+				renderer=new XYLineAndShapeRenderer();
+				renderer.setSeriesShape(0, createRingShape(0, 0, 2.5, 0.75));
+				((XYLineAndShapeRenderer) renderer).setBaseLinesVisible(false);
 
 				break;
 
@@ -924,15 +932,73 @@ public class Charter {
 				dataset.addSeries(series);
 				break;
 
+			case imsspectrum:
+				{
+					FragmentIon[] annotations;
+					if (trace instanceof AnnotatedLibraryEntry) {
+						annotations=((AnnotatedLibraryEntry)trace).getIonAnnotations();
+					} else if (trace instanceof AnnotatedSpectrum) {
+						annotations=((AnnotatedSpectrum)trace).getAnnotations();
+					} else {
+						annotations=new FragmentIon[x.length];
+					}
+
+					float[] ims=new float[x.length];
+					if (trace instanceof Spectrum) {
+						if (((Spectrum)trace).getIonMobilityArray().isPresent()) {
+							ims=((Spectrum)trace).getIonMobilityArray().get();
+							// otherwise set it to an empty array
+						}
+					}
+
+					double maxIntensity=General.max(y);
+					int seriesCount=0;
+					for (int i=0; i<x.length; i++) {
+						if (y[i]/maxIntensity<0.01) {
+							// ignore peaks that are less than 1%
+							continue;
+						}
+
+						XYSeries peakSeries=new XYSeries(i);
+						peakSeries.add(ims[i], x[i]);
+						dataset.addSeries(peakSeries);
+
+						// dot size is related to the sqrt of intensity (area=pi*r*r)
+						double intensity=Math.sqrt(y[i]/maxIntensity);
+
+						double diameter=intensity*20.0;
+						double negHalfDiameter=-diameter/2.0;
+						if (annotations[i]!=null) {
+							Color color=IonType.getColor(annotations[i].getType());
+							renderer.setSeriesShape(seriesCount, new Ellipse2D.Double(negHalfDiameter, negHalfDiameter, diameter, diameter));
+							renderer.setSeriesPaint(seriesCount, color);
+							
+							if (IonType.b==annotations[i].getType()||IonType.y==annotations[i].getType()||IonType.annotated==annotations[i].getType()) {
+								XYTextAnnotation xytextannotation = new XYTextAnnotation(annotations[i].toString(), ims[i], x[i]);
+								xytextannotation.setPaint(color);
+								
+								xytextannotation.setFont(IonType.getFont(annotations[i].getType()));
+						        xytextannotation.setTextAnchor(TextAnchor.BOTTOM_CENTER);
+						        plot.addAnnotation(xytextannotation);
+							}
+						} else {
+							Color color=new Color(0.0f, 0.0f, 0.0f, (float)intensity);
+							renderer.setSeriesShape(seriesCount, new Ellipse2D.Double(negHalfDiameter, negHalfDiameter, diameter, diameter));
+							renderer.setSeriesPaint(seriesCount, color);
+						}
+						seriesCount++;
+					}
+				}
+				break;
+
 			case spectrum:
-				double[] intensities=y.clone();
-				Arrays.sort(intensities);
-				
-				// just annotate the top 5 ions that don't already have labels and above 20%
+				// IGNORE: just annotate the top 5 ions that don't already have labels and above 20%
+				//double[] intensities=y.clone();
+				//Arrays.sort(intensities);
 				double yThreshold=0;//intensities.length>0?intensities[Math.max(0, intensities.length-5)]:0.0;
 				yThreshold=Double.MAX_VALUE;//Math.max(General.max(y)*0.1, yThreshold);
-				FragmentIon[] annotations;
 				
+				FragmentIon[] annotations;
 				if (trace instanceof AnnotatedLibraryEntry) {
 					annotations=((AnnotatedLibraryEntry)trace).getIonAnnotations();
 				} else if (trace instanceof AnnotatedSpectrum) {
@@ -940,6 +1006,7 @@ public class Charter {
 				} else {
 					annotations=new FragmentIon[x.length];;
 				}
+				
 				for (int i=0; i<x.length; i++) {
 					if (!Double.isNaN(x[i])&&!Double.isNaN(y[i])) {
 						XYSeries peakSeries=new XYSeries(i);
@@ -1067,7 +1134,7 @@ public class Charter {
 		chartPanel.setMaximumDrawWidth(Integer.MAX_VALUE);
 		chartPanel.setMaximumDrawHeight(Integer.MAX_VALUE);
 
-		if (maxY>0&&divider>0) numberaxis1.setUpperBound(maxY/divider);
+		if (isSpectrum&&maxY>0&&divider>0) numberaxis1.setUpperBound(maxY/divider);
 		return chartPanel;
 	}
 

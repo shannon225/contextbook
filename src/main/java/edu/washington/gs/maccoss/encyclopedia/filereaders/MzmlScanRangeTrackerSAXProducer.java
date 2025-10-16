@@ -133,7 +133,7 @@ public class MzmlScanRangeTrackerSAXProducer extends DefaultHandler implements R
 	@Override
 	public void endElement(String uri, String localName, String qName) throws SAXException {
 		if ("spectrum".equalsIgnoreCase(qName)) {
-			if (spectrumRef==null&&msLevel<=1) {
+			if (spectrumRef==null||isolationWindowTarget==null||msLevel<=1) {
 				Range range=new Range(scanWindowLowerLimit, scanWindowUpperLimit);
 				retentionTimesByStripe.addPrecursor(range, scanStartTime);
 			} else {
@@ -153,6 +153,7 @@ public class MzmlScanRangeTrackerSAXProducer extends DefaultHandler implements R
 				if (parameters.getMaxWindowWidth()<=0||parameters.getMaxWindowWidth()>isolationWindowUpperOffset+isolationWindowLowerOffset) {	
 					// NOTE: does not consider parameters.getPrecursorIsolationMargin() to keep margins intact for reporting
 					Range range=new Range(isolationWindowTarget-isolationWindowLowerOffset, isolationWindowTarget+isolationWindowUpperOffset);
+					
 					boolean keepGoing=retentionTimesByStripe.addRange(range, scanStartTime);
 					if (!keepGoing) {
 						throw new SAXTerminatorException();

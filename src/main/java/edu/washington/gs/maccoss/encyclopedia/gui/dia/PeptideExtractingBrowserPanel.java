@@ -51,7 +51,9 @@ import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParame
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAOneScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAOneScoringTask;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedIMSSpectrum;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedSpectrum;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
@@ -95,6 +97,7 @@ public class PeptideExtractingBrowserPanel extends JPanel {
 	private final JSplitPane chromatogramSplit=new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 	private final JSplitPane spectrumSplit=new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 	private final JSplitPane horizontalSplit=new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+	private final JSplitPane imsSpectrumSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 	private final JTable table;
 	private final TableRowSorter<TableModel> rowSorter;
 	private final JTextField jtfFilter;
@@ -266,7 +269,18 @@ public class PeptideExtractingBrowserPanel extends JPanel {
 		searchPanel.add(jtfFilter, BorderLayout.CENTER);
 		
 		spectrumSplit.setTopComponent(new JScrollPane(table));
-		
+
+		chromatogramSplit.setContinuousLayout(true);
+		chromatogramSplit.setOneTouchExpandable(true);
+		spectrumSplit.setContinuousLayout(true);
+		spectrumSplit.setOneTouchExpandable(true);
+		horizontalSplit.setContinuousLayout(true);
+		horizontalSplit.setOneTouchExpandable(true);
+        imsSpectrumSplit.setContinuousLayout(true);
+        imsSpectrumSplit.setOneTouchExpandable(true);
+		imsSpectrumSplit.setResizeWeight(0.75);
+        imsSpectrumSplit.setDividerSize(8);
+        
 		horizontalSplit.setLeftComponent(chromatogramSplit);
 		horizontalSplit.setRightComponent(spectrumSplit);
 		add(horizontalSplit, BorderLayout.CENTER);
@@ -304,10 +318,26 @@ public class PeptideExtractingBrowserPanel extends JPanel {
 		}
 		
 		SimplePeptidePrecursor precursor=new SimplePeptidePrecursor(peptideModSeq, precursorCharge, parameters.getAAConstants());
-		AnnotatedLibraryEntry entry=new AnnotatedLibraryEntry(precursor, spectrum, parameters);
+		AnnotatedSpectrum entry=new AnnotatedSpectrum(spectrum, precursor, parameters);
+		
 
 		final ChartPanel spectrumChart=Charter.getChart(entry);
-		spectrumSplit.setBottomComponent(spectrumChart);
+		
+		if (entry.getIonMobilityArray().isPresent()) {
+			AnnotatedIMSSpectrum imsEntry=new AnnotatedIMSSpectrum(spectrum, precursor, parameters);
+			final ChartPanel imsChart=Charter.getChart(imsEntry);
+
+			int dividerLocation=imsSpectrumSplit.getDividerLocation();
+            imsSpectrumSplit.setLeftComponent(spectrumChart);
+            imsSpectrumSplit.setRightComponent(imsChart);
+            if (dividerLocation!=0) {
+            	imsSpectrumSplit.setDividerLocation(dividerLocation);
+            }
+			
+			spectrumSplit.setBottomComponent(imsSpectrumSplit);
+		} else {
+			spectrumSplit.setBottomComponent(spectrumChart);
+		}
 
 		spectrumSplit.setDividerLocation(locationSpectrum);
 	}
@@ -456,7 +486,7 @@ public class PeptideExtractingBrowserPanel extends JPanel {
 		if (jfreeRange.getLowerBound()!=lowerBound||jfreeRange.getUpperBound()!=upperBound) {
 			lowerBound=jfreeRange.getLowerBound();
 			upperBound=jfreeRange.getUpperBound();
-			System.out.println("Found: "+lowerBound+" / "+upperBound);
+			//System.out.println("Found: "+lowerBound+" / "+upperBound);
 			
 			Range range=new Range(jfreeRange.getLowerBound(), jfreeRange.getUpperBound());
 			for (Entry<FragmentIon, XYTrace> ionEntry : targetFragmentTraceMap.entrySet()) {
@@ -466,7 +496,7 @@ public class PeptideExtractingBrowserPanel extends JPanel {
 
 				if (xy!=null) {
 					XYTextAnnotation annotation=new XYTextAnnotation(ion.getName()+" ("+String.format("%.1f", ion.getMass())+" m/z)", xy.x, xy.y/chart.getDivider()*1.01);
-					System.out.println("      "+trace.getName()+" = "+xy.x+" / "+(xy.y/chart.getDivider()));
+					//System.out.println("      "+trace.getName()+" = "+xy.x+" / "+(xy.y/chart.getDivider()));
 					plot.addAnnotation(annotation);
 				}
 			}
