@@ -41,8 +41,10 @@ import org.jfree.chart.ChartPanel;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.TransitionRefiner;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedIMSSpectrum;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.IMSSpectrumWrapper;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
@@ -95,6 +97,7 @@ public class DIABrowserPanel extends JPanel {
 	private final JSplitPane rawSplit=new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 	private final JSplitPane spectrumSplit=new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 	private final JSplitPane split=new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+	private final JSplitPane imsSpectrumSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 	private final JTable table;
 	private final TableRowSorter<TableModel> rowSorter;
 	private final JTextField jtfFilter;
@@ -236,6 +239,24 @@ public class DIABrowserPanel extends JPanel {
 				updateToSelected();
 			}
 		});
+		boxplotSplit.setContinuousLayout(true);
+		boxplotSplit.setOneTouchExpandable(true);
+		distributionSplit.setContinuousLayout(true);
+		distributionSplit.setOneTouchExpandable(true);
+		rawSplit.setContinuousLayout(true);
+		rawSplit.setOneTouchExpandable(true);
+		split.setContinuousLayout(true);
+		split.setOneTouchExpandable(true);
+
+		spectrumSplit.setResizeWeight(0.80);
+		spectrumSplit.setDividerSize(8);
+		spectrumSplit.setContinuousLayout(true);
+		spectrumSplit.setOneTouchExpandable(true);
+
+		imsSpectrumSplit.setResizeWeight(0.75);
+        imsSpectrumSplit.setDividerSize(8);
+		imsSpectrumSplit.setContinuousLayout(true);
+		imsSpectrumSplit.setOneTouchExpandable(true);
 		
 		add(split, BorderLayout.CENTER);
 	}
@@ -278,6 +299,8 @@ public class DIABrowserPanel extends JPanel {
 			basePeakMasses.add(basePeakMass);
 			basePeakIntensities.add(Log.protectedLog10(basePeakIntensity));
 		}
+		
+		if (minMZ>maxMZ) return new HashMap<PolymerIon, XYTrace>();
 
 		if (false) {
 			float[] basepeakIntensityArray=basePeakIntensities.toArray();
@@ -513,9 +536,6 @@ public class DIABrowserPanel extends JPanel {
 		}
 		int locationSpectrum=spectrumSplit.getDividerLocation();
 		//System.out.println("locationRaw:"+locationRaw);
-		if (locationSpectrum<=5) {
-			locationSpectrum=400;
-		}
 		
 		if (entries==null) {
 			if (chromatogram!=null) {
@@ -544,14 +564,34 @@ public class DIABrowserPanel extends JPanel {
 			}
 
 			final ChartPanel spectrumChart=Charter.getChart(spectrum);
+			
+			if (spectrum.getIonMobilityArray().isPresent()) {
+				IMSSpectrumWrapper imsEntry=new IMSSpectrumWrapper(spectrum);
+				final ChartPanel imsChart=Charter.getChart(imsEntry);
+
+				int dividerLocation=imsSpectrumSplit.getDividerLocation();
+	            imsSpectrumSplit.setLeftComponent(spectrumChart);
+	            imsSpectrumSplit.setRightComponent(imsChart);
+	            if (dividerLocation!=0) {
+	            	imsSpectrumSplit.setDividerLocation(dividerLocation);
+	            }
+				
+				spectrumSplit.setLeftComponent(imsSpectrumSplit);
+			} else {
+				spectrumSplit.setLeftComponent(spectrumChart);
+			}
+			
 			XYTrace intensityHistogram=new XYTrace(PivotTableGenerator.createPivotTable(Log.log10(spectrum.getIntensityArray())), GraphType.area, "Log10 Fragment Intensity Distribution");
+
 			final ChartPanel precursorIntensities=Charter.getChart("Log10 Intensity", "Count (N="+spectrum.getIntensityArray().length+")", false, intensityHistogram);
 			
-			spectrumSplit.setLeftComponent(spectrumChart);
 			spectrumSplit.setRightComponent(precursorIntensities);
-			
+
 			XYTrace marker=new XYTrace(rtRange, new double[] {0, maxTIC}, GraphType.dashedline, "marker");
 			rawSplit.setTopComponent(Charter.getChart("Retention Time", "Precursor TIC", false, chromatogram, marker));
+		}
+		if (locationSpectrum<=5) {
+			locationSpectrum=Math.round(split.getWidth()*0.8f);
 		}
 		spectrumSplit.setDividerLocation(locationSpectrum);
 		rawSplit.setDividerLocation(locationRaw);

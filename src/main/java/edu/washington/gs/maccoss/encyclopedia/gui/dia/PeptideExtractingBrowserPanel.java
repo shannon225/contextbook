@@ -11,9 +11,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Optional;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -42,29 +41,23 @@ import javax.swing.table.TableRowSorter;
 
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.annotations.XYTextAnnotation;
-import org.jfree.chart.event.AxisChangeEvent;
-import org.jfree.chart.event.AxisChangeListener;
 import org.jfree.chart.event.PlotChangeEvent;
 import org.jfree.chart.event.PlotChangeListener;
 import org.jfree.chart.plot.XYPlot;
 
-import com.google.common.util.concurrent.AtomicDouble;
-
-import edu.washington.gs.maccoss.encyclopedia.algorithms.ExpectedFragmentationScorer;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.FragmentationTraceTask;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.AbstractScoringResult;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanOneFragmentationModel;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanRawScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.pecan.PecanSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAOneScorer;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.XCorDIAOneScoringTask;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedIMSSpectrum;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedSpectrum;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.DataAcquisitionType;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.LibraryEntry;
-import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursor;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScanMap;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
@@ -93,13 +86,9 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.SpectrumUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
-import edu.washington.gs.maccoss.encyclopedia.utils.math.PivotTableGenerator;
 
 public class PeptideExtractingBrowserPanel extends JPanel {
 	private static final long serialVersionUID=1L;
-	
-	private final PecanRawScorer scorer;
 
 	private final SearchParameters parameters;
 	private final FileChooserPanel diaFile;
@@ -108,6 +97,7 @@ public class PeptideExtractingBrowserPanel extends JPanel {
 	private final JSplitPane chromatogramSplit=new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 	private final JSplitPane spectrumSplit=new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 	private final JSplitPane horizontalSplit=new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+	private final JSplitPane imsSpectrumSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 	private final JTable table;
 	private final TableRowSorter<TableModel> rowSorter;
 	private final JTextField jtfFilter;
@@ -160,7 +150,6 @@ public class PeptideExtractingBrowserPanel extends JPanel {
 	public PeptideExtractingBrowserPanel(SearchParameters parameters) {
 		super(new BorderLayout());
 		this.parameters=parameters; 
-		scorer=new PecanRawScorer(parameters.getFragmentTolerance(), new ExpectedFragmentationScorer(parameters, 3));
 
 		diaFile=new FileChooserPanel(null, "RAW File", StripeFileGenerator.getFilenameFilter(), true) {
 			private static final long serialVersionUID=1L;
@@ -280,7 +269,18 @@ public class PeptideExtractingBrowserPanel extends JPanel {
 		searchPanel.add(jtfFilter, BorderLayout.CENTER);
 		
 		spectrumSplit.setTopComponent(new JScrollPane(table));
-		
+
+		chromatogramSplit.setContinuousLayout(true);
+		chromatogramSplit.setOneTouchExpandable(true);
+		spectrumSplit.setContinuousLayout(true);
+		spectrumSplit.setOneTouchExpandable(true);
+		horizontalSplit.setContinuousLayout(true);
+		horizontalSplit.setOneTouchExpandable(true);
+        imsSpectrumSplit.setContinuousLayout(true);
+        imsSpectrumSplit.setOneTouchExpandable(true);
+		imsSpectrumSplit.setResizeWeight(0.75);
+        imsSpectrumSplit.setDividerSize(8);
+        
 		horizontalSplit.setLeftComponent(chromatogramSplit);
 		horizontalSplit.setRightComponent(spectrumSplit);
 		add(horizontalSplit, BorderLayout.CENTER);
@@ -318,10 +318,26 @@ public class PeptideExtractingBrowserPanel extends JPanel {
 		}
 		
 		SimplePeptidePrecursor precursor=new SimplePeptidePrecursor(peptideModSeq, precursorCharge, parameters.getAAConstants());
-		AnnotatedLibraryEntry entry=new AnnotatedLibraryEntry(precursor, spectrum, parameters);
+		AnnotatedSpectrum entry=new AnnotatedSpectrum(spectrum, precursor, parameters);
+		
 
 		final ChartPanel spectrumChart=Charter.getChart(entry);
-		spectrumSplit.setBottomComponent(spectrumChart);
+		
+		if (entry.getIonMobilityArray().isPresent()) {
+			AnnotatedIMSSpectrum imsEntry=new AnnotatedIMSSpectrum(spectrum, precursor, parameters);
+			final ChartPanel imsChart=Charter.getChart(imsEntry);
+
+			int dividerLocation=imsSpectrumSplit.getDividerLocation();
+            imsSpectrumSplit.setLeftComponent(spectrumChart);
+            imsSpectrumSplit.setRightComponent(imsChart);
+            if (dividerLocation!=0) {
+            	imsSpectrumSplit.setDividerLocation(dividerLocation);
+            }
+			
+			spectrumSplit.setBottomComponent(imsSpectrumSplit);
+		} else {
+			spectrumSplit.setBottomComponent(spectrumChart);
+		}
 
 		spectrumSplit.setDividerLocation(locationSpectrum);
 	}
@@ -364,8 +380,6 @@ public class PeptideExtractingBrowserPanel extends JPanel {
 			try {
 				ArrayList<PrecursorScan> precursors=dia.getPrecursors(0.0f, Float.MAX_VALUE);
 				ArrayList<FragmentScan> stripes=dia.getStripes(entry.getPrecursorMZ(), 0.0f, Float.MAX_VALUE, false);
-				FragmentationTraceTask task=new FragmentationTraceTask(scorer, FragmentationTraceTask.PLOT_INTENSITIES, entries, stripes, new PrecursorScanMap(new ArrayList<PrecursorScan>()), parameters.getAAConstants());
-				HashMap<LibraryEntry, AbstractScoringResult> result=task.call();
 				
 				ArrayList<XYTrace> traces=new ArrayList<XYTrace>();
 				ArrayList<XYTrace> precursorTraces=new ArrayList<XYTrace>();
@@ -472,7 +486,7 @@ public class PeptideExtractingBrowserPanel extends JPanel {
 		if (jfreeRange.getLowerBound()!=lowerBound||jfreeRange.getUpperBound()!=upperBound) {
 			lowerBound=jfreeRange.getLowerBound();
 			upperBound=jfreeRange.getUpperBound();
-			System.out.println("Found: "+lowerBound+" / "+upperBound);
+			//System.out.println("Found: "+lowerBound+" / "+upperBound);
 			
 			Range range=new Range(jfreeRange.getLowerBound(), jfreeRange.getUpperBound());
 			for (Entry<FragmentIon, XYTrace> ionEntry : targetFragmentTraceMap.entrySet()) {
@@ -482,7 +496,7 @@ public class PeptideExtractingBrowserPanel extends JPanel {
 
 				if (xy!=null) {
 					XYTextAnnotation annotation=new XYTextAnnotation(ion.getName()+" ("+String.format("%.1f", ion.getMass())+" m/z)", xy.x, xy.y/chart.getDivider()*1.01);
-					System.out.println("      "+trace.getName()+" = "+xy.x+" / "+(xy.y/chart.getDivider()));
+					//System.out.println("      "+trace.getName()+" = "+xy.x+" / "+(xy.y/chart.getDivider()));
 					plot.addAnnotation(annotation);
 				}
 			}

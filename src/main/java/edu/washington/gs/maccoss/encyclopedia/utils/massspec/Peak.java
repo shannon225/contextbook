@@ -1,9 +1,9 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Optional;
 
-import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.Triplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.PointInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
@@ -24,6 +24,34 @@ public class Peak implements PointInterface {
 		this.ionMobility=ionMobility;
 	}
 	
+	public static Peak mergePeaks(Peak p1, Peak p2) {
+		float weightedSum=p1.intensity+p2.intensity;
+		if (weightedSum<=0) weightedSum=1; // guard rail to not divide by 0
+		double mass=(p1.mass*p1.intensity+p2.mass*p2.intensity)/weightedSum;
+
+		Float ims;
+		if (p1.ionMobility!=null&&p2.ionMobility!=null) {
+			ims=(p1.ionMobility*p1.intensity+p2.ionMobility*p2.intensity)/weightedSum;
+		} else if (p1.ionMobility!=null) {
+			ims=p1.ionMobility;
+		} else if (p2.ionMobility!=null) {
+			ims=p2.ionMobility;
+		} else {
+			ims=null;
+		}
+		return new Peak(mass, weightedSum, ims);
+	}
+	
+	public float getIntensity() {
+		return intensity;
+	}
+	public double getMass() {
+		return mass;
+	}
+	public Float getIonMobility() {
+		return ionMobility;
+	}
+	
 	@Override
 	public String toString() {
 		return "("+mass+","+intensity+")";
@@ -39,16 +67,6 @@ public class Peak implements PointInterface {
 		return intensity;
 	}
 	
-	public float getIntensity() {
-		return intensity;
-	}
-	public double getMass() {
-		return mass;
-	}
-	public Float getIonMobility() {
-		return ionMobility;
-	}
-	
 	/**
 	 * doesn't compare on Y (intensity)
 	 */
@@ -58,6 +76,14 @@ public class Peak implements PointInterface {
 		if (mass>o.getX()) return 1;
 		if (mass<o.getX()) return -1;
 		return 0;
+	}
+
+	public static ArrayList<Peak> fromArrays(double[] masses, float[] intensities, Optional<float[]> ionMobility) {
+		ArrayList<Peak> peaks=new ArrayList<>();
+		for (int i=0; i<masses.length; i++) {
+			peaks.add(new Peak(masses[i], intensities[i], ionMobility.isEmpty()?null:ionMobility.get()[i]));
+		}
+		return peaks;
 	}
 	
 	public static Triplet<double[], float[], Optional<float[]>> toArrays(Collection<Peak> peaks) {

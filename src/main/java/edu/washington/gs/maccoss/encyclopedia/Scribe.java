@@ -73,6 +73,8 @@ public class Scribe {
 	public static final String OUTPUT_RESULT_TAG="-o";
 	public static final String INPUT_DIA_TAG="-i";
 	public static final String BACKGROUND_FASTA_TAG="-f";
+	private static final int minimumExpectedPrecursorMz=350;
+	private static final int maximumExpectedPrecursorMz=1600;
 	
 	public static void main(String[] args) {
 		HashMap<String, String> arguments=CommandLineParser.parseArguments(args);
@@ -242,24 +244,32 @@ public class Scribe {
 		precursorList.sort();
 		
 		ArrayList<Range> ranges=new ArrayList<>();
-		int index=0;
-		float lastStop=0.0f;
-		while (true) {
-			float start=Math.nextUp(lastStop);
-			if (index+NUMBER_OF_SPECTRA_IN_BATCH>precursorList.size()) {
-				float maxStop=Math.nextUp(precursorList.get(precursorList.size()-1));
-				ranges.add(new Range(start, maxStop));
-				break;
-			} else {
-				// random is deterministic, but it forces reads to be not be synchronizes
-				index=index+RandomGenerator.randomIndex(NUMBER_OF_SPECTRA_IN_BATCH, index);
-				lastStop=precursorList.get(index);
-				if (lastStop<start) continue;
-
-				ranges.add(new Range(start, lastStop));
+		if (precursorList.size()!=0) {
+			int index=0;
+			float lastStop=0.0f;
+			while (true) {
+				float start=Math.nextUp(lastStop);
+				if (index+NUMBER_OF_SPECTRA_IN_BATCH>precursorList.size()) {
+					float maxStop=Math.nextUp(precursorList.get(precursorList.size()-1));
+					ranges.add(new Range(start, maxStop));
+					break;
+				} else {
+					// random is deterministic, but it forces reads to be not be synchronizes
+					index=index+RandomGenerator.randomIndex(NUMBER_OF_SPECTRA_IN_BATCH, index);
+					lastStop=precursorList.get(index);
+					if (lastStop<start) continue;
+	
+					ranges.add(new Range(start, lastStop));
+				}
 			}
+			Logger.logLine("Found "+ranges.size()+" total ranges");
+		} else {
+			ranges.add(new Range(0, minimumExpectedPrecursorMz));
+			for (int i=minimumExpectedPrecursorMz; i<maximumExpectedPrecursorMz; i++) {
+				ranges.add(new Range(i, i+1));
+			}
+			ranges.add(new Range(maximumExpectedPrecursorMz, Float.MAX_VALUE));
 		}
-		Logger.logLine("Found "+ranges.size()+" total ranges");
 
 		// prepare executor for background
 		int cores=parameters.getNumberOfThreadsUsed();

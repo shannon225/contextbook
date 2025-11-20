@@ -1,6 +1,5 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,11 +19,14 @@ public class SpectrumUtils {
 	public static Spectrum binnedMergeSpectra(List<? extends Spectrum> spectra, double binWidth) {
 		double maxMz=0.0;
 		for (Spectrum spectrum : spectra) {
-			double mz=spectrum.getMassArray()[spectrum.getMassArray().length-1];
-			if (maxMz<mz) maxMz=mz;
+			if (spectrum.getMassArray().length>0) {
+				double mz=spectrum.getMassArray()[spectrum.getMassArray().length-1];
+				if (maxMz<mz) maxMz=mz;
+			}
 		}
-		float[] bins=new float[(int)Math.ceil(maxMz/binWidth)];
-		if (bins.length==0) return  new PrecursorScan("Combined", 0, 0.0f, 0, 0.0, Double.MAX_VALUE, null, new double[0], new float[0], Optional.empty(), 0.0f);
+		float[] intensityBins=new float[(int)Math.ceil(maxMz/binWidth)];
+		float[] imsBins=new float[intensityBins.length];
+		if (intensityBins.length==0) return  new PrecursorScan("Combined", 0, 0.0f, 0, 0.0, Double.MAX_VALUE, null, new double[0], new float[0], Optional.empty(), 0.0f);
 
 		float totalIIT=0.0f;
 		float minRT=Float.MAX_VALUE;
@@ -56,8 +58,12 @@ public class SpectrumUtils {
 			for (int i=0; i<mz.length; i++) {
 				int index=(int)Math.round(mz[i]/binWidth);
 				if (index<0) index=0;
-				if (index>=bins.length) index=bins.length-1;
-				bins[index]+=intens[i];
+				if (index>=intensityBins.length) index=intensityBins.length-1;
+				float previousIntensity=intensityBins[index];
+				intensityBins[index]+=intens[i];
+				if (spectrum.getIonMobilityArray().isPresent()&&intens[i]>0) {
+					imsBins[index]=(imsBins[index]*previousIntensity+spectrum.getIonMobilityArray().get()[i]*intens[i])/(previousIntensity+intens[i]);
+				}
 			}
 			tic += spectrum.getTIC();
 		}
@@ -70,18 +76,21 @@ public class SpectrumUtils {
 
 		TDoubleArrayList masses=new TDoubleArrayList();
 		TFloatArrayList intensities=new TFloatArrayList();
-		for (int i=0; i<bins.length; i++) {
-			if (bins[i]>0.0f) {
+		for (int i=0; i<intensityBins.length; i++) {
+			if (intensityBins[i]>0.0f) {
 				masses.add(i*binWidth);
-				intensities.add(bins[i]);
+				intensities.add(intensityBins[i]);
 			}
 		}
 		
-		return new PrecursorScan("Combined", 0, minRT, minFraction, isolationWindowLower, isolationWindowUpper, totalIIT, masses.toArray(), intensities.toArray(), Optional.empty(), tic);
+		Optional<float[]> optionalIMS=General.sum(imsBins)>0.0f?Optional.of(imsBins):Optional.empty();
+		
+		return new PrecursorScan("Combined", 0, minRT, minFraction, isolationWindowLower, isolationWindowUpper, totalIIT, masses.toArray(), intensities.toArray(), optionalIMS, tic);
 	}
 	public static Spectrum accurateMergeSpectra(List<? extends Spectrum> spectra, MassTolerance tolerance) {
 		TDoubleArrayList masses=new TDoubleArrayList();
 		TFloatArrayList intensities=new TFloatArrayList();
+		TFloatArrayList ims=new TFloatArrayList();
 
 		float totalIIT=0.0f;
 		float minRT=Float.MAX_VALUE;
@@ -109,6 +118,7 @@ public class SpectrumUtils {
 			
 			double[] mz=spectrum.getMassArray();
 			float[] intens=spectrum.getIntensityArray();
+			Optional<float[]> imdata=spectrum.getIonMobilityArray();
 			
 			for (int i=0; i<mz.length; i++) {
 				int index=getIndex(masses, mz[i], tolerance);
@@ -116,8 +126,16 @@ public class SpectrumUtils {
 					int insertionPoint=-(index+1);
 					masses.insert(insertionPoint, mz[i]);
 					intensities.insert(insertionPoint, intens[i]);
+					if (imdata.isPresent()) {
+						ims.insert(insertionPoint, imdata.get()[i]);
+					}
 				} else {
-					intensities.setQuick(index, intensities.getQuick(index)+intens[i]);
+					float previousIntensity=intensities.getQuick(index);
+					intensities.setQuick(index, previousIntensity+intens[i]);
+					if (imdata.isPresent()) {
+						float newIMS=(ims.getQuick(index)*previousIntensity+imdata.get()[i]*intens[i])/(previousIntensity+intens[i]);
+						ims.setQuick(index, newIMS);
+					}
 				}
 			}
 			tic += spectrum.getTIC();
@@ -129,7 +147,9 @@ public class SpectrumUtils {
 			isolationWindowUpper=Double.MAX_VALUE;
 		}
 		
-		return new PrecursorScan("Combined", 0, minRT, minFraction, isolationWindowLower, isolationWindowUpper, totalIIT, masses.toArray(), intensities.toArray(), Optional.empty(), tic);
+		Optional<float[]> combinedIMS=ims.size()==0?Optional.empty():Optional.of(ims.toArray());
+		
+		return new PrecursorScan("Combined", 0, minRT, minFraction, isolationWindowLower, isolationWindowUpper, totalIIT, masses.toArray(), intensities.toArray(), combinedIMS, tic);
 	}
 
 	public static int getIndex(TDoubleArrayList peaks, double target, MassTolerance tolerance) {

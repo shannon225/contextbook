@@ -267,12 +267,16 @@ public class MultiResultsBrowserPanel extends JPanel {
 		left.add(split1, BorderLayout.CENTER);
 		left.add(searchPanel, BorderLayout.SOUTH);
 		
-		
-		
 		split.setLeftComponent(left);
 		split.setRightComponent(new JLabel("Select a peptide!"));
 		
-
+		split.setContinuousLayout(true);
+		split.setOneTouchExpandable(true);
+		split1.setContinuousLayout(true);
+		split1.setOneTouchExpandable(true);
+		split2.setContinuousLayout(true);
+		split2.setOneTouchExpandable(true);
+		
 		setLayout(new BorderLayout());
 		add(split, BorderLayout.CENTER);
 	}
