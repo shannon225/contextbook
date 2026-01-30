@@ -118,7 +118,7 @@ public class SearchTestSupport {
 		File output = new File(tDir, filename);
 		
 		output.deleteOnExit();
-		Files.copy(is, output.toPath(), StandardCopyOption.REPLACE_EXISTING);
+			Files.copy(is, output.toPath(), StandardCopyOption.REPLACE_EXISTING);
 		
 		return output;
 	}

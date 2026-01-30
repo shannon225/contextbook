@@ -74,7 +74,7 @@ public class StripeFileTrimmer {
 		stripeFile.addStripe(stripes);
 		
 		thisStripeFile.close();
-		Logger.logLine("Finished merging, finalizing "+newFile.getName());
+		Logger.logLine("Finished trimming, finalizing "+newFile.getName());
 
 		stripeFile.setFileName(newFile.getName(), null, newFile.getAbsolutePath());
 		stripeFile.setRanges(dutyCycleMap);

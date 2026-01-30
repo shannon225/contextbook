@@ -8,6 +8,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Ion;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.ScoredObject;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
 
@@ -42,7 +43,7 @@ public class AnnotatedLibraryEntry extends LibraryEntry {
 
 		FragmentationModel model=PeptideUtils.getPeptideModel(entry.getPeptideModSeq(), parameters.getAAConstants());
 		for (FragmentIon fragmentIon : model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge(), false)) {
-			int[] indicies=parameters.getFragmentTolerance().getIndicies(massArray, fragmentIon.getMass());
+			int[] indicies=parameters.getFragmentTolerance().getIndices(massArray, fragmentIon.getMass());
 			for (int i=0; i<indicies.length; i++) {
 				ionAnnotations[indicies[i]]=fragmentIon;
 			}
@@ -59,7 +60,7 @@ public class AnnotatedLibraryEntry extends LibraryEntry {
 
 		FragmentationModel model=PeptideUtils.getPeptideModel(entry.getPeptideModSeq(), parameters.getAAConstants());
 		for (FragmentIon fragmentIon : model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge(), false)) {
-			int[] indicies=parameters.getFragmentTolerance().getIndicies(massArray, fragmentIon.getMass());
+			int[] indicies=parameters.getFragmentTolerance().getIndices(massArray, fragmentIon.getMass());
 			for (int i=0; i<indicies.length; i++) {
 				ionAnnotations[indicies[i]]=fragmentIon;
 			}
@@ -83,7 +84,7 @@ public class AnnotatedLibraryEntry extends LibraryEntry {
 		FragmentationModel model=PeptideUtils.getPeptideModel(entry.getPeptideModSeq(), parameters.getAAConstants());
 		for (Ion fragmentIon : model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge(), false)) {
 			if (minIonNumber==0||fragmentIon.getIndex()>=minIonNumber) {
-				int[] indicies=parameters.getFragmentTolerance().getIndicies(massArray, fragmentIon.getMass());
+				int[] indicies=parameters.getFragmentTolerance().getIndices(massArray, fragmentIon.getMass());
 				for (int i=0; i<indicies.length; i++) {
 					newMasses.add(massArray[indicies[i]]);
 					newIntensities.add(intensityArray[indicies[i]]);
@@ -113,5 +114,66 @@ public class AnnotatedLibraryEntry extends LibraryEntry {
 	 */
 	public FragmentIon[] getIonAnnotations() {
 		return ionAnnotations;
+	}
+	
+	/**
+	 * 
+	 * @param n
+	 * @param minIndex
+	 * @param minimumPercent
+	 * @param mask can be null
+	 * @return
+	 */
+	public FragmentIon[] getMostCorrelatedAnnotatedIons(int n, int minIndex, float minimumCorrelation) {
+		float[] correlationArray=getCorrelationArray();
+		ArrayList<ScoredObject<FragmentIon>> scored=new ArrayList<ScoredObject<FragmentIon>>();
+		for (int i=0; i<ionAnnotations.length; i++) {
+			if (ionAnnotations[i]!=null) {
+				if (ionAnnotations[i].getIndex()>=minIndex&&correlationArray[i]>minimumCorrelation) {
+					scored.add(new ScoredObject<FragmentIon>(correlationArray[i], ionAnnotations[i]));
+				}
+			}
+		}
+		scored.sort(null);
+		
+		ArrayList<FragmentIon> best=new ArrayList<FragmentIon>();
+		for (int i=scored.size()-1; i>=0; i--) {
+			best.add(scored.get(i).y);
+			if (best.size()>=n) break;
+		}
+		return best.toArray(new FragmentIon[0]);
+	}
+	
+	/**
+	 * 
+	 * @param n
+	 * @param minIndex
+	 * @param minimumPercent
+	 * @param mask can be null
+	 * @return
+	 */
+	public FragmentIon[] getMostIntenseAnnotatedIons(int n, int minIndex, float minimumPercent, boolean[] mask) {
+		float[] intensityArray=getIntensityArray();
+		ArrayList<ScoredObject<FragmentIon>> scored=new ArrayList<ScoredObject<FragmentIon>>();
+		float maxIntensity=0.0f;
+		for (int i=0; i<ionAnnotations.length; i++) {
+			if (ionAnnotations[i]!=null&&(mask==null||mask[i])) {
+				if (ionAnnotations[i].getIndex()>=minIndex) {
+					if (maxIntensity<intensityArray[i]) {
+						maxIntensity=intensityArray[i];
+					}
+					scored.add(new ScoredObject<FragmentIon>(intensityArray[i], ionAnnotations[i]));
+				}
+			}
+		}
+		scored.sort(null);
+		
+		ArrayList<FragmentIon> best=new ArrayList<FragmentIon>();
+		for (int i=scored.size()-1; i>=0; i--) {
+			if (scored.get(i).x/maxIntensity<minimumPercent) break;
+			best.add(scored.get(i).y);
+			if (best.size()>=n) break;
+		}
+		return best.toArray(new FragmentIon[0]);
 	}
 }

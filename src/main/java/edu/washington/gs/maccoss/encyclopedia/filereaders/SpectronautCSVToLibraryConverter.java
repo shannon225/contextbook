@@ -98,8 +98,8 @@ public class SpectronautCSVToLibraryConverter {
 					final String localSourceFile=OpenSwathTSVToLibraryConverter.getFromMap(row, "R.Label");
 					final String peptideModSeq=OpenSwathTSVToLibraryConverter.getFromMap(row, "ModifiedPeptide", "EG.ModifiedPeptide");
 					final String chargeString=OpenSwathTSVToLibraryConverter.getFromMap(row, "PrecursorCharge", "FG.Charge");
-					final String productMz=OpenSwathTSVToLibraryConverter.getFromMap(row, "FragmentMz", "ProductMz", "F.CalibratedMz", "F.MeasuredMz");
-					final String libraryIntensity=OpenSwathTSVToLibraryConverter.getFromMap(row, "RelativeIntensity", "RelativeFragmentIntensity", "LibraryIntensity", "F.PeakHeight", "F.PeakArea");
+					final String productMz=OpenSwathTSVToLibraryConverter.getFromMap(row, "FragmentMz", "ProductMz", "F.CalibratedMz", "F.MeasuredMz", "F.FrgMz");
+					final String libraryIntensity=OpenSwathTSVToLibraryConverter.getFromMap(row, "RelativeIntensity", "RelativeFragmentIntensity", "LibraryIntensity", "F.PeakHeight", "F.PeakArea", "F.MeasuredRelativeIntensity");
 					final String rtString = OpenSwathTSVToLibraryConverter.getFromMap(row, "iRT", "Tr_recalibrated", "EG.ApexRT");
 
 					try {

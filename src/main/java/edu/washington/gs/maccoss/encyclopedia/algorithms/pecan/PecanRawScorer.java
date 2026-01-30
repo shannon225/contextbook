@@ -93,7 +93,7 @@ public class PecanRawScorer implements PSMPeakScorer {
 
 		for (int i=0; i<libraryMasses.length; i++) {
 			double targetMass=libraryMasses[i];
-			int[] indicies=fragmentTolerance.getIndicies(spectrumMasses, targetMass);
+			int[] indicies=fragmentTolerance.getIndices(spectrumMasses, targetMass);
 			float intensity=0.0f;
 			float bestPeakIntensity=0.0f;
 			float deltaMass=0.0f;

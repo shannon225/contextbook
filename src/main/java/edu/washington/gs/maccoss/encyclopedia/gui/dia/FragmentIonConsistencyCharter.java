@@ -43,7 +43,7 @@ public class FragmentIonConsistencyCharter {
 			double[] masses=entry.getMassArray();
 			
 			for (int j = 0; j < primaryIons.length; j++) {
-				int[] indicies=parameters.getFragmentTolerance().getIndicies(masses, primaryIons[j].getMass());
+				int[] indicies=parameters.getFragmentTolerance().getIndices(masses, primaryIons[j].getMass());
 				float totalIntensity=0.0f;
 				for (int k = 0; k < indicies.length; k++) {
 					totalIntensity+=intensities[indicies[k]];
@@ -65,7 +65,7 @@ public class FragmentIonConsistencyCharter {
 				
 				float[] annotatedIntensities=new float[primaryIons.length];
 				for (int j = 0; j < primaryIons.length; j++) {
-					int[] indicies=parameters.getFragmentTolerance().getIndicies(masses, primaryIons[j].getMass());
+					int[] indicies=parameters.getFragmentTolerance().getIndices(masses, primaryIons[j].getMass());
 					float totalIntensity=0.0f;
 					for (int k = 0; k < indicies.length; k++) {
 						totalIntensity+=intensities[indicies[k]];
@@ -98,7 +98,7 @@ public class FragmentIonConsistencyCharter {
 			FragmentIon[] foundIonArray=foundIons.toArray(new FragmentIon[foundIons.size()]);
 			float[] annotatedIntensities=new float[foundIonArray.length];
 			for (int j = 0; j < foundIonArray.length; j++) {
-				int[] indicies=parameters.getFragmentTolerance().getIndicies(masses, foundIonArray[j].getMass());
+				int[] indicies=parameters.getFragmentTolerance().getIndices(masses, foundIonArray[j].getMass());
 				float totalIntensity=0.0f;
 				for (int k = 0; k < indicies.length; k++) {
 					totalIntensity+=intensities[indicies[k]];

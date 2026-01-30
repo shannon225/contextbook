@@ -92,7 +92,7 @@ public class EncyclopediaTwoAuxillaryPSMScorer extends EncyclopediaAuxillaryPSMS
 		ArrayList<XYPoint> fragmentDeltaMasses=new ArrayList<XYPoint>();
 		for (FragmentIon target : ions) {
 			double targetMass=target.getMass();
-			int[] predictedIndicies=libraryTolerance.getIndicies(predictedMasses, targetMass);
+			int[] predictedIndicies=libraryTolerance.getIndices(predictedMasses, targetMass);
 			float predictedIntensity=0.0f;
 			float maxCorrelation=0.01f;
 			for (int i=0; i<predictedIndicies.length; i++) {
@@ -105,7 +105,7 @@ public class EncyclopediaTwoAuxillaryPSMScorer extends EncyclopediaAuxillaryPSMS
 			}
 			
 			if (predictedIntensity>0) {
-				int[] indicies=acquiredTolerance.getIndicies(acquiredMasses, targetMass);
+				int[] indicies=acquiredTolerance.getIndices(acquiredMasses, targetMass);
 				float intensity=0.0f;
 				float bestPeakIntensity=0.0f;
 				float deltaMass=0.0f;
@@ -159,7 +159,7 @@ public class EncyclopediaTwoAuxillaryPSMScorer extends EncyclopediaAuxillaryPSMS
 			@Override
 			public boolean execute(char aa, double targetMass) {
 				if (entry.getPeptideSeq().indexOf(aa)>=0) {
-					int[] indicies=acquiredTolerance.getIndicies(acquiredMasses, targetMass);
+					int[] indicies=acquiredTolerance.getIndices(acquiredMasses, targetMass);
 
 					for (int j=0; j<indicies.length; j++) {
 						if (acquiredIntensities[indicies[j]]>0) {

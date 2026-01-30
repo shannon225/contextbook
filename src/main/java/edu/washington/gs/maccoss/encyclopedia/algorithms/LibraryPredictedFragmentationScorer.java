@@ -26,7 +26,7 @@ public class LibraryPredictedFragmentationScorer extends AuxillaryPSMScorer {
 		
 		TFloatArrayList ions=new TFloatArrayList();
 		for (int i=0; i<predicted.length; i++) {
-			int[] indicies=tolerance.getIndicies(masses, predicted[i]);
+			int[] indicies=tolerance.getIndices(masses, predicted[i]);
 			float intensity=0.0f;
 			for (int j=0; j<indicies.length; j++) {
 				intensity+=intensities[indicies[j]];

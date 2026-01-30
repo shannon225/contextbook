@@ -278,7 +278,7 @@ public class IonAccountingTest {
 		
 		public int[] getOverlappingIDs(double target, float rtInSec, int peptideID) {
 			TIntHashSet otherIDs=new TIntHashSet();
-			int[] indices=tolerance.getIndicies(masses, target);
+			int[] indices=tolerance.getIndices(masses, target);
 			for (int i : indices) {
 				if (blacklistRanges[i].contains(rtInSec)) {
 					if (peptideIDs[i]!=peptideID) {
@@ -290,7 +290,7 @@ public class IonAccountingTest {
 		}
 		
 		public boolean isIonOverlapping(double target, float rtInSec, int peptideID) {
-			int[] indices=tolerance.getIndicies(masses, target);
+			int[] indices=tolerance.getIndices(masses, target);
 			for (int i : indices) {
 				if (blacklistRanges[i].contains(rtInSec)) {
 					if (peptideIDs[i]!=peptideID) {
@@ -302,7 +302,7 @@ public class IonAccountingTest {
 		}
 		
 		public boolean isBlacklisted(double target) {
-			int[] indices=tolerance.getIndicies(masses, target);
+			int[] indices=tolerance.getIndices(masses, target);
 			if (indices.length>0) return true;
 			return false;
 		}

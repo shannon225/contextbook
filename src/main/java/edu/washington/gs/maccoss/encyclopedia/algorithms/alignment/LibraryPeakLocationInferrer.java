@@ -68,7 +68,7 @@ public class LibraryPeakLocationInferrer implements PeakLocationInferrerInterfac
 		for (int i=0; i<topNMasses.length; i++) {
 			float sum=0.0f;
 			float maxCorr=0.0f;
-			int[] optionalIndex=params.getFragmentTolerance().getIndicies(masses, topNMasses[i]);
+			int[] optionalIndex=params.getFragmentTolerance().getIndices(masses, topNMasses[i]);
 			for (int index : optionalIndex) {
 				sum+=intensities[index];
 				maxCorr=Math.max(maxCorr, correlations[index]);

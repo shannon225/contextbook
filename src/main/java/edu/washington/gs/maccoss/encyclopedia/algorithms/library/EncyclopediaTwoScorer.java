@@ -107,7 +107,7 @@ public class EncyclopediaTwoScorer implements EncyclopediaScorer {
 		for (FragmentIon targetIon : ions) {
 			double target=targetIon.getMass();
 			
-			int[] predictedIndicies=libraryTolerance.getIndicies(predictedMasses, target);
+			int[] predictedIndicies=libraryTolerance.getIndices(predictedMasses, target);
 			float predictedIntensity=0.0f;
 			float maxCorrelation=0.01f;
 			for (int i=0; i<predictedIndicies.length; i++) {
@@ -120,7 +120,7 @@ public class EncyclopediaTwoScorer implements EncyclopediaScorer {
 			}
 			
 			if (predictedIntensity>0) {
-				int[] indicies=acquiredTolerance.getIndicies(acquiredMasses, target);
+				int[] indicies=acquiredTolerance.getIndices(acquiredMasses, target);
 				float intensity=0.0f;
 				float bestPeakIntensity=0.0f;
 				float deltaMass=0.0f;

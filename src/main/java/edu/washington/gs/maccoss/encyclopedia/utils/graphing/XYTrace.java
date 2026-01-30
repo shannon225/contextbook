@@ -38,6 +38,10 @@ public class XYTrace implements XYTraceInterface, Comparable<XYTraceInterface> {
 		
 		Collections.sort(points);
 	}
+
+	public XYTrace changeData(ArrayList<XYPoint> points) {
+		return new XYTrace(points, type, name, color, thickness);
+	}
 	
 	public XYTrace changeGraphType(GraphType t) {
 		return new XYTrace(points, t, name, color, thickness);

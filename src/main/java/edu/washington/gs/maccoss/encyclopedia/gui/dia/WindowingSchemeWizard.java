@@ -1,14 +1,21 @@
 package edu.washington.gs.maccoss.encyclopedia.gui.dia;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.EventQueue;
+import java.awt.FileDialog;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.Locale;
 
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
@@ -20,6 +27,7 @@ import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -31,6 +39,7 @@ import org.jfree.chart.ChartPanel;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ScanRangeTracker;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.WindowSchemeGenerator;
 import edu.washington.gs.maccoss.encyclopedia.gui.general.LabeledComponent;
+import edu.washington.gs.maccoss.encyclopedia.gui.general.SimpleFilenameFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector;
 import edu.washington.gs.maccoss.encyclopedia.utils.OSDetector.OS;
@@ -95,6 +104,7 @@ public class WindowingSchemeWizard extends JPanel implements ActionListener, Cha
 		super(new BorderLayout());
 
 		JPanel options=new JPanel();
+		options.setBackground(Color.white);
 		options.setLayout(new BoxLayout(options, BoxLayout.PAGE_AXIS));
 		options.add(new LabeledComponent("<p style=\"font-size:12px; font-family: Helvetica, sans-serif\"><b>Parameters", new JLabel()));
 
@@ -109,6 +119,15 @@ public class WindowingSchemeWizard extends JPanel implements ActionListener, Cha
 		options.add(new LabeledComponent("Start m/z", c2));
 		options.add(new LabeledComponent("Stop m/z", c3));
 		options.add(new LabeledComponent("Margin Width", c4));
+		
+		JButton exportButton=new JButton("Export CSV");
+		exportButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				export();
+			}
+		});
+		options.add(exportButton);
 
 		windowingScheme.addActionListener(this);
 		isPhospho.addActionListener(this);
@@ -150,7 +169,7 @@ public class WindowingSchemeWizard extends JPanel implements ActionListener, Cha
 		}
 		int tableLocation=tableSplit.getDividerLocation();
 		if (tableLocation<=5) {
-			tableLocation=200;
+			tableLocation=250;
 		}
 		
 		ScanRangeTracker scanRange=generateScanRangeTracker(isPhospho.isSelected());
@@ -174,5 +193,43 @@ public class WindowingSchemeWizard extends JPanel implements ActionListener, Cha
 		}
 
 		return WindowSchemeGenerator.generateWindowingScheme(windowingSchemeIndex, start, stop, numWindows, margin, isPhospho);
+	}
+	
+	
+	/** Write Thermo method file. Uses default charge of z=3 **/
+	public void export() {
+		FileDialog dialog=new FileDialog((JFrame)SwingUtilities.getWindowAncestor(this), "Save Method CSV", FileDialog.SAVE);
+		dialog.setFile("Mass List Table.csv");
+		dialog.setFilenameFilter(new SimpleFilenameFilter(".csv"));
+		dialog.setVisible(true);
+		File[] fs=dialog.getFiles();
+		try {
+			if (fs!=null&&fs.length>0&&fs[0]!=null) {
+				File saveFile;
+				if (fs[0].getName().toLowerCase().endsWith(".csv")) {
+					saveFile=fs[0];
+				} else {
+					saveFile=new File(fs[0].getParentFile(), fs[0].getName()+".csv");
+				}
+
+				PrintWriter writer=new PrintWriter(saveFile);
+				writer.println("Compound,Formula,Adduct,m/z,z");
+				
+				for (int i=0; i<model.getRowCount(); i++) {
+					writer.printf(Locale.US, ",,(no adduct),%.4f,3", model.getCenter(i));
+					writer.println();
+				}
+
+				writer.close();
+				
+				Logger.logLine("Finished exporting CSV!");
+			}
+		
+		} catch (IOException ioe) {
+			Logger.errorLine("Found IO error saving CSV file...");
+			Logger.errorException(ioe);
+		}
+		
+		
 	}
 }

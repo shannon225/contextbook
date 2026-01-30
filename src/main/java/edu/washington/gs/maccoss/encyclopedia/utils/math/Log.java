@@ -37,6 +37,22 @@ public class Log {
 		return (float)(Math.log(v)/log2);
 	}
 
+	public static float[] logLn(float[] v) {
+		float[] r=new float[v.length];
+		for (int i=0; i<r.length; i++) {
+			r[i]=(float)Math.log(v[i]);
+		}
+		return r;
+	}
+
+	public static double[] logLn(double[] v) {
+		double[] r=new double[v.length];
+		for (int i=0; i<r.length; i++) {
+			r[i]=Math.log(v[i]);
+		}
+		return r;
+	}
+
 	public static float[] log10(float[] v) {
 		float[] r=new float[v.length];
 		for (int i=0; i<r.length; i++) {

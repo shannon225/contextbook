@@ -135,6 +135,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.BackgroundSubtractionFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.LogQuadraticInterpolatedFunction;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.SkylineSGFilter;
 import edu.washington.gs.maccoss.encyclopedia.utils.threading.EmptyProgressIndicator;
 import gnu.trove.list.array.TFloatArrayList;
@@ -165,6 +166,9 @@ public class ChromatogrindrPanel extends JPanel {
 	private final JCheckBox fragmentBox;
 	private final JCheckBox sgSmoothBox;
 	private final JCheckBox backgroundSubtractBox;
+	private final JCheckBox interpolatePlotsBox;
+	private final SpinnerModel offsetSpinnerModel=new SpinnerNumberModel(0, 0, 10, 1);
+	private final SpinnerModel downsampleSpinnerModel=new SpinnerNumberModel(0, 0, 10, 1);
 	private final SpinnerModel smallestIonNumbers=new SpinnerNumberModel(3, 0, 10, 1);
 
 	private LibraryInterface reference=null;
@@ -176,86 +180,15 @@ public class ChromatogrindrPanel extends JPanel {
 	private final KoinaLibraryPredictionClient client;
 
 	public static void main(String[] args) {
-		File rawFile=new File("/Users/searleb/Documents/encyclopedia/small_file/bcs_2020jan16_hela_clib_3.mzML");
-		File libraryFile=new File("/Users/searleb/Documents/encyclopedia/small_file/pan_human_library.dlib");
+		File rawFile=new File("/Users/searle.brian/Documents/temp/small_test/2024_11_08_EP5_VNeo_DI_100ng_HeLa_PRTC_67kDa_PRM_01.dia");
+		File libraryFile=new File("/Users/searle.brian/Documents/temp/small_test/prtcs.dlib");
 		final ChromatogrindrPanel browser=new ChromatogrindrPanel();
 		launchBrowserPanel(browser);
 		
 		//browser.updateLibrary(libraryFile);
 		browser.updateRaw(rawFile);
 		
-		browser.pasteTable("KNILLTIGSYK	64.14	2	\n" + "GLGC[+57.021464]SLLFIPLGLVDRR	96.87	3	\n"
-				+ "ATTGTQTLLSSGTR	46.81	2	\n" + "STLDIVLANKDR	57.81	2	\n" + "YETLFQALDR	78.86	2	\n"
-				+ "AYSFAMGC[+57.021464]WPK	72.86	2	\n" + "YAEEELEQVR	48.26	2	\n"
-				+ "RNPDTQWITK	42.77	2	\n" + "RNEFLGELQK	51.95	2	\n"
-				+ "ISEEC[+57.021464]IAQWK	57.02	2	\n" + "GGDFSSSDFQSR	44.43	2	\n"
-				+ "TVLLLADQMISR	81.11	2	\n" + "LWTSC[+57.021464]APLNIR	69.84	2	\n"
-				+ "AGSFITGIDVTSK	66.42	2	\n" + "SMAEDTINAAVK	50.93	2	\n" + "GGGTPDANSLAPPGK	43.07	2	\n"
-				+ "ATSLGRPEEEEDELAHR	42.37	3	\n" + "LWDYIDGILIK	89.78	2	\n"
-				+ "IPNIYAIGDVVAGPM[+15.994915]LAHK	81.20	3	\n" + "QLFHGTPVTIENFLNWK	88.69	3	\n"
-				+ "LPEHC[+57.021464]IEYVR	45.37	2	\n" + "RQESGYLIEEIGDVLLAR	94.88	3	\n"
-				+ "DHGLEVLGLVR	72.62	2	\n" + "ISTLTIEEGNLDIQRPK	64.12	3	\n" + "AVQELVHPVVDR	50.54	2	\n"
-				+ "MSAYSGITDVIIGMPHR	79.54	3	\n" + "MSQVAPSLSALIGEAVGAR	93.61	3	\n"
-				+ "LVTC[+57.021464]TGYHQVR	35.64	2	\n" + "GGPNIITLADIVKDPVSR	84.24	3	\n"
-				+ "SNQLFNGHGGHIMPPTQSQFGEMGGK	60.40	4	\n" + "TVEAEAAHGTVTR	31.26	2	\n"
-				+ "VAPLWHSSSEVISMADR	68.71	3	\n" + "QVTPDGESDEVGVIPSKR	48.04	3	\n"
-				+ "LIETLKPFGVFEEEEELQRR	78.29	4	\n" + "DLEQPSQAAGINLEIIR	80.25	3	\n"
-				+ "AYFDLQTHVIQVPQGK	69.42	3	\n" + "AYWLLEEMLTK	94.64	2	\n" + "VPNSVLWLLR	87.95	2	\n"
-				+ "AQETGHLVMDVR	46.31	2	\n" + "LAQM[+15.994915]FSDMVLK	67.63	2	\n"
-				+ "MLGTEGGEGFVVK	61.23	2	\n" + "QVSGLTVDTEER	46.31	2	\n"
-				+ "LVAFGTSHGFGLFDHQQR	69.63	3	\n" + "SGAGEDPPMPASR	38.16	2	\n"
-				+ "QVSASELHTSGILGPETLR	64.22	3	\n" + "LVIVDGIAFPFR	92.84	2	\n"
-				+ "LIQFC[+57.021464]AIDELGTNYPK	81.94	3	\n" + "SIVEEIEDLVAR	97.14	2	\n"
-				+ "HPDSHQLFIGNLPHEVDKSELKDFFQSYGNVVELR	84.82	6	\n"
-				+ "DVAHWLGC[+57.021464]SATSTFNFHPNVR	77.60	4	\n" + "LLPALQSTITR	67.46	2	\n"
-				+ "DGFVQNVHTPR	44.68	2	\n" + "AEELIQEIQR	59.01	2	\n"
-				+ "ELMC[+57.021464]QIEASAK	54.10	2	\n" + "QSVEADINGLR	54.00	2	\n"
-				+ "AGLSPANC[+57.021464]QSDR	32.31	2	\n" + "EVWALVQAGIR	78.76	2	\n"
-				+ "NFATSLYSMIK	84.59	2	\n" + "IFLYPNAGQLK	69.89	2	\n" + "DLPPVSGSIIWAK	80.74	2	\n"
-				+ "MININILSVC[+57.021464]K	80.29	2	\n" + "SIIEC[+57.021464]VDDFR	67.87	2	\n"
-				+ "ELPDLEDLMK	84.14	2	\n" + "AIPNQGEILVIR	69.13	2	\n" + "DYIWNTLNSGR	73.05	2	\n"
-				+ "GFC[+57.021464]QLVVSSSLR	69.66	2	\n" + "TFQMDDYSLC[+57.021464]GLISHK	77.77	3	\n"
-				+ "EYVEPELHINDLWR	78.19	3	\n" + "VKNEGDDFGWGVVVNFSK	79.71	3	\n"
-				+ "MLAQPLKDSDVEVYNIIK	75.86	3	\n" + "MVEPQYQELK	50.71	2	\n"
-				+ "ATPSENLVPSSAR	46.77	2	\n" + "TESPVLTSSC[+57.021464]R	39.62	2	\n"
-				+ "DPNTQSVGNPQR	29.78	2	\n" + "EVMFTEEDVK	54.97	2	\n" + "LTHYDHVLIELTQAGLK	75.81	3	\n"
-				+ "EAQELSQNSAIKQDAQSLHGDIPQK	51.97	4	\n" + "EMVSDVDLSFNK	65.81	2	\n"
-				+ "VSGVDGYETEGIR	49.14	2	\n" + "ISAFGYLEC[+57.021464]SAK	68.26	2	\n"
-				+ "LAPGFDAELIVK	76.12	2	\n" + "NSC[+57.021464]NVGGGGGGFK	32.43	2	\n"
-				+ "SRPPEERPPGLPLPPPPPSSSAVFR	69.25	4	\n" + "YDYVLTGYTR	60.16	2	\n"
-				+ "DLTPEHLPLLR	71.33	2	\n" + "TSQLLETLNQLSTHTHVVDITR	82.40	4	\n"
-				+ "ALLQQQPEDDSK	40.52	2	\n" + "TFSFYLSNIGR	79.80	2	\n" + "ATQELIPIEDFITPLK	96.14	3	\n"
-				+ "EAAEAEAEVPVVQYVGER	68.63	3	\n" + "EVMSPLQAMSSYTVAGR	81.15	3	\n"
-				+ "IPPLNPGQGPGPNK	49.99	2	\n" + "LVAC[+57.021464]FQGQHGTDAERR	37.40	3	\n"
-				+ "GTGAASFDEFGNSK	52.10	2	\n" + "NLNGTLHELLR	66.91	2	\n" + "LESENDEYER	31.44	2	\n"
-				+ "AQPTPSSSATQSKPTPVKPNYALK	42.12	4	\n" + "GHDLNEDGLVSWEEYK	65.57	3	\n"
-				+ "RLSQIGVENTEENRR	35.68	3	\n" + "APLKPYPVSPSDK	43.30	2	\n" + "NPLVAVYYTNR	62.66	2	\n"
-				+ "NLHVVFTMNPSSEGLKDR	61.51	3	\n" + "GAVYSMVEFNGK	63.09	2	\n"
-				+ "EYVNSTSEESHDEDEIRPVQQQDLHR	44.33	5	\n" + "EPPADVWTPPAR	58.65	2	\n"
-				+ "NADHSMNYQYR	33.96	2	\n" + "NAQEALQAIETK	56.01	2	\n" + "EDLPAENGETK	33.87	2	\n"
-				+ "LLEEENQESLR	45.66	2	\n" + "IVFAAGNFWGR	79.69	2	\n" + "LYQGINQLPNVIQALEK	90.46	3	\n"
-				+ "QVTSSGVSHGGTVSLQDAVTR	50.02	3	\n" + "THSQGGYGSQGYK	25.90	2	\n"
-				+ "MVDENC[+57.021464]VGFDHTVKPVSDMELETPTDKR	60.48	5	\n" + "LAGDPSAGDGAAPR	34.31	2	\n"
-				+ "LFAVLEQLSPVR	87.07	2	\n" + "NTLTNIAM[+15.994915]RPGLEGYALPR	68.67	3	\n"
-				+ "KDPGVPNSAPFK	43.93	2	\n" + "SEIC[+57.021464]TEEPQK	32.30	2	\n"
-				+ "C[+57.021464]DPAGYYC[+57.021464]GFK	53.99	2	\n" + "ALEQQVEEMK	47.84	2	\n"
-				+ "NLTGDVC[+57.021464]AVMR	60.78	2	\n" + "TC[+57.021464]LIC[+57.021464]ADTFR	62.03	2	\n"
-				+ "LAQDGAHVVVSSR	36.45	2	\n" + "LVSWYTLMEGQEPIAR	87.46	3	\n" + "EDLYLKPIQR	52.89	2	\n"
-				+ "VQFAPEKPGPQPSAETTR	44.37	3	\n" + "EQSGTIYLQHADEEREK	39.95	3	\n"
-				+ "TDAEATDTEATET	32.20	2	\n" + "QDLPALEEKPR	46.14	2	\n" + "LVPGGGATEIELAK	59.74	2	\n"
-				+ "VLHMVGDKPVFSFQPR	64.95	3	\n" + "WEEVQSYIR	59.78	2	\n" + "VFEVNASNLEK	56.81	2	\n"
-				+ "LTGTIQNDILK	59.81	2	\n" + "SVSGTDVQEEC[+57.021464]R	31.45	2	\n"
-				+ "LPPNTNDEVDEDPTGNK	42.33	3	\n" + "NVALSGVLEVVR	79.42	2	\n" + "QLQLAQEAAQK	44.98	2	\n"
-				+ "TIEDLDENQLKDEFFK	74.48	3	\n" + "EVWDYVFFK	87.08	2	\n"
-				+ "ISM[+15.994915]PDLDLNLK	67.16	2	\n" + "WDLSAQQIEER	62.26	2	\n"
-				+ "TASSVIELTC[+57.021464]TK	55.26	2	\n" + "QRPGQQVATC[+57.021464]VR	31.39	2	\n"
-				+ "VFSDEVQQQAQLSTIR	61.03	3	\n" + "RLEFPSGETIVMHNPK	58.85	3	\n"
-				+ "FNC[+57.021464]EENQHSDSC[+57.021464]YK	29.61	3	\n" + "VNPYEEVDQEK	45.28	2	\n"
-				+ "SLEDALAEAQR	58.97	2	\n" + "C[+57.021464]HWSDMFTGR	58.77	2	\n"
-				+ "QLDTVNFFLK	80.84	2	\n" + "QQPDTEAVLNGK	44.00	2	\n"
-				+ "ATSITVTGSGSC[+57.021464]R	37.35	2	\n" + "VSNQVAVNMYK	47.48	2	\n"
-				+ "QLGELLTDGVR	65.94	2	\n" + "EADASPASAGIC[+57.021464]R	37.79	2	\n"
-				+ "TPLHMAASEGHASIVEVLLK	74.64	3	\n");
+		browser.updateImportedLibrary(libraryFile);
 	}
 
 	public static void launchBrowserPanel(final ChromatogrindrPanel browser) {
@@ -409,10 +342,33 @@ public class ChromatogrindrPanel extends JPanel {
 				updateToSelectedPeptide();
 			}
 		});
+		interpolatePlotsBox=new JCheckBox("Interpolate");
+		interpolatePlotsBox.setSelected(true);
+		interpolatePlotsBox.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				updateToSelectedPeptide();
+			}
+		});
 		
 		JSpinner ionSpinner = new JSpinner(smallestIonNumbers);
 		ionSpinner.addChangeListener(new ChangeListener() {
-			
+			@Override
+			public void stateChanged(ChangeEvent e) {
+				updateToSelectedPeptide();
+			}
+		});
+		
+		JSpinner downsampleSpinner = new JSpinner(downsampleSpinnerModel);
+		downsampleSpinner.addChangeListener(new ChangeListener() {
+			@Override
+			public void stateChanged(ChangeEvent e) {
+				updateToSelectedPeptide();
+			}
+		});
+		
+		JSpinner offsetSpinner = new JSpinner(offsetSpinnerModel);
+		offsetSpinner.addChangeListener(new ChangeListener() {
 			@Override
 			public void stateChanged(ChangeEvent e) {
 				updateToSelectedPeptide();
@@ -420,6 +376,10 @@ public class ChromatogrindrPanel extends JPanel {
 		});
 		LabeledComponent ionSpinnerLabel = new LabeledComponent("Min Ion", "The smallest ion index considered, 0 for unfiltered", ionSpinner);
 		ionSpinnerLabel.setBackground(null);
+		LabeledComponent downsampleSpinnerLabel = new LabeledComponent("Downsample", "The number of points to skip", downsampleSpinner);
+		downsampleSpinnerLabel.setBackground(null);
+		LabeledComponent offsetSpinnerLabel = new LabeledComponent("Offset", "The start of points to skip", offsetSpinner);
+		offsetSpinnerLabel.setBackground(null);
 
 		JPanel checkboxes=new JPanel(new FlowLayout());
 		options.add(checkboxes);
@@ -429,7 +389,13 @@ public class ChromatogrindrPanel extends JPanel {
 		checkboxes.add(Box.createHorizontalStrut(10));
 		checkboxes.add(backgroundSubtractBox);
 		checkboxes.add(Box.createHorizontalStrut(10));
+		checkboxes.add(interpolatePlotsBox);
+		checkboxes.add(Box.createHorizontalStrut(10));
 		checkboxes.add(ionSpinnerLabel);
+		checkboxes.add(Box.createHorizontalStrut(10));
+		checkboxes.add(downsampleSpinnerLabel); // FIXME cut
+		checkboxes.add(Box.createHorizontalStrut(10));
+		checkboxes.add(offsetSpinnerLabel); // FIXME cut
 		
 		JPanel buttons=new JPanel(new FlowLayout());
 		options.add(buttons);
@@ -700,6 +666,11 @@ public class ChromatogrindrPanel extends JPanel {
 		}
 		File libraryFile=fs[0];
 
+		updateImportedLibrary(libraryFile);
+		
+	}
+
+	private void updateImportedLibrary(File libraryFile) {
 		try {
 			LibraryFile library=new LibraryFile();
 			library.openFile(libraryFile);
@@ -727,7 +698,6 @@ public class ChromatogrindrPanel extends JPanel {
 			Logger.errorLine("Found IO error reading data from library file...");
 			Logger.errorException(ioe);
 		}
-		
 	}
 	
 	public void exportLibrary() {
@@ -987,8 +957,46 @@ public class ChromatogrindrPanel extends JPanel {
 				data=TransitionRefiner.identifyTransitions(entry.getPeptideModSeq(), entry.getPrecursorCharge(), entry.getRetentionTimeInSec(), 
 						primaryIonObjects, chromatogramList, retentionTimes, false, parameters);
 			}
-			fragmentTraces=getTraces(primaryIonObjects, data.getChromatograms(), data.getCorrelationArray(), retentionTimes, data.getRange(), -Float.MAX_VALUE);
+			fragmentTraces=getTraces(primaryIonObjects, data.getChromatograms(), new float[data.getCorrelationArray().length], retentionTimes, data.getRange(), -Float.MAX_VALUE);
 			
+			if ((Integer)downsampleSpinnerModel.getValue()>0) {
+				for (int j=0; j<precursorTraces.size(); j++) {
+					XYTrace trace=precursorTraces.get(j);
+					ArrayList<XYPoint> points=new ArrayList<XYPoint>();
+					int count=0;
+					for (XYPoint point: trace.getPoints()) {
+						count++;
+						if ((count%((Integer)downsampleSpinnerModel.getValue())==((Integer)offsetSpinnerModel.getValue()))) {
+							points.add(point);
+						}
+					}
+					precursorTraces.set(j, trace.changeData(points));
+				}
+
+				for (int j=0; j<fragmentTraces.size(); j++) {
+					XYTrace trace=fragmentTraces.get(j);
+					ArrayList<XYPoint> points=new ArrayList<XYPoint>();
+					int count=0;
+					for (XYPoint point: trace.getPoints()) {
+						count++;
+						if ((count%((Integer)downsampleSpinnerModel.getValue())==((Integer)offsetSpinnerModel.getValue()))) {
+							points.add(point);
+						}
+					}
+					fragmentTraces.set(j, trace.changeData(points));
+				}
+			}
+			
+			if (interpolatePlotsBox.isSelected()) {
+				for (int j=0; j<precursorTraces.size(); j++) {
+					XYTrace trace=precursorTraces.get(j);
+					precursorTraces.set(j, trace.changeData(new LogQuadraticInterpolatedFunction(trace.getPoints()).interpolate()));
+				}
+				for (int j=0; j<fragmentTraces.size(); j++) {
+					XYTrace trace=fragmentTraces.get(j);
+					fragmentTraces.set(j, trace.changeData(new LogQuadraticInterpolatedFunction(trace.getPoints()).interpolate()));
+				}
+			}
 			
 			final ChartPanel chartPanel = getChromatogramChartPanel(entry, fragmentTraces, precursorTraces, data.getRange());
 	        
@@ -1212,60 +1220,66 @@ public class ChromatogrindrPanel extends JPanel {
 			
 			@Override
 			public void mouseDragged(MouseEvent e) {
-		        Rectangle2D area=chartPanel.getScreenDataArea(e.getX(), e.getY());
-		        if (area!=null) {
-			        XYPlot plot = (XYPlot) chartPanel.getChart().getPlot();
-			        ValueAxis xAxis = plot.getDomainAxis();
-			        double x = xAxis.java2DToValue(e.getX(), area, RectangleEdge.BOTTOM);
-			        xCrosshair.setValue(x);
-			        
-			        double prevX=zoomPoint.getX();
-			        double prevY=zoomPoint.getY();
-			        if (!Double.isNaN(prevX)&&!Double.isNaN(prevY)) {
-				        Line2D zoomLine=new Line2D.Double(prevX, prevY, e.getX(), prevY);
-
-				        Graphics2D g2 = (Graphics2D) chartPanel.getGraphics();
-				        g2.setPaint(Color.gray);
-				        g2.draw(zoomLine);
+				if (e.getButton()==MouseEvent.BUTTON1) {
+			        Rectangle2D area=chartPanel.getScreenDataArea(e.getX(), e.getY());
+			        if (area!=null) {
+				        XYPlot plot = (XYPlot) chartPanel.getChart().getPlot();
+				        ValueAxis xAxis = plot.getDomainAxis();
+				        double x = xAxis.java2DToValue(e.getX(), area, RectangleEdge.BOTTOM);
+				        xCrosshair.setValue(x);
+				        
+				        double prevX=zoomPoint.getX();
+				        double prevY=zoomPoint.getY();
+				        if (!Double.isNaN(prevX)&&!Double.isNaN(prevY)) {
+					        Line2D zoomLine=new Line2D.Double(prevX, prevY, e.getX(), prevY);
+	
+					        Graphics2D g2 = (Graphics2D) chartPanel.getGraphics();
+					        g2.setPaint(Color.gray);
+					        g2.draw(zoomLine);
+				        }
 			        }
-		        }
+				}
 			}
 		});
 		
 		chartPanel.addMouseListener(new MouseListener() {
 			@Override
 			public void mouseReleased(MouseEvent e) {
-				double prevX=zoomPoint.getX();
-				if (!Double.isNaN(prevX)) {
-		            Rectangle2D area=chartPanel.getScreenDataArea(e.getX(), e.getY());
-		            if (area==null) return;
-		            
-		        	double x=Math.max(area.getMinX(), Math.min(e.getX(), area.getMaxX()));
-		        	
-		        	double first=Math.min(x, prevX);
-		        	double second=Math.max(x, prevX);
-		        	
-			        XYPlot plot = (XYPlot) chartPanel.getChart().getPlot();
-			        ValueAxis xAxis = plot.getDomainAxis();
-			        double plotX1 = xAxis.java2DToValue(first, area, RectangleEdge.BOTTOM);
-			        double plotX2 = xAxis.java2DToValue(second, area, RectangleEdge.BOTTOM);
-			        
-			        entry.setRtRangeInSecs(new Range(plotX1*60.0, plotX2*60.0));
-			        resetPeptide(entry);
-		        }
+				if (e.getButton()==MouseEvent.BUTTON1) {
+					double prevX=zoomPoint.getX();
+					if (!Double.isNaN(prevX)) {
+			            Rectangle2D area=chartPanel.getScreenDataArea(e.getX(), e.getY());
+			            if (area==null) return;
+			            
+			        	double x=Math.max(area.getMinX(), Math.min(e.getX(), area.getMaxX()));
+			        	
+			        	double first=Math.min(x, prevX);
+			        	double second=Math.max(x, prevX);
+			        	
+				        XYPlot plot = (XYPlot) chartPanel.getChart().getPlot();
+				        ValueAxis xAxis = plot.getDomainAxis();
+				        double plotX1 = xAxis.java2DToValue(first, area, RectangleEdge.BOTTOM);
+				        double plotX2 = xAxis.java2DToValue(second, area, RectangleEdge.BOTTOM);
+				        
+				        entry.setRtRangeInSecs(new Range(plotX1*60.0, plotX2*60.0));
+				        resetPeptide(entry);
+			        }
+				}
 			}
 			
 			@Override
 			public void mousePressed(MouseEvent e) {
-		        Rectangle2D area=chartPanel.getScreenDataArea(e.getX(), e.getY());
-		        if (area!=null) {
-		        	zoomPoint.setX(Math.max(area.getMinX(), Math.min(e.getX(), area.getMaxX())));
-		        	zoomPoint.setY(Math.max(area.getMinY(), Math.min(e.getY(), area.getMaxY())));
-		        }
-		        else {
-		        	zoomPoint.setX(null);
-		        	zoomPoint.setY(null);
-		        }
+				if (e.getButton()==MouseEvent.BUTTON1) {
+			        Rectangle2D area=chartPanel.getScreenDataArea(e.getX(), e.getY());
+			        if (area!=null) {
+			        	zoomPoint.setX(Math.max(area.getMinX(), Math.min(e.getX(), area.getMaxX())));
+			        	zoomPoint.setY(Math.max(area.getMinY(), Math.min(e.getY(), area.getMaxY())));
+			        }
+			        else {
+			        	zoomPoint.setX(null);
+			        	zoomPoint.setY(null);
+			        }
+				}
 			}
 			
 			@Override
@@ -1297,7 +1311,7 @@ public class ChromatogrindrPanel extends JPanel {
 		for (int i = 0; i < ions.length; i++) {
 			FragmentIon target=ions[i];
 		
-			int[] indicies=acquiredTolerance.getIndicies(acquiredMasses, target.getMass());
+			int[] indicies=acquiredTolerance.getIndices(acquiredMasses, target.getMass());
 			float intensity=0.0f;
 			float bestPeakIntensity=-1.0f;
 			double bestPeakMass=0.0;
@@ -1357,6 +1371,7 @@ public class ChromatogrindrPanel extends JPanel {
 //				backgroundgraphtype=GraphType.line;
 //				thickness=3.0f;
 			} else {
+				System.out.println(correlationArray[i]);
 				c=new Color(128, 128, 128, 128);
 				graphtype=GraphType.bolddashedline;
 				backgroundgraphtype=GraphType.dashedline;
@@ -1373,6 +1388,7 @@ public class ChromatogrindrPanel extends JPanel {
 	}
 
 	private static float getMinimumCorrelation(float[] correlationArray) {
+		if (true) return -Float.MAX_VALUE;// FIXME
 		if (correlationArray.length==0) return TransitionRefiner.quantitativeCorrelationThreshold;
 		
 		float[] correlationClone=correlationArray.clone();

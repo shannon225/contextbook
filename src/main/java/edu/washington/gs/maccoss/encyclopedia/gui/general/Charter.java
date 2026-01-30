@@ -31,7 +31,6 @@ import java.sql.SQLException;
 import java.text.AttributedString;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -1206,6 +1205,9 @@ public class Charter {
 				AnnotatedLibraryEntry entry=(AnnotatedLibraryEntry)trace;
 				
 				entries.add(entry);
+			} else if (trace instanceof AnnotatedSpectrum) {
+				AnnotatedSpectrum spectrum=(AnnotatedSpectrum)trace;
+				entries.add(spectrum.getEntry());
 			}
 		}
 		// don't bother continuing if we don't have any annotated spectra

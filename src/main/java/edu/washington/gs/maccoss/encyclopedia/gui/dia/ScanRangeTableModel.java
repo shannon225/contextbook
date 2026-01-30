@@ -35,6 +35,11 @@ public class ScanRangeTableModel extends AbstractTableModel {
 	public ScoredObject<Range> getSelectedRow(int rowIndex) {
 		return ranges.get(rowIndex);
 	}
+	
+	public float getCenter(int rowIndex) {
+		ScoredObject<Range> entry=getSelectedRow(rowIndex);
+		return entry.y.getMiddle();
+	}
 
 	@Override
 	public int getRowCount() {

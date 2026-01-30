@@ -51,18 +51,12 @@ public class LibraryEntry implements Comparable<PeptidePrecursor>, SpectrumWithC
 	private final HashSet<String> accessions;
 
 	public LibraryEntry(String source, HashSet<String> accessions, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray, Optional<Float> ionMobility, AminoAcidConstants aaConstants) {
-		this(source, accessions, 1, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, getUnitArray(massArray.length), getBooleanUnitArray(massArray.length), ionMobility, aaConstants);
+		this(source, accessions, 1, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, getUnitArray(massArray.length), General.getBooleanUnitArray(massArray.length, true), ionMobility, aaConstants);
 	}
 	
 	private static float[] getUnitArray(int length) {
 		float[] unit=new float[length];
 		Arrays.fill(unit, 1.0f);
-		return unit;
-	}
-	
-	private static boolean[] getBooleanUnitArray(int length) {
-		boolean[] unit=new boolean[length];
-		Arrays.fill(unit, true);
 		return unit;
 	}
 
@@ -71,7 +65,7 @@ public class LibraryEntry implements Comparable<PeptidePrecursor>, SpectrumWithC
 	}
 
 	public LibraryEntry(String source, HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray, Optional<Float> ionMobility, AminoAcidConstants aaConstants) {
-		this(source, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, getUnitArray(massArray.length), getBooleanUnitArray(massArray.length), ionMobility, aaConstants);
+		this(source, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime, score, massArray, intensityArray, getUnitArray(massArray.length), General.getBooleanUnitArray(massArray.length, true), ionMobility, aaConstants);
 	}
 	public LibraryEntry(String source, HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, int copies, float retentionTime, float score, double[] massArray, float[] intensityArray, float[] correlationArray, boolean[] quantifiedIonsArray, Optional<Float> ionMobility, AminoAcidConstants aaConstants) {
 		this(source, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, copies, retentionTime,
@@ -180,7 +174,7 @@ public class LibraryEntry implements Comparable<PeptidePrecursor>, SpectrumWithC
 	 * @return
 	 */
 	public LibraryEntry updateMS2(double[] newMassArray, float[] newIntensityArray) {
-		return new LibraryEntry(source, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, massCorrectedPeptideModSeq, copies, retentionTime, score, newMassArray, newIntensityArray, getUnitArray(newMassArray.length), getBooleanUnitArray(newMassArray.length), ionMobility);
+		return new LibraryEntry(source, accessions, spectrumIndex, precursorMZ, precursorCharge, peptideModSeq, massCorrectedPeptideModSeq, copies, retentionTime, score, newMassArray, newIntensityArray, getUnitArray(newMassArray.length), General.getBooleanUnitArray(massArray.length, true), ionMobility);
 	}
 	
 	/**

@@ -93,7 +93,7 @@ public class SpectrumUtils {
 		TFloatArrayList ims=new TFloatArrayList();
 
 		float totalIIT=0.0f;
-		float minRT=Float.MAX_VALUE;
+		float averageRT=0.0f;
 		
 		boolean gotAcquiredData=false;
 		float tic=0f;
@@ -102,7 +102,7 @@ public class SpectrumUtils {
 		double isolationWindowUpper=0.0;
 		
 		for (Spectrum spectrum : spectra) {
-			if (spectrum.getScanStartTime()<minRT) minRT=spectrum.getScanStartTime();
+			averageRT+=spectrum.getScanStartTime();
 			if (spectrum instanceof AcquiredSpectrum) {
 				gotAcquiredData=true;
 				AcquiredSpectrum acquiredSpectrum = (AcquiredSpectrum)spectrum;
@@ -140,6 +140,9 @@ public class SpectrumUtils {
 			}
 			tic += spectrum.getTIC();
 		}
+		if (spectra.size()>0) {
+			averageRT=averageRT/spectra.size();
+		}
 		
 		if (!gotAcquiredData) {
 			minFraction=0;
@@ -149,7 +152,7 @@ public class SpectrumUtils {
 		
 		Optional<float[]> combinedIMS=ims.size()==0?Optional.empty():Optional.of(ims.toArray());
 		
-		return new PrecursorScan("Combined", 0, minRT, minFraction, isolationWindowLower, isolationWindowUpper, totalIIT, masses.toArray(), intensities.toArray(), combinedIMS, tic);
+		return new PrecursorScan("Combined", 0, averageRT, minFraction, isolationWindowLower, isolationWindowUpper, totalIIT, masses.toArray(), intensities.toArray(), combinedIMS, tic);
 	}
 
 	public static int getIndex(TDoubleArrayList peaks, double target, MassTolerance tolerance) {

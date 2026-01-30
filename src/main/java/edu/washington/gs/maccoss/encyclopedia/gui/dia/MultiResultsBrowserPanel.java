@@ -15,6 +15,7 @@ import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTraceInterface;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.*;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
+import edu.washington.gs.maccoss.encyclopedia.utils.math.LogQuadraticInterpolatedFunction;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
@@ -74,6 +75,7 @@ public class MultiResultsBrowserPanel extends JPanel {
 	private final JCheckBox precursorsPlots=new JCheckBox("Precursors");
 	private final JCheckBox fragmentsPlots=new JCheckBox("Fragments");
 	private final JCheckBox sgSmoothBox=new JCheckBox("Smooth");
+	private final JCheckBox interpolatePlots=new JCheckBox("Interpolate");
 	private final JCheckBox backgroundSubtractBox=new JCheckBox("Background Subtract");
 	
 	private final int defaultMinimumNumberOfFragmentsIndex=3;
@@ -225,6 +227,14 @@ public class MultiResultsBrowserPanel extends JPanel {
 				updateToSelectedPeptide();
 			}
 		});
+		
+		interpolatePlots.setSelected(true);
+		interpolatePlots.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				updateToSelectedPeptide();
+			}
+		});
 
 		backgroundSubtractBox.setSelected(true);
 		backgroundSubtractBox.addActionListener(new ActionListener() {
@@ -234,6 +244,7 @@ public class MultiResultsBrowserPanel extends JPanel {
 			}
 		});
 		checkBoxes.add(sgSmoothBox);
+		checkBoxes.add(interpolatePlots);
 		checkBoxes.add(backgroundSubtractBox);
 		
 		options.add(checkBoxes);
@@ -450,6 +461,17 @@ public class MultiResultsBrowserPanel extends JPanel {
 				} else {
 					precursorTraces=extractPrecursorTraces(sampleName, quantitativeData, file);
 					fragmentTraces=extractFragmentTraces(primaryIonObjects, sampleName, quantitativeData, file);
+
+					if (interpolatePlots.isSelected()) {
+						for (int j=0; j<precursorTraces.size(); j++) {
+							XYTrace trace=precursorTraces.get(j);
+							precursorTraces.set(j, trace.changeData(new LogQuadraticInterpolatedFunction(trace.getPoints()).interpolate()));
+						}
+						for (int j=0; j<fragmentTraces.size(); j++) {
+							XYTrace trace=fragmentTraces.get(j);
+							fragmentTraces.set(j, trace.changeData(new LogQuadraticInterpolatedFunction(trace.getPoints()).interpolate()));
+						}
+					}
 				}
 
 				if (fragmentTraces!=null) {

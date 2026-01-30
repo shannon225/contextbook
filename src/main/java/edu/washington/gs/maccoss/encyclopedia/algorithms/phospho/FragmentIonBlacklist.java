@@ -50,7 +50,7 @@ public class FragmentIonBlacklist {
 	}
 	
 	public boolean isBlacklisted(double target, float rtInSec) {
-		int[] indices=tolerance.getIndicies(masses, target);
+		int[] indices=tolerance.getIndices(masses, target);
 		for (int i : indices) {
 			if (blacklistRanges[i].contains(rtInSec)) {
 				return true;
@@ -60,7 +60,7 @@ public class FragmentIonBlacklist {
 	}
 	
 	public boolean isBlacklisted(double target) {
-		int[] indices=tolerance.getIndicies(masses, target);
+		int[] indices=tolerance.getIndices(masses, target);
 		if (indices.length>0) return true;
 		return false;
 	}
