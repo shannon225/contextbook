@@ -3,7 +3,6 @@ package edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ModificationLocalizationData;
@@ -14,16 +13,13 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PeptidePrecursor;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.utils.EncyclopediaException;
-import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
 import edu.washington.gs.maccoss.encyclopedia.utils.Quadruplet;
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYPoint;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Ion;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Peak;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeakChromatogram;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.QuantitativeDIAData;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
@@ -245,22 +241,33 @@ public class TransitionRefinementData implements PeptidePrecursor {
 		return topN;
 	}
 	
+	/**
+	 * computes intensity-weighted centroid for intensities above 50%
+	 * @return
+	 */
 	public float getApexRT() {
 		if (!rtArray.isPresent()) {
 			throw new EncyclopediaException("Requesting apex RT but no retention times are loaded!");
 		}
 		
-		int bestIndex=-1;
-		float bestMedian=-Float.MAX_VALUE;
-		for (int i=0; i<medianChromatogram.length; i++) {
-			if (medianChromatogram[i]>bestMedian) {
-				bestIndex=i;
-				bestMedian=medianChromatogram[i];
+		Range rtRange=getRange();
+		float[] rtArrayData=rtArray.get();
+		
+		float maxIntensity=General.max(medianChromatogram);
+		float sumIntensity=0.0f;
+		float sumMultiply=0.0f;
+
+		for (int i=0; i<rtArrayData.length; i++) {
+			if (rtRange.contains(rtArrayData[i])&&medianChromatogram[i]/maxIntensity>0.5f) {
+				sumIntensity+=medianChromatogram[i];
+				sumMultiply+=medianChromatogram[i]*rtArrayData[i];
 			}
 		}
-		
-		if (bestIndex<0) bestIndex=medianChromatogram.length/2; // if we found no best median, just set to the middle of the array
-		return rtArray.get()[bestIndex];
+		if (sumIntensity>0.0f) {
+			return sumMultiply/sumIntensity;
+		} else {
+			return range.getMiddle();
+		}
 	}
 	
 	public float getTotalIntensity(float minimumCorrelation) {

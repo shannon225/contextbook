@@ -256,7 +256,7 @@ public class OverlapDeconvoluter implements SpectrumProcessor {
 		// get the intensity.
 		if (stripe==null) return Float.MIN_VALUE;
 		
-		int[] indicies=tolerance.getIndicies(stripe.getMassArray(), mass);
+		int[] indicies=tolerance.getIndices(stripe.getMassArray(), mass);
 		float intensity=0.0f;
 		for (int j=0; j<indicies.length; j++) {
 			intensity+=stripe.getIntensityArray()[indicies[j]];

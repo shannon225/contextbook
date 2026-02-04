@@ -6,7 +6,7 @@ import java.util.HashMap;
 
 public class FastaToPrositCSVParameters {
 	public static final int MAX_DEFAULT_NCE = 40;
-	public static final int MIN_DEFAULT_NCE = 25;
+	public static final int MIN_DEFAULT_NCE = 24;
 	public static final int DEFAULT_DEFAULT_NCE = 33;
 
 	public static final byte MAX_DEFAULT_CHARGE = 4;
@@ -14,7 +14,7 @@ public class FastaToPrositCSVParameters {
 	public static final byte DEFAULT_DEFAULT_CHARGE = 3;
 
 	public static final byte MIN_CHARGE = 1;
-	public static final byte MAX_CHARGE = 6;
+	public static final byte MAX_CHARGE = 7;
 	public static final byte DEFAULT_MIN_CHARGE = 2;
 	public static final byte DEFAULT_MAX_CHARGE = 3;
 
@@ -25,7 +25,7 @@ public class FastaToPrositCSVParameters {
 	public static final double MIN_MZ = 150.0;
 	public static final double DEFAULT_MIN_MZ = 396.4;
 
-	public static final double MAX_MZ = 1600.0;
+	public static final double MAX_MZ = 2000.0;
 	public static final double DEFAULT_MAX_MZ = 1002.7;
 	
 	public static final boolean DEFAULT_ADJUST_NCE_FOR_DIA = true;

@@ -17,6 +17,7 @@ import java.util.HashMap;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.AlleleVariant;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.xcordia.allelespecific.ExtendedFastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AminoAcidConstants;
+import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaEntryInterface;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FastaPeptideEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.ModificationMassMap;
@@ -34,8 +35,35 @@ public class FastaReaderForPeffTest {
 	private final static int maxMissedCleavages=0;
 	private final static AminoAcidConstants constants=new AminoAcidConstants(new TCharDoubleHashMap(), new ModificationMassMap());
 	private final static DigestionEnzyme enzyme=DigestionEnzyme.getEnzyme("trypsin");
-
 	public static void main(String[] args) throws Exception {
+		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
+		// checkDigestionRunningTimeForPeff();
+
+		File peffFile=new File("/Users/searle.brian/Downloads/MBNL1_Variants_Tested.peff.peff");
+
+		InputStream is=new FileInputStream(peffFile);
+		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(new BufferedReader(new InputStreamReader(is)), peffFile.getName(), null, true, parameters);
+		
+		
+		for (int i=0; i<entries.size(); i++) {
+			FastaEntryInterface entry=entries.get(i);
+			ExtendedFastaEntry extended=(ExtendedFastaEntry)entry;
+			ArrayList<AlleleVariant> potentialVariants=extended.getPotentialVariants();
+			System.out.println(entry.getAccession()+" "+potentialVariants.size());
+			for (AlleleVariant variant : potentialVariants) {
+				System.out.println("  "+variant.toString());
+			}
+			
+			ArrayList<FastaPeptideEntry> peptideSequencesPeff=enzyme.digestProtein(entry, minLength, maxLength, maxMissedCleavages, constants, false, new ArrayList<AlleleVariant>());
+
+			
+			ArrayList<FastaPeptideEntry> peptideSequencesFasta=enzyme.digestProtein(new FastaEntry(entry.getSequence()), minLength, maxLength, maxMissedCleavages, constants, false, new ArrayList<AlleleVariant>());
+			
+			//System.out.println(peptideSequencesFasta.size()+" vs "+peptideSequencesPeff.size());
+		}
+
+	}
+	public static void main2(String[] args) throws Exception {
 		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
 		// checkDigestionRunningTimeForPeff();
 

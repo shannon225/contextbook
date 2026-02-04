@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
+import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 
 //@Immutable
@@ -172,7 +173,38 @@ public class MassTolerance implements Comparable<MassTolerance> {
 	 * @param target
 	 * @return all matching masses in range
 	 */
-	public int[] getIndicies(double[] peaks, double target) {
+	public int[] getIndices(TDoubleArrayList peaks, double target) {
+		int value=peaks.binarySearch(target);
+		// exact match (not likely)
+		if (value<0) {
+			// insertion point
+			value=-(value+1);
+		}
+		
+		TIntArrayList matches=new TIntArrayList();
+		// look below
+		int index=value;
+		while (index>0&&compareTo(peaks.get(index-1), target)==0) {
+			matches.add(index-1);
+			index--;
+		}
+
+		// look up
+		index=value;
+		while (index<peaks.size()&&compareTo(peaks.get(index), target)==0) {
+			matches.add(index);
+			index++;
+		}
+
+		return matches.toArray();
+	}
+	
+	/**
+	 * @param peaks -- assumes sorted array of peaks
+	 * @param target
+	 * @return all matching masses in range
+	 */
+	public int[] getIndices(double[] peaks, double target) {
 		int value=Arrays.binarySearch(peaks, target);
 		// exact match (not likely)
 		if (value<0) {
@@ -204,7 +236,7 @@ public class MassTolerance implements Comparable<MassTolerance> {
 	 * @return all matching masses in range
 	 */
 	public double[] getMatches(double[] peaks, double target) {
-		int[] indicies=getIndicies(peaks, target);
+		int[] indicies=getIndices(peaks, target);
 		double[] matches=new double[indicies.length];
 		for (int i=0; i<indicies.length; i++) {
 			matches[i]=peaks[indicies[i]];
@@ -297,7 +329,7 @@ public class MassTolerance implements Comparable<MassTolerance> {
 	 * @return all matching masses in range
 	 */
 	public float getIntegratedIntensity(double[] masses, float[] intensities, double target) {
-		int[] indicies=getIndicies(masses, target);
+		int[] indicies=getIndices(masses, target);
 		float intensity=0.0f;
 		for (int i=0; i<indicies.length; i++) {
 			intensity+=intensities[indicies[i]];
@@ -311,7 +343,7 @@ public class MassTolerance implements Comparable<MassTolerance> {
 	 * @return all matching masses in range
 	 */
 	public float getMaxIntensity(double[] masses, float[] intensities, double target) {
-		int[] indicies=getIndicies(masses, target);
+		int[] indicies=getIndices(masses, target);
 		float intensity=0.0f;
 		for (int i=0; i<indicies.length; i++) {
 			if(intensity<intensities[indicies[i]]) {

@@ -293,10 +293,6 @@ public class SearchToBLIB {
 						System.exit(1);
 					}
 
-					if (files.length == 0) {
-						Logger.errorLine("Your specified input (-i) directory didn't contain any .RAW files!");
-						System.exit(1);
-					}
 					for (File file : files) {
 						ScribeJobData job = new ScribeJobData(file, fastaFile, library, factory);
 						pecanJobs.add(job);

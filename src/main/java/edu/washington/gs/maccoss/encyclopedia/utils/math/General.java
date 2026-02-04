@@ -139,12 +139,18 @@ public class General {
 	}
 
 	public static Float[][] transposeMatrix(Float[][] m) {
-		if (m[0].length==0) {
-			throw new ArrayIndexOutOfBoundsException(m[0].length);
+		int maxLength=0;
+		for (int i=0; i<m.length; i++) {
+			if (m[i].length>maxLength) {
+				maxLength=m[i].length;
+			}
 		}
-		Float[][] temp = new Float[m[0].length][m.length];
+		if (maxLength==0) {
+			throw new ArrayIndexOutOfBoundsException(maxLength);
+		}
+		Float[][] temp = new Float[maxLength][m.length];
 		for (int i = 0; i < m.length; i++)
-			for (int j = 0; j < m[0].length; j++)
+			for (int j = 0; j < m[i].length; j++)
 				temp[j][i] = m[i][j];
 		return temp;
 	}
@@ -203,6 +209,12 @@ public class General {
 			if (a[i]!=b[i]) return false;
 		}
 		return true;
+	}
+	
+	public static boolean[] getBooleanUnitArray(int length, boolean value) {
+		boolean[] unit=new boolean[length];
+		Arrays.fill(unit, value);
+		return unit;
 	}
 	
 	public static String[] insert(String[] a, int index, String... s) {
@@ -769,6 +781,14 @@ public class General {
 
 	public static float[] add(float[] v1, float v) {
 		float[] r=new float[v1.length];
+		for (int i=0; i<r.length; i++) {
+			r[i]=v1[i]+v;
+		}
+		return r;
+	}
+
+	public static double[] add(double[] v1, double v) {
+		double[] r=new double[v1.length];
 		for (int i=0; i<r.length; i++) {
 			r[i]=v1[i]+v;
 		}

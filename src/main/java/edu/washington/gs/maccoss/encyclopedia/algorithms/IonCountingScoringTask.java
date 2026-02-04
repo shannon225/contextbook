@@ -40,7 +40,7 @@ public class IonCountingScoringTask extends AbstractLibraryScoringTask {
 				double[] masses=stripe.getMassArray();
 				
 				for (double mass : entry.getMassArray()) {
-					int[] indicies=tolerance.getIndicies(masses, mass);
+					int[] indicies=tolerance.getIndices(masses, mass);
 					if (indicies.length>0) primary[i]+=1.0f;
 				}
 

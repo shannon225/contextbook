@@ -180,7 +180,7 @@ public class PrecursorScanMap {
 			byte isotope=isotopes[i];
 			
 			double target=mz+(isotope*MassConstants.neutronMass/charge);
-			int[] indicies=tolerance.getIndicies(masses, target);
+			int[] indicies=tolerance.getIndices(masses, target);
 			float intensity=0.0f;
 			double bestMz=target;
 			float bestPeakIntensity=0.0f;

@@ -10,7 +10,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
+import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.math3.util.CombinatoricsUtils;
@@ -36,15 +36,11 @@ import edu.washington.gs.maccoss.encyclopedia.utils.massspec.PeptideUtils;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.General;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.Log;
 import gnu.trove.list.array.TDoubleArrayList;
-import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TCharDoubleHashMap;
-import gnu.trove.map.hash.TIntIntHashMap;
-import gnu.trove.map.hash.TObjectIntHashMap;
-import gnu.trove.procedure.TIntProcedure;
 import gnu.trove.map.hash.TCharIntHashMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
-import gnu.trove.procedure.TCharIntProcedure;
+import gnu.trove.procedure.TObjectIntProcedure;
 import gnu.trove.set.hash.TIntHashSet;
 import junit.framework.TestCase;
 
@@ -161,8 +157,77 @@ public class FastaReaderTest extends TestCase {
 		}
 	}
 	
-	// check for equal peptides between fastas
 	public static void main(String[] args) throws Exception {
+		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
+		File f1=new File("/Users/searle.brian/Documents/temp/Human_UP000005640_9606.fasta");
+		File f2=new File("/Users/searle.brian/Downloads/titin_isoforms_uniprotkb_2025_11_25.fasta");
+
+//		File f1=new File("/Users/searle.brian/Downloads/titin_isoforms_uniprotkb_2025_11_25.fasta");
+//		File f2=new File("/Users/searle.brian/Downloads/titin_new_isoform.fasta");
+		DigestionEnzyme enzyme = DigestionEnzyme.getEnzyme("Trypsin");
+
+		HashSet<String> canonical=new HashSet<String>();
+		ArrayList<FastaEntryInterface> entries=FastaReader.readFasta(f1, parameters);
+		for (FastaEntryInterface entry : entries) {
+			if (entry.getAccession().startsWith("sp|Q8WZ42|TITIN_HUMAN")) {
+				continue;
+			}
+			ArrayList<FastaPeptideEntry> peptides=enzyme.digestProtein(entry, 8, 40, 2, parameters.getAAConstants(), false);
+			for (FastaPeptideEntry peptide : peptides) {
+				canonical.add(peptide.getSequence().replace("I", "L"));
+			}			
+		}
+
+		HashMap<String, ArrayList<String>> accessionsBySequence=new HashMap<String, ArrayList<String>>();
+		TObjectIntHashMap<String> counter=new TObjectIntHashMap<String>();
+		ArrayList<FastaEntryInterface> entries2=FastaReader.readFasta(f2, parameters);
+		for (FastaEntryInterface entry : entries2) {
+			ArrayList<FastaPeptideEntry> peptides=enzyme.digestProtein(entry, 8, 40, 2, parameters.getAAConstants(), false);
+			for (FastaPeptideEntry peptide : peptides) {
+				String sequence=peptide.getSequence().replace("I", "L");
+				counter.put(sequence, counter.get(sequence)+1);
+				
+				ArrayList<String> thisSequencesAccessions=accessionsBySequence.get(sequence);
+				if (thisSequencesAccessions==null) {
+					thisSequencesAccessions=new ArrayList<String>();
+					accessionsBySequence.put(sequence, thisSequencesAccessions);
+				}
+				
+				thisSequencesAccessions.add(entry.getAccession());
+			}			
+		}
+		
+		HashMap<String, ArrayList<String>> peptidesByAccession=new HashMap<String, ArrayList<String>>(); 
+		counter.forEachEntry(new TObjectIntProcedure<String>() {
+			@Override
+			public boolean execute(String a, int b) {
+				if (b==1) { // unique
+					if (!canonical.contains(a)) { // not in canonical
+						ArrayList<String> accessionList=accessionsBySequence.get(a);
+						if (accessionList!=null) {
+							String accession=accessionList.get(0);
+							ArrayList<String> peptides=peptidesByAccession.get(accession);
+							if (peptides==null) {
+								peptides=new ArrayList<String>();
+								peptidesByAccession.put(accession, peptides);
+							}
+							peptides.add(a);
+						}
+					}
+				}
+				return true;
+			}
+		});
+		
+		for (Map.Entry<String, ArrayList<String>> entry : peptidesByAccession.entrySet()) {
+			String key=entry.getKey();
+			ArrayList<String> val=entry.getValue();
+			System.out.println(key+" --> "+val.size());
+		}
+	}
+	
+	// check for equal peptides between fastas
+	public static void main11(String[] args) throws Exception {
 		SearchParameters parameters=SearchParameterParser.getDefaultParametersObject();
 		
 		

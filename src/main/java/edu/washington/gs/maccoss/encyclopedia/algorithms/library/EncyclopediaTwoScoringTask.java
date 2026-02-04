@@ -89,7 +89,7 @@ public class EncyclopediaTwoScoringTask extends AbstractLibraryScoringTask {
 			TFloatArrayList predictedTargetIntensities=new TFloatArrayList();
 			TFloatArrayList maxCorrelations=new TFloatArrayList();
 			for (FragmentIon target : ions) {
-				int[] predictedIndicies=libraryTolerance.getIndicies(predictedMasses, target.getMass());
+				int[] predictedIndicies=libraryTolerance.getIndices(predictedMasses, target.getMass());
 				float predictedIntensity=0.0f;
 				float maxCorrelation=0.01f;
 				for (int i=0; i<predictedIndicies.length; i++) {
@@ -350,7 +350,7 @@ public class EncyclopediaTwoScoringTask extends AbstractLibraryScoringTask {
 		for (int i = 0; i < ions.length; i++) {
 			FragmentIon target=ions[i];
 		
-			int[] indicies=acquiredTolerance.getIndicies(acquiredMasses, target.getMass());
+			int[] indicies=acquiredTolerance.getIndices(acquiredMasses, target.getMass());
 			float intensity=0.0f;
 			float bestPeakIntensity=0.0f;
 			double bestPeakMass=0.0;

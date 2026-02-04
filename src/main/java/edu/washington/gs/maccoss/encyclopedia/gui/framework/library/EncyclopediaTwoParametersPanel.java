@@ -15,6 +15,7 @@ import javax.swing.JComboBox;
 import javax.swing.JEditorPane;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
@@ -195,6 +196,7 @@ public class EncyclopediaTwoParametersPanel extends JPanel implements Parameters
 			Optional<File> optFile=EncyclopediaTwoAlignmentLibraryFactory.getPreAlignmentFile(searchPanel.getEnzyme());
 			if (!optFile.isPresent()) {
 				Logger.errorLine("Sorry, no pre-alignment library for that enzyme. You must select a library or change enzyme!");
+				JOptionPane.showMessageDialog(searchPanel.getParent(), "Sorry, no pre-alignment library for that enzyme. You must select a library or change enzyme!");
 				return;
 			}
 			prealignmentLibraryFile=optFile.get();

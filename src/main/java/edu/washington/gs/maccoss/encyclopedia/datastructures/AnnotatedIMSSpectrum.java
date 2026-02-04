@@ -1,9 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
-import java.util.Optional;
-
 import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
-import edu.washington.gs.maccoss.encyclopedia.utils.massspec.FragmentIon;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.MassTolerance;
 import edu.washington.gs.maccoss.encyclopedia.utils.massspec.Spectrum;
 import gnu.trove.map.hash.TDoubleObjectHashMap;
@@ -14,13 +11,8 @@ public class AnnotatedIMSSpectrum extends AnnotatedSpectrum {
 		super(s, entry, parameters);
 	}
 
-	public AnnotatedIMSSpectrum(Spectrum s, TDoubleObjectHashMap<String> annotationMap, MassTolerance tolerance) {
-		super(s, annotationMap, tolerance);
-	}
-
-	public AnnotatedIMSSpectrum(String name, double mz, float scanStartTime, double[] masses, float[] intensities, Optional<float[]> ionMobilityArray,
-			FragmentIon[] annotations) {
-		super(name, mz, scanStartTime, masses, intensities, ionMobilityArray, annotations);
+	public AnnotatedIMSSpectrum(String peptideModSeq, Spectrum s, TDoubleObjectHashMap<String> annotationMap, byte precursorCharge, MassTolerance tolerance) {
+		super(peptideModSeq, s, annotationMap, precursorCharge, tolerance);
 	}
 
 	@Override

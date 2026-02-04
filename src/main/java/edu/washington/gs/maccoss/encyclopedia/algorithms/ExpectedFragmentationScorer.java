@@ -34,7 +34,7 @@ public class ExpectedFragmentationScorer extends AuxillaryPSMScorer {
 		TFloatArrayList ions=new TFloatArrayList();
 		for (FragmentIon ion : modelIons) {
 			if (ion.getIndex()<startIonIndex) continue;
-			int[] indicies=tolerance.getIndicies(masses, ion.getMass());
+			int[] indicies=tolerance.getIndices(masses, ion.getMass());
 			float intensity=0.0f;
 			for (int j=0; j<indicies.length; j++) {
 				intensity+=intensities[indicies[j]];

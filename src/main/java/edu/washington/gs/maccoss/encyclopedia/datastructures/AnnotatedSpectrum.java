@@ -1,6 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.datastructures;
 
 import java.awt.Color;
+import java.util.HashSet;
 import java.util.Optional;
 
 import edu.washington.gs.maccoss.encyclopedia.utils.Pair;
@@ -16,6 +17,7 @@ import gnu.trove.map.hash.TDoubleObjectHashMap;
 import gnu.trove.procedure.TDoubleObjectProcedure;
 
 public class AnnotatedSpectrum implements Spectrum, XYTraceInterface {
+	private final String peptideModSeq;
 	private final double[] masses;
 	private final float[] intensities;
 	private final Optional<float[]> ionMobilityArray;
@@ -24,20 +26,24 @@ public class AnnotatedSpectrum implements Spectrum, XYTraceInterface {
 	private final float scanStartTime;
 	private final String name;
 	private final double mz;
+	private final byte precursorCharge;
 	
-	public AnnotatedSpectrum(String name, double mz, float scanStartTime, double[] masses, float[] intensities, Optional<float[]> ionMobilityArray, FragmentIon[] annotations) {
-		super();
-		this.masses = masses;
-		this.intensities = intensities;
-		this.ionMobilityArray=ionMobilityArray;
-		this.tic = General.sum(intensities);
-		this.scanStartTime = scanStartTime;
-		this.name = name;
-		this.mz = mz;
-		this.annotations=annotations;
+	public LibraryEntry getEntry() {
+		double precursorMZ=new AminoAcidConstants().getChargedMass(peptideModSeq, precursorCharge);
+		//String source, HashSet<String> accessions, int spectrumIndex, double precursorMZ, byte precursorCharge, String peptideModSeq, String massCorrectedPeptideModSeq, 
+		//int copies, float retentionTime, float score, double[] massArray, float[] intensityArray, float[] correlationArray, boolean[] quantifiedIonsArray, Optional<Float> ionMobility
+		Optional<Float> ionMobility;
+		if (ionMobilityArray.isPresent()) {
+			ionMobility=Optional.of(Float.valueOf(General.sum(General.multiply(intensities, ionMobilityArray.get()))/tic));
+		} else {
+			ionMobility=Optional.empty();
+		}
+		return new LibraryEntry(name, new HashSet<String>(), 1, precursorMZ, precursorCharge, peptideModSeq, peptideModSeq, 
+				1, scanStartTime, 0.0f, masses, intensities, new float[masses.length], General.getBooleanUnitArray(masses.length, true), ionMobility, false);
 	}
 
 	public AnnotatedSpectrum(Spectrum s, PeptidePrecursor entry, SearchParameters parameters) {
+		peptideModSeq=entry.getPeptideModSeq();
 		masses=s.getMassArray();
 		intensities=s.getIntensityArray();
 		ionMobilityArray=s.getIonMobilityArray();
@@ -45,20 +51,22 @@ public class AnnotatedSpectrum implements Spectrum, XYTraceInterface {
 		scanStartTime=s.getScanStartTime();
 		name=s.getSpectrumName();
 		mz=s.getPrecursorMZ();
+		precursorCharge=entry.getPrecursorCharge();
 		
 		double[] massArray=s.getMassArray();
 		this.annotations=new FragmentIon[massArray.length];
 
 		FragmentationModel model=PeptideUtils.getPeptideModel(entry.getPeptideModSeq(), parameters.getAAConstants());
 		for (FragmentIon fragmentIon : model.getPrimaryIonObjects(parameters.getFragType(), entry.getPrecursorCharge(), false)) {
-			int[] indicies=parameters.getFragmentTolerance().getIndicies(massArray, fragmentIon.getMass());
+			int[] indicies=parameters.getFragmentTolerance().getIndices(massArray, fragmentIon.getMass());
 			for (int i=0; i<indicies.length; i++) {
 				annotations[indicies[i]]=fragmentIon;
 			}
 		}
 	}
 	
-	public AnnotatedSpectrum(Spectrum s, TDoubleObjectHashMap<String> annotationMap, MassTolerance tolerance) {
+	public AnnotatedSpectrum(String peptideModSeq, Spectrum s, TDoubleObjectHashMap<String> annotationMap, byte precursorCharge, MassTolerance tolerance) {
+		this.peptideModSeq=peptideModSeq;
 		masses=s.getMassArray();
 		intensities=s.getIntensityArray();
 		ionMobilityArray=s.getIonMobilityArray();
@@ -66,6 +74,7 @@ public class AnnotatedSpectrum implements Spectrum, XYTraceInterface {
 		scanStartTime=s.getScanStartTime();
 		name=s.getSpectrumName();
 		mz=s.getPrecursorMZ();
+		this.precursorCharge=precursorCharge;
 		
 		annotations=new FragmentIon[masses.length];
 		annotationMap.forEachEntry(new TDoubleObjectProcedure<String>() {

@@ -1,10 +1,36 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.math;
 
+import java.awt.Color;
 import java.util.Random;
 
+import edu.washington.gs.maccoss.encyclopedia.gui.general.Charter;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.GraphType;
+import edu.washington.gs.maccoss.encyclopedia.utils.graphing.XYTrace;
 import junit.framework.TestCase;
 
 public class SGFilterTest extends TestCase {
+	public static void main(String[] args) {
+		float[] data=new float[] {78122.11f, 98378.266f, 142467.98f, 160690.98f, 222905.19f, 232847.81f, 307916.06f, 287985.97f, 354645.78f, 292500.47f, 363600.66f, 315389.8f, 347600.38f, 301699.44f,
+				294894.66f, 221306.75f, 186132.05f, 170257.3f, 146349.67f};
+		
+		float[] smooth9=SkylineSGFilter.paddedSavitzkyGolay9PointSmooth(data);
+		float[] smooth7=SkylineSGFilter.paddedSavitzkyGolay7PointSmooth(data);
+		float[] smooth5=SkylineSGFilter.paddedSavitzkyGolay5PointSmooth(data);
+		float[] smooth3=SkylineSGFilter.paddedSavitzkyGolay3PointSmooth(data);
+		
+		float[] index=new float[data.length];
+		for (int i=0; i<index.length; i++) {
+			index[i]=i;
+		}
+		
+		XYTrace trace9=new XYTrace(index, smooth9, GraphType.line, "9 point", Color.cyan, 2.0f);
+		XYTrace trace7=new XYTrace(index, smooth7, GraphType.line, "7 point", Color.blue, 2.0f);
+		XYTrace trace5=new XYTrace(index, smooth5, GraphType.line, "5 point", Color.magenta, 2.0f);
+		XYTrace trace3=new XYTrace(index, smooth3, GraphType.line, "3 point", Color.red, 2.0f);
+		XYTrace traceOrig=new XYTrace(index, data, GraphType.line, "Original", Color.black, 2.0f);
+		
+		Charter.launchChart("X", "Y", true, traceOrig, trace3, trace5, trace7, trace9);
+	}
 
 	public void testSavitzkyGolaySmooth() {
 		float[] data=new float[] {78122.11f, 98378.266f, 142467.98f, 160690.98f, 222905.19f, 232847.81f, 307916.06f, 287985.97f, 354645.78f, 292500.47f, 363600.66f, 315389.8f, 347600.38f, 301699.44f,

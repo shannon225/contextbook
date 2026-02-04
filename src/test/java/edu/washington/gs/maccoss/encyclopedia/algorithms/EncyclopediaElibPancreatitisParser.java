@@ -66,7 +66,7 @@ public class EncyclopediaElibPancreatitisParser {
 		
 		//File file=new File("/Users/searleb/Documents/OSU/projects/maisam_pancreatitis/presentation/pancreatitis_analysis/032922_pancreatitis_120_quant_reports.elib");
 		//File file=new File("/Users/searleb/Documents/OSU/projects/maisam_pancreatitis/032922_pancreatitis_grant_dataset/032922_pancreatitis_120_quant_reports.elib");
-		File file=new File("/Users/searleb/Documents/manuscripts/2024/chronic_pancreatitis/032922_pancreatitis_120_quant_reports.elib");
+		File file=new File("/Users/searle.brian/Documents/projects/pancreatitis/032922_pancreatitis_120_quant_reports.elib");
 		//File stub=new File(file.getParent(), "pancreatitis_poster_120_boxplots");
 		File stub=new File(file.getParent(), "cp_versus_others/cp_120_boxplots");
 		//File stub=new File(file.getParent(), "fracture_120_boxplots");
@@ -93,7 +93,7 @@ public class EncyclopediaElibPancreatitisParser {
 		
 		//String[] keptAccessions=new String[] {"AMYP_HUMAN"};
 		//String[] keptAccessions=new String[] {"CEL2A_HUMAN"};
-		String[] keptAccessions=new String[] {"AMYP_HUMAN", "CEL2A_HUMAN"};
+		//String[] keptAccessions=new String[] {"AMYP_HUMAN", "CEL2A_HUMAN"};
 		//String[] keptAccessions=new String[] {"AMYP_HUMAN", "POF1B_HUMAN", "REG1A_HUMAN", "CRP_HUMAN", "CEL2A_HUMAN"};
 		//String[] keptAccessions=new String[] {"AMYP_HUMAN", "POF1B_HUMAN", "SH3L1_HUMAN", "REG1A_HUMAN", "CRP_HUMAN", "CEL2A_HUMAN", "CAYP1_HUMAN", "SYUG_HUMAN", "IDHC_HUMAN", "S100P_HUMAN", "S10A6_HUMAN", "GSHR_HUMAN", "FCL_HUMAN", "BAZ1A_HUMAN", "PHS_HUMAN", "PGDH_HUMAN", "GPD1L_HUMAN", "SCRN1_HUMAN", "CRYM_HUMAN", "EMAL2_HUMAN", "AGR2_HUMAN", "NUCKS_HUMAN", "MTPN_HUMAN", "GSH1_HUMAN", "ALDOC_HUMAN"};
 		
@@ -106,9 +106,9 @@ public class EncyclopediaElibPancreatitisParser {
 		//createClassifier(proteinReportFile, new HashSet<String>(Arrays.asList(keptAccessions)));
 		HashSet<String> significantAccessions=assessProteinSpecificPValues(testDirs, proteinReportFile, new File(stub, "volcano_report.csv"));
 		//createClassifier(proteinReportFile, new HashSet<String>(Arrays.asList(keptAccessions)));
-		//assessProteinSpecificPValues(testDirs, proteinReportFile);
+		//assessProteinSpecificPValues(testDirs, proteinReportFile, new File(stub, "volcano_report.csv"));
 		
-		analyzeFibrosis(proteinReportFile, significantAccessions);
+		//analyzeFibrosis(proteinReportFile, significantAccessions);
 	}
 	
 	private static void analyzeFibrosis(File proteinReportFile, HashSet<String> keptAccessions) {

@@ -15,14 +15,11 @@ import java.util.zip.DataFormatException;
 
 import edu.washington.gs.maccoss.encyclopedia.algorithms.ParsimonyProteinGrouper;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.alignment.LibraryPeakLocationInferrer;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorExecutionData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorPeptide;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.PercolatorProteinGroup;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.prediction.AminoAcidEncoding;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.prediction.NonstandardAminoAcidException;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.quantitation.PeptideQuantExtractor;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.scribe.ScribeJobData;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.scribe.ScribeScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AbstractSearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.AnnotatedLibraryEntry;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.IntegratedLibraryEntry;
@@ -31,7 +28,6 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.PSMData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryFile;
-import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileGenerator;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.StripeFileInterface;
@@ -57,7 +53,8 @@ import gnu.trove.map.hash.TObjectFloatHashMap;
 
 public class Reintegrator {
 	private static final boolean WRITE_REPORTS=false; //FIXME turn off for production
-	private static final boolean WRITE_LIBRARIES=false; //FIXME turn on for production
+	private static final boolean WRITE_LIBRARIES=true; //FIXME turn on for production
+	private static final boolean INTEGRATE_PRECURSORS=false;
 	
 	public static void main(String[] args) throws Exception {
 		File mainDir=new File("/Users/searleb/Documents/manuscripts/2025/mapms/mapms/");
@@ -112,7 +109,6 @@ public class Reintegrator {
 			newLibrary.dropIndices();
 		}
 		
-		
 		TFloatArrayList[] intensityValuesByCorrelation=new TFloatArrayList[101];
 		for (int i = 0; i < intensityValuesByCorrelation.length; i++) {
 			intensityValuesByCorrelation[i]=new TFloatArrayList();
@@ -121,7 +117,6 @@ public class Reintegrator {
 		int[] pointsAcrossThePeakHistogram=new int[21];
 		HashMap<String, TFloatArrayList> quantitativeValuesByPeptide=new HashMap<String, TFloatArrayList>();
 		
-		boolean integratePrecursors=false;
 		ProgressIndicator progress=new EmptyProgressIndicator();
 		for (Entry<String, ArrayList<PSMData>> entryMapping : result.x.matchesMap.entrySet()) {
 			ArrayList<PSMData> matches=entryMapping.getValue();
@@ -189,7 +184,7 @@ public class Reintegrator {
 			if (WRITE_LIBRARIES) {
 				newLibrary.addTIC(stripeFile);
 				
-				newLibrary.addIntegratedEntries(!integratePrecursors, entries, Optional.empty(), Optional.empty(), params);		
+				newLibrary.addIntegratedEntries(!INTEGRATE_PRECURSORS, entries, Optional.empty(), Optional.empty(), params);		
 			}
 		}
 

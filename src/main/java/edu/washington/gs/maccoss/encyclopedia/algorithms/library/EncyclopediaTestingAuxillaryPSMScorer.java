@@ -71,7 +71,7 @@ public class EncyclopediaTestingAuxillaryPSMScorer extends EncyclopediaAuxillary
 		TFloatArrayList actualTargetIntensities=new TFloatArrayList();
 		ArrayList<XYPoint> fragmentDeltaMasses=new ArrayList<XYPoint>();
 		for (double target : ions) {
-			int[] predictedIndicies=libraryTolerance.getIndicies(predictedMasses, target);
+			int[] predictedIndicies=libraryTolerance.getIndices(predictedMasses, target);
 			float predictedIntensity=0.0f;
 			float maxCorrelation=0.01f;
 			for (int i=0; i<predictedIndicies.length; i++) {
@@ -84,7 +84,7 @@ public class EncyclopediaTestingAuxillaryPSMScorer extends EncyclopediaAuxillary
 			}
 			
 			if (predictedIntensity>0) {
-				int[] indicies=acquiredTolerance.getIndicies(acquiredMasses, target);
+				int[] indicies=acquiredTolerance.getIndices(acquiredMasses, target);
 				float intensity=0.0f;
 				float bestPeakIntensity=0.0f;
 				float deltaMass=0.0f;

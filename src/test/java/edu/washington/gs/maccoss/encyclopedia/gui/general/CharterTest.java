@@ -83,7 +83,7 @@ public class CharterTest {
 
 		PrecursorScan ms = new PrecursorScan("2',5'-oligoadenylate synthetase 1 isoform E16 ", 0, 0.0f, 0, 0.0, 10000.0,
 				null, masses, intensities, Optional.empty());
-		AnnotatedSpectrum anno = new AnnotatedSpectrum(ms, map, new MassTolerance(0.25, MassErrorUnitType.AMU));
+		AnnotatedSpectrum anno = new AnnotatedSpectrum("", ms, map, (byte)2, new MassTolerance(0.25, MassErrorUnitType.AMU));
 
 		Charter.launchChart(anno);
 	}
@@ -148,7 +148,7 @@ public class CharterTest {
 
 		PrecursorScan ms = new PrecursorScan("943.46 m/z", 0, 0.0f, 0, 0.0, 10000.0, null, masses, intensities,
 				Optional.empty());
-		AnnotatedSpectrum anno = new AnnotatedSpectrum(ms, map, new MassTolerance(10, MassErrorUnitType.PPM));
+		AnnotatedSpectrum anno = new AnnotatedSpectrum("YSQVLANGLDNK", ms, map, (byte)2, new MassTolerance(10, MassErrorUnitType.PPM));
 
 		HashMap<String, String> paramsMap = SearchParameterParser.getDefaultParameters();
 		paramsMap.put("-ptol", "20");
@@ -209,7 +209,7 @@ public class CharterTest {
 
 		PrecursorScan ms = new PrecursorScan("943.46 m/z", 0, 0.0f, 0, 0.0, 10000.0, null, masses, intensities,
 				Optional.empty());
-		AnnotatedSpectrum anno = new AnnotatedSpectrum(ms, map, new MassTolerance(30, MassErrorUnitType.PPM));
+		AnnotatedSpectrum anno = new AnnotatedSpectrum("HELTEISNVDVETQSGK", ms, map, (byte)2, new MassTolerance(30, MassErrorUnitType.PPM));
 
 		HashMap<String, String> paramMap=SearchParameterParser.getDefaultParameters();
 		paramMap.put("-ftol", "30");
@@ -438,7 +438,7 @@ public class CharterTest {
 
 		PrecursorScan ms = new PrecursorScan("Glycylpeptide N-tetradecanoyltransferase 2", 0, 0.0f, 0, 0.0, 10000.0,
 				null, masses, intensities, Optional.empty());
-		AnnotatedSpectrum anno = new AnnotatedSpectrum(ms, map, new MassTolerance(0.25, MassErrorUnitType.AMU));
+		AnnotatedSpectrum anno = new AnnotatedSpectrum("", ms, map, (byte)2, new MassTolerance(0.25, MassErrorUnitType.AMU));
 
 		Charter.launchChart(anno);
 	}

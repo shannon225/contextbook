@@ -286,6 +286,7 @@ public class MzmlStructureCharter {
 				}
 			}
 		}
+		Logger.errorLine("FOUND "+traces.size()+" TRACES");
 
 		String yAxis=isScanNumberInsteadOfRT?"Scan Number":"Retention Time (secs)";
 		ChartPanel panel=Charter.getChart("M/Z", yAxis, false, traces.toArray(new XYTraceInterface[traces.size()]));

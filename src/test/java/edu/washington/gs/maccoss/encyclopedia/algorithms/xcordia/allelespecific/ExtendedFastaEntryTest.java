@@ -60,6 +60,7 @@ public class ExtendedFastaEntryTest extends TestCase {
 		
 		for (int index=0; index<variants.size(); index++) {
 			AlleleVariant variant=variants.get(index);
+			System.out.println(variant);
 			assertEquals(sequence.substring(variant.getStartSite()-1, variant.getStopSite()),variant.getOriginalSequence());
 			String newSeq = sequence.substring(0,variant.getStartSite()-1)+variant.getNewSequence()+sequence.substring(variant.getStopSite());
 			assertEquals(newSeq.length(),sequence.length()-variant.getOriginalSequence().length() +variant.getNewSequence().length());
