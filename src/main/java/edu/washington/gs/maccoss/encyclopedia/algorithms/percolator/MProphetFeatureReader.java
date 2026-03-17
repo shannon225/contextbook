@@ -105,6 +105,7 @@ public class MProphetFeatureReader {
 			if (StringUtils.contains(columnNames, "scribe")) sortingScoreString="scribe";  
 			if (StringUtils.contains(columnNames, "xCorrLib")) sortingScoreString="xCorrLib";  
 			if (StringUtils.contains(columnNames, "xCorrModel")) sortingScoreString="xCorrModel";  
+			if (StringUtils.contains(columnNames, "main_var_Intensity")) sortingScoreString="main_var_Intensity";
 			//if (StringUtils.contains(columnNames, "primary")) sortingScoreString="primary";  
 
 			if (sortingScoreString==null) {
