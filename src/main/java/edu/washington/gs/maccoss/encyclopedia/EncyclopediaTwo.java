@@ -313,7 +313,7 @@ public class EncyclopediaTwo {
 		Logger.logLine(""); 
 	}
 
-	static PSMConsumer generateFeatureFile(ProgressIndicator progress, LibraryInterface library, EncyclopediaTwoJobData job, StripeFileInterface stripefile, Optional<Pair<MProphetResult, TargeteDecoyPSMFilter>> prelimAnalysis) throws IOException, SQLException, DataFormatException, InterruptedException {
+	public static PSMConsumer generateFeatureFile(ProgressIndicator progress, LibraryInterface library, EncyclopediaTwoJobData job, StripeFileInterface stripefile, Optional<Pair<MProphetResult, TargeteDecoyPSMFilter>> prelimAnalysis) throws IOException, SQLException, DataFormatException, InterruptedException {
 
 		LibraryScoringFactory taskFactory=job.getTaskFactory();
 		SearchParameters parameters=taskFactory.getParameters();
