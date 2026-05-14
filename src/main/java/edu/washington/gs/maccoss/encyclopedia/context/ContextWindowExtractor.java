@@ -1,4 +1,4 @@
-package edu.washington.gs.maccoss.encyclopedia.algorithms;
+package edu.washington.gs.maccoss.encyclopedia.context;
 
 import java.io.File;
 import java.io.IOException;
@@ -10,8 +10,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map.Entry;
 
-import edu.washington.gs.maccoss.encyclopedia.context.IsolationWindow;
-import edu.washington.gs.maccoss.encyclopedia.context.IsolationWindowReader;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.FragmentScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.PrecursorScan;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.Range;

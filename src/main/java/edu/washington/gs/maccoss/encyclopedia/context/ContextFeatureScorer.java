@@ -1,4 +1,4 @@
-package edu.washington.gs.maccoss.encyclopedia.algorithms;
+package edu.washington.gs.maccoss.encyclopedia.context;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -16,8 +16,6 @@ import edu.washington.gs.maccoss.encyclopedia.EncyclopediaTwo;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaScoringFactory;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.EncyclopediaTwoJobData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.library.LibraryScoringFactory;
-import edu.washington.gs.maccoss.encyclopedia.context.IsolationWindow;
-import edu.washington.gs.maccoss.encyclopedia.context.IsolationWindowReader;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;

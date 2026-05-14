@@ -1,4 +1,4 @@
-package edu.washington.gs.maccoss.encyclopedia.algorithms;
+package edu.washington.gs.maccoss.encyclopedia.context;
 
 
 public class ScoredFeature {
