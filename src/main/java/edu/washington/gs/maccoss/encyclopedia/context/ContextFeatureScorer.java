@@ -28,7 +28,7 @@ public class ContextFeatureScorer {
 
 	public static void main(String[] args) throws IOException, SQLException, InterruptedException, DataFormatException {
 		// Inputs for Search
-		String rawFilePath = "C:/Users/m334793/Documents/Library/cd14_combined.dia"; // Raw file to search
+		String rawFilePath = "C:/Users/m334793/Documents/Library/masked1_cd14_combined.dia"; // Raw file to search
 		String libraryFilePath = "C:/Users/m334793/Documents/Library/easyspray_lit_immune_library.elib"; // Library to
 																											// search
 																											// against
@@ -43,32 +43,35 @@ public class ContextFeatureScorer {
 		File library = new File(libraryFilePath);
 
 		try {
-			ArrayList<ScoredFeature> bestFeature = scoreFeatures(library, rawFile, fasta, baseName, massListPath);
-			System.out.println(bestFeature.get(0).getSequence());
-			System.out.println(bestFeature.get(0).getPrimary());
-
+			ArrayList<ScoredFeature> partitionedFeatures = scoreFeatures(library, rawFile, fasta, baseName, massListPath);
+			System.out.println(partitionedFeatures.get(0).getSequence());
+			System.out.println(partitionedFeatures.get(0).getPrimary());
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-
 	}
-	private static boolean isFeatureOnMassList(
+	static boolean isFeatureOnMassList(
 	        ScoredFeature feature,
 	        ArrayList<IsolationWindow> targetWindows,
 	        double halfWindowWidth) {
 
 	    double featureMz = feature.getMz();
+	    byte featureCharge = feature.getCharge();
 
 	    for (IsolationWindow window : targetWindows) {
 	        double targetMz = window.getTargetMz();
 	        double mzStart = targetMz - halfWindowWidth;
 	        double mzStop = targetMz + halfWindowWidth;
+	        byte charge = window.getCharge();
 
-	        if (featureMz >= mzStart && featureMz <= mzStop) {
-	            return true;
-	        }
+	     //   if (featureMz >= mzStart && featureMz <= mzStop) {
+	      //      return true;
+	       // }
+	        
+	        if (featureMz==targetMz && featureCharge==charge) {
+	        	return true;
 	    }
-
+	    }
 	    return false;
 	}
 
@@ -153,16 +156,16 @@ public class ContextFeatureScorer {
 
 
 		// Output Paths
-		String referenceOutputPath = baseName + "_reference_features.txt";
-		String backgroundOutputPath = baseName + "_background_features.txt";
-		String referenceDecoyOutputPath = baseName + "_reference_decoy_features.txt";
-		String backgroundDecoyOutputPath = baseName + "_background_decoy_features.txt";
+		String referenceOutputPath = baseName + "_reference.features.txt";
+		String backgroundOutputPath = baseName + "_background.features.txt";
+	//	String referenceDecoyOutputPath = baseName + "_reference_decoy_features.txt";
+	//	String backgroundDecoyOutputPath = baseName + "_background_decoy_features.txt";
 
 		// Output Files
 		File referenceOutput = new File(referenceOutputPath);
 		File backgroundOutput = new File(backgroundOutputPath);
-		File referenceDecoyOutput = new File(referenceDecoyOutputPath);
-		File backgroundDecoyOutput = new File(backgroundDecoyOutputPath);
+//		File referenceDecoyOutput = new File(referenceDecoyOutputPath);
+//		File backgroundDecoyOutput = new File(backgroundDecoyOutputPath);
 
 		// Target mass list
 		ArrayList<IsolationWindow> targetWindows = IsolationWindowReader.parseMassList(massListPath);
@@ -170,34 +173,46 @@ public class ContextFeatureScorer {
 
 		ArrayList<ScoredFeature> referenceFeatures = new ArrayList<>();
 		ArrayList<ScoredFeature> backgroundFeatures = new ArrayList<>();
-		ArrayList<ScoredFeature> referenceDecoyFeatures = new ArrayList<>();
-		ArrayList<ScoredFeature> backgroundDecoyFeatures = new ArrayList<>();
+//		ArrayList<ScoredFeature> referenceDecoyFeatures = new ArrayList<>();
+//		ArrayList<ScoredFeature> backgroundDecoyFeatures = new ArrayList<>();
 		
-		double halfWindowWidth = 0.35;
+		double halfWindowWidth = 0;
+		
+		ArrayList<ScoredFeature> partitionedFeatures = new ArrayList<>();
 
 		for (ScoredFeature feature : bestFeatures) {
 		    boolean isOnMassList = isFeatureOnMassList(feature, targetWindows, halfWindowWidth);
+		    boolean isBackground = !isOnMassList;
+		    
+		    ScoredFeature annotatedFeature = new ScoredFeature(feature.getMz(), 
+		    		feature.isDecoy(), 
+		    		feature.getPrimary(), 
+		    		feature.getRetentionTime(), feature.getSequence(), 
+		    		feature.getProtein(), feature.getOriginalLine(), 
+		    		isBackground);
+		    partitionedFeatures.add(annotatedFeature);
 
 		    if (!feature.isDecoy() && isOnMassList) {
 		        referenceFeatures.add(feature);
 		    } else if (!feature.isDecoy() && !isOnMassList) {
 		        backgroundFeatures.add(feature);
 		    } else if (feature.isDecoy() && isOnMassList) {
-		        referenceDecoyFeatures.add(feature);
+		        referenceFeatures.add(feature);
 		    } else {
-		        backgroundDecoyFeatures.add(feature);
+		        backgroundFeatures.add(feature);
 		    }
 		}
 		writeScoredFeatures(referenceOutput, referenceFeatures, header);
 		writeScoredFeatures(backgroundOutput, backgroundFeatures, header);
-		writeScoredFeatures(referenceDecoyOutput, referenceDecoyFeatures, header);
-		writeScoredFeatures(backgroundDecoyOutput, backgroundDecoyFeatures, header);
-
+	//	writeScoredFeatures(referenceDecoyOutput, referenceDecoyFeatures, header);
+	//	writeScoredFeatures(backgroundDecoyOutput, backgroundDecoyFeatures, header);
+	
+		
 		System.out.println("Reference target features: " + referenceFeatures.size());
-		System.out.println("Background target features: " + backgroundFeatures.size());
-		System.out.println("Reference decoy features: " + referenceDecoyFeatures.size());
-		System.out.println("Background decoy features: " + backgroundDecoyFeatures.size());
-	return bestFeatures;
+//		System.out.println("Background target features: " + backgroundFeatures.size());
+//		System.out.println("Reference decoy features: " + referenceDecoyFeatures.size());
+//		System.out.println("Background decoy features: " + backgroundDecoyFeatures.size());
+	return partitionedFeatures;
 }
 
 	public static void partitionFeatureFile() {

@@ -29,7 +29,6 @@ public class ContextWindowExtractor {
 
 		StripeFile maskedFile = maskByTargetWindows(rawFilePath, outputPath, targetAssayPath);
 		System.out.println("Masked File was created at " + outputPath + "\n" + maskedFile);
-
 	}
 
 	public static StripeFile maskByTargetWindows(Path rawFilePath, Path outputPath, String scheduledAssayPath)
@@ -46,14 +45,14 @@ public class ContextWindowExtractor {
 
 		try {
 
-			// Define ArrayList<> of IsolationWindows - If this works, you should see a list
-			// of windows being added to scheduledWindows
+			// Define ArrayList<> of IsolationWindows 
+			// If this works, you should see a list of windows being added to scheduledWindows
 			ArrayList<IsolationWindow> scheduledWindows = IsolationWindowReader.parseMassList(scheduledAssayPath);
 
 			targetFile.openFile(rawFile);
 			maskedFile.openFile();
 
-			// Add ranges
+			// Add ranges to the masked file 
 			HashMap<Range, WindowData> dutyCycleMap = new HashMap<>();
 
 			HashSet<Integer> addedFragments = new HashSet<>();
@@ -72,7 +71,7 @@ public class ContextWindowExtractor {
 						windowRtMax, false);
 				ArrayList<FragmentScan> matchingScans = new ArrayList<>();
 
-				// Find fragments
+				// Find fragment scans that match the isolation window range for m/z 
 				for (FragmentScan scan : fragmentScansInWindow) {
 					double scanMz = scan.getPrecursorMZ();
 					addedPrecursors.add(scanMz);
