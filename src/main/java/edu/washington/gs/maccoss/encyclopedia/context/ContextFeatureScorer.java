@@ -40,11 +40,19 @@ public class ContextFeatureScorer {
 		String massListPath = args[3];
 		
 		// Inputs for Search
+<<<<<<< HEAD
 //		String rawFilePath = "C:/Users/m334793/Documents/targeted_bootstrapper_eval_20260522/varying_number_of_peptides/100_pep/IL2A_GPFDIA_0combined_masked0_assay.dia"; // Raw file to search
 //		String libraryFilePath = "C:/Users/m334793/Documents/targeted_bootstrapper_eval_20260522/varying_number_of_peptides/100_pep/IL2_and_IL15_Combo.elib"; // Library to
 		// search
 		// against
 //		String fastaPath = "C:/Users/m334793/Documents/targeted_bootstrapper_eval_20260522/varying_number_of_peptides/100_pep/mus_musculus_reviewed_uniprot.fasta"; // fasta file for serach
+=======
+		String rawFilePath = "C:/Users/m334793/Documents/Library/masked1_cd14_combined.dia"; // Raw file to search
+		String libraryFilePath = "C:/Users/m334793/Documents/Library/easyspray_lit_immune_library.elib"; // Library to
+																											// search
+																											// against
+		String fastaPath = "C:/Users/m334793/Documents/Library/human_uniprot_2025dec12.fasta"; // fasta file for serach
+>>>>>>> f44678a1 (Added a class that will process features with Encyclopedia without running Percolator, and export them as pin.tsv files.)
 		String baseName = rawFilePath.replaceFirst("\\.dia$", "");
 
 		// Mass list file
@@ -56,12 +64,18 @@ public class ContextFeatureScorer {
 
 		try {
 			ArrayList<ScoredFeature> partitionedFeatures = scoreFeatures(library, rawFile, fasta, baseName, massListPath);
+<<<<<<< HEAD
 //			System.out.println(partitionedFeatures.get(0).getSequence());
 //			System.out.println(partitionedFeatures.get(0).getPrimary());
+=======
+			System.out.println(partitionedFeatures.get(0).getSequence());
+			System.out.println(partitionedFeatures.get(0).getPrimary());
+>>>>>>> f44678a1 (Added a class that will process features with Encyclopedia without running Percolator, and export them as pin.tsv files.)
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
+<<<<<<< HEAD
 	static IsolationWindow findMatchingMassListWindow(ScoredFeature feature, ArrayList<IsolationWindow> targetWindows) {
 		String sequence = cleanPeptideSequence(feature.getSequence());
 
@@ -74,6 +88,31 @@ public class ContextFeatureScorer {
 		}
 
 		return null;
+=======
+	static boolean isFeatureOnMassList(
+	        ScoredFeature feature,
+	        ArrayList<IsolationWindow> targetWindows,
+	        double halfWindowWidth) {
+
+	    double featureMz = feature.getMz();
+	    byte featureCharge = feature.getCharge();
+
+	    for (IsolationWindow window : targetWindows) {
+	        double targetMz = window.getTargetMz();
+	        double mzStart = targetMz - halfWindowWidth;
+	        double mzStop = targetMz + halfWindowWidth;
+	        byte charge = window.getCharge();
+
+	     //   if (featureMz >= mzStart && featureMz <= mzStop) {
+	      //      return true;
+	       // }
+	        
+	        if (featureMz==targetMz && featureCharge==charge) {
+	        	return true;
+	    }
+	    }
+	    return false;
+>>>>>>> f44678a1 (Added a class that will process features with Encyclopedia without running Percolator, and export them as pin.tsv files.)
 	}
 	
 //	private static String cleanPeptideSequence(String sequence) {
@@ -191,10 +230,21 @@ public class ContextFeatureScorer {
 		// Output Paths
 		String referenceOutputPath = baseName + "_reference.features.txt";
 		String backgroundOutputPath = baseName + "_background.features.txt";
+<<<<<<< HEAD
 		
 		// Output Files
 		File referenceOutput = new File(referenceOutputPath);
 		File backgroundOutput = new File(backgroundOutputPath);
+=======
+	//	String referenceDecoyOutputPath = baseName + "_reference_decoy_features.txt";
+	//	String backgroundDecoyOutputPath = baseName + "_background_decoy_features.txt";
+
+		// Output Files
+		File referenceOutput = new File(referenceOutputPath);
+		File backgroundOutput = new File(backgroundOutputPath);
+//		File referenceDecoyOutput = new File(referenceDecoyOutputPath);
+//		File backgroundDecoyOutput = new File(backgroundDecoyOutputPath);
+>>>>>>> f44678a1 (Added a class that will process features with Encyclopedia without running Percolator, and export them as pin.tsv files.)
 
 		// Target mass list
 		ArrayList<IsolationWindow> targetWindows = IsolationWindowReader.parseMassList(massListPath);
@@ -202,6 +252,7 @@ public class ContextFeatureScorer {
 
 		ArrayList<ScoredFeature> referenceFeatures = new ArrayList<>();
 		ArrayList<ScoredFeature> backgroundFeatures = new ArrayList<>();
+<<<<<<< HEAD
 
 		ArrayList<ScoredFeature> partitionedFeatures = new ArrayList<>(); // so that the return is all of the features
 
@@ -240,6 +291,49 @@ public class ContextFeatureScorer {
 
 		return partitionedFeatures;
 	}
+=======
+//		ArrayList<ScoredFeature> referenceDecoyFeatures = new ArrayList<>();
+//		ArrayList<ScoredFeature> backgroundDecoyFeatures = new ArrayList<>();
+		
+		double halfWindowWidth = 0;
+		
+		ArrayList<ScoredFeature> partitionedFeatures = new ArrayList<>();
+
+		for (ScoredFeature feature : bestFeatures) {
+		    boolean isOnMassList = isFeatureOnMassList(feature, targetWindows, halfWindowWidth);
+		    boolean isBackground = !isOnMassList;
+		    
+		    ScoredFeature annotatedFeature = new ScoredFeature(feature.getMz(), 
+		    		feature.isDecoy(), 
+		    		feature.getPrimary(), 
+		    		feature.getRetentionTime(), feature.getSequence(), 
+		    		feature.getProtein(), feature.getOriginalLine(), 
+		    		isBackground);
+		    partitionedFeatures.add(annotatedFeature);
+
+		    if (!feature.isDecoy() && isOnMassList) {
+		        referenceFeatures.add(feature);
+		    } else if (!feature.isDecoy() && !isOnMassList) {
+		        backgroundFeatures.add(feature);
+		    } else if (feature.isDecoy() && isOnMassList) {
+		        referenceFeatures.add(feature);
+		    } else {
+		        backgroundFeatures.add(feature);
+		    }
+		}
+		writeScoredFeatures(referenceOutput, referenceFeatures, header);
+		writeScoredFeatures(backgroundOutput, backgroundFeatures, header);
+	//	writeScoredFeatures(referenceDecoyOutput, referenceDecoyFeatures, header);
+	//	writeScoredFeatures(backgroundDecoyOutput, backgroundDecoyFeatures, header);
+	
+		
+		System.out.println("Reference target features: " + referenceFeatures.size());
+//		System.out.println("Background target features: " + backgroundFeatures.size());
+//		System.out.println("Reference decoy features: " + referenceDecoyFeatures.size());
+//		System.out.println("Background decoy features: " + backgroundDecoyFeatures.size());
+	return partitionedFeatures;
+}
+>>>>>>> f44678a1 (Added a class that will process features with Encyclopedia without running Percolator, and export them as pin.tsv files.)
 
 	public static void partitionFeatureFile() {
 

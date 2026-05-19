@@ -36,7 +36,10 @@ public class IsolationWindowReader {
 			String line;
 			while ((line = br.readLine()) != null) {
 				String columns[] = line.split(DELIM, -1);
+<<<<<<< HEAD
 				String compound = columns[0];
+=======
+>>>>>>> f44678a1 (Added a class that will process features with Encyclopedia without running Percolator, and export them as pin.tsv files.)
 				double targetMz = Double.parseDouble(columns[3]);
 				byte charge = Byte.parseByte(columns[4]);
 				float rtCenter = Float.parseFloat(columns[5]);
@@ -51,7 +54,11 @@ public class IsolationWindowReader {
 				// Assemble each window
 				IsolationWindow window = new IsolationWindow(compound, targetMz, charge, rtMin, rtMax, isDecoy);
 				isolationWindows.add(window);
+<<<<<<< HEAD
 			System.out.println("Adding an mz at to the target list " + targetMz + " and RT " + rtCenter + " min " + rtMin/60 + " max " + rtMax/60 
+=======
+				System.out.println("Adding an mz at to the target list " + targetMz + " and RT " + rtCenter + " min " + rtMin/60 + " max " + rtMax/60 
+>>>>>>> f44678a1 (Added a class that will process features with Encyclopedia without running Percolator, and export them as pin.tsv files.)
 //						+ "\nRTCenter: " + rtCenter
 //						+ "\ntargetMz: " + targetMz
 //						+ "\nrtStart: " + rtMinHmmm now

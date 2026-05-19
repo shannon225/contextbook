@@ -34,7 +34,11 @@ public class ScoredFeature {
 
 	}
 
+<<<<<<< HEAD
 	public ScoredFeature(double mz, byte charge, boolean isDecoy, float primary, float retentionTime, String sequence, String protein, String originalLine) {
+=======
+	public ScoredFeature(double mz, byte charge, boolean isDecoy, float primary, float retentionTime, String sequence, String protein, String originalLine, boolean isBackground) {
+>>>>>>> f44678a1 (Added a class that will process features with Encyclopedia without running Percolator, and export them as pin.tsv files.)
 		this.mz=mz;
 		this.charge=charge;
 		this.isDecoy=isDecoy;
@@ -43,7 +47,11 @@ public class ScoredFeature {
 		this.sequence=sequence;
 		this.protein=protein;
 		this.originalLine=originalLine;
+<<<<<<< HEAD
 //		this.isBackground=isBackground; 
+=======
+		this.isBackground=isBackground; 
+>>>>>>> f44678a1 (Added a class that will process features with Encyclopedia without running Percolator, and export them as pin.tsv files.)
 	}
 
 

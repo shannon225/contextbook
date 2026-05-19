@@ -50,6 +50,15 @@ public class IsolationWindow {
 //			this.isDecoy = isDecoy;
 		}
 
+	// Constructor
+		public IsolationWindow(double precursorMz, byte charge, float rtInSecondsStart, float rtInSecondsStop, boolean isDecoy) {
+			this.targetMz = precursorMz;
+			this.charge = charge;
+			this.rtMin = rtInSecondsStart;
+			this.rtMax = rtInSecondsStop;
+			this.isDecoy = isDecoy;
+			}
+
 
 	// Getters 
 	
@@ -59,11 +68,19 @@ public class IsolationWindow {
 	public double getTargetMz() {
 		return targetMz;
 	}
+<<<<<<< HEAD
 
 	public byte getCharge() {
 		return charge;
 	}
 
+=======
+	
+	public byte getCharge() {
+		return charge;
+	}
+	
+>>>>>>> f44678a1 (Added a class that will process features with Encyclopedia without running Percolator, and export them as pin.tsv files.)
 	public double getWindowMz() {
 		return windowMz;
 	}
