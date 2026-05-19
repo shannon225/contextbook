@@ -2,6 +2,7 @@ package edu.washington.gs.maccoss.encyclopedia.context;
 
 public class IsolationWindow {
 	private double targetMz;
+	private byte charge;
 	private double mzStart;
 	private double mzStop; 
 	private double windowMz;
@@ -19,10 +20,23 @@ public class IsolationWindow {
 		this.isDecoy = isDecoy;
 		}
 
+	// Constructor
+		public IsolationWindow(double precursorMz, byte charge, float rtInSecondsStart, float rtInSecondsStop, boolean isDecoy) {
+			this.targetMz = precursorMz;
+			this.charge = charge;
+			this.rtMin = rtInSecondsStart;
+			this.rtMax = rtInSecondsStop;
+			this.isDecoy = isDecoy;
+			}
+
 
 	// Getters 
 	public double getTargetMz() {
 		return targetMz;
+	}
+	
+	public byte getCharge() {
+		return charge;
 	}
 	
 	public double getWindowMz() {
