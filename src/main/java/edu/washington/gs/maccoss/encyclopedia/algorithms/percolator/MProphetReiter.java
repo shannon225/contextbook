@@ -74,6 +74,25 @@ public class MProphetReiter implements Runnable {
 		prophet.run();
 		return prophet.getResult();
 	}
+	
+	
+	public void runWithModel(LinearDiscriminantAnalysis lda) {
+		File file = settings.getInputTSV();
+		
+		try {
+			MProphetDataset data = MProphetFeatureReader.parseFeatureFile(file, settings);
+			result = calculateProbabilitiesWithModel(data, lda);
+		} catch (Throwable t ) {
+			Logger.errorLine("Error performing MProphetReiter with the supplied LDA model");
+			Logger.errorException(t);
+			this.error = t;
+		}
+	}
+	public static MProphetResult executeMProphetTSVWithModel(MProphetExecutionData commandData, float threshold, LinearDiscriminantAnalysis lda, AminoAcidConstants aaConstants) throws IOException, FileNotFoundException, UnsupportedEncodingException, InterruptedException {
+		MProphetReiter prophet = new MProphetReiter(commandData, threshold, 1, aaConstants);
+		prophet.runWithModel(lda);
+		return prophet.getResult();
+	}
 
 	@Override
 	public void run() {
@@ -275,6 +294,103 @@ public class MProphetReiter implements Runnable {
 		}
 		
 		return new MProphetResult(detectedPeptides, averageModel, dataset.getFeatureNames(), finalData.y);
+	}
+	
+	protected MProphetResult calculateProbabilitiesWithModel(
+			MProphetDataset dataset,
+			LinearDiscriminantAnalysis lda)
+			throws EncyclopediaException {
+
+		Pair<ArrayList<ScoredMProphetData>, Float> finalData =
+				dataset.getPassingTargetsByFDR(Optional.ofNullable(lda), Float.MAX_VALUE);
+
+		int passingCount = 0;
+		for (ScoredMProphetData data : finalData.x) {
+			if (data.fdr < 0.01) passingCount++;
+		}
+
+		Pair<ArrayList<ScoredMProphetData>, Float> finalDecoyData =
+				dataset.getPassingTargetsByFDR(Optional.ofNullable(lda), Float.MAX_VALUE, true);
+
+		Logger.logLine("Final supplied model: " + passingCount + "/"
+				+ dataset.getTargetData().size() + " passing, pi0:" + finalData.y);
+
+		for (int i = 0; i < lda.getCoefficients().length; i++) {
+			Logger.logLine("   " + dataset.getFeatureNames().get(i) + " --> " + lda.getCoefficients()[i]);
+		}
+		Logger.logLine("   constant --> " + lda.getConstant());
+
+		ArrayList<ScoredMProphetData> allData = new ArrayList<ScoredMProphetData>();
+		allData.addAll(finalData.x);
+		allData.addAll(finalDecoyData.x);
+		Collections.sort(allData);
+
+		HashSet<String> detectedPeptideSequences = new HashSet<String>();
+		ArrayList<PercolatorPeptide> detectedPeptides = new ArrayList<>();
+
+		try {
+			PrintWriter targetWriter = new PrintWriter(settings.getPeptideOutputFile(), "UTF-8");
+			PrintWriter decoyWriter = new PrintWriter(settings.getPeptideDecoyFile(), "UTF-8");
+
+			targetWriter.println("PSMId\tscore\tq-value\tposterior_error_prob\tpeptide\tproteinIds");
+			decoyWriter.println("PSMId\tscore\tq-value\tposterior_error_prob\tpeptide\tproteinIds");
+
+			for (ScoredMProphetData scoredData : allData) {
+				if (detectedPeptideSequences.contains(scoredData.getData().getSequence())) {
+					continue;
+				}
+
+				detectedPeptideSequences.add(scoredData.getData().getSequence());
+
+				float score = scoredData.getScore();
+				float qValue = (float) scoredData.getFDR();
+				float posteriorErrorProb = (float) scoredData.getLocalFDR();
+
+				if (qValue <= peptideFDRThreshold && !scoredData.getData().isDecoy()) {
+					PercolatorPeptide pep = new PercolatorPeptide(
+							scoredData.getData().getId(),
+							scoredData.getData().getProtein(),
+							qValue,
+							posteriorErrorProb,
+							aaConstants
+					);
+					detectedPeptides.add(pep);
+				}
+
+				if (scoredData.getData().isDecoy()) {
+					decoyWriter.println(scoredData.getData().getId() + "\t"
+							+ score + "\t"
+							+ qValue + "\t"
+							+ posteriorErrorProb + "\t"
+							+ "-." + scoredData.getData().getSequence() + ".-" + "\t"
+							+ scoredData.getData().getProtein());
+				} else {
+					targetWriter.println(scoredData.getData().getId() + "\t"
+							+ score + "\t"
+							+ qValue + "\t"
+							+ posteriorErrorProb + "\t"
+							+ "-." + scoredData.getData().getSequence() + ".-" + "\t"
+							+ scoredData.getData().getProtein());
+				}
+			}
+
+			targetWriter.println("pi_0=" + finalData.y);
+			decoyWriter.println("pi_0=" + finalData.y);
+
+			targetWriter.flush();
+			decoyWriter.flush();
+			targetWriter.close();
+			decoyWriter.close();
+
+		} catch (FileNotFoundException e) {
+			throw new EncyclopediaException("Error setting up output file: "
+					+ settings.getPeptideOutputFile().getAbsolutePath(), e);
+		} catch (UnsupportedEncodingException e) {
+			throw new EncyclopediaException("Error setting up output file: "
+					+ settings.getPeptideOutputFile().getAbsolutePath(), e);
+		}
+
+		return new MProphetResult(detectedPeptides, lda, dataset.getFeatureNames(), finalData.y);
 	}
 
 	public boolean hadError() {

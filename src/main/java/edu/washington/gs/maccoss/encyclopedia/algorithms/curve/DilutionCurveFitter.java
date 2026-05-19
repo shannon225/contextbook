@@ -93,21 +93,21 @@ public class DilutionCurveFitter {
 	}
 	
 	public static void main(String[] args) throws Exception {
-		final File outputDirectory=new File("/Users/searleb/Documents/students/ariana/stellar_dilution/curves/");
+		final File outputDirectory=new File("C:/Users/m334793/Documents/SanJoseStellarEP5_Reprocessed/CalCurve/encyclopedia_dilution_fitter/");
 		final File targetDirectory=new File(outputDirectory, "target");
 		outputDirectory.mkdirs();
 		targetDirectory.mkdirs();
 
-		File dataFile=new File("/Users/searleb/Documents/students/ariana/stellar_dilution/EncyclopdiaFoM_Input_1ngCalCurve.csv");
-		File sampleOrganizationFile=new File("/Users/searleb/Documents/students/ariana/stellar_dilution/1ngSampleList2.csv");
+		File dataFile=new File("C:/Users/m334793/Documents/SanJoseStellarEP5_Reprocessed/CalCurve/encyclopedia_dilution_fitter/CalCurve_Quant_v4_7_11.elib.peptides_curve2.txt");
+		File sampleOrganizationFile=new File("C:/Users/m334793/Documents/SanJoseStellarEP5_Reprocessed/CalCurve/encyclopedia_dilution_fitter/curve2_dia_calcurve.elib.diffacto.samples.csv");
 		
 		Pair<ArrayList<ScoredObject<String>>, Map<String, TObjectFloatHashMap<String>>> concentrationPair=getExpectedConcentrationsFromCSV(sampleOrganizationFile);
 		final ArrayList<ScoredObject<String>> expectedConcentrations=concentrationPair.x;
 		final Map<String, TObjectFloatHashMap<String>> unknowns=concentrationPair.y;
 		final float[] expected = adjustForZeroConcentrations(expectedConcentrations);
 
-		final ArrayList<FitPeptide> fitPeptides=fitCurves(outputDirectory, dataFile, expectedConcentrations, expected, new DilutionCurveFitting8HzWideParameters("MOUSE"), true);
-		final HashMap<String, Map<String, TObjectFloatHashMap<String>>> unknownData=extractUnknowns(dataFile, unknowns, "MOUSE");
+		final ArrayList<FitPeptide> fitPeptides=fitCurves(outputDirectory, dataFile, expectedConcentrations, expected, new DilutionCurveFitting8HzWideParameters("HUMAN"), true);
+		final HashMap<String, Map<String, TObjectFloatHashMap<String>>> unknownData=extractUnknowns(dataFile, unknowns, "HUMAN");
 		
 		for (FitPeptide fit : fitPeptides) {
 			Map<String, TObjectFloatHashMap<String>> data=unknownData.get(fit.peptideModSeq);

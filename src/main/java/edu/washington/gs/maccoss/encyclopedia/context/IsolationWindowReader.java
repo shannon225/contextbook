@@ -36,8 +36,6 @@ public class IsolationWindowReader {
 			String line;
 			while ((line = br.readLine()) != null) {
 				String columns[] = line.split(DELIM, -1);
-				System.out.println("Added another line " + line); // Console will print what the data looks like as its read in
-
 				double targetMz = Double.parseDouble(columns[3]);
 				float rtCenter = Float.parseFloat(columns[5]);
 				float rtWindow = Float.parseFloat(columns[6]);
@@ -50,7 +48,7 @@ public class IsolationWindowReader {
 				// Assemble each window
 				IsolationWindow window = new IsolationWindow(targetMz, rtMin, rtMax, isDecoy);
 				isolationWindows.add(window);
-				System.out.println("Adding an mz at " + targetMz + " and RT " + rtCenter + " min " + rtMin/60 + " max " + rtMax/60 
+				System.out.println("Adding an mz at to the target list " + targetMz + " and RT " + rtCenter + " min " + rtMin/60 + " max " + rtMax/60 
 //						+ "\nRTCenter: " + rtCenter
 //						+ "\ntargetMz: " + targetMz
 //						+ "\nrtStart: " + rtMin

@@ -1,7 +1,9 @@
 package edu.washington.gs.maccoss.encyclopedia.context;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.SQLException;
@@ -41,13 +43,13 @@ public class TargetedBootstrapper {
 //		int numberOfPeptides = Integer.parseInt(args[4]);
 //		int seed = Integer.parseInt(args[5]);
 
-		String libraryPath = "C:/Users/m334793/Documents/Library/easyspray_lit_immune_library.elib";
-		String rawFilePath = "C:/Users/m334793/Documents/Library/cd14_combined.dia";
-		
+		String libraryPath = "C:/Users/m334793/Documents/Library/for_context_50perCycle/IL2_and_IL15_Combo.elib";
+		String rawFilePath = "C:/Users/m334793/Documents/Library/for_context_50perCycle/IT_100ngCurve_100p.dia";
+		Path mapOutputPath = Paths.get("C:/Users/m334793/Documents/Library/for_context_50perCycle/target_decoy_map.txt");
+
 		Path rawFile = Paths.get(rawFilePath);
 		String baseName = rawFilePath.replaceFirst("\\.dia$",  "");
 		
-		Path outputPath = rawFile.getParent().resolve(baseName + "_context.dia");
 		
 		int seed = 0;
 		AminoAcidConstants aaConstants = new AminoAcidConstants();
@@ -56,9 +58,12 @@ public class TargetedBootstrapper {
 
 		for (int i = 0; i <= seed; i++) {// Randomly Select Precursors, then use them to mask the .DIA file
 
-			ArrayList<IsolationWindow> isolationWindows = selectMask(numberOfPeptides, aaConstants, i, libraryPath);
+			ArrayList<IsolationWindow> isolationWindows = selectMask(numberOfPeptides, aaConstants, i, libraryPath, mapOutputPath);
+			Path outputPath = rawFile.getParent().resolve(baseName + "_masked" + i + "assay.dia");
+			Path maskedAssayOutputPath = rawFile.getParent().resolve(baseName + "_masked" + i + "_assay.txt");
 
 			StripeFile maskedFile = writeMaskedFile(isolationWindows, i, rawFilePath, outputPath);
+		    writeAssayList(isolationWindows, maskedAssayOutputPath);
 
 			System.out.println("Complete! The masked file " + maskedFile + i + " was made.\n");
 		}
@@ -69,16 +74,18 @@ public class TargetedBootstrapper {
 	// into a list
 
 	public static ArrayList<IsolationWindow> selectMask(int numberOfPeptides,
-			AminoAcidConstants aaConstants, int i, String libraryPath) throws IOException, SQLException, Throwable {
+			AminoAcidConstants aaConstants, int i, String libraryPath, Path mapOutputPath) throws IOException, SQLException, Throwable {
 
 		// START TIMER 1
 		long startTime = System.nanoTime();
-		//		String libraryPath = "C:/Users/m334793/Documents/Library/easyspray_lit_immune_library.elib";
-
 		LibraryFile library = new LibraryFile();
 		File file = new File(libraryPath);
 		
 		ArrayList<IsolationWindow> isolationWindows = new ArrayList<>();
+		
+		// For mapping targets and decoys later
+		HashMap<String, String> targetDecoyOriginMap = new HashMap<>();
+
 		int randomValue = 0 + i; // Add haliburton's number to get random number
 		
 		HashSet<Integer> simulatedAssaySet = new HashSet<>();
@@ -87,26 +94,17 @@ public class TargetedBootstrapper {
 		SearchParameters params = PecanParameterParser.getDefaultParametersObject(); // need parameters to run smartDecoy 
 
 		library.openFile(file);
-		//		int seed1 = 1;
 		try {
-			// Open library
-
-
+		
 			// Load all entries
 			ArrayList<LibraryEntry> entries = library.getAllEntries(false, aaConstants);
-
-			// Print size of library to confirm that it is open
-			System.out
-			.println("Total number of peptides in the chromatogram library: " + entries.size() + " peptides.");
-
-			//		int seed = (int) 1;
 
 			while (simulatedAssaySet.size() < numberOfPeptides) {
 				randomValue = RandomGenerator.randomInt(randomValue);
 				int index = Math.abs(randomValue) % entries.size();
 				simulatedAssaySet.add(index);
 			}
-			System.out.println("Selecting " + simulatedAssaySet.size() + " precursors for a fake assay.");
+//			System.out.println("Selecting " + simulatedAssaySet.size() + " precursors for a fake assay.");
 
 			for (Integer index : simulatedAssaySet) {
 				
@@ -133,53 +131,25 @@ public class TargetedBootstrapper {
 				String decoy = PeptideUtils.getSmartDecoy(sequence, charge, sequencesSelectedForMasking, params);
 				String correctedDecoyMass = PeptideUtils.getCorrectedMasses(decoy, constants);
 				double decoyMz = constants.getChargedMass(correctedDecoyMass, charge);
+				targetDecoyOriginMap.put(sequence, decoy);   
+				writeTargetDecoyMap(targetDecoyOriginMap, mapOutputPath);
 				
 				// Add decoys to Isolation Windows
 				IsolationWindow decoyWindow = new IsolationWindow(decoyMz, rtMin, rtMax, true);
 				isolationWindows.add(decoyWindow);
-				System.out.println("The peptide " + sequence + " had a decoy " + decoy + " made at m/z " + decoyMz + " has been selected. The decoy was generated!" 
-						+ "\ndecoyMz = " + decoyMz 
-						+ "\ntargetMz = " + targetMz);	
-				
-				System.out.println(entry.getPeptideModSeq());
-				System.out.println(correctedDecoyMass);
-				//
-
-				//			System.out.println("Added the precursor at " + targetMz + " between " + rtMin / 60 + " and "
-				//					+ rtMax / 60 + " minutes.");
 			}
 			
-			// Generating decoys and adding them to the ArrayList<> isolationWindows
-//			for (String sequence : sequencesSelectedForMasking) {
-//
-//				byte charge = PeptideUtils.getExpectedChargeState(sequence); 
-//				String decoy = PeptideUtils.getSmartDecoy(sequence, charge, sequencesSelectedForMasking, params);
-//				String correctedDecoyMass = PeptideUtils.getCorrectedMasses(decoy, constants);
-//				double decoyMass = constants.getMass(correctedDecoyMass);
-//				double decoyMz = decoyMass/charge;
-//				
-//				// Add decoys to isolation windows
-//				IsolationWindow decoyWindow = new IsolationWindow(decoyMz, 0, 0, 0, true);
-//				isolationWindows.add(decoyWindow);
-//				
-//				System.out.println("The peptide " + sequence + " at m/z " + decoyMz + " has been selected. The decoy was generated!" 
-//						+ "\ndecoyMass = " + decoyMass + ", charge = +" + charge  
-//						+ "\ndecoyMz = " + decoyMz);		
-//			} 
- 
 			library.close();
 			System.out.println(isolationWindows.size() + " Precursors marked for extraction.");
 
 		} catch (Exception e) {
 			System.out.println("There was an error with selecting precursors. Check file path.");
-			e.printStackTrace(); // important for debugging
+			e.printStackTrace();
 		}
 
 		// END TIMER 1
 		long endTime = System.nanoTime();
 		long duration = endTime - startTime;
-		// System.out.println("randomlySelectPrecursors(): Time taken (ns): " +
-		// duration);
 		System.out.println("randomlySelectPrecursors(): Time taken (ms) : " + duration / 1_000_000);
 
 		return isolationWindows;
@@ -206,6 +176,7 @@ public class TargetedBootstrapper {
 		try {
 			rawLibraryFile.openFile(rawFile);
 			maskedFile.openFile();
+			
 			// Add Ranges
 			HashMap<Range, WindowData> dutyCycleMap = new HashMap<>();
 			System.out.println("Masking DIA file based on the selected precursors...");
@@ -215,14 +186,12 @@ public class TargetedBootstrapper {
 				float windowStartTime = window.getRtMin();
 				float windowStopTime = window.getRtMax();
 				boolean sqrt = false;
-				double mzStart = windowMz - 0.35; // range specified for an ion trap stellar - extract out a 0.7 mz window
+				double mzStart = windowMz - 0.35; 
 				double mzStop = windowMz + 0.35;
 				Range mzRange = new Range(mzStart, mzStop);
-				// Range rtInSecRange = new Range(mzStart*60, mzStop*60);
 
 				ArrayList<FragmentScan> fragmentScansFromWindow = rawLibraryFile.getStripes(windowMz, windowStartTime, windowStopTime, sqrt);
 				ArrayList<FragmentScan> matchingScans = new ArrayList<>();
-				//				HashSet<Integer> addedFragmentSpectrumIndexes = new HashSet<>();
 
 				// Add Fragment Scans
 				for (FragmentScan scan : fragmentScansFromWindow) {
@@ -242,21 +211,18 @@ public class TargetedBootstrapper {
 				}
 				maskedFile.setRanges(dutyCycleMap);
 				maskedFile.addStripe(matchingScans);
+				
 				// Add Precursor Scans
 				ArrayList<PrecursorScan> precursorScanFromWindow = rawLibraryFile.getPrecursors(windowStartTime, windowStopTime);
 				ArrayList<PrecursorScan> matchingPrecursors = new ArrayList<>();
-				//				HashSet<Integer> addedPrecursorSpectrumIndexes = new HashSet<>();
 
 				for (PrecursorScan precursor : precursorScanFromWindow) {
 					Range precursorRange = new Range(precursor.getIsolationWindowLower(),
 							precursor.getIsolationWindowUpper());
-					//		System.out.println("Precursor range: " + precursorRange);
 					int spectrumIndex = precursor.getSpectrumIndex();
 					if ((precursorRange.contains(mzRange) && !addedPrecursors.contains(spectrumIndex))) {
 						matchingPrecursors.add(precursor);
 						addedPrecursors.add(spectrumIndex);
-
-						//			System.out.println("Precursor count: " + matchingPrecursorScans.size());
 					}
 				}
 				maskedFile.addPrecursor(matchingPrecursors);
@@ -275,16 +241,57 @@ public class TargetedBootstrapper {
 		long endTime = System.nanoTime();
 		long duration = endTime - startTime;
 
-		// System.out.println("maskDIAFileBasedOnIsolationWindows(): Time taken (ns): "
-		// + duration);
 		System.out.println("maskDIAFileBasedOnIsolationWindows(): Time taken (ms) : " + duration / 1_000_000);
 
 		maskedFile.saveAsFile(outputFile);
-		System.out.println("Wrote the " + " was written to " + outputPath
+		System.out.println("Target mass list for the masked file  was written to " + outputPath
 				+ "\n Number of added Precursor scans: " + addedPrecursors.size()
 				+ "\n Number of added Fragment scans: " + addedFragments.size());
 		
 
 		return maskedFile;
+	}
+	
+	public static void writeAssayList(ArrayList<IsolationWindow> isolationWindows, Path outputPath) throws IOException {
+	    try (BufferedWriter writer = Files.newBufferedWriter(outputPath)) {
+	        writer.write("Compound\tFormula\tAdduct\tm/z\tz\tRT Time (min)\tWindow (min)");
+	        writer.newLine();
+
+	        for (IsolationWindow window : isolationWindows) {
+	            String compound = " ";
+	            double targetMz = window.getTargetMz();
+	            byte charge = window.getCharge();
+
+	            float rtCenterMin = ((window.getRtMin() + window.getRtMax()) / 2.0f) / 60.0f;
+	            float windowMin = (window.getRtMax() - window.getRtMin()) / 60.0f;
+
+	            writer.write(compound + "\t" +
+	                    "" + "\t" +
+	                    "(no adduct)" + "\t" +
+	                    targetMz + "\t" +
+	                    charge + "\t" +
+	                    rtCenterMin + "\t" +
+	                    windowMin);
+	            writer.newLine();
+	        }
+	    }
+	}
+	
+	private static void writeTargetDecoyMap(HashMap<String, String> targetDecoyMap, Path outputPath)
+	        throws IOException {
+
+	    try (BufferedWriter writer = Files.newBufferedWriter(outputPath)) {
+
+	        writer.write("decoySequence\ttargetSequence");
+	        writer.newLine();
+
+	        for (Entry<String, String> entry : targetDecoyMap.entrySet()) {
+	            String decoySequence = entry.getKey();
+	            String targetSequence = entry.getValue();
+
+	            writer.write(decoySequence + "\t" + targetSequence);
+	            writer.newLine();
+	        }
+	    }
 	}
 }
