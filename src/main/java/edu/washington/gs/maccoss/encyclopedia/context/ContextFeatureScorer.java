@@ -40,24 +40,18 @@ public class ContextFeatureScorer {
 		String massListPath = args[3];
 		
 		// Inputs for Search
-//		String rawFilePath = "C:/Users/m334793/Documents/targeted_bootstrapper_eval_20260522/varying_number_of_peptides/100_pep/IL2A_GPFDIA_0combined_masked0_assay.dia"; // Raw file to search
-//		String libraryFilePath = "C:/Users/m334793/Documents/targeted_bootstrapper_eval_20260522/varying_number_of_peptides/100_pep/IL2_and_IL15_Combo.elib"; // Library to
-		// search
-		// against
-//		String fastaPath = "C:/Users/m334793/Documents/targeted_bootstrapper_eval_20260522/varying_number_of_peptides/100_pep/mus_musculus_reviewed_uniprot.fasta"; // fasta file for serach
 		String baseName = rawFilePath.replaceFirst("\\.dia$", "");
 
 		// Mass list file
 //		String massListPath = "C:/Users/m334793/Documents/targeted_bootstrapper_eval_20260522/varying_number_of_peptides/100_pep/IL2A_GPFDIA_0combined_masked0_assay.txt";
 		String rawFilePath = "C:/Users/m334793/Documents/Library/for_context_50perCycle/IT_100ngCurve_100p.dia"; // Raw file to search
 		String libraryFilePath = "C:/Users/m334793/Documents/Library/for_context_50perCycle/IL2_and_IL15_Combo.elib"; // Library to
-		// search
-		// against
-		String fastaPath = "C:/Users/m334793/Documents/Library/for_context_50perCycle/mus_musculus_reviewed_uniprot.fasta"; // fasta file for serach
+	
+		String fastaPath = "C:/Users/m334793/Documents/Library/targeted_bootstrapper_test/mus_musculus_reviewed_uniprot.fasta"; // fasta file for serach
 		String baseName = rawFilePath.replaceFirst("\\.dia$", "");
 
 		// Mass list file
-		String massListPath = "C:/Users/m334793/Documents/Library/for_context_50perCycle/assay.csv";
+		String massListPath = "C:/Users/m334793/Documents/Library/targeted_bootstrapper_test/IT_100ngCurve_100p_masked0_assay.txt";
 
 		final File fasta = new File(fastaPath);
 		File rawFile = new File(rawFilePath);
@@ -87,16 +81,6 @@ public class ContextFeatureScorer {
 		return null;
 	}
 	
-//	private static String cleanPeptideSequence(String sequence) {
-//		if (sequence == null) return "";
-//		sequence = sequence.trim();
-//		String[] parts = sequence.split("\\.");
-//		if (parts.length == 3) {
-//			return parts[1].trim();
-//		}
-//		return sequence;
-//	}
-
 	private static String cleanPeptideSequence(String sequence) {
 		if (sequence == null) return "";
 
@@ -129,14 +113,28 @@ public class ContextFeatureScorer {
 	static boolean isFeatureOnMassList(ScoredFeature feature, ArrayList<IsolationWindow> targetWindows) {
 		String sequence = feature.getSequence();
 
-		for (IsolationWindow window: targetWindows) {
-			String compound = window.getCompound();
-//			System.out.println("Compound peptide is " + compound);
-			if (compound.trim().equals(sequence.replaceFirst("-.", "").replace(".-", "")))  {
-				return true;
+		for (IsolationWindow window : targetWindows) {
+			String compound = cleanPeptideSequence(window.getCompound());
+
+			if (compound.equals(sequence)) {
+				return window;
 			}
 		}
-		return false;
+
+		return null;
+	}
+	
+	private static String cleanPeptideSequence(String sequence) {
+		if (sequence == null) return "";
+
+		sequence = sequence.trim();
+
+		String[] parts = sequence.split("\\.");
+		if (parts.length == 3) {
+			return parts[1].trim();
+		}
+
+		return sequence;
 	}
 
 	private static void writeScoredFeatures(File outputFile, ArrayList<ScoredFeature> features, String header)
@@ -259,7 +257,6 @@ public class ContextFeatureScorer {
 			boolean isOnMassList = matchingWindow != null;
 			boolean isMassListDecoy = isOnMassList && matchingWindow.isDecoy();
 			boolean isBackground = !isOnMassList;
-			
 
 			ScoredFeature annotatedFeature = new ScoredFeature(feature.getMz(), feature.isDecoy(), feature.getPrimary(), feature.getRetentionTime(), cleanPeptideSequence(feature.getSequence()), feature.getProtein(), feature.getOriginalLine(), isBackground);
 			partitionedFeatures.add(annotatedFeature);
@@ -292,21 +289,27 @@ public class ContextFeatureScorer {
 		for (ScoredFeature feature : bestFeatures) {
 			boolean isOnMassList = isFeatureOnMassList(feature, targetWindows);
 			boolean isBackground = !isOnMassList;
+			
 
 			ScoredFeature annotatedFeature = new ScoredFeature(feature.getMz(), feature.isDecoy(), feature.getPrimary(), feature.getRetentionTime(), feature.getSequence().replaceFirst("\\-.", "").replaceAll("\\.-", ""), feature.getProtein(), feature.getOriginalLine(), isBackground);
 			partitionedFeatures.add(annotatedFeature);
 			
-			System.out.println("Features are being read, sequence for this feature is " + feature.getSequence().replaceFirst("\\-.", "").replaceAll("\\.-", ""));
+			System.out.println("Features are being read, sequence for this feature is " + cleanPeptideSequence(feature.getSequence()));
 			
-			if (!feature.isDecoy() && isOnMassList) {
-				referenceFeatures.add(feature);
-			} else if (!feature.isDecoy() && !isOnMassList) {
-				backgroundFeatures.add(feature);
-			} else if (feature.isDecoy() && isOnMassList) {
-				referenceFeatures.add(feature);
+			if (isOnMassList) {
+				referenceFeatures.add(feature); 
 			} else {
 				backgroundFeatures.add(feature);
 			}
+//			if (!feature.isDecoy() && isOnMassList) {
+//				referenceFeatures.add(feature);
+//			} else if (!feature.isDecoy() && !isOnMassList) {
+//				backgroundFeatures.add(feature);
+//			} else if (feature.isDecoy() && isOnMassList) {
+//				referenceFeatures.add(feature);
+//			} else {
+//				backgroundFeatures.add(feature);
+//			}
 		}
 		writeScoredFeatures(referenceOutput, referenceFeatures, header);
 		writeScoredFeatures(backgroundOutput, backgroundFeatures, header);

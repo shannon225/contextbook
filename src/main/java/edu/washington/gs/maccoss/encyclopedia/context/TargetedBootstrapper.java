@@ -39,36 +39,16 @@ public class TargetedBootstrapper {
 		String rawFilePath = args[1];
 		Path mapOutputPath = Paths.get(args[2]);
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-//		String libraryPath = "C:/Users/m334793/Documents/Library/bootstrapping_immune_cells/cd4_library.elib";
-//		String rawFilePath = "C:/Users/m334793/Documents/Library/bootstrapping_immune_cells/2026_01_28_EP5_CD4_PicoChipHT_30min_GPFDIA_combined00_01.dia";
-//		Path mapOutputPath = Paths.get("C:/Users/m334793/Documents/Library/bootstrapping_immune_cells/CD4_target_decoy_map.txt");
 		Path rawFile = Paths.get(rawFilePath);
 		String baseName = rawFilePath.replaceFirst("\\.dia$",  "");
-=======
+
 		String libraryPath = "C:/Users/m334793/Documents/Library/for_context_50perCycle/IL2_and_IL15_Combo.elib";
 		String rawFilePath = "C:/Users/m334793/Documents/Library/for_context_50perCycle/IT_100ngCurve_100p.dia";
 		Path mapOutputPath = Paths.get("C:/Users/m334793/Documents/Library/for_context_50perCycle/target_decoy_map.txt");
-=======
-		String libraryPath = "C:/Users/m334793/Documents/Library/targeted_bootstrapper_test/IL2_and_IL15_Combo.elib";
-		String rawFilePath = "C:/Users/m334793/Documents/Library/targeted_bootstrapper_test/IT_100ngCurve_100p.dia";
-		Path mapOutputPath = Paths.get("C:/Users/m334793/Documents/Library/targeted_bootstrapper_test/target_decoy_map.txt");
->>>>>>> 8b8d896c (Added sequences to the mass lists for the TargetedBoostrapper class.)
 
-		Path rawFile = Paths.get(rawFilePath);
-		String baseName = rawFilePath.replaceFirst("\\.dia$",  "");
-		
-		
-<<<<<<< HEAD
+	
 		int seed = 0;
->>>>>>> f44678a1 (Added a class that will process features with Encyclopedia without running Percolator, and export them as pin.tsv files.)
-=======
-		int seed = 1;
->>>>>>> 8b8d896c (Added sequences to the mass lists for the TargetedBoostrapper class.)
 		AminoAcidConstants aaConstants = new AminoAcidConstants();
-
-		int seed = 0;
 		int numberOfPeptides = 100; // number of Peptides per assay
 		float halfWindowWidthRT = 2.5f;
 		double halfWindowWidthMz = 1.0;
@@ -92,19 +72,12 @@ public class TargetedBootstrapper {
 
 		for (int i = 0; i <= seed; i++) {// Randomly Select Precursors, then use them to mask the .DIA file
 
-<<<<<<< HEAD
 			ArrayList<IsolationWindow> isolationWindows = selectMask(numberOfPeptides, aaConstants, i, libraryPath, mapOutputPath, halfWindowWidthRT);
 			Path outputPath = rawFile.getParent().resolve(baseName + "_masked" + i + "_assay.dia");
 			Path maskedAssayOutputPath = rawFile.getParent().resolve(baseName + "_masked" + i + "_assay.txt");
 
 			StripeFile maskedFile = writeMaskedFile(isolationWindows, i, rawFilePath, outputPath, halfWindowWidthMz);
-=======
-			ArrayList<IsolationWindow> isolationWindows = selectMask(numberOfPeptides, aaConstants, i, libraryPath, mapOutputPath);
-			Path outputPath = rawFile.getParent().resolve(baseName + "_masked" + i + "_assay.dia");
-			Path maskedAssayOutputPath = rawFile.getParent().resolve(baseName + "_masked" + i + "_assay.txt");
 
-			StripeFile maskedFile = writeMaskedFile(isolationWindows, i, rawFilePath, outputPath);
->>>>>>> f44678a1 (Added a class that will process features with Encyclopedia without running Percolator, and export them as pin.tsv files.)
 		    writeAssayList(isolationWindows, maskedAssayOutputPath);
 
 			System.out.println("Complete! The masked file " + maskedFile + i + " was made.\n");
@@ -116,11 +89,7 @@ public class TargetedBootstrapper {
 	// into a list
 
 	public static ArrayList<IsolationWindow> selectMask(int numberOfPeptides,
-<<<<<<< HEAD
 			AminoAcidConstants aaConstants, int i, String libraryPath, Path mapOutputPath, float halfWindowWidthRT) throws IOException, SQLException, Throwable {
-=======
-			AminoAcidConstants aaConstants, int i, String libraryPath, Path mapOutputPath) throws IOException, SQLException, Throwable {
->>>>>>> f44678a1 (Added a class that will process features with Encyclopedia without running Percolator, and export them as pin.tsv files.)
 
 		// START TIMER 1
 		long startTime = System.nanoTime();
@@ -233,14 +202,9 @@ public class TargetedBootstrapper {
 				float windowStartTime = window.getRtMin();
 				float windowStopTime = window.getRtMax();
 				boolean sqrt = false;
-<<<<<<< HEAD
 				double mzStart = windowMz - halfWindowWidthMz; 
 				double mzStop = windowMz + halfWindowWidthMz;
-=======
-				double mzStart = windowMz - 0.35; 
-				double mzStop = windowMz + 0.35;
->>>>>>> f44678a1 (Added a class that will process features with Encyclopedia without running Percolator, and export them as pin.tsv files.)
-				Range mzRange = new Range(mzStart, mzStop);
+		Range mzRange = new Range(mzStart, mzStop);
 
 				ArrayList<FragmentScan> fragmentScansFromWindow = rawLibraryFile.getStripes(windowMz, windowStartTime, windowStopTime, sqrt);
 				ArrayList<FragmentScan> matchingScans = new ArrayList<>();
@@ -306,10 +270,8 @@ public class TargetedBootstrapper {
 	
 	public static void writeAssayList(ArrayList<IsolationWindow> isolationWindows, Path outputPath) throws IOException {
 	    try (BufferedWriter writer = Files.newBufferedWriter(outputPath)) {
-<<<<<<< HEAD
 	    	writer.write("Compound\tFormula\tAdduct\tm/z\tz\tRT Time (min)\tWindow (min)\tisDecoy");
 	    	writer.newLine();
-
 	        for (IsolationWindow window : isolationWindows) {
 	            String compound = window.getCompound();
 	            double targetMz = window.getTargetMz();
@@ -341,9 +303,7 @@ public class TargetedBootstrapper {
 	}
 	
 	
-=======
-	        writer.write("Compound\tFormula\tAdduct\tm/z\tz\tRT Time (min)\tWindow (min)");
-	        writer.newLine();
+
 
 	        for (IsolationWindow window : isolationWindows) {
 	            String compound = window.getCompound();
@@ -354,24 +314,28 @@ public class TargetedBootstrapper {
 	            float rtCenterMin = ((window.getRtMin() + window.getRtMax()) / 2.0f) / 60.0f;
 	            float windowMin = (window.getRtMax() - window.getRtMin()) / 60.0f;
 	            
-	            writer.write(compound + "\t" +
-	                    "" + "\t" +
-	                    "(no adduct)" + "\t" +
-	                    targetMz + "\t" +
-	                    charge + "\t" +
-	                    rtCenterMin + "\t" +
-	                    windowMin);
+	            writer.write(compound + 
+	            		"\t" +
+	            		"" + 
+	            		"\t" +
+	            		"(no adduct)" +
+	            		"\t" +
+	            		targetMz +
+	            		"\t" +
+	            		charge +
+	            		"\t" +
+	            		rtCenterMin +
+	            		"\t" +
+	            		windowMin +
+	            		"\t" +
+	            		isDecoy);
 	            writer.newLine();
 
 	        } 
 	    }
 	}
 	
-<<<<<<< HEAD
->>>>>>> f44678a1 (Added a class that will process features with Encyclopedia without running Percolator, and export them as pin.tsv files.)
-=======
-	
->>>>>>> 8b8d896c (Added sequences to the mass lists for the TargetedBoostrapper class.)
+
 	private static void writeTargetDecoyMap(HashMap<String, String> targetDecoyMap, Path outputPath)
 	        throws IOException {
 
