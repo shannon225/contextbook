@@ -51,7 +51,7 @@ public class TargetedBootstrapper {
 		String baseName = rawFilePath.replaceFirst("\\.dia$",  "");
 		
 		
-		int seed = 1;
+		int seed = 0;
 		AminoAcidConstants aaConstants = new AminoAcidConstants();
 		int numberOfPeptides = 100; // number of Peptides per assay
 
@@ -255,8 +255,8 @@ public class TargetedBootstrapper {
 	
 	public static void writeAssayList(ArrayList<IsolationWindow> isolationWindows, Path outputPath) throws IOException {
 	    try (BufferedWriter writer = Files.newBufferedWriter(outputPath)) {
-	        writer.write("Compound\tFormula\tAdduct\tm/z\tz\tRT Time (min)\tWindow (min)");
-	        writer.newLine();
+	    	writer.write("Compound\tFormula\tAdduct\tm/z\tz\tRT Time (min)\tWindow (min)\tisDecoy");
+	    	writer.newLine();
 
 	        for (IsolationWindow window : isolationWindows) {
 	            String compound = window.getCompound();
@@ -267,13 +267,21 @@ public class TargetedBootstrapper {
 	            float rtCenterMin = ((window.getRtMin() + window.getRtMax()) / 2.0f) / 60.0f;
 	            float windowMin = (window.getRtMax() - window.getRtMin()) / 60.0f;
 	            
-	            writer.write(compound + "\t" +
-	                    "" + "\t" +
-	                    "(no adduct)" + "\t" +
-	                    targetMz + "\t" +
-	                    charge + "\t" +
-	                    rtCenterMin + "\t" +
-	                    windowMin);
+	            writer.write(compound + 
+	            		"\t" +
+	            		"" + 
+	            		"\t" +
+	            		"(no adduct)" +
+	            		"\t" +
+	            		targetMz +
+	            		"\t" +
+	            		charge +
+	            		"\t" +
+	            		rtCenterMin +
+	            		"\t" +
+	            		windowMin +
+	            		"\t" +
+	            		isDecoy);
 	            writer.newLine();
 
 	        } 
