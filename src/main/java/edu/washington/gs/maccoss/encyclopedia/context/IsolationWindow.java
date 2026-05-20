@@ -20,6 +20,7 @@ public class IsolationWindow {
 		this.rtMax = rtInSecondsStop;
 		this.isDecoy = isDecoy;
 	}
+<<<<<<< HEAD
 
 	// Constructor
 	public IsolationWindow(double precursorMz, byte charge, float rtInSecondsStart, float rtInSecondsStop, boolean isDecoy) {
@@ -49,15 +50,27 @@ public class IsolationWindow {
 			this.rtMax = rtInSecondsStop;
 //			this.isDecoy = isDecoy;
 		}
+=======
+>>>>>>> 8b8d896c (Added sequences to the mass lists for the TargetedBoostrapper class.)
 
 	// Constructor
-		public IsolationWindow(double precursorMz, byte charge, float rtInSecondsStart, float rtInSecondsStop, boolean isDecoy) {
-			this.targetMz = precursorMz;
-			this.charge = charge;
-			this.rtMin = rtInSecondsStart;
-			this.rtMax = rtInSecondsStop;
-			this.isDecoy = isDecoy;
-			}
+	public IsolationWindow(double precursorMz, byte charge, float rtInSecondsStart, float rtInSecondsStop, boolean isDecoy) {
+		this.targetMz = precursorMz;
+		this.charge = charge;
+		this.rtMin = rtInSecondsStart;
+		this.rtMax = rtInSecondsStop;
+		this.isDecoy = isDecoy;
+	}
+
+	// Constructor
+	public IsolationWindow(String compound, double precursorMz, byte charge, float rtInSecondsStart, float rtInSecondsStop, boolean isDecoy) {
+		this.compound = compound;
+		this.targetMz = precursorMz;
+		this.charge = charge;
+		this.rtMin = rtInSecondsStart;
+		this.rtMax = rtInSecondsStop;
+		this.isDecoy = isDecoy;
+	}
 
 
 	// Getters 
@@ -68,6 +81,7 @@ public class IsolationWindow {
 	public double getTargetMz() {
 		return targetMz;
 	}
+<<<<<<< HEAD
 <<<<<<< HEAD
 
 	public byte getCharge() {
@@ -81,6 +95,13 @@ public class IsolationWindow {
 	}
 	
 >>>>>>> f44678a1 (Added a class that will process features with Encyclopedia without running Percolator, and export them as pin.tsv files.)
+=======
+
+	public byte getCharge() {
+		return charge;
+	}
+
+>>>>>>> 8b8d896c (Added sequences to the mass lists for the TargetedBoostrapper class.)
 	public double getWindowMz() {
 		return windowMz;
 	}

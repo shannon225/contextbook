@@ -1,32 +1,26 @@
 package edu.washington.gs.maccoss.encyclopedia.context;
 
 import java.io.File;
-<<<<<<< HEAD
 import java.util.Arrays;
-
 import org.coode.owlapi.owlxmlparser.AbstractDataRangeFillerRestrictionElementHandler;
-
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.MProphetExecutionData;
-=======
 import java.util.ArrayList;
-
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.MProphetDataset;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.MProphetFeatureReader;
->>>>>>> f44678a1 (Added a class that will process features with Encyclopedia without running Percolator, and export them as pin.tsv files.)
+import java.util.Arrays;
+import org.coode.owlapi.owlxmlparser.AbstractDataRangeFillerRestrictionElementHandler;
+import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.MProphetExecutionData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.MProphetReiter;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.MProphetResult;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.LinearDiscriminantAnalysis;
-<<<<<<< HEAD
-=======
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.MProphetExecutionData;
->>>>>>> f44678a1 (Added a class that will process features with Encyclopedia without running Percolator, and export them as pin.tsv files.)
 
 public class ContextMProphetExecutor {
 
 	public static void main(String[] args) {
-<<<<<<< HEAD
+
 
 		// Map files 
 		String libraryPath = "C:/Users/m334793/Documents/targeted_bootstrapper_eval_20260522/varying_number_of_peptides/100_pep/IL2_and_IL15_Combo.elib";
@@ -145,62 +139,130 @@ public class ContextMProphetExecutor {
 		File peptideDecoyFile = new File(inputFeatureFile.getAbsolutePath().replaceAll("\\.txt$", "") + outputSuffix + ".decoy.txt");
 =======
 		
+=======
+
+>>>>>>> 8b8d896c (Added sequences to the mass lists for the TargetedBoostrapper class.)
 		// Map files 
-		String outputPath = "C:/Users/m334793/Documents/Library/for_context_50perCycle/";
-		String libraryPath = "C:/Users/m334793/Documents/Library/for_context_50perCycle/IL2_and_IL15_Combo.elib";
-		String fastaPath = "C:/Users/m334793/Documents/Library/for_context_50perCycle/mus_musculus_reviewed_uniprot.fasta";
-		String diaFilePath = "C:/Users/m334793/Documents/Library/for_context_50perCycle/IT_100ngCurve_100p.dia";
-		
-		String baseName = diaFilePath.replaceFirst("\\.dia$", "");
-		
+		String libraryPath = "C:/Users/m334793/Documents/Library/targeted_bootstrapper_test/IL2_and_IL15_Combo.elib";
+		String fastaPath = "C:/Users/m334793/Documents/Library/targeted_bootstrapper_test/mus_musculus_reviewed_uniprot.fasta";
+//		String diaFilePath = "C:/Users/m334793/Documents/Library/for_context_50perCycle/IT_100ngCurve_100p.dia";
+
 		// Mass list file 
-		String massListPath = "C:/Users/m334793/Documents/Library/for_context_50perCycle/assay.csv";
+//		String massListPath = "C:/Users/m334793/Documents/Library/targeted_bootstrapper_test/assay.csv";
+
+		// Where the feature files are located: 
+		String diaFolderPath = "C:/Users/m334793/Documents/Library/targeted_bootstrapper_test/";
+
+		// Get a list of .dia files 
+		File diaFolder = new File(diaFolderPath);
+		File[] diaFiles = diaFolder.listFiles();
 		
+		System.out.println("DIA Folder was fidentified as: " + diaFolder.getAbsolutePath());
+		System.out.println("DIA files detected! The following files will be detected with MProphet:");
+
+		if (diaFiles != null) {
+			for (File diaFile : diaFiles) {
+				if (diaFile.isFile() && diaFile.getName().endsWith(".dia")) {
+					System.out.println(diaFile.getName());
+				}
+			}
+		}
+		
+		// Identify the current file so we can loop through all files
+
+		if (diaFiles !=null) {
+			for (File diaFile : diaFiles) {
+
+				// Ignore files that do not end in .dia 
+				if (!diaFile.isFile() || !diaFile.getName().endsWith(".dia")) {
+					continue;
+				}
+	
+				String currentDiaFilePath = diaFile.getAbsolutePath();
+				String diaName = diaFile.getName(); 
+				String baseName = diaName.substring(0, diaName.lastIndexOf(".dia"));
+				
+				File massListFile = new File(diaFolder, baseName + ".txt");
+				String massListPath = massListFile.getAbsolutePath();
+				
+				System.out.println("Processesing " + diaFile.getName());
+				
+				if (!massListFile.exists()) {
+					System.out.println("Skipping " + diaFile.getName() + " because mass list was not found: " + massListPath);
+					continue;
+				}
+				executeContextMProphet(libraryPath, fastaPath, currentDiaFilePath, massListPath, diaFolder);
+			}	
+		}
+	}
+
+	public static void executeContextMProphet(String libraryPath, String fastaPath, String diaFilePath, String massListPath, File diaFolder) {
 		File fasta = new File(fastaPath);
 		File diaFile = new File(diaFilePath);
 		File library = new File(libraryPath);
-		
-//		ArrayList<ScoredFeature> referenceFeatures = new ArrayList<>();
-//		ArrayList<ScoredFeature> backgroundFeatures = new ArrayList<>();
-	
-//		ArrayList<IsolationWindow> targetWindows = IsolationWindowReader.parseMassList(massListPath);
+
+		String baseName = diaFilePath.replaceFirst("\\.dia$", "");
+
+		//		ArrayList<ScoredFeature> referenceFeatures = new ArrayList<>();
+		//		ArrayList<ScoredFeature> backgroundFeatures = new ArrayList<>();
+
+		//		ArrayList<IsolationWindow> targetWindows = IsolationWindowReader.parseMassList(massListPath);
 		SearchParameters params = SearchParameterParser.getDefaultParametersObject();
-		
-		
+
+
 		// Score features in the .dia file against the library, split the results
 		try {
 			ContextFeatureScorer.scoreFeatures(library, diaFile, fasta, baseName, massListPath); // run this if the feature file hasn't been processed yet
-			File referenceFeatureFile = new File(baseName + "_reference_features.txt");
-			File backgroundFeatureFile = new File(baseName + "_background_features.txt");
-			
-			MProphetExecutionData backgroundData = makeMProphetExecutionData(backgroundFeatureFile, fasta, params, ".background.model.txt");
-			MProphetExecutionData referenceData = makeMProphetExecutionData(referenceFeatureFile, fasta, params, ".reference.model.txt");
-			
+			String featureFileName = baseName.replaceAll("\\.txt$", "");
+
+			File backgroundFeatureFile = new File(featureFileName + "_background.features.txt");
+			File referenceFeatureFile = new File(featureFileName + "_reference.features.txt");
+
+			MProphetExecutionData backgroundData = makeMProphetExecutionData(backgroundFeatureFile, fasta, params, ".pep");
+			MProphetExecutionData referenceData = makeMProphetExecutionData(referenceFeatureFile, fasta, params, ".pep");
+
 			float peptideFDRThreshold = 0.01f;
 			int seed = 1;
 			int round = 1;
-			
+
 			MProphetResult backgroundMProphetResult = MProphetReiter.executeMProphetTSV(backgroundData, peptideFDRThreshold, seed, params.getAAConstants(), round);
 			LinearDiscriminantAnalysis backgroundLDA = backgroundMProphetResult.getLDA();
-			
- // 	Use the background LDA model on the reference feature file without retraining
+
+			// 	Use the background LDA model on the reference feature file without retraining
 			MProphetResult referenceMProphetResult = MProphetReiter.executeMProphetTSVWithModel(referenceData, peptideFDRThreshold, backgroundLDA, params.getAAConstants());
-		
-			System.out.println("Finished training lda model on background features. Parsed reference features from " + backgroundFeatureFile.getAbsolutePath());
-//			System.out.println("Background passing peptides: " + backgroundMProphetResult.getPassingPeptides().size());
+
+			System.out.println("The lda model has been trained on background feature. Now we'll use reference features from " + referenceFeatureFile.getAbsolutePath());
+			//			System.out.println("Background passing peptides: " + backgroundMProphetResult.getPassingPeptides().size());
 			System.out.println("Finished scoring peptides with background-trained lda model. "
 					+ "\nReference passing peptides: " + referenceMProphetResult.getPassingPeptides().size());
+			
+			String diaBaseName = diaFile.getName().replaceFirst("\\.dia$", "");
+			File nameOfFolderForPlot = new File(diaFolder, diaBaseName + "_mprophet_plots");
+			ContextMProphetPlotter.plotContextMProphetResults(
+			        backgroundData.getPeptideOutputFile(),
+			        backgroundData.getPeptideDecoyFile(),
+			        referenceData.getPeptideOutputFile(),
+			        referenceData.getPeptideDecoyFile(),
+			        nameOfFolderForPlot
+			);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
+
 	}
-	
+
+
+
 	private static MProphetExecutionData makeMProphetExecutionData(File inputFeatureFile, File fasta, SearchParameters params, String outputSuffix) {
 
+<<<<<<< HEAD
 		File peptideOutputFile = new File(inputFeatureFile.getAbsolutePath() + outputSuffix + ".output.txt");
 		File peptideDecoyFile = new File(inputFeatureFile.getAbsolutePath() + outputSuffix + ".decoy.txt");
 >>>>>>> f44678a1 (Added a class that will process features with Encyclopedia without running Percolator, and export them as pin.tsv files.)
+=======
+		File peptideOutputFile = new File(inputFeatureFile.getAbsolutePath().replaceAll("\\.txt$", "") + outputSuffix + ".output.txt");
+		File peptideDecoyFile = new File(inputFeatureFile.getAbsolutePath().replaceAll("\\.txt$", "") + outputSuffix + ".decoy.txt");
+>>>>>>> 8b8d896c (Added sequences to the mass lists for the TargetedBoostrapper class.)
 
 		return new MProphetExecutionData(
 				inputFeatureFile,
@@ -209,10 +271,14 @@ public class ContextMProphetExecutor {
 				peptideDecoyFile,
 				params
 <<<<<<< HEAD
+<<<<<<< HEAD
 				);
 =======
 		);
 >>>>>>> f44678a1 (Added a class that will process features with Encyclopedia without running Percolator, and export them as pin.tsv files.)
+=======
+				);
+>>>>>>> 8b8d896c (Added sequences to the mass lists for the TargetedBoostrapper class.)
 	}
 
 }

@@ -40,6 +40,7 @@ public class TargetedBootstrapper {
 		Path mapOutputPath = Paths.get(args[2]);
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 //		String libraryPath = "C:/Users/m334793/Documents/Library/bootstrapping_immune_cells/cd4_library.elib";
 //		String rawFilePath = "C:/Users/m334793/Documents/Library/bootstrapping_immune_cells/2026_01_28_EP5_CD4_PicoChipHT_30min_GPFDIA_combined00_01.dia";
 //		Path mapOutputPath = Paths.get("C:/Users/m334793/Documents/Library/bootstrapping_immune_cells/CD4_target_decoy_map.txt");
@@ -49,13 +50,22 @@ public class TargetedBootstrapper {
 		String libraryPath = "C:/Users/m334793/Documents/Library/for_context_50perCycle/IL2_and_IL15_Combo.elib";
 		String rawFilePath = "C:/Users/m334793/Documents/Library/for_context_50perCycle/IT_100ngCurve_100p.dia";
 		Path mapOutputPath = Paths.get("C:/Users/m334793/Documents/Library/for_context_50perCycle/target_decoy_map.txt");
+=======
+		String libraryPath = "C:/Users/m334793/Documents/Library/targeted_bootstrapper_test/IL2_and_IL15_Combo.elib";
+		String rawFilePath = "C:/Users/m334793/Documents/Library/targeted_bootstrapper_test/IT_100ngCurve_100p.dia";
+		Path mapOutputPath = Paths.get("C:/Users/m334793/Documents/Library/targeted_bootstrapper_test/target_decoy_map.txt");
+>>>>>>> 8b8d896c (Added sequences to the mass lists for the TargetedBoostrapper class.)
 
 		Path rawFile = Paths.get(rawFilePath);
 		String baseName = rawFilePath.replaceFirst("\\.dia$",  "");
 		
 		
+<<<<<<< HEAD
 		int seed = 0;
 >>>>>>> f44678a1 (Added a class that will process features with Encyclopedia without running Percolator, and export them as pin.tsv files.)
+=======
+		int seed = 1;
+>>>>>>> 8b8d896c (Added sequences to the mass lists for the TargetedBoostrapper class.)
 		AminoAcidConstants aaConstants = new AminoAcidConstants();
 
 		int seed = 0;
@@ -90,7 +100,7 @@ public class TargetedBootstrapper {
 			StripeFile maskedFile = writeMaskedFile(isolationWindows, i, rawFilePath, outputPath, halfWindowWidthMz);
 =======
 			ArrayList<IsolationWindow> isolationWindows = selectMask(numberOfPeptides, aaConstants, i, libraryPath, mapOutputPath);
-			Path outputPath = rawFile.getParent().resolve(baseName + "_masked" + i + "assay.dia");
+			Path outputPath = rawFile.getParent().resolve(baseName + "_masked" + i + "_assay.dia");
 			Path maskedAssayOutputPath = rawFile.getParent().resolve(baseName + "_masked" + i + "_assay.txt");
 
 			StripeFile maskedFile = writeMaskedFile(isolationWindows, i, rawFilePath, outputPath);
@@ -336,13 +346,14 @@ public class TargetedBootstrapper {
 	        writer.newLine();
 
 	        for (IsolationWindow window : isolationWindows) {
-	            String compound = " ";
+	            String compound = window.getCompound();
 	            double targetMz = window.getTargetMz();
 	            byte charge = window.getCharge();
+	            boolean isDecoy = window.isDecoy();
 
 	            float rtCenterMin = ((window.getRtMin() + window.getRtMax()) / 2.0f) / 60.0f;
 	            float windowMin = (window.getRtMax() - window.getRtMin()) / 60.0f;
-
+	            
 	            writer.write(compound + "\t" +
 	                    "" + "\t" +
 	                    "(no adduct)" + "\t" +
@@ -351,11 +362,16 @@ public class TargetedBootstrapper {
 	                    rtCenterMin + "\t" +
 	                    windowMin);
 	            writer.newLine();
-	        }
+
+	        } 
 	    }
 	}
 	
+<<<<<<< HEAD
 >>>>>>> f44678a1 (Added a class that will process features with Encyclopedia without running Percolator, and export them as pin.tsv files.)
+=======
+	
+>>>>>>> 8b8d896c (Added sequences to the mass lists for the TargetedBoostrapper class.)
 	private static void writeTargetDecoyMap(HashMap<String, String> targetDecoyMap, Path outputPath)
 	        throws IOException {
 

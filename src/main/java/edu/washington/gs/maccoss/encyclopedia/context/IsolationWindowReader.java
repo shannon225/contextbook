@@ -37,9 +37,13 @@ public class IsolationWindowReader {
 			while ((line = br.readLine()) != null) {
 				String columns[] = line.split(DELIM, -1);
 <<<<<<< HEAD
+<<<<<<< HEAD
 				String compound = columns[0];
 =======
 >>>>>>> f44678a1 (Added a class that will process features with Encyclopedia without running Percolator, and export them as pin.tsv files.)
+=======
+				String compound = columns[0];
+>>>>>>> 8b8d896c (Added sequences to the mass lists for the TargetedBoostrapper class.)
 				double targetMz = Double.parseDouble(columns[3]);
 				byte charge = Byte.parseByte(columns[4]);
 				float rtCenter = Float.parseFloat(columns[5]);
@@ -55,15 +59,19 @@ public class IsolationWindowReader {
 				IsolationWindow window = new IsolationWindow(compound, targetMz, charge, rtMin, rtMax, isDecoy);
 				isolationWindows.add(window);
 <<<<<<< HEAD
+<<<<<<< HEAD
 			System.out.println("Adding an mz at to the target list " + targetMz + " and RT " + rtCenter + " min " + rtMin/60 + " max " + rtMax/60 
 =======
 				System.out.println("Adding an mz at to the target list " + targetMz + " and RT " + rtCenter + " min " + rtMin/60 + " max " + rtMax/60 
 >>>>>>> f44678a1 (Added a class that will process features with Encyclopedia without running Percolator, and export them as pin.tsv files.)
+=======
+//				System.out.println("Adding an mz at to the target list " + targetMz + " and RT " + rtCenter + " min " + rtMin/60 + " max " + rtMax/60 
+>>>>>>> 8b8d896c (Added sequences to the mass lists for the TargetedBoostrapper class.)
 //						+ "\nRTCenter: " + rtCenter
 //						+ "\ntargetMz: " + targetMz
 //						+ "\nrtStart: " + rtMinHmmm now
 //						+ "\nrtStop: " + rtMax
-						);
+//						);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();

@@ -35,10 +35,14 @@ public class ScoredFeature {
 	}
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 	public ScoredFeature(double mz, byte charge, boolean isDecoy, float primary, float retentionTime, String sequence, String protein, String originalLine) {
 =======
 	public ScoredFeature(double mz, byte charge, boolean isDecoy, float primary, float retentionTime, String sequence, String protein, String originalLine, boolean isBackground) {
 >>>>>>> f44678a1 (Added a class that will process features with Encyclopedia without running Percolator, and export them as pin.tsv files.)
+=======
+	public ScoredFeature(double mz, byte charge, boolean isDecoy, float primary, float retentionTime, String sequence, String protein, String originalLine) {
+>>>>>>> 8b8d896c (Added sequences to the mass lists for the TargetedBoostrapper class.)
 		this.mz=mz;
 		this.charge=charge;
 		this.isDecoy=isDecoy;
@@ -48,10 +52,14 @@ public class ScoredFeature {
 		this.protein=protein;
 		this.originalLine=originalLine;
 <<<<<<< HEAD
+<<<<<<< HEAD
 //		this.isBackground=isBackground; 
 =======
 		this.isBackground=isBackground; 
 >>>>>>> f44678a1 (Added a class that will process features with Encyclopedia without running Percolator, and export them as pin.tsv files.)
+=======
+//		this.isBackground=isBackground; 
+>>>>>>> 8b8d896c (Added sequences to the mass lists for the TargetedBoostrapper class.)
 	}
 
 
