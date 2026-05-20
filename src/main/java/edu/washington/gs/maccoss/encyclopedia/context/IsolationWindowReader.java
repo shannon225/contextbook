@@ -12,7 +12,7 @@ public class IsolationWindowReader {
 
 	public static void main(String[] args) {
 
-		String massListFile = "C:/Users/m334793/Documents/Library/assay7.csv";
+		String massListFile = "C:/Users/m334793/Documents/Library/targeted_bootstrapper_test/IT_100ngCurve_100p_masked0_assay.txt";
 
 		ArrayList<IsolationWindow> windows = parseMassList(massListFile);
 		
@@ -36,7 +36,9 @@ public class IsolationWindowReader {
 			String line;
 			while ((line = br.readLine()) != null) {
 				String columns[] = line.split(DELIM, -1);
+				String compound = columns[0];
 				double targetMz = Double.parseDouble(columns[3]);
+				byte charge = Byte.parseByte(columns[4]);
 				float rtCenter = Float.parseFloat(columns[5]);
 				float rtWindow = Float.parseFloat(columns[6]);
 
@@ -46,14 +48,14 @@ public class IsolationWindowReader {
 				boolean isDecoy = false;
 
 				// Assemble each window
-				IsolationWindow window = new IsolationWindow(targetMz, rtMin, rtMax, isDecoy);
+				IsolationWindow window = new IsolationWindow(compound, targetMz, charge, rtMin, rtMax, isDecoy);
 				isolationWindows.add(window);
-				System.out.println("Adding an mz at to the target list " + targetMz + " and RT " + rtCenter + " min " + rtMin/60 + " max " + rtMax/60 
+//				System.out.println("Adding an mz at to the target list " + targetMz + " and RT " + rtCenter + " min " + rtMin/60 + " max " + rtMax/60 
 //						+ "\nRTCenter: " + rtCenter
 //						+ "\ntargetMz: " + targetMz
 //						+ "\nrtStart: " + rtMin
 //						+ "\nrtStop: " + rtMax
-						);
+//						);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
