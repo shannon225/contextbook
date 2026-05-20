@@ -43,15 +43,15 @@ public class TargetedBootstrapper {
 //		int numberOfPeptides = Integer.parseInt(args[4]);
 //		int seed = Integer.parseInt(args[5]);
 
-		String libraryPath = "C:/Users/m334793/Documents/Library/for_context_50perCycle/IL2_and_IL15_Combo.elib";
-		String rawFilePath = "C:/Users/m334793/Documents/Library/for_context_50perCycle/IT_100ngCurve_100p.dia";
-		Path mapOutputPath = Paths.get("C:/Users/m334793/Documents/Library/for_context_50perCycle/target_decoy_map.txt");
+		String libraryPath = "C:/Users/m334793/Documents/Library/targeted_bootstrapper_test/IL2_and_IL15_Combo.elib";
+		String rawFilePath = "C:/Users/m334793/Documents/Library/targeted_bootstrapper_test/IT_100ngCurve_100p.dia";
+		Path mapOutputPath = Paths.get("C:/Users/m334793/Documents/Library/targeted_bootstrapper_test/target_decoy_map.txt");
 
 		Path rawFile = Paths.get(rawFilePath);
 		String baseName = rawFilePath.replaceFirst("\\.dia$",  "");
 		
 		
-		int seed = 0;
+		int seed = 1;
 		AminoAcidConstants aaConstants = new AminoAcidConstants();
 		int numberOfPeptides = 100; // number of Peptides per assay
 
@@ -59,7 +59,7 @@ public class TargetedBootstrapper {
 		for (int i = 0; i <= seed; i++) {// Randomly Select Precursors, then use them to mask the .DIA file
 
 			ArrayList<IsolationWindow> isolationWindows = selectMask(numberOfPeptides, aaConstants, i, libraryPath, mapOutputPath);
-			Path outputPath = rawFile.getParent().resolve(baseName + "_masked" + i + "assay.dia");
+			Path outputPath = rawFile.getParent().resolve(baseName + "_masked" + i + "_assay.dia");
 			Path maskedAssayOutputPath = rawFile.getParent().resolve(baseName + "_masked" + i + "_assay.txt");
 
 			StripeFile maskedFile = writeMaskedFile(isolationWindows, i, rawFilePath, outputPath);
@@ -117,12 +117,13 @@ public class TargetedBootstrapper {
 				String sequence = entry.getPeptideModSeq();
 				byte charge = entry.getPrecursorCharge();
 
+
 				// Calculate a RT ranges for the isolationWindows object
 				float rtMin = (float) (rtCenter - (60 * 2.5));
 				float rtMax = (float) (rtCenter + (60 * 2.5));
 				
 				// Add sequences to the isolationWindows object
-				IsolationWindow window = new IsolationWindow(targetMz, rtMin, rtMax, false);
+				IsolationWindow window = new IsolationWindow(sequence, targetMz, charge, rtMin, rtMax, false);
 				isolationWindows.add(window);
 				sequencesSelectedForMasking.add(sequence);
 				
@@ -135,7 +136,7 @@ public class TargetedBootstrapper {
 				writeTargetDecoyMap(targetDecoyOriginMap, mapOutputPath);
 				
 				// Add decoys to Isolation Windows
-				IsolationWindow decoyWindow = new IsolationWindow(decoyMz, rtMin, rtMax, true);
+				IsolationWindow decoyWindow = new IsolationWindow(decoy, decoyMz, charge, rtMin, rtMax, true);
 				isolationWindows.add(decoyWindow);
 			}
 			
@@ -258,13 +259,14 @@ public class TargetedBootstrapper {
 	        writer.newLine();
 
 	        for (IsolationWindow window : isolationWindows) {
-	            String compound = " ";
+	            String compound = window.getCompound();
 	            double targetMz = window.getTargetMz();
 	            byte charge = window.getCharge();
+	            boolean isDecoy = window.isDecoy();
 
 	            float rtCenterMin = ((window.getRtMin() + window.getRtMax()) / 2.0f) / 60.0f;
 	            float windowMin = (window.getRtMax() - window.getRtMin()) / 60.0f;
-
+	            
 	            writer.write(compound + "\t" +
 	                    "" + "\t" +
 	                    "(no adduct)" + "\t" +
@@ -273,9 +275,11 @@ public class TargetedBootstrapper {
 	                    rtCenterMin + "\t" +
 	                    windowMin);
 	            writer.newLine();
-	        }
+
+	        } 
 	    }
 	}
+	
 	
 	private static void writeTargetDecoyMap(HashMap<String, String> targetDecoyMap, Path outputPath)
 	        throws IOException {
