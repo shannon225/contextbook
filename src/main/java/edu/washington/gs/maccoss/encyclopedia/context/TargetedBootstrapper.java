@@ -43,9 +43,9 @@ public class TargetedBootstrapper {
 //		int numberOfPeptides = Integer.parseInt(args[4]);
 //		int seed = Integer.parseInt(args[5]);
 
-		String libraryPath = "C:/Users/m334793/Documents/Library/targeted_bootstrapper_test/IL2_and_IL15_Combo.elib";
-		String rawFilePath = "C:/Users/m334793/Documents/Library/targeted_bootstrapper_test/IT_100ngCurve_100p.dia";
-		Path mapOutputPath = Paths.get("C:/Users/m334793/Documents/Library/targeted_bootstrapper_test/target_decoy_map.txt");
+		String libraryPath = "C:/Users/m334793/Documents/Library/bootstrapping_immune_cells/cd4_library.elib";
+		String rawFilePath = "C:/Users/m334793/Documents/Library/bootstrapping_immune_cells/2026_01_28_EP5_CD4_PicoChipHT_30min_GPFDIA_combined00_01.dia";
+		Path mapOutputPath = Paths.get("C:/Users/m334793/Documents/Library/bootstrapping_immune_cells/CD4_target_decoy_map.txt");
 
 		Path rawFile = Paths.get(rawFilePath);
 		String baseName = rawFilePath.replaceFirst("\\.dia$",  "");
@@ -187,8 +187,8 @@ public class TargetedBootstrapper {
 				float windowStartTime = window.getRtMin();
 				float windowStopTime = window.getRtMax();
 				boolean sqrt = false;
-				double mzStart = windowMz - 0.35; 
-				double mzStop = windowMz + 0.35;
+				double mzStart = windowMz - 1; 
+				double mzStop = windowMz + 1;
 				Range mzRange = new Range(mzStart, mzStop);
 
 				ArrayList<FragmentScan> fragmentScansFromWindow = rawLibraryFile.getStripes(windowMz, windowStartTime, windowStopTime, sqrt);
