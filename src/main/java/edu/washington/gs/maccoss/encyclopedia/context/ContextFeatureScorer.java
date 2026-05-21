@@ -40,18 +40,21 @@ public class ContextFeatureScorer {
 		String massListPath = args[3];
 		
 		// Inputs for Search
+
 		String baseName = rawFilePath.replaceFirst("\\.dia$", "");
 
 		// Mass list file
 //		String massListPath = "C:/Users/m334793/Documents/targeted_bootstrapper_eval_20260522/varying_number_of_peptides/100_pep/IL2A_GPFDIA_0combined_masked0_assay.txt";
-		String rawFilePath = "C:/Users/m334793/Documents/Library/for_context_50perCycle/IT_100ngCurve_100p.dia"; // Raw file to search
-		String libraryFilePath = "C:/Users/m334793/Documents/Library/for_context_50perCycle/IL2_and_IL15_Combo.elib"; // Library to
-	
-		String fastaPath = "C:/Users/m334793/Documents/Library/targeted_bootstrapper_test/mus_musculus_reviewed_uniprot.fasta"; // fasta file for serach
-		String baseName = rawFilePath.replaceFirst("\\.dia$", "");
+//		String rawFilePath = "C:/Users/m334793/Documents/Library/for_context_50perCycle/IT_100ngCurve_100p.dia"; // Raw file to search
+//		String libraryFilePath = "C:/Users/m334793/Documents/Library/for_context_50perCycle/IL2_and_IL15_Combo.elib"; // Library to
+//		String rawFilePath = "C:/Users/m334793/Documents/Library/targeted_bootstrapper_test/IT_100ngCurve_100p_masked0_assay.dia"; // Raw file to search
+//		String libraryFilePath = "C:/Users/m334793/Documents/Library/targeted_bootstrapper_test/IL2_and_IL15_Combo.elib"; // Library to
+
+//		String fastaPath = "C:/Users/m334793/Documents/Library/targeted_bootstrapper_test/mus_musculus_reviewed_uniprot.fasta"; // fasta file for serach
+//		String baseName = rawFilePath.replaceFirst("\\.dia$", "");
 
 		// Mass list file
-		String massListPath = "C:/Users/m334793/Documents/Library/targeted_bootstrapper_test/IT_100ngCurve_100p_masked0_assay.txt";
+//		String massListPath = "C:/Users/m334793/Documents/Library/targeted_bootstrapper_test/IT_100ngCurve_100p_masked0_assay.txt";
 
 		final File fasta = new File(fastaPath);
 		File rawFile = new File(rawFilePath);
@@ -81,6 +84,16 @@ public class ContextFeatureScorer {
 		return null;
 	}
 	
+//	private static String cleanPeptideSequence(String sequence) {
+//		if (sequence == null) return "";
+//		sequence = sequence.trim();
+//		String[] parts = sequence.split("\\.");
+//		if (parts.length == 3) {
+//			return parts[1].trim();
+//		}
+//		return sequence;
+//	}
+
 	private static String cleanPeptideSequence(String sequence) {
 		if (sequence == null) return "";
 

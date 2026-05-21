@@ -143,22 +143,22 @@ public class ContextMProphetExecutor {
 
 >>>>>>> 8b8d896c (Added sequences to the mass lists for the TargetedBoostrapper class.)
 		// Map files 
-		String libraryPath = "C:/Users/m334793/Documents/Library/targeted_bootstrapper_test/IL2_and_IL15_Combo.elib";
-		String fastaPath = "C:/Users/m334793/Documents/Library/targeted_bootstrapper_test/mus_musculus_reviewed_uniprot.fasta";
+		String libraryPath = "C:/Users/m334793/Documents/Library/bootstrapping_immune_cells/cd4_library.elib";
+		String fastaPath = "C:/Users/m334793/Documents/Library/bootstrapping_immune_cells/Human_UP000005640_9606.fasta.trypsin.z1-6_nce27_DIA.fasta";
 //		String diaFilePath = "C:/Users/m334793/Documents/Library/for_context_50perCycle/IT_100ngCurve_100p.dia";
 
 		// Mass list file 
 //		String massListPath = "C:/Users/m334793/Documents/Library/targeted_bootstrapper_test/assay.csv";
 
 		// Where the feature files are located: 
-		String diaFolderPath = "C:/Users/m334793/Documents/Library/targeted_bootstrapper_test/";
+		String diaFolderPath = "C:/Users/m334793/Documents/Library/bootstrapping_immune_cells/";
 
 		// Get a list of .dia files 
 		File diaFolder = new File(diaFolderPath);
 		File[] diaFiles = diaFolder.listFiles();
 		
 		System.out.println("DIA Folder was fidentified as: " + diaFolder.getAbsolutePath());
-		System.out.println("DIA files detected! The following files will be detected with MProphet:");
+		System.out.println("DIA files detected! The following files will be processed with MProphet:" + diaFolder.listFiles());
 
 		if (diaFiles != null) {
 			for (File diaFile : diaFiles) {

@@ -41,11 +41,6 @@ public class TargetedBootstrapper {
 
 		Path rawFile = Paths.get(rawFilePath);
 		String baseName = rawFilePath.replaceFirst("\\.dia$",  "");
-
-		String libraryPath = "C:/Users/m334793/Documents/Library/for_context_50perCycle/IL2_and_IL15_Combo.elib";
-		String rawFilePath = "C:/Users/m334793/Documents/Library/for_context_50perCycle/IT_100ngCurve_100p.dia";
-		Path mapOutputPath = Paths.get("C:/Users/m334793/Documents/Library/for_context_50perCycle/target_decoy_map.txt");
-
 	
 		int seed = 0;
 		AminoAcidConstants aaConstants = new AminoAcidConstants();
@@ -186,7 +181,7 @@ public class TargetedBootstrapper {
 		
 		HashSet<Integer> addedPrecursors = new HashSet<>();
 		HashSet<Integer> addedFragments = new HashSet<>();
-		
+
 		// System.out.println("Is the .dia file open? " + rawLibraryFile.isOpen());
 
 		try {
