@@ -41,6 +41,11 @@ public class ContextFeatureScorer {
 		
 		// Inputs for Search
 
+//		String rawFilePath = "C:/Users/m334793/Documents/targeted_bootstrapper_eval_20260522/varying_number_of_peptides/100_pep/IL2A_GPFDIA_0combined_masked0_assay.dia"; // Raw file to search
+//		String libraryFilePath = "C:/Users/m334793/Documents/targeted_bootstrapper_eval_20260522/varying_number_of_peptides/100_pep/IL2_and_IL15_Combo.elib"; // Library to
+		// search
+		// against
+//		String fastaPath = "C:/Users/m334793/Documents/targeted_bootstrapper_eval_20260522/varying_number_of_peptides/100_pep/mus_musculus_reviewed_uniprot.fasta"; // fasta file for serach
 		String baseName = rawFilePath.replaceFirst("\\.dia$", "");
 
 		// Mass list file
@@ -55,6 +60,8 @@ public class ContextFeatureScorer {
 
 		// Mass list file
 //		String massListPath = "C:/Users/m334793/Documents/Library/targeted_bootstrapper_test/IT_100ngCurve_100p_masked0_assay.txt";
+//		String massListPath = "C:/Users/m334793/Documents/targeted_bootstrapper_eval_20260522/varying_number_of_peptides/100_pep/IL2A_GPFDIA_0combined_masked0_assay.txt";
+//		String massListPath = "C:/Users/m334793/Documents/targeted_bootstrapper_eval_20260522/varying_number_of_peptides/100_pep/IL2A_GPFDIA_0combined_masked0_assay.txt";
 
 		final File fasta = new File(fastaPath);
 		File rawFile = new File(rawFilePath);

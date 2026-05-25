@@ -39,11 +39,22 @@ public class TargetedBootstrapper {
 		String rawFilePath = args[1];
 		Path mapOutputPath = Paths.get(args[2]);
 
+<<<<<<< Upstream, based on 8a3e19f30ba1a08ac3c39782c599eb3f2a178248
+=======
+//		String libraryPath = "C:/Users/m334793/Documents/Library/bootstrapping_immune_cells/cd4_library.elib";
+//		String rawFilePath = "C:/Users/m334793/Documents/Library/bootstrapping_immune_cells/2026_01_28_EP5_CD4_PicoChipHT_30min_GPFDIA_combined00_01.dia";
+//		Path mapOutputPath = Paths.get("C:/Users/m334793/Documents/Library/bootstrapping_immune_cells/CD4_target_decoy_map.txt");
+>>>>>>> 42d09bf Added in command line interface options for ContextMProphetExecutor, TargetedBootstrapper and ContextFeatureScorer.
 		Path rawFile = Paths.get(rawFilePath);
 		String baseName = rawFilePath.replaceFirst("\\.dia$",  "");
+<<<<<<< Upstream, based on 8a3e19f30ba1a08ac3c39782c599eb3f2a178248
 	
 		int seed = 0;
+=======
+>>>>>>> 42d09bf Added in command line interface options for ContextMProphetExecutor, TargetedBootstrapper and ContextFeatureScorer.
 		AminoAcidConstants aaConstants = new AminoAcidConstants();
+
+		int seed = 0;
 		int numberOfPeptides = 100; // number of Peptides per assay
 		float halfWindowWidthRT = 2.5f;
 		double halfWindowWidthMz = 1.0;
@@ -72,7 +83,10 @@ public class TargetedBootstrapper {
 			Path maskedAssayOutputPath = rawFile.getParent().resolve(baseName + "_masked" + i + "_assay.txt");
 
 			StripeFile maskedFile = writeMaskedFile(isolationWindows, i, rawFilePath, outputPath, halfWindowWidthMz);
+<<<<<<< Upstream, based on 8a3e19f30ba1a08ac3c39782c599eb3f2a178248
 
+=======
+>>>>>>> 42d09bf Added in command line interface options for ContextMProphetExecutor, TargetedBootstrapper and ContextFeatureScorer.
 		    writeAssayList(isolationWindows, maskedAssayOutputPath);
 
 			System.out.println("Complete! The masked file " + maskedFile + i + " was made.\n");
@@ -181,7 +195,7 @@ public class TargetedBootstrapper {
 		
 		HashSet<Integer> addedPrecursors = new HashSet<>();
 		HashSet<Integer> addedFragments = new HashSet<>();
-
+		
 		// System.out.println("Is the .dia file open? " + rawLibraryFile.isOpen());
 
 		try {
@@ -199,7 +213,11 @@ public class TargetedBootstrapper {
 				boolean sqrt = false;
 				double mzStart = windowMz - halfWindowWidthMz; 
 				double mzStop = windowMz + halfWindowWidthMz;
+<<<<<<< Upstream, based on 8a3e19f30ba1a08ac3c39782c599eb3f2a178248
 		Range mzRange = new Range(mzStart, mzStop);
+=======
+				Range mzRange = new Range(mzStart, mzStop);
+>>>>>>> 42d09bf Added in command line interface options for ContextMProphetExecutor, TargetedBootstrapper and ContextFeatureScorer.
 
 				ArrayList<FragmentScan> fragmentScansFromWindow = rawLibraryFile.getStripes(windowMz, windowStartTime, windowStopTime, sqrt);
 				ArrayList<FragmentScan> matchingScans = new ArrayList<>();
