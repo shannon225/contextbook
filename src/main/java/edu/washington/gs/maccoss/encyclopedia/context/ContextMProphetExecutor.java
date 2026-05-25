@@ -17,15 +17,15 @@ public class ContextMProphetExecutor {
 	public static void main(String[] args) {
 
 		// Map files 
-		String libraryPath = "C:/Users/m334793/Documents/Library/bootstrapping_immune_cells/cd4_library.elib";
-		String fastaPath = "C:/Users/m334793/Documents/Library/bootstrapping_immune_cells/Human_UP000005640_9606.fasta.trypsin.z1-6_nce27_DIA.fasta";
+		String libraryPath = "C:/Users/m334793/Documents/targeted_bootstrapper_eval_20260522/varying_number_of_peptides/100_pep/IL2_and_IL15_Combo.elib";
+		String fastaPath = "C:/Users/m334793/Documents/targeted_bootstrapper_eval_20260522/varying_number_of_peptides/100_pep/mus_musculus_reviewed_uniprot.fasta";
 //		String diaFilePath = "C:/Users/m334793/Documents/Library/for_context_50perCycle/IT_100ngCurve_100p.dia";
 
 		// Mass list file 
 //		String massListPath = "C:/Users/m334793/Documents/Library/targeted_bootstrapper_test/assay.csv";
 
 		// Where the feature files are located: 
-		String diaFolderPath = "C:/Users/m334793/Documents/Library/bootstrapping_immune_cells/";
+		String diaFolderPath = "C:/Users/m334793/Documents/targeted_bootstrapper_eval_20260522/varying_number_of_peptides/100_pep/";
 
 		// Get a list of .dia files 
 		File diaFolder = new File(diaFolderPath);
