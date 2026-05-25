@@ -27,16 +27,28 @@ import edu.washington.gs.maccoss.encyclopedia.utils.threading.ProgressIndicator;
 public class ContextFeatureScorer {
 
 	public static void main(String[] args) throws IOException, SQLException, InterruptedException, DataFormatException {
+		
+		if (args.length != 4) {
+			System.err.println("Usage: ");
+			System.err.println("java edu.washington.gs.maccoss.encyclopedia.context.ContextFeatureScorer " + 
+			"<rawFilePath> <libraryFilePath> <fastaPath> <massListPath");
+			}
+		
+		String rawFilePath = args[0];
+		String libraryFilePath = args[1];
+		String fastaPath = args[2];
+		String massListPath = args[3];
+		
 		// Inputs for Search
-		String rawFilePath = "C:/Users/m334793/Documents/targeted_bootstrapper_eval_20260522/varying_number_of_peptides/100_pep/IL2A_GPFDIA_0combined_masked0_assay.dia"; // Raw file to search
-		String libraryFilePath = "C:/Users/m334793/Documents/targeted_bootstrapper_eval_20260522/varying_number_of_peptides/100_pep/IL2_and_IL15_Combo.elib"; // Library to
+//		String rawFilePath = "C:/Users/m334793/Documents/targeted_bootstrapper_eval_20260522/varying_number_of_peptides/100_pep/IL2A_GPFDIA_0combined_masked0_assay.dia"; // Raw file to search
+//		String libraryFilePath = "C:/Users/m334793/Documents/targeted_bootstrapper_eval_20260522/varying_number_of_peptides/100_pep/IL2_and_IL15_Combo.elib"; // Library to
 		// search
 		// against
-		String fastaPath = "C:/Users/m334793/Documents/targeted_bootstrapper_eval_20260522/varying_number_of_peptides/100_pep/mus_musculus_reviewed_uniprot.fasta"; // fasta file for serach
+//		String fastaPath = "C:/Users/m334793/Documents/targeted_bootstrapper_eval_20260522/varying_number_of_peptides/100_pep/mus_musculus_reviewed_uniprot.fasta"; // fasta file for serach
 		String baseName = rawFilePath.replaceFirst("\\.dia$", "");
 
 		// Mass list file
-		String massListPath = "C:/Users/m334793/Documents/targeted_bootstrapper_eval_20260522/varying_number_of_peptides/100_pep/IL2A_GPFDIA_0combined_masked0_assay.txt";
+//		String massListPath = "C:/Users/m334793/Documents/targeted_bootstrapper_eval_20260522/varying_number_of_peptides/100_pep/IL2A_GPFDIA_0combined_masked0_assay.txt";
 
 		final File fasta = new File(fastaPath);
 		File rawFile = new File(rawFilePath);
