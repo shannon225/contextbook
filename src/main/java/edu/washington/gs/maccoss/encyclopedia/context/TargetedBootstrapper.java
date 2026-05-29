@@ -28,41 +28,53 @@ import edu.washington.gs.maccoss.encyclopedia.utils.math.RandomGenerator;
 public class TargetedBootstrapper {
 
 	public static void main(String[] args) throws Throwable {
-//		if (args.length!=5) {
-//			Logger.errorLine("TargetedBootstrapper requires five parameters in order:");
-//			Logger.logLine(" 1) Input Library (.elib file)");
-//			Logger.logLine(" 2) Input raw file (.raw, .mzML, or .dia");
-//			Logger.logLine(" 3) Output file path");
-//			Logger.logLine(" 4) Number of peptides per assay (default = 100)");
-//			Logger.logLine(" 5) Starting Seed Number (default is 3, which will use seeds 0, 1, 2, and 3, producing 4 assays total);");
+		if (args.length < 3 || args.length > 7) {
+			System.err.println("Usage: " + "java edu.washintgon.gs.maccoss.encyclopedia.context.TargetedBootstrapper " + 
+		"<library file location> <.dia file location> <target_decoy map output location> " +
+				"\n[seed] [numberOfpeptides] [halfWindowWidthRT] [halfWindowWidthMz]"	);
+			System.exit(1);
+		}
 		
-		
-//		File libraryPath = new File(args[0]);
-//		File rawFile = new File(args[1]);
-//		File outputPath = new File(args[2]);
-//		int numberOfPeptides = Integer.parseInt(args[4]);
-//		int seed = Integer.parseInt(args[5]);
+		String libraryPath = args[0];
+		String rawFilePath = args[1];
+		Path mapOutputPath = Paths.get(args[2]);
 
-		String libraryPath = "C:/Users/m334793/Documents/Library/for_context_50perCycle/IL2_and_IL15_Combo.elib";
-		String rawFilePath = "C:/Users/m334793/Documents/Library/for_context_50perCycle/IT_100ngCurve_100p.dia";
-		Path mapOutputPath = Paths.get("C:/Users/m334793/Documents/Library/for_context_50perCycle/target_decoy_map.txt");
-
+//		String libraryPath = "C:/Users/m334793/Documents/Library/bootstrapping_immune_cells/cd4_library.elib";
+//		String rawFilePath = "C:/Users/m334793/Documents/Library/bootstrapping_immune_cells/2026_01_28_EP5_CD4_PicoChipHT_30min_GPFDIA_combined00_01.dia";
+//		Path mapOutputPath = Paths.get("C:/Users/m334793/Documents/Library/bootstrapping_immune_cells/CD4_target_decoy_map.txt");
 		Path rawFile = Paths.get(rawFilePath);
 		String baseName = rawFilePath.replaceFirst("\\.dia$",  "");
-		
-		
-		int seed = 0;
 		AminoAcidConstants aaConstants = new AminoAcidConstants();
+
+		int seed = 0;
 		int numberOfPeptides = 100; // number of Peptides per assay
+		float halfWindowWidthRT = 2.5f;
+		double halfWindowWidthMz = 1.0;
+		
+		if (args.length >= 4) {
+			seed = Integer.parseInt(args[3]);
+		}
+		
+		if (args.length >=5) {
+			numberOfPeptides = Integer.parseInt(args[4]);
+		}
+		
+		if (args.length >= 6) {
+			halfWindowWidthRT = Float.parseFloat(args[5]);
+		}
+
+		if (args.length >= 7) {
+			halfWindowWidthMz = Double.parseDouble(args[6]);
+		}
 
 
 		for (int i = 0; i <= seed; i++) {// Randomly Select Precursors, then use them to mask the .DIA file
 
-			ArrayList<IsolationWindow> isolationWindows = selectMask(numberOfPeptides, aaConstants, i, libraryPath, mapOutputPath);
-			Path outputPath = rawFile.getParent().resolve(baseName + "_masked" + i + "assay.dia");
+			ArrayList<IsolationWindow> isolationWindows = selectMask(numberOfPeptides, aaConstants, i, libraryPath, mapOutputPath, halfWindowWidthRT);
+			Path outputPath = rawFile.getParent().resolve(baseName + "_masked" + i + "_assay.dia");
 			Path maskedAssayOutputPath = rawFile.getParent().resolve(baseName + "_masked" + i + "_assay.txt");
 
-			StripeFile maskedFile = writeMaskedFile(isolationWindows, i, rawFilePath, outputPath);
+			StripeFile maskedFile = writeMaskedFile(isolationWindows, i, rawFilePath, outputPath, halfWindowWidthMz);
 		    writeAssayList(isolationWindows, maskedAssayOutputPath);
 
 			System.out.println("Complete! The masked file " + maskedFile + i + " was made.\n");
@@ -74,7 +86,7 @@ public class TargetedBootstrapper {
 	// into a list
 
 	public static ArrayList<IsolationWindow> selectMask(int numberOfPeptides,
-			AminoAcidConstants aaConstants, int i, String libraryPath, Path mapOutputPath) throws IOException, SQLException, Throwable {
+			AminoAcidConstants aaConstants, int i, String libraryPath, Path mapOutputPath, float halfWindowWidthRT) throws IOException, SQLException, Throwable {
 
 		// START TIMER 1
 		long startTime = System.nanoTime();
@@ -117,12 +129,13 @@ public class TargetedBootstrapper {
 				String sequence = entry.getPeptideModSeq();
 				byte charge = entry.getPrecursorCharge();
 
+
 				// Calculate a RT ranges for the isolationWindows object
-				float rtMin = (float) (rtCenter - (60 * 2.5));
-				float rtMax = (float) (rtCenter + (60 * 2.5));
+				float rtMin = (float) (rtCenter - (60 * (halfWindowWidthRT/2)));
+				float rtMax = (float) (rtCenter + (60 * (halfWindowWidthRT/2)));
 				
 				// Add sequences to the isolationWindows object
-				IsolationWindow window = new IsolationWindow(targetMz, rtMin, rtMax, false);
+				IsolationWindow window = new IsolationWindow(sequence, targetMz, charge, rtMin, rtMax, false);
 				isolationWindows.add(window);
 				sequencesSelectedForMasking.add(sequence);
 				
@@ -135,7 +148,7 @@ public class TargetedBootstrapper {
 				writeTargetDecoyMap(targetDecoyOriginMap, mapOutputPath);
 				
 				// Add decoys to Isolation Windows
-				IsolationWindow decoyWindow = new IsolationWindow(decoyMz, rtMin, rtMax, true);
+				IsolationWindow decoyWindow = new IsolationWindow(decoy, decoyMz, charge, rtMin, rtMax, true);
 				isolationWindows.add(decoyWindow);
 			}
 			
@@ -157,7 +170,7 @@ public class TargetedBootstrapper {
 
 	// Second function - Uses the IsolationWindow List to mask the raw data
 	@SuppressWarnings("unused")
-	public static StripeFile writeMaskedFile(ArrayList<IsolationWindow> isolationWindows, int i, String diaFilePath, Path outputPath)
+	public static StripeFile writeMaskedFile(ArrayList<IsolationWindow> isolationWindows, int i, String diaFilePath, Path outputPath, double halfWindowWidthMz)
 			throws Throwable {
 
 		// START TIMER 2
@@ -170,7 +183,7 @@ public class TargetedBootstrapper {
 		
 		HashSet<Integer> addedPrecursors = new HashSet<>();
 		HashSet<Integer> addedFragments = new HashSet<>();
-
+		
 		// System.out.println("Is the .dia file open? " + rawLibraryFile.isOpen());
 
 		try {
@@ -186,8 +199,8 @@ public class TargetedBootstrapper {
 				float windowStartTime = window.getRtMin();
 				float windowStopTime = window.getRtMax();
 				boolean sqrt = false;
-				double mzStart = windowMz - 0.35; 
-				double mzStop = windowMz + 0.35;
+				double mzStart = windowMz - halfWindowWidthMz; 
+				double mzStop = windowMz + halfWindowWidthMz;
 				Range mzRange = new Range(mzStart, mzStop);
 
 				ArrayList<FragmentScan> fragmentScansFromWindow = rawLibraryFile.getStripes(windowMz, windowStartTime, windowStopTime, sqrt);
@@ -254,28 +267,39 @@ public class TargetedBootstrapper {
 	
 	public static void writeAssayList(ArrayList<IsolationWindow> isolationWindows, Path outputPath) throws IOException {
 	    try (BufferedWriter writer = Files.newBufferedWriter(outputPath)) {
-	        writer.write("Compound\tFormula\tAdduct\tm/z\tz\tRT Time (min)\tWindow (min)");
-	        writer.newLine();
+	    	writer.write("Compound\tFormula\tAdduct\tm/z\tz\tRT Time (min)\tWindow (min)\tisDecoy");
+	    	writer.newLine();
 
 	        for (IsolationWindow window : isolationWindows) {
-	            String compound = " ";
+	            String compound = window.getCompound();
 	            double targetMz = window.getTargetMz();
 	            byte charge = window.getCharge();
+	            boolean isDecoy = window.isDecoy();
 
 	            float rtCenterMin = ((window.getRtMin() + window.getRtMax()) / 2.0f) / 60.0f;
 	            float windowMin = (window.getRtMax() - window.getRtMin()) / 60.0f;
-
-	            writer.write(compound + "\t" +
-	                    "" + "\t" +
-	                    "(no adduct)" + "\t" +
-	                    targetMz + "\t" +
-	                    charge + "\t" +
-	                    rtCenterMin + "\t" +
-	                    windowMin);
+	            
+	            writer.write(compound + 
+	            		"\t" +
+	            		"" + 
+	            		"\t" +
+	            		"(no adduct)" +
+	            		"\t" +
+	            		targetMz +
+	            		"\t" +
+	            		charge +
+	            		"\t" +
+	            		rtCenterMin +
+	            		"\t" +
+	            		windowMin +
+	            		"\t" +
+	            		isDecoy);
 	            writer.newLine();
-	        }
+
+	        } 
 	    }
 	}
+	
 	
 	private static void writeTargetDecoyMap(HashMap<String, String> targetDecoyMap, Path outputPath)
 	        throws IOException {
