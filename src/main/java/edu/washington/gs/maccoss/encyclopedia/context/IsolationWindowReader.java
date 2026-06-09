@@ -45,7 +45,7 @@ public class IsolationWindowReader {
 
 				float rtMin = (rtCenter - (rtWindow / 2))*60;
 				float rtMax = (rtCenter + (rtWindow / 2))*60;
-
+				
 				// Assemble each window
 				IsolationWindow window = new IsolationWindow(compound, targetMz, charge, rtMin, rtMax, isDecoy);
 				isolationWindows.add(window);

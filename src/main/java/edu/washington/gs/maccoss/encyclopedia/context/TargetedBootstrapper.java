@@ -42,13 +42,13 @@ public class TargetedBootstrapper {
 		Path rawFile = Paths.get(rawFilePath);
 		String baseName = rawFilePath.replaceFirst("\\.dia$",  "");
 
-		String libraryPath = "C:/Users/m334793/Documents/Library/for_context_50perCycle/IL2_and_IL15_Combo.elib";
-		String rawFilePath = "C:/Users/m334793/Documents/Library/for_context_50perCycle/IT_100ngCurve_100p.dia";
-		Path mapOutputPath = Paths.get("C:/Users/m334793/Documents/Library/for_context_50perCycle/target_decoy_map.txt");
+//		String libraryPath = "C:/Users/m334793/Documents/Library/bootstrapping_immune_cells/cd4_library.elib";
+//		String rawFilePath = "C:/Users/m334793/Documents/Library/bootstrapping_immune_cells/2026_01_28_EP5_CD4_PicoChipHT_30min_GPFDIA_combined00_01.dia";
+//		Path mapOutputPath = Paths.get("C:/Users/m334793/Documents/Library/bootstrapping_immune_cells/CD4_target_decoy_map.txt");
 
-	
-		int seed = 0;
 		AminoAcidConstants aaConstants = new AminoAcidConstants();
+
+		int seed = 0;
 		int numberOfPeptides = 100; // number of Peptides per assay
 		float halfWindowWidthRT = 2.5f;
 		double halfWindowWidthMz = 1.0;
@@ -203,7 +203,8 @@ public class TargetedBootstrapper {
 				boolean sqrt = false;
 				double mzStart = windowMz - halfWindowWidthMz; 
 				double mzStop = windowMz + halfWindowWidthMz;
-		Range mzRange = new Range(mzStart, mzStop);
+
+				Range mzRange = new Range(mzStart, mzStop);
 
 				ArrayList<FragmentScan> fragmentScansFromWindow = rawLibraryFile.getStripes(windowMz, windowStartTime, windowStopTime, sqrt);
 				ArrayList<FragmentScan> matchingScans = new ArrayList<>();
@@ -302,40 +303,6 @@ public class TargetedBootstrapper {
 	    }
 	}
 	
-	
-
-
-	        for (IsolationWindow window : isolationWindows) {
-	            String compound = window.getCompound();
-	            double targetMz = window.getTargetMz();
-	            byte charge = window.getCharge();
-	            boolean isDecoy = window.isDecoy();
-
-	            float rtCenterMin = ((window.getRtMin() + window.getRtMax()) / 2.0f) / 60.0f;
-	            float windowMin = (window.getRtMax() - window.getRtMin()) / 60.0f;
-	            
-	            writer.write(compound + 
-	            		"\t" +
-	            		"" + 
-	            		"\t" +
-	            		"(no adduct)" +
-	            		"\t" +
-	            		targetMz +
-	            		"\t" +
-	            		charge +
-	            		"\t" +
-	            		rtCenterMin +
-	            		"\t" +
-	            		windowMin +
-	            		"\t" +
-	            		isDecoy);
-	            writer.newLine();
-
-	        } 
-	    }
-	}
-	
-
 	private static void writeTargetDecoyMap(HashMap<String, String> targetDecoyMap, Path outputPath)
 	        throws IOException {
 
