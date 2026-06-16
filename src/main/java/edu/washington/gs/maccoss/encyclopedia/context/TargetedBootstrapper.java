@@ -198,11 +198,7 @@ public class TargetedBootstrapper {
 				boolean sqrt = false;
 				double mzStart = windowMz - halfWindowWidthMz; 
 				double mzStop = windowMz + halfWindowWidthMz;
-<<<<<<< Upstream, based on 8a3e19f30ba1a08ac3c39782c599eb3f2a178248
-		Range mzRange = new Range(mzStart, mzStop);
-=======
 				Range mzRange = new Range(mzStart, mzStop);
->>>>>>> 42d09bf Added in command line interface options for ContextMProphetExecutor, TargetedBootstrapper and ContextFeatureScorer.
 
 				ArrayList<FragmentScan> fragmentScansFromWindow = rawLibraryFile.getStripes(windowMz, windowStartTime, windowStopTime, sqrt);
 				ArrayList<FragmentScan> matchingScans = new ArrayList<>();
@@ -270,39 +266,6 @@ public class TargetedBootstrapper {
 	    try (BufferedWriter writer = Files.newBufferedWriter(outputPath)) {
 	    	writer.write("Compound\tFormula\tAdduct\tm/z\tz\tRT Time (min)\tWindow (min)\tisDecoy");
 	    	writer.newLine();
-	        for (IsolationWindow window : isolationWindows) {
-	            String compound = window.getCompound();
-	            double targetMz = window.getTargetMz();
-	            byte charge = window.getCharge();
-	            boolean isDecoy = window.isDecoy();
-
-	            float rtCenterMin = ((window.getRtMin() + window.getRtMax()) / 2.0f) / 60.0f;
-	            float windowMin = (window.getRtMax() - window.getRtMin()) / 60.0f;
-	            
-	            writer.write(compound + 
-	            		"\t" +
-	            		"" + 
-	            		"\t" +
-	            		"(no adduct)" +
-	            		"\t" +
-	            		targetMz +
-	            		"\t" +
-	            		charge +
-	            		"\t" +
-	            		rtCenterMin +
-	            		"\t" +
-	            		windowMin +
-	            		"\t" +
-	            		isDecoy);
-	            writer.newLine();
-
-	        } 
-	    }
-	}
-	
-	
-
-
 	        for (IsolationWindow window : isolationWindows) {
 	            String compound = window.getCompound();
 	            double targetMz = window.getTargetMz();

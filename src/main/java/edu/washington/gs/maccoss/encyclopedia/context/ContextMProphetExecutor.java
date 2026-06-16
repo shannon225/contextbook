@@ -23,7 +23,7 @@ public class ContextMProphetExecutor {
 
 
 		// Map files 
-		String libraryPath = "C:/Users/m334793/Documents/targeted_bootstrapper_eval_20260522/varying_number_of_peptides/100_pep/IL2_and_IL15_Combo.elib";
+		String libraryPath = "C:/Users/m334793/Documents/asms2023/for_poster/mrpophet_context/IL2_and_IL15_Combo.elib";
 		String fastaPath = "C:/Users/m334793/Documents/targeted_bootstrapper_eval_20260522/varying_number_of_peptides/100_pep/mus_musculus_reviewed_uniprot.fasta";
 //		String diaFilePath = "C:/Users/m334793/Documents/Library/for_context_50perCycle/IT_100ngCurve_100p.dia";
 
@@ -137,11 +137,7 @@ public class ContextMProphetExecutor {
 
 		File peptideOutputFile = new File(inputFeatureFile.getAbsolutePath().replaceAll("\\.txt$", "") + outputSuffix + ".output.txt");
 		File peptideDecoyFile = new File(inputFeatureFile.getAbsolutePath().replaceAll("\\.txt$", "") + outputSuffix + ".decoy.txt");
-=======
-		
-=======
 
->>>>>>> 8b8d896c (Added sequences to the mass lists for the TargetedBoostrapper class.)
 		// Map files 
 		String libraryPath = "C:/Users/m334793/Documents/targeted_bootstrapper_eval_20260522/varying_number_of_peptides/100_pep/IL2_and_IL15_Combo.elib";
 		String fastaPath = "C:/Users/m334793/Documents/targeted_bootstrapper_eval_20260522/varying_number_of_peptides/100_pep/mus_musculus_reviewed_uniprot.fasta";
@@ -194,9 +190,10 @@ public class ContextMProphetExecutor {
 				executeContextMProphet(libraryPath, fastaPath, currentDiaFilePath, massListPath, diaFolder);
 			}	
 		}
+		return null;
 	}
 
-	public static void executeContextMProphet(String libraryPath, String fastaPath, String diaFilePath, String massListPath, File diaFolder) {
+	public static void executeContextMProphet2(String libraryPath, String fastaPath, String diaFilePath, String massListPath, File diaFolder) {
 		File fasta = new File(fastaPath);
 		File diaFile = new File(diaFilePath);
 		File library = new File(libraryPath);
@@ -253,32 +250,10 @@ public class ContextMProphetExecutor {
 
 
 
-	private static MProphetExecutionData makeMProphetExecutionData(File inputFeatureFile, File fasta, SearchParameters params, String outputSuffix) {
+	private static void makeMProphetExecutionData2(File inputFeatureFile, File fasta, SearchParameters params, String outputSuffix) {
 
-<<<<<<< HEAD
-		File peptideOutputFile = new File(inputFeatureFile.getAbsolutePath() + outputSuffix + ".output.txt");
-		File peptideDecoyFile = new File(inputFeatureFile.getAbsolutePath() + outputSuffix + ".decoy.txt");
->>>>>>> f44678a1 (Added a class that will process features with Encyclopedia without running Percolator, and export them as pin.tsv files.)
-=======
 		File peptideOutputFile = new File(inputFeatureFile.getAbsolutePath().replaceAll("\\.txt$", "") + outputSuffix + ".output.txt");
 		File peptideDecoyFile = new File(inputFeatureFile.getAbsolutePath().replaceAll("\\.txt$", "") + outputSuffix + ".decoy.txt");
->>>>>>> 8b8d896c (Added sequences to the mass lists for the TargetedBoostrapper class.)
-
-		return new MProphetExecutionData(
-				inputFeatureFile,
-				fasta,
-				peptideOutputFile,
-				peptideDecoyFile,
-				params
-<<<<<<< HEAD
-<<<<<<< HEAD
-				);
-=======
-		);
->>>>>>> f44678a1 (Added a class that will process features with Encyclopedia without running Percolator, and export them as pin.tsv files.)
-=======
-				);
->>>>>>> 8b8d896c (Added sequences to the mass lists for the TargetedBoostrapper class.)
 	}
 
 }
