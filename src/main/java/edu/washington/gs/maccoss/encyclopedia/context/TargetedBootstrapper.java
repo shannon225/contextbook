@@ -45,7 +45,7 @@ public class TargetedBootstrapper {
 		int seed = 0;
 		AminoAcidConstants aaConstants = new AminoAcidConstants();
 		int numberOfPeptides = 100; // number of Peptides per assay
-		float halfWindowWidthRT = 0.5f;
+		float halfWindowWidthRT = 1.25f;
 		double halfWindowWidthMz = 1.0;
 
 		if (args.length >= 4) {
