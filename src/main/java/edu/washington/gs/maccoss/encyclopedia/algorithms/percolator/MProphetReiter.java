@@ -122,7 +122,7 @@ public class MProphetReiter implements Runnable {
 		seedCoefficients.put("xCorrModel", 0.2);
 		seedCoefficients.put("numberOfMatchingPeaksAboveThreshold", 0.2);
 		seedCoefficients.put("isotopeDotProduct", 0.5);
-		seedCoefficients.put("correlationToPrecursor", 0.4);
+//		seedCoefficients.put("correlationToPrecursor", 0.4);
 		seedCoefficients.put("isIntegratedSignal", 0.2);
 		seedCoefficients.put("numPeaksWithGoodCorrelation", 0.1);
 		

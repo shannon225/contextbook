@@ -66,19 +66,27 @@ public class ContextFeatureScorer {
 	}
 
 	
+//	private static String cleanPeptideSequence(String sequence) {
+//		if (sequence == null) return "";
+//		sequence = sequence.trim();
+
+//		String[] parts = sequence.split("\\.");
+//		if (parts.length == 3) {
+//			return parts[1].trim();
+//		}
+
+//		return sequence;
+//	}
+
 	private static String cleanPeptideSequence(String sequence) {
 		if (sequence == null) return "";
 
-		sequence = sequence.trim();
-
-		String[] parts = sequence.split("\\.");
-		if (parts.length == 3) {
-			return parts[1].trim();
-		}
-
-		return sequence;
+		return sequence
+				.trim()
+				.replaceFirst("^[A-Za-z-]?\\.", "")
+				.replaceFirst("\\.[A-Za-z-]?$", "");
 	}
-
+	
 	private static void writeScoredFeatures(File outputFile, ArrayList<ScoredFeature> features, String header)
 			throws IOException {
 		try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile))) {
@@ -199,7 +207,7 @@ public class ContextFeatureScorer {
 			ScoredFeature annotatedFeature = new ScoredFeature(feature.getMz(), feature.isDecoy(), feature.getPrimary(), feature.getRetentionTime(), cleanPeptideSequence(feature.getSequence()), feature.getProtein(), feature.getOriginalLine(), isBackground);
 			partitionedFeatures.add(annotatedFeature);
 			
-			System.out.println("Features are being read, sequence for this feature is " + cleanPeptideSequence(feature.getSequence()));
+//			System.out.println("Features are being read, sequence for this feature is " + cleanPeptideSequence(feature.getSequence()));
 			
 			if (isOnMassList) {
 				referenceFeatures.add(feature); 

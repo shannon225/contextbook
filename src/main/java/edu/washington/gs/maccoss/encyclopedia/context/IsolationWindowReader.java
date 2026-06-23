@@ -49,12 +49,12 @@ public class IsolationWindowReader {
 				// Assemble each window
 				IsolationWindow window = new IsolationWindow(compound, targetMz, charge, rtMin, rtMax, isDecoy);
 				isolationWindows.add(window);
-			System.out.println("Adding an mz at to the target list " + targetMz + " and RT " + rtCenter + " min " + rtMin/60 + " max " + rtMax/60 
+//			System.out.println("Adding an mz at to the target list " + targetMz + " and RT " + rtCenter + " min " + rtMin/60 + " max " + rtMax/60 
 //						+ "\nRTCenter: " + rtCenter
 //						+ "\ntargetMz: " + targetMz
 //						+ "\nrtStart: " + rtMinHmmm now
 //						+ "\nrtStop: " + rtMax
-						);
+//						);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();

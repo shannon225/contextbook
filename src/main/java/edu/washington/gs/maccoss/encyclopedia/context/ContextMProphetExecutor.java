@@ -21,23 +21,22 @@ public class ContextMProphetExecutor {
 
 	public static void main(String[] args) {
 
-
 		// Map files 
-		String libraryPath = "C:/Users/m334793/Documents/asms2023/for_poster/mrpophet_context/IL2_and_IL15_Combo.elib";
-		String fastaPath = "C:/Users/m334793/Documents/targeted_bootstrapper_eval_20260522/varying_number_of_peptides/100_pep/mus_musculus_reviewed_uniprot.fasta";
-//		String diaFilePath = "C:/Users/m334793/Documents/Library/for_context_50perCycle/IT_100ngCurve_100p.dia";
+		String libraryPath = "C:/Users/m334793/Documents/asms2026/stellar/2mz_2pt5min/IL2_and_IL15_Combo.elib";
+		String fastaPath = "C:/Users/m334793/Documents/asms2026/stellar/2mz_2pt5min/mus_musculus_reviewed_uniprot.fasta";
+		//		String diaFilePath = "C:/Users/m334793/Documents/Library/for_context_50perCycle/IT_100ngCurve_100p.dia";
 
 		// Mass list file 
-//		String massListPath = "C:/Users/m334793/Documents/Library/targeted_bootstrapper_test/assay.csv";
+		//		String massListPath = "C:/Users/m334793/Documents/Library/targeted_bootstrapper_test/assay.csv";
 
 		// Where the feature files are located: 
-		String diaFolderPath = "C:/Users/m334793/Documents/targeted_bootstrapper_eval_20260522/varying_number_of_peptides/100_pep/";
+		String diaFolderPath = "C:/Users/m334793/Documents/asms2026/stellar/2mz_2pt5min/";
 
 		// Get a list of .dia files 
 		File diaFolder = new File(diaFolderPath);
 		File[] diaFiles = diaFolder.listFiles();
-		
-		System.out.println("DIA Folder was fidentified as: " + diaFolder.getAbsolutePath());
+
+		System.out.println("DIA Folder was identified as: " + diaFolder.getAbsolutePath());
 		System.out.println("DIA files detected! The following files will be processed with MProphet:" + diaFolder.listFiles());
 
 		if (diaFiles != null) {
@@ -47,7 +46,7 @@ public class ContextMProphetExecutor {
 				}
 			}
 		}
-		
+
 		// Identify the current file so we can loop through all files
 
 		if (diaFiles !=null) {
@@ -57,16 +56,16 @@ public class ContextMProphetExecutor {
 				if (!diaFile.isFile() || !diaFile.getName().endsWith(".dia")) {
 					continue;
 				}
-	
+
 				String currentDiaFilePath = diaFile.getAbsolutePath();
 				String diaName = diaFile.getName(); 
 				String baseName = diaName.substring(0, diaName.lastIndexOf(".dia"));
-				
+
 				File massListFile = new File(diaFolder, baseName + ".txt");
 				String massListPath = massListFile.getAbsolutePath();
-				
+
 				System.out.println("Processesing " + diaFile.getName());
-				
+
 				if (!massListFile.exists()) {
 					System.out.println("Skipping " + diaFile.getName() + " because mass list was not found: " + massListPath);
 					continue;
@@ -115,16 +114,16 @@ public class ContextMProphetExecutor {
 			//			System.out.println("Background passing peptides: " + backgroundMProphetResult.getPassingPeptides().size());
 			System.out.println("Finished scoring peptides with background-trained lda model. "
 					+ "\nReference passing peptides: " + referenceMProphetResult.getPassingPeptides().size());
-			
-			String diaBaseName = diaFile.getName().replaceFirst("\\.dia$", "");
-			File nameOfFolderForPlot = new File(diaFolder, diaBaseName + "_mprophet_plots");
-			ContextMProphetPlotter.plotContextMProphetResults(
-			        backgroundData.getPeptideOutputFile(),
-			        backgroundData.getPeptideDecoyFile(),
-			        referenceData.getPeptideOutputFile(),
-			        referenceData.getPeptideDecoyFile(),
-			        nameOfFolderForPlot
-			);
+
+			//			String diaBaseName = diaFile.getName().replaceFirst("\\.dia$", "");
+			//			File nameOfFolderForPlot = new File(diaFolder, diaBaseName + "_mprophet_plots");
+			//			ContextMProphetPlotter.plotContextMProphetResults(
+			//			        backgroundData.getPeptideOutputFile(),
+			//			        backgroundData.getPeptideDecoyFile(),
+			//			        referenceData.getPeptideOutputFile(),
+			//			        referenceData.getPeptideDecoyFile(),
+			//			        nameOfFolderForPlot
+			//			);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -133,27 +132,27 @@ public class ContextMProphetExecutor {
 
 
 
-	private static MProphetExecutionData makeMProphetExecutionData(File inputFeatureFile, File fasta, SearchParameters params, String outputSuffix) {
+	private static MProphetExecutionData makeMProphetExecutionData2(String fastaPath, String libraryPath, String diaFolderPath, File inputFeatureFile, File fasta, SearchParameters params, String outputSuffix) {
 
-		File peptideOutputFile = new File(inputFeatureFile.getAbsolutePath().replaceAll("\\.txt$", "") + outputSuffix + ".output.txt");
-		File peptideDecoyFile = new File(inputFeatureFile.getAbsolutePath().replaceAll("\\.txt$", "") + outputSuffix + ".decoy.txt");
+				File peptideOutputFile = new File(inputFeatureFile.getAbsolutePath().replaceAll("\\.txt$", "") + outputSuffix + ".output.txt");
+				File peptideDecoyFile = new File(inputFeatureFile.getAbsolutePath().replaceAll("\\.txt$", "") + outputSuffix + ".decoy.txt");
 
 		// Map files 
-		String libraryPath = "C:/Users/m334793/Documents/targeted_bootstrapper_eval_20260522/varying_number_of_peptides/100_pep/IL2_and_IL15_Combo.elib";
-		String fastaPath = "C:/Users/m334793/Documents/targeted_bootstrapper_eval_20260522/varying_number_of_peptides/100_pep/mus_musculus_reviewed_uniprot.fasta";
-//		String diaFilePath = "C:/Users/m334793/Documents/Library/for_context_50perCycle/IT_100ngCurve_100p.dia";
+		//		String libraryPath = "C:/Users/m334793/Documents/targeted_bootstrapper_eval_20260522/varying_number_of_peptides/100_pep/IL2_and_IL15_Combo.elib";
+		//		String fastaPath = "C:/Users/m334793/Documents/targeted_bootstrapper_eval_20260522/varying_number_of_peptides/100_pep/mus_musculus_reviewed_uniprot.fasta";
+		//		String diaFilePath = "C:/Users/m334793/Documents/Library/for_context_50perCycle/IT_100ngCurve_100p.dia";
 
 		// Mass list file 
-//		String massListPath = "C:/Users/m334793/Documents/Library/targeted_bootstrapper_test/assay.csv";
+		//		String massListPath = "C:/Users/m334793/Documents/Library/targeted_bootstrapper_test/assay.csv";
 
 		// Where the feature files are located: 
-		String diaFolderPath = "C:/Users/m334793/Documents/targeted_bootstrapper_eval_20260522/varying_number_of_peptides/100_pep/";
+		//		String diaFolderPath = "C:/Users/m334793/Documents/targeted_bootstrapper_eval_20260522/varying_number_of_peptides/100_pep/";
 
 		// Get a list of .dia files 
 		File diaFolder = new File(diaFolderPath);
 		File[] diaFiles = diaFolder.listFiles();
-		
-		System.out.println("DIA Folder was fidentified as: " + diaFolder.getAbsolutePath());
+
+		System.out.println("DIA Folder was identified as: " + diaFolder.getAbsolutePath());
 		System.out.println("DIA files detected! The following files will be processed with MProphet:" + diaFolder.listFiles());
 
 		if (diaFiles != null) {
@@ -163,7 +162,7 @@ public class ContextMProphetExecutor {
 				}
 			}
 		}
-		
+
 		// Identify the current file so we can loop through all files
 
 		if (diaFiles !=null) {
@@ -173,16 +172,16 @@ public class ContextMProphetExecutor {
 				if (!diaFile.isFile() || !diaFile.getName().endsWith(".dia")) {
 					continue;
 				}
-	
+
 				String currentDiaFilePath = diaFile.getAbsolutePath();
 				String diaName = diaFile.getName(); 
 				String baseName = diaName.substring(0, diaName.lastIndexOf(".dia"));
-				
+
 				File massListFile = new File(diaFolder, baseName + ".txt");
 				String massListPath = massListFile.getAbsolutePath();
-				
+
 				System.out.println("Processesing " + diaFile.getName());
-				
+
 				if (!massListFile.exists()) {
 					System.out.println("Skipping " + diaFile.getName() + " because mass list was not found: " + massListPath);
 					continue;
@@ -232,16 +231,16 @@ public class ContextMProphetExecutor {
 			//			System.out.println("Background passing peptides: " + backgroundMProphetResult.getPassingPeptides().size());
 			System.out.println("Finished scoring peptides with background-trained lda model. "
 					+ "\nReference passing peptides: " + referenceMProphetResult.getPassingPeptides().size());
-			
-			String diaBaseName = diaFile.getName().replaceFirst("\\.dia$", "");
-			File nameOfFolderForPlot = new File(diaFolder, diaBaseName + "_mprophet_plots");
-			ContextMProphetPlotter.plotContextMProphetResults(
-			        backgroundData.getPeptideOutputFile(),
-			        backgroundData.getPeptideDecoyFile(),
-			        referenceData.getPeptideOutputFile(),
-			        referenceData.getPeptideDecoyFile(),
-			        nameOfFolderForPlot
-			);
+
+			//			String diaBaseName = diaFile.getName().replaceFirst("\\.dia$", "");
+			//			File nameOfFolderForPlot = new File(diaFolder, diaBaseName + "_mprophet_plots");
+			//			ContextMProphetPlotter.plotContextMProphetResults(
+			//			        backgroundData.getPeptideOutputFile(),
+			//			        backgroundData.getPeptideDecoyFile(),
+			//			        referenceData.getPeptideOutputFile(),
+			//			        referenceData.getPeptideDecoyFile(),
+			//			        nameOfFolderForPlot
+			//			);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -250,10 +249,18 @@ public class ContextMProphetExecutor {
 
 
 
-	private static void makeMProphetExecutionData2(File inputFeatureFile, File fasta, SearchParameters params, String outputSuffix) {
+	private static  MProphetExecutionData makeMProphetExecutionData(File inputFeatureFile, File fasta, SearchParameters params, String outputSuffix) {
 
 		File peptideOutputFile = new File(inputFeatureFile.getAbsolutePath().replaceAll("\\.txt$", "") + outputSuffix + ".output.txt");
 		File peptideDecoyFile = new File(inputFeatureFile.getAbsolutePath().replaceAll("\\.txt$", "") + outputSuffix + ".decoy.txt");
-	}
 
+		return new MProphetExecutionData(
+				inputFeatureFile,
+				fasta,
+				peptideOutputFile,
+				peptideDecoyFile,
+				params);
+	}
 }
+
+
