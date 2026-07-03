@@ -22,11 +22,11 @@ public class ContextMProphetExecutor {
 	public static void main(String[] args) {
 
 		// Map files 
-		String libraryPath = "C:/Users/m334793/Documents/asms2026/stellar/2mz_2pt5min/IL2_and_IL15_Combo.elib";
-		String fastaPath = "C:/Users/m334793/Documents/asms2026/stellar/2mz_2pt5min/mus_musculus_reviewed_uniprot.fasta";
+		String libraryPath = "C:/Users/m334793/Documents/asms2026/stellar/2mz_1min/IL2_and_IL15_Combo.elib";
+		String fastaPath = "C:/Users/m334793/Documents/asms2026/stellar/2mz_1min/mus_musculus_reviewed_uniprot.fasta";
 
 		// Where the feature files are located: 
-		String diaFolderPath = "C:/Users/m334793/Documents/asms2026/stellar/2mz_2pt5min/";
+		String diaFolderPath = "C:/Users/m334793/Documents/asms2026/stellar/2mz_1min/";
 
 		// Get a list of .dia files 
 		File diaFolder = new File(diaFolderPath);

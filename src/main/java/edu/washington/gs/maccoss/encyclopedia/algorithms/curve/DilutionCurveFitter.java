@@ -93,13 +93,13 @@ public class DilutionCurveFitter {
 	}
 	
 	public static void main(String[] args) throws Exception {
-		final File outputDirectory=new File("C:/Users/m334793/Documents/cal_curves_stim_tcell_astral/output4/");
+		final File outputDirectory=new File("C:/Users/m334793/Documents/cal_curves_stim_tcell_astral/bcs/");
 		final File targetDirectory=new File(outputDirectory, "target");
 		outputDirectory.mkdirs();
 		targetDirectory.mkdirs();
 
-		File dataFile=new File("C:/Users/m334793/Documents/cal_curves_stim_tcell_astral/quant_report_3.elib.peptides.txt");
-		File sampleOrganizationFile=new File("C:/Users/m334793/Documents/cal_curves_stim_tcell_astral/quant_report_3.elib.diffacto.samples.lst.csv");
+		File dataFile=new File("C:/Users/m334793/Documents/cal_curves_stim_tcell_astral/bcs_curve_quant.elib.peptides.txt");
+		File sampleOrganizationFile=new File("C:/Users/m334793/Documents/cal_curves_stim_tcell_astral/bcs_curve_quant.elib.diffacto.samples.lst.csv");
 		
 		Pair<ArrayList<ScoredObject<String>>, Map<String, TObjectFloatHashMap<String>>> concentrationPair=getExpectedConcentrationsFromCSV(sampleOrganizationFile);
 		final ArrayList<ScoredObject<String>> expectedConcentrations=concentrationPair.x;

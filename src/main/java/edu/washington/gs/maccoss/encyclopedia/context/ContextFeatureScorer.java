@@ -66,18 +66,6 @@ public class ContextFeatureScorer {
 	}
 
 	
-//	private static String cleanPeptideSequence(String sequence) {
-//		if (sequence == null) return "";
-//		sequence = sequence.trim();
-
-//		String[] parts = sequence.split("\\.");
-//		if (parts.length == 3) {
-//			return parts[1].trim();
-//		}
-
-//		return sequence;
-//	}
-
 	private static String cleanPeptideSequence(String sequence) {
 		if (sequence == null) return "";
 
