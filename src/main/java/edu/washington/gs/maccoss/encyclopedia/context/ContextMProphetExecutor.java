@@ -1,264 +1,156 @@
 package edu.washington.gs.maccoss.encyclopedia.context;
 
 import java.io.File;
-import java.util.Arrays;
-import org.coode.owlapi.owlxmlparser.AbstractDataRangeFillerRestrictionElementHandler;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.MProphetExecutionData;
-import java.util.ArrayList;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.MProphetDataset;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.MProphetFeatureReader;
-import java.util.Arrays;
-import org.coode.owlapi.owlxmlparser.AbstractDataRangeFillerRestrictionElementHandler;
+import java.io.IOException;
+import java.util.HashMap;
+
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.MProphetExecutionData;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.MProphetReiter;
 import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.MProphetResult;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
+import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
+import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.LinearDiscriminantAnalysis;
-import edu.washington.gs.maccoss.encyclopedia.algorithms.percolator.MProphetExecutionData;
 
+/**
+ * Context-mode mProphet driver.
+ *
+ * End-to-end: scores a single PRM file against a library, splits features
+ * into reference (peptides in the mass list) vs background (everything else),
+ * trains an LDA mProphet model on the background features, and applies that
+ * model to the reference features.
+ *
+ * Outputs (written alongside each split feature file):
+ *   <basename>_reference.features.pep.output.txt   (target peptides)
+ *   <basename>_reference.features.pep.decoy.txt    (decoy peptides)
+ *   <basename>_background.features.pep.output.txt
+ *   <basename>_background.features.pep.decoy.txt
+ * Plus diagnostic plots in -plotsdir.
+ */
 public class ContextMProphetExecutor {
 
-	public static void main(String[] args) {
-		// Map files 
-		String libraryPath = "C:/Users/m334793/Documents/targeted_bootstrapper_eval_20260522/varying_number_of_peptides/100_pep/IL2_and_IL15_Combo.elib";
-		String fastaPath = "C:/Users/m334793/Documents/targeted_bootstrapper_eval_20260522/varying_number_of_peptides/100_pep/mus_musculus_reviewed_uniprot.fasta";
-//		String diaFilePath = "C:/Users/m334793/Documents/Library/for_context_50perCycle/IT_100ngCurve_100p.dia";
+	private static final float  DEFAULT_FDR  = 0.01f;
+	private static final int    DEFAULT_SEED = 1;
+	private static final String DEFAULT_PLOTS_DIR = "mprophet_plots";
 
-		// Mass list file 
-//		String massListPath = "C:/Users/m334793/Documents/Library/targeted_bootstrapper_test/assay.csv";
+	public static void main(String[] args) throws IOException {
+		HashMap<String, String> arguments = CommandLineParser.parseArguments(args);
 
-		// Where the feature files are located: 
-		String diaFolderPath = "C:/Users/m334793/Documents/targeted_bootstrapper_eval_20260522/varying_number_of_peptides/100_pep/";
-
-		// Get a list of .dia files 
-		File diaFolder = new File(diaFolderPath);
-		File[] diaFiles = diaFolder.listFiles();
-		
-		System.out.println("DIA Folder was fidentified as: " + diaFolder.getAbsolutePath());
-		System.out.println("DIA files detected! The following files will be processed with MProphet:" + diaFolder.listFiles());
-
-		if (diaFiles != null) {
-			for (File diaFile : diaFiles) {
-				if (diaFile.isFile() && diaFile.getName().endsWith(".dia")) {
-					System.out.println(diaFile.getName());
-				}
-			}
+		if (args.length == 0
+				|| arguments.containsKey("-h")
+				|| arguments.containsKey("-help")
+				|| arguments.containsKey("--help")) {
+			printHelp();
+			System.exit(args.length == 0 ? 1 : 0);
 		}
-		
-		// Identify the current file so we can loop through all files
 
-		if (diaFiles !=null) {
-			for (File diaFile : diaFiles) {
+		File dia       = requiredFile(arguments, "-i");
+		File library   = requiredFile(arguments, "-l");
+		File fasta     = requiredFile(arguments, "-f");
+		File massList  = requiredFile(arguments, "-massList");
+		float fdr      = Float.parseFloat(arguments.getOrDefault("-fdr",  Float.toString(DEFAULT_FDR)));
+		int   seed     = Integer.parseInt(arguments.getOrDefault("-seed", Integer.toString(DEFAULT_SEED)));
+		File  plotsDir = new File(arguments.getOrDefault("-plotsdir", DEFAULT_PLOTS_DIR));
 
-				// Ignore files that do not end in .dia 
-				if (!diaFile.isFile() || !diaFile.getName().endsWith(".dia")) {
-					continue;
-				}
-	
-				String currentDiaFilePath = diaFile.getAbsolutePath();
-				String diaName = diaFile.getName(); 
-				String baseName = diaName.substring(0, diaName.lastIndexOf(".dia"));
-				
-				File massListFile = new File(diaFolder, baseName + ".txt");
-				String massListPath = massListFile.getAbsolutePath();
-				
-				System.out.println("Processesing " + diaFile.getName());
-				
-				if (!massListFile.exists()) {
-					System.out.println("Skipping " + diaFile.getName() + " because mass list was not found: " + massListPath);
-					continue;
-				}
-				executeContextMProphet(libraryPath, fastaPath, currentDiaFilePath, massListPath, diaFolder);
-			}	
+		try {
+			runEndToEnd(library, fasta, dia, massList, fdr, seed, plotsDir);
+		} catch (Exception e) {
+			Logger.errorLine("ContextMProphetExecutor failed: " + e.getMessage());
+			e.printStackTrace();
+			System.exit(2);
 		}
 	}
 
-	public static void executeContextMProphet(String libraryPath, String fastaPath, String diaFilePath, String massListPath, File diaFolder) {
-		File fasta = new File(fastaPath);
-		File diaFile = new File(diaFilePath);
-		File library = new File(libraryPath);
+	/**
+	 * Full pipeline for one PRM file: score -> split -> train(bg) -> apply(ref).
+	 */
+	public static void runEndToEnd(File library, File fasta, File dia, File massList,
+	                               float fdr, int seed, File plotsDir) throws Exception {
 
-		String baseName = diaFilePath.replaceFirst("\\.dia$", "");
+		if (!dia.exists())      throw new IOException("Input file not found: " + dia);
+		if (!library.exists())  throw new IOException("Library file not found: " + library);
+		if (!fasta.exists())    throw new IOException("FASTA file not found: " + fasta);
+		if (!massList.exists()) throw new IOException("Mass list file not found: " + massList);
 
-		//		ArrayList<ScoredFeature> referenceFeatures = new ArrayList<>();
-		//		ArrayList<ScoredFeature> backgroundFeatures = new ArrayList<>();
+		// Strip .dia or .mzML (case-insensitive). EncyclopeDIA accepts both.
+		String baseName = dia.getAbsolutePath().replaceFirst("(?i)\\.(dia|mzML)$", "");
 
-		//		ArrayList<IsolationWindow> targetWindows = IsolationWindowReader.parseMassList(massListPath);
+		Logger.logLine("ContextFeatureScorer: scoring " + dia.getName());
+		ContextFeatureScorer.scoreFeatures(library, dia, fasta, baseName, massList.getAbsolutePath());
+
+		File referenceFeatures  = new File(baseName + "_reference.features.txt");
+		File backgroundFeatures = new File(baseName + "_background.features.txt");
+
+		runTrainApply(referenceFeatures, backgroundFeatures, fasta, fdr, seed, plotsDir);
+	}
+
+	/**
+	 * Train mProphet LDA on {@code backgroundFeatures}, apply to {@code referenceFeatures}.
+	 * Exposed publicly so future rescorers can reuse the same split feature files.
+	 */
+	public static void runTrainApply(File referenceFeatures, File backgroundFeatures,
+	                                 File fasta, float fdr, int seed, File plotsDir) throws Exception {
+
 		SearchParameters params = SearchParameterParser.getDefaultParametersObject();
 
+		MProphetExecutionData backgroundData = buildExecutionData(backgroundFeatures, fasta, params);
+		MProphetExecutionData referenceData  = buildExecutionData(referenceFeatures,  fasta, params);
 
-		// Score features in the .dia file against the library, split the results
-		try {
-			ContextFeatureScorer.scoreFeatures(library, diaFile, fasta, baseName, massListPath); // run this if the feature file hasn't been processed yet
-			String featureFileName = baseName.replaceAll("\\.txt$", "");
+		final int round = 1;
 
-			File backgroundFeatureFile = new File(featureFileName + "_background.features.txt");
-			File referenceFeatureFile = new File(featureFileName + "_reference.features.txt");
+		Logger.logLine("Training mProphet LDA on background features: " + backgroundFeatures.getName());
+		MProphetResult backgroundResult = MProphetReiter.executeMProphetTSV(
+				backgroundData, fdr, seed, params.getAAConstants(), round);
+		LinearDiscriminantAnalysis backgroundLDA = backgroundResult.getLDA();
 
-			MProphetExecutionData backgroundData = makeMProphetExecutionData(fastaPath, libraryPath, featureFileName, backgroundFeatureFile, fasta, params, ".pep");
-			MProphetExecutionData referenceData = makeMProphetExecutionData(fastaPath, libraryPath, featureFileName, referenceFeatureFile, fasta, params, ".pep");
+		Logger.logLine("Applying background-trained LDA to reference features: " + referenceFeatures.getName());
+		MProphetResult referenceResult = MProphetReiter.executeMProphetTSVWithModel(
+				referenceData, fdr, backgroundLDA, params.getAAConstants());
 
-			float peptideFDRThreshold = 0.01f;
-			int seed = 1;
-			int round = 1;
+		Logger.logLine("Reference passing peptides: " + referenceResult.getPassingPeptides().size());
 
-			MProphetResult backgroundMProphetResult = MProphetReiter.executeMProphetTSV(backgroundData, peptideFDRThreshold, seed, params.getAAConstants(), round);
-			LinearDiscriminantAnalysis backgroundLDA = backgroundMProphetResult.getLDA();
-
-			// 	Use the background LDA model on the reference feature file without retraining
-			MProphetResult referenceMProphetResult = MProphetReiter.executeMProphetTSVWithModel(referenceData, peptideFDRThreshold, backgroundLDA, params.getAAConstants());
-
-			System.out.println("The lda model has been trained on background feature. Now we'll use reference features from " + referenceFeatureFile.getAbsolutePath());
-			//			System.out.println("Background passing peptides: " + backgroundMProphetResult.getPassingPeptides().size());
-			System.out.println("Finished scoring peptides with background-trained lda model. "
-					+ "\nReference passing peptides: " + referenceMProphetResult.getPassingPeptides().size());
-			
-			String diaBaseName = diaFile.getName().replaceFirst("\\.dia$", "");
-			File nameOfFolderForPlot = new File(diaFolder, diaBaseName + "_mprophet_plots");
-			ContextMProphetPlotter.plotContextMProphetResults(
-			        backgroundData.getPeptideOutputFile(),
-			        backgroundData.getPeptideDecoyFile(),
-			        referenceData.getPeptideOutputFile(),
-			        referenceData.getPeptideDecoyFile(),
-			        nameOfFolderForPlot
-			);
-		} catch (Exception e) {
-			e.printStackTrace();
+		if (!plotsDir.exists() && !plotsDir.mkdirs()) {
+			Logger.errorLine("Could not create plots directory: " + plotsDir);
 		}
-
+		ContextMProphetPlotter.plotContextMProphetResults(
+				backgroundData.getPeptideOutputFile(),
+				backgroundData.getPeptideDecoyFile(),
+				referenceData.getPeptideOutputFile(),
+				referenceData.getPeptideDecoyFile(),
+				plotsDir);
 	}
 
-
-
-	private static MProphetExecutionData makeMProphetExecutionData(String fastaPath, String libraryPath, String diaFolderPath, File inputFeatureFile, File fasta, SearchParameters params, String outputSuffix) {
-
-		File peptideOutputFile = new File(inputFeatureFile.getAbsolutePath().replaceAll("\\.txt$", "") + outputSuffix + ".output.txt");
-		File peptideDecoyFile = new File(inputFeatureFile.getAbsolutePath().replaceAll("\\.txt$", "") + outputSuffix + ".decoy.txt");
-		// Map files 
-//		String libraryPath = "C:/Users/m334793/Documents/targeted_bootstrapper_eval_20260522/varying_number_of_peptides/100_pep/IL2_and_IL15_Combo.elib";
-//		String fastaPath = "C:/Users/m334793/Documents/targeted_bootstrapper_eval_20260522/varying_number_of_peptides/100_pep/mus_musculus_reviewed_uniprot.fasta";
-//		String diaFilePath = "C:/Users/m334793/Documents/Library/for_context_50perCycle/IT_100ngCurve_100p.dia";
-
-		// Mass list file 
-//		String massListPath = "C:/Users/m334793/Documents/Library/targeted_bootstrapper_test/assay.csv";
-
-		// Where the feature files are located: 
-//		String diaFolderPath = "C:/Users/m334793/Documents/targeted_bootstrapper_eval_20260522/varying_number_of_peptides/100_pep/";
-
-		// Get a list of .dia files 
-		File diaFolder = new File(diaFolderPath);
-		File[] diaFiles = diaFolder.listFiles();
-		
-		System.out.println("DIA Folder was fidentified as: " + diaFolder.getAbsolutePath());
-		System.out.println("DIA files detected! The following files will be processed with MProphet:" + diaFolder.listFiles());
-
-		if (diaFiles != null) {
-			for (File diaFile : diaFiles) {
-				if (diaFile.isFile() && diaFile.getName().endsWith(".dia")) {
-					System.out.println(diaFile.getName());
-				}
-			}
-		}
-		
-		// Identify the current file so we can loop through all files
-
-		if (diaFiles !=null) {
-			for (File diaFile : diaFiles) {
-
-				// Ignore files that do not end in .dia 
-				if (!diaFile.isFile() || !diaFile.getName().endsWith(".dia")) {
-					continue;
-				}
-	
-				String currentDiaFilePath = diaFile.getAbsolutePath();
-				String diaName = diaFile.getName(); 
-				String baseName = diaName.substring(0, diaName.lastIndexOf(".dia"));
-				
-				File massListFile = new File(diaFolder, baseName + ".txt");
-				String massListPath = massListFile.getAbsolutePath();
-				
-				System.out.println("Processesing " + diaFile.getName());
-				
-				if (!massListFile.exists()) {
-					System.out.println("Skipping " + diaFile.getName() + " because mass list was not found: " + massListPath);
-					continue;
-				}
-				executeContextMProphet(libraryPath, fastaPath, currentDiaFilePath, massListPath, diaFolder);
-			}	
-		}
-		return null;
+	private static MProphetExecutionData buildExecutionData(File inputFeatures, File fasta, SearchParameters params) {
+		String base = inputFeatures.getAbsolutePath().replaceAll("\\.txt$", "");
+		File peptideOutputFile = new File(base + ".pep.output.txt");
+		File peptideDecoyFile  = new File(base + ".pep.decoy.txt");
+		return new MProphetExecutionData(inputFeatures, fasta, peptideOutputFile, peptideDecoyFile, params);
 	}
 
-	public static void executeContextMProphet2(String libraryPath, String fastaPath, String diaFilePath, String massListPath, File diaFolder) {
-		File fasta = new File(fastaPath);
-		File diaFile = new File(diaFilePath);
-		File library = new File(libraryPath);
-
-		String baseName = diaFilePath.replaceFirst("\\.dia$", "");
-
-		//		ArrayList<ScoredFeature> referenceFeatures = new ArrayList<>();
-		//		ArrayList<ScoredFeature> backgroundFeatures = new ArrayList<>();
-
-		//		ArrayList<IsolationWindow> targetWindows = IsolationWindowReader.parseMassList(massListPath);
-		SearchParameters params = SearchParameterParser.getDefaultParametersObject();
-
-
-		// Score features in the .dia file against the library, split the results
-		try {
-			ContextFeatureScorer.scoreFeatures(library, diaFile, fasta, baseName, massListPath); // run this if the feature file hasn't been processed yet
-			String featureFileName = baseName.replaceAll("\\.txt$", "");
-
-			File backgroundFeatureFile = new File(featureFileName + "_background.features.txt");
-			File referenceFeatureFile = new File(featureFileName + "_reference.features.txt");
-
-			MProphetExecutionData backgroundData = makeMProphetExecutionData(diaFilePath, libraryPath, featureFileName, backgroundFeatureFile, fasta, params, ".pep");
-			MProphetExecutionData referenceData = makeMProphetExecutionData(diaFilePath, libraryPath, featureFileName, referenceFeatureFile, fasta, params, ".pep");
-
-			float peptideFDRThreshold = 0.01f;
-			int seed = 1;
-			int round = 1;
-
-			MProphetResult backgroundMProphetResult = MProphetReiter.executeMProphetTSV(backgroundData, peptideFDRThreshold, seed, params.getAAConstants(), round);
-			LinearDiscriminantAnalysis backgroundLDA = backgroundMProphetResult.getLDA();
-
-			// 	Use the background LDA model on the reference feature file without retraining
-			MProphetResult referenceMProphetResult = MProphetReiter.executeMProphetTSVWithModel(referenceData, peptideFDRThreshold, backgroundLDA, params.getAAConstants());
-
-			System.out.println("The lda model has been trained on background feature. Now we'll use reference features from " + referenceFeatureFile.getAbsolutePath());
-			//			System.out.println("Background passing peptides: " + backgroundMProphetResult.getPassingPeptides().size());
-			System.out.println("Finished scoring peptides with background-trained lda model. "
-					+ "\nReference passing peptides: " + referenceMProphetResult.getPassingPeptides().size());
-			
-			String diaBaseName = diaFile.getName().replaceFirst("\\.dia$", "");
-			File nameOfFolderForPlot = new File(diaFolder, diaBaseName + "_mprophet_plots");
-			ContextMProphetPlotter.plotContextMProphetResults(
-			        backgroundData.getPeptideOutputFile(),
-			        backgroundData.getPeptideDecoyFile(),
-			        referenceData.getPeptideOutputFile(),
-			        referenceData.getPeptideDecoyFile(),
-			        nameOfFolderForPlot
-			);
-		} catch (Exception e) {
-			e.printStackTrace();
+	private static File requiredFile(HashMap<String, String> args, String flag) {
+		String value = args.get(flag);
+		if (value == null) {
+			Logger.errorLine("Missing required argument: " + flag);
+			printHelp();
+			System.exit(1);
 		}
-
+		return new File(value);
 	}
 
-
-
-	private static MProphetExecutionData makeMProphetExecutionData2(File inputFeatureFile, File fasta, SearchParameters params, String outputSuffix) {
-
-		File peptideOutputFile = new File(inputFeatureFile.getAbsolutePath().replaceAll("\\.txt$", "") + outputSuffix + ".output.txt");
-		File peptideDecoyFile = new File(inputFeatureFile.getAbsolutePath().replaceAll("\\.txt$", "") + outputSuffix + ".decoy.txt");
-
-		return new MProphetExecutionData(
-				inputFeatureFile,
-				fasta,
-				peptideOutputFile,
-				peptideDecoyFile,
-				params);
-
+	private static void printHelp() {
+		Logger.timelessLogLine("ContextMProphetExecutor");
+		Logger.timelessLogLine("Context-mode mProphet: score one PRM file, split by mass-list membership,");
+		Logger.timelessLogLine("train LDA on background features, apply to reference features.");
+		Logger.timelessLogLine("");
+		Logger.timelessLogLine("Required:");
+		Logger.timelessLogLine("  -i        <file>   input .dia (or .mzML)");
+		Logger.timelessLogLine("  -l        <file>   library (.elib preferred, .dlib accepted)");
+		Logger.timelessLogLine("  -f        <file>   FASTA protein database");
+		Logger.timelessLogLine("  -massList <file>   assay / mass-list .txt");
+		Logger.timelessLogLine("Optional:");
+		Logger.timelessLogLine("  -fdr      <float>  peptide FDR threshold (default: " + DEFAULT_FDR + ")");
+		Logger.timelessLogLine("  -seed     <int>    random seed for LDA training (default: " + DEFAULT_SEED + ")");
+		Logger.timelessLogLine("  -plotsdir <dir>    diagnostic plot directory (default: " + DEFAULT_PLOTS_DIR + ")");
 	}
-
 }
