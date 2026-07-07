@@ -249,15 +249,23 @@ public class TransitionRefinementData implements PeptidePrecursor {
 		if (!rtArray.isPresent()) {
 			throw new EncyclopediaException("Requesting apex RT but no retention times are loaded!");
 		}
-		
+
 		Range rtRange=getRange();
 		float[] rtArrayData=rtArray.get();
-		
+
+		// Guard against empty / mismatched arrays. Sparse PRM or single-GPF
+		// libexport can produce chromatograms with zero-length data; fall back
+		// to the middle of the RT range rather than crashing.
+		if (medianChromatogram == null || medianChromatogram.length == 0 || rtArrayData.length == 0) {
+			return range.getMiddle();
+		}
+
 		float maxIntensity=General.max(medianChromatogram);
 		float sumIntensity=0.0f;
 		float sumMultiply=0.0f;
 
-		for (int i=0; i<rtArrayData.length; i++) {
+		int n = Math.min(rtArrayData.length, medianChromatogram.length);
+		for (int i=0; i<n; i++) {
 			if (rtRange.contains(rtArrayData[i])&&medianChromatogram[i]/maxIntensity>0.5f) {
 				sumIntensity+=medianChromatogram[i];
 				sumMultiply+=medianChromatogram[i]*rtArrayData[i];
