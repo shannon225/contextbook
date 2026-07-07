@@ -19,13 +19,20 @@ import edu.washington.gs.maccoss.encyclopedia.filereaders.WindowData;
 public class ContextWindowExtractor {
 
 	public static void main(String[] args) throws IOException, SQLException {
-		String targetAssayPath = "C:/Users/m334793/Documents/Library/assay7.csv";
-		Path rawFilePath = Paths.get("C:/Users/m334793/Documents/Library/masked1_cd14_combined.dia");
-		
+		if (args.length < 2 || args.length > 3) {
+			System.err.println("Usage: java edu.washington.gs.maccoss.encyclopedia.context.ContextWindowExtractor "
+					+ "<rawDiaFile> <massListTsv> [outputDiaFile]");
+			System.exit(1);
+		}
+		Path rawFilePath = Paths.get(args[0]);
+		String targetAssayPath = args[1];
+
 		String rawFileName = rawFilePath.getFileName().toString();
 		String baseName = rawFileName.replaceFirst("\\.dia$",  "");
-		
-		Path outputPath = rawFilePath.getParent().resolve(baseName + "_context.dia");
+
+		Path outputPath = args.length == 3
+				? Paths.get(args[2])
+				: rawFilePath.getParent().resolve(baseName + "_context.dia");
 
 		StripeFile maskedFile = maskByTargetWindows(rawFilePath, outputPath, targetAssayPath);
 		System.out.println("Masked File was created at " + outputPath + "\n" + maskedFile);
