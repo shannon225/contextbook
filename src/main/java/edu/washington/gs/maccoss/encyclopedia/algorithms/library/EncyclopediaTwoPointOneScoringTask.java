@@ -384,8 +384,14 @@ public class EncyclopediaTwoPointOneScoringTask extends AbstractLibraryScoringTa
 							
 							// zero outside peak
 							Peak[] peaks=precursors.getIsotopePacket(entry.getPrecursorMZ(), localRetentionTimes[j], entry.getPrecursorCharge(), parameters.getPrecursorTolerance());
-							precursor[j]=peaks[PrecursorScanMap.monoisotopicIndex].intensity;
-							precursorPlusOne[j]=peaks[PrecursorScanMap.plusOneIndex].intensity;
+							// Guard against short isotope packets (PRM with few precursor scans
+							// can return arrays smaller than monoisotopicIndex/plusOneIndex).
+							if (peaks.length > PrecursorScanMap.monoisotopicIndex) {
+								precursor[j]=peaks[PrecursorScanMap.monoisotopicIndex].intensity;
+							}
+							if (peaks.length > PrecursorScanMap.plusOneIndex) {
+								precursorPlusOne[j]=peaks[PrecursorScanMap.plusOneIndex].intensity;
+							}
 						}
 					}
 					
