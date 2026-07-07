@@ -131,6 +131,14 @@ public class LocalFDR {
         return lfdr;
     }
 
+    /**
+     * Storey-style estimate of the proportion of true null hypotheses.
+     * Returns the median of per-lambda estimates, then caps at 1.0 (the
+     * theoretical upper bound). Without the cap the estimator can exceed 1
+     * when sample sizes are small or the p-value distribution is noisy in
+     * the upper range -- values > 1 are mathematically meaningless and
+     * propagate into q-values / local FDRs > 1 downstream.
+     */
     public static double estimatePi0(double[] pValues) {
     	double[] lambdas=new double[9];
     	double[] pi0s=new double[lambdas.length];
@@ -139,9 +147,13 @@ public class LocalFDR {
 			pi0s[i]=estimatePi0Local(pValues, lambdas[i]);
 		}
 
-    	return QuickMedianDouble.median(pi0s);
+    	return Math.min(1.0, QuickMedianDouble.median(pi0s));
     }
 
+    /**
+     * Per-lambda pi_0 estimate. Not capped -- callers using this directly
+     * should cap themselves. Public callers should prefer {@link #estimatePi0}.
+     */
     public static double estimatePi0Local(double[] pValues, double lambda) {
         int m = pValues.length;
         int count = 0;
