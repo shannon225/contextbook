@@ -1,5 +1,5 @@
 # contextbook for the TEAPOT pipeline
-FROM eclipse-temurin:17-jre
+FROM eclipse-temurin:17-jre-jammy
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends libgomp1 procps \

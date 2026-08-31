@@ -114,3 +114,5 @@ jobs:
           smoke "ContextMProphetExecutor" docker run --rm "$tag" edu.washington.gs.maccoss.encyclopedia.context.ContextMProphetExecutor -h
           docker run --rm --entrypoint sh "$tag" -c 'command -v ps'
           docker run --rm --entrypoint sh "$tag" -c 'test -s /opt/encyclopedia/encyclopedia.jar'
+          n=$(docker run --rm --entrypoint sh "$tag" -c 'date +%s%3N' | tr -d '\n' | wc -c)
+          [ "$n" = "13" ] || { echo "::error::date +%s%3N gave $n digits, not 13; the base image needs GNU coreutils."; exit 1; }
