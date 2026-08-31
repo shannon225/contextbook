@@ -1,5 +1,6 @@
 package edu.washington.gs.maccoss.encyclopedia.filewriters.web;
 
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +31,24 @@ public interface KoinaFeaturePredictionModel {
 	public URL getURL(String baseURL);
 	public void updatePeptides(List<KoinaPrecursor> peptides, String baseURL);
 	public boolean canModelPeptide(AminoAcidEncoding[] aas, byte precursorCharge);
+
+	/**
+	 * Builds a model's inference URL, tolerating a base URL with or without a
+	 * trailing slash. Every model used to concatenate baseURL directly with
+	 * "v2/models/...", so a -url given without one produced
+	 * "https://host:443v2/models/..." and a MalformedURLException at index 3.
+	 *
+	 * @param baseURL   the Koina server root, with or without a trailing slash
+	 * @param modelName the model's path segment, e.g. "Prosit_2019_irt"
+	 */
+	public static URL inferenceURL(String baseURL, String modelName) {
+		try {
+			String separator=baseURL.endsWith("/")?"":"/";
+			return new URL(baseURL+separator+"v2/models/"+modelName+"/infer");
+		} catch (MalformedURLException e) {
+			throw new EncyclopediaException("Error getting Koina URL for ["+modelName+"] from ["+baseURL+"]", e);
+		}
+	}
 
 	/**
 	 * Retrieves the default set of Koina feature prediction models. This includes a fragmentation model,
