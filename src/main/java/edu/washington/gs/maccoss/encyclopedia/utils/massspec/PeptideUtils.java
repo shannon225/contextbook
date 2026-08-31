@@ -1,6 +1,8 @@
 package edu.washington.gs.maccoss.encyclopedia.utils.massspec;
 
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.util.Locale;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Optional;
@@ -383,8 +385,9 @@ public class PeptideUtils {
 		return getModIndicies(sequence, nominalMass).length;
 	}
 
-	private static final DecimalFormat SKYLINE_DF = new DecimalFormat(".#");
-	private static final DecimalFormat SKYLINE_PEAK_BOUNDARIES_DF = new DecimalFormat("#");
+	private static final DecimalFormatSymbols SKYLINE_SYMBOLS = DecimalFormatSymbols.getInstance(Locale.US);
+	private static final DecimalFormat SKYLINE_DF = new DecimalFormat(".#", SKYLINE_SYMBOLS);
+	private static final DecimalFormat SKYLINE_PEAK_BOUNDARIES_DF = new DecimalFormat("#", SKYLINE_SYMBOLS);
 
 	public static String formatForSkyline(String sequence) {
 		return formatForSkyline(sequence, SKYLINE_DF, true);

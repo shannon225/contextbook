@@ -1,6 +1,7 @@
 package edu.washington.gs.maccoss.encyclopedia.utils;
 
 import java.util.Arrays;
+import java.util.Locale;
 
 public class StringUtils {
 	public static boolean contains(String[] array, String target) {
@@ -118,7 +119,7 @@ public class StringUtils {
 	
 	public static String scientificNotation(double v, int precision) {
 		assert(precision>=0);
-		String s=String.format("%."+precision+"E", v);
+		String s=String.format(Locale.US, "%."+precision+"E", v);
 		int e=s.indexOf('E');
 		String first=s.substring(0, e);
 		String second=s.substring(e+1);
