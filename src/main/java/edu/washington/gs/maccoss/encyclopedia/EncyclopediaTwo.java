@@ -50,6 +50,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.parameters.InstrumentSpecificSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.IsolationWindowFilter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
@@ -364,7 +365,8 @@ public class EncyclopediaTwo {
 			float numberOfTasks = 2.0f + ranges.size();
 
 			ArrayList<LibraryEntry> nextEntries=library.getEntries(ranges.get(0), useSqrt, parameters.getAAConstants());
-			ArrayList<FragmentScan> nextStripes=stripefile.getStripes(ranges.get(0).getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, useSqrt);
+			ArrayList<FragmentScan> nextStripes=IsolationWindowFilter.restrictToWindow(
+					stripefile.getStripes(ranges.get(0).getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, useSqrt), ranges.get(0));
 			
 			for (int rangeIndex = 0; rangeIndex < ranges.size(); rangeIndex++) {
 				Range range=ranges.get(rangeIndex);
@@ -440,7 +442,8 @@ public class EncyclopediaTwo {
 
 				if (rangeIndex+1<ranges.size()) {
 					nextEntries=library.getEntries(ranges.get(rangeIndex+1), useSqrt, parameters.getAAConstants());
-					nextStripes=stripefile.getStripes(ranges.get(rangeIndex+1).getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, useSqrt);
+					nextStripes=IsolationWindowFilter.restrictToWindow(
+							stripefile.getStripes(ranges.get(rangeIndex+1).getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, useSqrt), ranges.get(rangeIndex+1));
 				}
 
 				executor.shutdown();

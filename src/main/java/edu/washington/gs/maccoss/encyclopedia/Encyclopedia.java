@@ -51,6 +51,7 @@ import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchJobData;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.SearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.datastructures.parameters.InstrumentSpecificSearchParameters;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.BlibToLibraryConverter;
+import edu.washington.gs.maccoss.encyclopedia.filereaders.IsolationWindowFilter;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.LibraryInterface;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.PercolatorReader;
 import edu.washington.gs.maccoss.encyclopedia.filereaders.SearchParameterParser;
@@ -378,7 +379,8 @@ public class Encyclopedia {
 				}
 				Logger.logLine("Processing " + range + " m/z, (" + dutyCycle + " second duty cycle)");
 
-				ArrayList<FragmentScan> stripes = stripefile.getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, true);
+				ArrayList<FragmentScan> stripes = IsolationWindowFilter.restrictToWindow(
+						stripefile.getStripes(range.getMiddle(), -Float.MAX_VALUE, Float.MAX_VALUE, true), range);
 				Collections.sort(stripes);
 				Logger.logLine("Found "+stripes.size()+" total MS/MS in this window");
 
