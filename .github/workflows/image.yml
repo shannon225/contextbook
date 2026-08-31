@@ -1,0 +1,109 @@
+name: Image
+
+on:
+  push:
+    branches: [teapot]
+  pull_request:
+    branches: [teapot]
+  workflow_dispatch:
+
+concurrency:
+  group: image-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE: encyclopedia
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Free up disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+                      /usr/local/share/boost "$AGENT_TOOLSDIRECTORY" || true
+          df -h /
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      - name: Read the version from pom.xml
+        id: version
+        run: |
+          version="$(python3 -c "import xml.etree.ElementTree as ET; \
+            ns='{http://maven.apache.org/POM/4.0.0}'; \
+            print(ET.parse('pom.xml').getroot().find(ns+'version').text)")"
+          echo "number=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Build the jar, running the tests
+        run: mvn -B -PbuildEncyclopedia -Duser.language=en -Duser.country=US package
+
+      - name: Keep the test reports if anything failed
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: target/surefire-reports/
+
+      - name: Check the jar
+        run: |
+          jar="target/encyclopedia-${{ steps.version.outputs.number }}-executable.jar"
+          [ -s "$jar" ] || { echo "::error::$jar is missing or empty"; exit 1; }
+          count="$(unzip -l "$jar" | grep -cE 'org/bytedeco/(opencv|ffmpeg|leptonica|hdf5)' || true)"
+          if [ "$count" != "0" ]; then
+            echo "::error::Unused natives are back. Check the deeplearning4j-core exclusions in pom.xml."
+            exit 1
+          fi
+          size_mb=$(( $(stat -c%s "$jar") / 1048576 ))
+          echo "Jar: ${size_mb} MB"
+          [ "$size_mb" -le 400 ] || { echo "::error::Jar is ${size_mb} MB, expected ~217. Check <javacpp.platform>."; exit 1; }
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        if: github.event_name != 'pull_request'
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=raw,value=${{ steps.version.outputs.number }}
+            type=sha,format=short
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: ${{ github.event_name != 'pull_request' }}
+          load: ${{ github.event_name == 'pull_request' }}
+          build-args: VERSION=${{ steps.version.outputs.number }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Smoke-test the image
+        run: |
+          tag="$(echo '${{ steps.meta.outputs.tags }}' | head -1)"
+          docker run --rm "$tag" edu.washington.gs.maccoss.encyclopedia.Encyclopedia -h
+          docker run --rm "$tag" edu.washington.gs.maccoss.encyclopedia.Encyclopedia -libexport -h
+          docker run --rm "$tag" edu.washington.gs.maccoss.encyclopedia.context.ContextMProphetExecutor -h
+          # Nextflow runs `ps` before the task script; without it every task exits 1.
+          docker run --rm --entrypoint sh "$tag" -c 'command -v ps'
+          docker run --rm --entrypoint sh "$tag" -c 'test -s /opt/encyclopedia/encyclopedia.jar'

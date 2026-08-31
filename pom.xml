@@ -5,7 +5,7 @@
 
 	<groupId>maccoss</groupId>
 	<artifactId>encyclopedia</artifactId>
-	<version>5.0.0-develop-SNAPSHOT</version>
+	<version>6.8.29-teapot</version>
 	<packaging>jar</packaging>
 
 	<name>encyclopedia</name>

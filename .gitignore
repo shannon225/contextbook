@@ -5,3 +5,5 @@
 .classpath
 /bin/
 .idea/
+
+/dependency-reduced-pom.xml
