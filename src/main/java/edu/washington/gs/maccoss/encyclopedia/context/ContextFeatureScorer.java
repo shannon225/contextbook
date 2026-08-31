@@ -136,10 +136,17 @@ public class ContextFeatureScorer {
 	
 
 
+	// Uses EncyclopeDIA's default search parameters: 10 ppm fragment tolerance, CID
 	public static ArrayList<ScoredFeature> scoreFeatures(File library, File rawFile, File fasta, String baseName, String massListPath) throws IOException, SQLException, DataFormatException, InterruptedException {
+		return scoreFeatures(library, rawFile, fasta, baseName, massListPath,
+				SearchParameterParser.getDefaultParametersObject());
+	}
+
+	// Score with user-supplied search parameters
+	public static ArrayList<ScoredFeature> scoreFeatures(File library, File rawFile, File fasta, String baseName, String massListPath, SearchParameters searchParameters) throws IOException, SQLException, DataFormatException, InterruptedException {
 
 		// Run an Encyclopedia job
-		SearchParameters params = SearchParameterParser.getDefaultParametersObject();
+		SearchParameters params = searchParameters;
 		LibraryScoringFactory scoringForLibrary = EncyclopediaScoringFactory.getDefaultScoringFactory(params);
 		LibraryInterface interfaceForLibrary = BlibToLibraryConverter.getFile(library, fasta, params);
 
