@@ -13,21 +13,6 @@ import edu.washington.gs.maccoss.encyclopedia.utils.CommandLineParser;
 import edu.washington.gs.maccoss.encyclopedia.utils.Logger;
 import edu.washington.gs.maccoss.encyclopedia.utils.math.LinearDiscriminantAnalysis;
 
-/**
- * Context-mode mProphet driver.
- *
- * End-to-end: scores a single PRM file against a library, splits features
- * into reference (peptides in the mass list) vs background (everything else),
- * trains an LDA mProphet model on the background features, and applies that
- * model to the reference features.
- *
- * Outputs (written alongside each split feature file):
- *   <basename>_reference.features.pep.output.txt   (target peptides)
- *   <basename>_reference.features.pep.decoy.txt    (decoy peptides)
- *   <basename>_background.features.pep.output.txt
- *   <basename>_background.features.pep.decoy.txt
- * Plus diagnostic plots in -plotsdir.
- */
 public class ContextMProphetExecutor {
 
 	private static final float  DEFAULT_FDR  = 0.01f;
@@ -45,16 +30,42 @@ public class ContextMProphetExecutor {
 			System.exit(args.length == 0 ? 1 : 0);
 		}
 
+		// Feature-file mode: skip the search and run only the train-on-background /
+		// apply-to-reference step on feature files that already exist
+		if (arguments.containsKey("-background") && arguments.containsKey("-reference")) {
+			try {
+				File backgroundFeatures = requiredFile(arguments, "-background");
+				File referenceFeatures  = requiredFile(arguments, "-reference");
+				File fasta              = requiredFile(arguments, "-f");
+				float fdr               = Float.parseFloat(arguments.getOrDefault("-fdr", Float.toString(DEFAULT_FDR)));
+				int   seed              = Integer.parseInt(arguments.getOrDefault("-seed", Integer.toString(DEFAULT_SEED)));
+				File  plotsDir          = plotsDirectory(arguments, referenceFeatures);
+				runTrainApply(referenceFeatures, backgroundFeatures, fasta, fdr, seed, plotsDir);
+				return;
+			} catch (Exception e) {
+				Logger.errorLine("ContextMProphetExecutor (feature-file mode) failed: " + e.getMessage());
+				e.printStackTrace();
+				System.exit(2);
+			}
+		}
+
 		File dia       = requiredFile(arguments, "-i");
 		File library   = requiredFile(arguments, "-l");
 		File fasta     = requiredFile(arguments, "-f");
 		File massList  = requiredFile(arguments, "-massList");
 		float fdr      = Float.parseFloat(arguments.getOrDefault("-fdr",  Float.toString(DEFAULT_FDR)));
 		int   seed     = Integer.parseInt(arguments.getOrDefault("-seed", Integer.toString(DEFAULT_SEED)));
-		File  plotsDir = new File(arguments.getOrDefault("-plotsdir", DEFAULT_PLOTS_DIR));
+		File  plotsDir = plotsDirectory(arguments, dia);
 
 		try {
-			runEndToEnd(library, fasta, dia, massList, fdr, seed, plotsDir);
+			// EncyclopeDIA's defaults, overridden by anything the caller passed
+			HashMap<String, String> searchArgs = SearchParameterParser.getDefaultParameters();
+			searchArgs.putAll(arguments);
+			SearchParameters searchParameters = SearchParameterParser.parseParameters(searchArgs);
+			Logger.logLine("Fragment tolerance: " + searchParameters.getFragmentTolerance()
+					+ ", fragmentation: " + searchParameters.getFragType());
+
+			runEndToEnd(library, fasta, dia, massList, fdr, seed, plotsDir, searchParameters);
 		} catch (Exception e) {
 			Logger.errorLine("ContextMProphetExecutor failed: " + e.getMessage());
 			e.printStackTrace();
@@ -62,11 +73,16 @@ public class ContextMProphetExecutor {
 		}
 	}
 
-	/**
-	 * Full pipeline for one PRM file: score -> split -> train(bg) -> apply(ref).
-	 */
+	// Full pipeline: score -> split -> train(bg) -> apply(ref)
 	public static void runEndToEnd(File library, File fasta, File dia, File massList,
 	                               float fdr, int seed, File plotsDir) throws Exception {
+		runEndToEnd(library, fasta, dia, massList, fdr, seed, plotsDir,
+				SearchParameterParser.getDefaultParametersObject());
+	}
+
+	public static void runEndToEnd(File library, File fasta, File dia, File massList,
+	                               float fdr, int seed, File plotsDir,
+	                               SearchParameters searchParameters) throws Exception {
 
 		if (!dia.exists())      throw new IOException("Input file not found: " + dia);
 		if (!library.exists())  throw new IOException("Library file not found: " + library);
@@ -77,22 +93,25 @@ public class ContextMProphetExecutor {
 		String baseName = dia.getAbsolutePath().replaceFirst("(?i)\\.(dia|mzML)$", "");
 
 		Logger.logLine("ContextFeatureScorer: scoring " + dia.getName());
-		ContextFeatureScorer.scoreFeatures(library, dia, fasta, baseName, massList.getAbsolutePath());
+		ContextFeatureScorer.scoreFeatures(library, dia, fasta, baseName, massList.getAbsolutePath(), searchParameters);
 
 		File referenceFeatures  = new File(baseName + "_reference.features.txt");
 		File backgroundFeatures = new File(baseName + "_background.features.txt");
 
-		runTrainApply(referenceFeatures, backgroundFeatures, fasta, fdr, seed, plotsDir);
+		runTrainApply(referenceFeatures, backgroundFeatures, fasta, fdr, seed, plotsDir, searchParameters);
 	}
 
-	/**
-	 * Train mProphet LDA on {@code backgroundFeatures}, apply to {@code referenceFeatures}.
-	 * Exposed publicly so future rescorers can reuse the same split feature files.
-	 */
 	public static void runTrainApply(File referenceFeatures, File backgroundFeatures,
 	                                 File fasta, float fdr, int seed, File plotsDir) throws Exception {
+		runTrainApply(referenceFeatures, backgroundFeatures, fasta, fdr, seed, plotsDir,
+				SearchParameterParser.getDefaultParametersObject());
+	}
 
-		SearchParameters params = SearchParameterParser.getDefaultParametersObject();
+	public static void runTrainApply(File referenceFeatures, File backgroundFeatures,
+	                                 File fasta, float fdr, int seed, File plotsDir,
+	                                 SearchParameters searchParameters) throws Exception {
+
+		SearchParameters params = searchParameters;
 
 		MProphetExecutionData backgroundData = buildExecutionData(backgroundFeatures, fasta, params);
 		MProphetExecutionData referenceData  = buildExecutionData(referenceFeatures,  fasta, params);
@@ -128,6 +147,15 @@ public class ContextMProphetExecutor {
 		return new MProphetExecutionData(inputFeatures, fasta, peptideOutputFile, peptideDecoyFile, params);
 	}
 
+	// Default the plots dir beside the input
+	private static File plotsDirectory(HashMap<String, String> arguments, File anchor) {
+		String configured=arguments.get("-plotsdir");
+		if (configured!=null) return new File(configured);
+
+		File parent=anchor.getAbsoluteFile().getParentFile();
+		return parent==null?new File(DEFAULT_PLOTS_DIR):new File(parent, DEFAULT_PLOTS_DIR);
+	}
+
 	private static File requiredFile(HashMap<String, String> args, String flag) {
 		String value = args.get(flag);
 		if (value == null) {
@@ -143,6 +171,11 @@ public class ContextMProphetExecutor {
 		Logger.timelessLogLine("Context-mode mProphet: score one PRM file, split by mass-list membership,");
 		Logger.timelessLogLine("train LDA on background features, apply to reference features.");
 		Logger.timelessLogLine("");
+		Logger.timelessLogLine("Feature-file mode (skips the search):");
+		Logger.timelessLogLine("  -background <file> background feature TSV");
+		Logger.timelessLogLine("  -reference  <file> reference feature TSV");
+		Logger.timelessLogLine("  -f          <file> FASTA");
+		Logger.timelessLogLine("");
 		Logger.timelessLogLine("Required:");
 		Logger.timelessLogLine("  -i        <file>   input .dia (or .mzML)");
 		Logger.timelessLogLine("  -l        <file>   library (.elib preferred, .dlib accepted)");
@@ -151,6 +184,13 @@ public class ContextMProphetExecutor {
 		Logger.timelessLogLine("Optional:");
 		Logger.timelessLogLine("  -fdr      <float>  peptide FDR threshold (default: " + DEFAULT_FDR + ")");
 		Logger.timelessLogLine("  -seed     <int>    random seed for LDA training (default: " + DEFAULT_SEED + ")");
-		Logger.timelessLogLine("  -plotsdir <dir>    diagnostic plot directory (default: " + DEFAULT_PLOTS_DIR + ")");
+		Logger.timelessLogLine("  -plotsdir <dir>    diagnostic plot directory (default: " + DEFAULT_PLOTS_DIR + "/ beside the input)");
+		Logger.timelessLogLine("");
+		Logger.timelessLogLine("Search parameters (passed through to EncyclopeDIA; defaults are ORBITRAP):");
+		Logger.timelessLogLine("  -ftol/-ftolunits   fragment tolerance, e.g. -ftol 0.4 -ftolunits AMU");
+		Logger.timelessLogLine("  -lftol/-lftolunits library fragment tolerance");
+		Logger.timelessLogLine("  -frag              CID | HCD | ...");
+		Logger.timelessLogLine("  ION TRAP data (Stellar, LTQ) needs -ftol ~0.4 AMU; the 10 ppm default");
+		Logger.timelessLogLine("  yields ZERO identifications on it.");
 	}
 }
