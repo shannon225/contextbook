@@ -360,7 +360,12 @@ public class XYTrace implements XYTraceInterface, Comparable<XYTraceInterface> {
 	
 	public static ArrayList<XYPoint> clipRegion(XYTrace trace, Range range) {
 		ArrayList<XYPoint> result = new ArrayList<>();
-		
+
+		// An empty trace is legitimate and must not throw
+		if (trace.points == null || trace.points.isEmpty()) {
+			return result;
+		}
+
 		if (range.getStop() < trace.points.get(0).getX() || 
         		range.getStart() > trace.points.get(trace.points.size() - 1).getX()) {
             // No overlap with points
