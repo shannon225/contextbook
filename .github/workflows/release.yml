@@ -90,9 +90,17 @@ jobs:
           mkdir -p dist && cp "$jar" dist/
           (cd dist && sha256sum ./*.jar > SHA256SUMS)
 
-          java -cp "$jar" edu.washington.gs.maccoss.encyclopedia.Encyclopedia -h
-          java -cp "$jar" edu.washington.gs.maccoss.encyclopedia.Encyclopedia -libexport -h
-          java -cp "$jar" edu.washington.gs.maccoss.encyclopedia.context.ContextMProphetExecutor -h
+          smoke() {
+            want="$1"; shift
+            out="$("$@" 2>&1 || true)"
+            case "$out" in
+              *"$want"*) echo "ok: $*" ;;
+              *) echo "::error::'$*' did not print '$want'"; echo "$out" | head -30; exit 1 ;;
+            esac
+          }
+          smoke "library search engine" java -cp "$jar" edu.washington.gs.maccoss.encyclopedia.Encyclopedia -h
+          smoke "SearchToLIB"           java -cp "$jar" edu.washington.gs.maccoss.encyclopedia.Encyclopedia -libexport -h
+          smoke "ContextMProphetExecutor" java -cp "$jar" edu.washington.gs.maccoss.encyclopedia.context.ContextMProphetExecutor -h
 
       - uses: softprops/action-gh-release@v2
         with:

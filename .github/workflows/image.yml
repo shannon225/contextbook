@@ -101,9 +101,16 @@ jobs:
       - name: Smoke-test the image
         run: |
           tag="$(echo '${{ steps.meta.outputs.tags }}' | head -1)"
-          docker run --rm "$tag" edu.washington.gs.maccoss.encyclopedia.Encyclopedia -h
-          docker run --rm "$tag" edu.washington.gs.maccoss.encyclopedia.Encyclopedia -libexport -h
-          docker run --rm "$tag" edu.washington.gs.maccoss.encyclopedia.context.ContextMProphetExecutor -h
-          # Nextflow runs `ps` before the task script; without it every task exits 1.
+          smoke() {
+            want="$1"; shift
+            out="$("$@" 2>&1 || true)"
+            case "$out" in
+              *"$want"*) echo "ok: $*" ;;
+              *) echo "::error::'$*' did not print '$want'"; echo "$out" | head -30; exit 1 ;;
+            esac
+          }
+          smoke "library search engine" docker run --rm "$tag" edu.washington.gs.maccoss.encyclopedia.Encyclopedia -h
+          smoke "SearchToLIB"           docker run --rm "$tag" edu.washington.gs.maccoss.encyclopedia.Encyclopedia -libexport -h
+          smoke "ContextMProphetExecutor" docker run --rm "$tag" edu.washington.gs.maccoss.encyclopedia.context.ContextMProphetExecutor -h
           docker run --rm --entrypoint sh "$tag" -c 'command -v ps'
           docker run --rm --entrypoint sh "$tag" -c 'test -s /opt/encyclopedia/encyclopedia.jar'
