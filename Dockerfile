@@ -1,30 +1,18 @@
-FROM openjdk:8-jre
+# contextbook for the TEAPOT pipeline
+FROM eclipse-temurin:17-jre
 
-RUN apt-get update && \
-    apt-get -y upgrade && \ 
-    apt-get -y install libgomp1 && \
-    apt-get clean
-
-WORKDIR /code
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends libgomp1 procps \
+ && rm -rf /var/lib/apt/lists/*
 
 ARG VERSION
-ENV VERSION ${VERSION}
+ENV JAVA_OPTS=""
 
-# Copy the executable JAR from the build context to the container.
-# Requires that a correctly-versioned JAR has been built locally.
-# If you encounter an error here running `docker build` check that
-# you've run `mvn package -PbuildEncyclopedia` and specified the
-# correct `--build-arg VERSION`.
-COPY "target/encyclopedia-$VERSION-executable.jar" .
+COPY "target/encyclopedia-${VERSION}-executable.jar" /opt/encyclopedia/encyclopedia.jar
 
-WORKDIR /app
+WORKDIR /data
 
-# Entry point for `docker run` specifies running the JAR in headless mode.
-# We must use this combination of shell and exec so that variable expansion
-# functions, parameters may be specified by CMD/run, and the process receives
-# signals (e.g. SIGINT in case of ctrl-C or `docker stop`).
-# See https://stackoverflow.com/a/42332740 for more information.
-ENTRYPOINT ["/bin/sh", "-c", "exec java -jar /code/encyclopedia-$VERSION-executable.jar -Djava.awt.headless \"$0\" \"$@\""]
+ENTRYPOINT ["/bin/sh", "-c", \
+  "exec java $JAVA_OPTS -Djava.awt.headless=true -cp /opt/encyclopedia/encyclopedia.jar \"$@\"", "--"]
 
-# CMD provides default parameters
-CMD ["-h"]
+CMD ["edu.washington.gs.maccoss.encyclopedia.Encyclopedia", "-h"]
