@@ -13,6 +13,12 @@
 
 	<properties>
 		<!--
+		javacpp presets otherwise resolve native binaries for 11 platforms, of which
+		only linux-x86_64 is needed in TEAPOT.
+		Remove it to go back to a portable, much larger jar.
+		-->
+		<javacpp.platform>linux-x86_64</javacpp.platform>
+		<!--
 		The name of the produced executable JAR.
 
 		If this is set to
@@ -573,6 +579,23 @@
 			<artifactId>deeplearning4j-core</artifactId>
 			<version>
 				1.0.0-M2.1</version>
+			<!--
+			datavec-data-image drags in javacv, and with it opencv, ffmpeg,
+			leptonica, tesseract, librealsense, artoolkitplus and a set of camera
+			drivers. deeplearning4j-modelimport drags in hdf5-platform. NOTHING
+			imports org.datavec or org.deeplearning4j.nn.modelimport. The only DL4J
+			packages used are nn, common, util, optimize and zoo.
+			-->
+			<exclusions>
+				<exclusion>
+					<groupId>org.datavec</groupId>
+					<artifactId>datavec-data-image</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.deeplearning4j</groupId>
+					<artifactId>deeplearning4j-modelimport</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.nd4j</groupId>
@@ -585,11 +608,11 @@
 			<artifactId>deeplearning4j-zoo</artifactId>
 			<version>1.0.0-M2.1</version>
 		</dependency>
-		<dependency>
-			<groupId>org.bytedeco</groupId>
-			<artifactId>cuda-platform-redist</artifactId>
-			<version>11.6-8.3-1.5.7</version>
-		</dependency>
+		<!--
+		cuda-platform-redist REMOVED for the teapot build.
+		To restore GPU support, put this dependency back AND add an nd4j-cuda
+		backend; without the backend it does nothing either way.
+		-->
 		<dependency>
 			<groupId>
 				org.bytedeco</groupId>
